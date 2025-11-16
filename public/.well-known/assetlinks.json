@@ -1,0 +1,11 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "com.martinz.modern_invitations",
+    "package_name": "com.martinz.modern_invitations",
+    "sha256_cert_fingerprints":
+    [
+      "60:F6:E8:11:67:83:70:A5:69:9C:22:71:F2:B8:36:8C:AF:19:59:6F:59:80:98:01:77:E9:9C:F6:71:25:93:9E"
+    ]
+  }
+}]

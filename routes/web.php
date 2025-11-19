@@ -63,22 +63,22 @@ Route::get('/run-optimize', function () {
     // Artisan::call('event:cache');
     // Artisan::call('migrate');
     // Artisan::call('db:seed');
-    
+
     // Execute composer require twilio/sdk with output capture
     // $output = [];
     // $returnCode = 0;
     // exec('composer require twilio/sdk 2>&1', $output, $returnCode);
-    
+
     // $composerResult = [
     //     'command' => 'composer require twilio/sdk',
     //     'return_code' => $returnCode,
     //     'output' => implode("\n", $output),
     //     'success' => $returnCode === 0
     // ];
-    
+
     return 'Optimization completed';
         // 'composer_execution' => $composerResult
-    
+
 });
 
 Route::get('/migrate',function (){
@@ -138,6 +138,7 @@ Route::group(['prefix' => 'admin'], function () {
             Route::get('/invitations/packages/change', 'changePackageStatus')->name('invitations.packages.change-status');
             Route::get('/invitations/requests', 'requests')->name('invitation.requests');
             Route::get('/invitations/guards/{invitation}', 'guards')->name('invitation.guards');
+            Route::get('/invitations/details/{id}', 'show')->name('invitations.details');
         });
 
         Route::resource('invitation', InvitationsController::class);
@@ -158,11 +159,11 @@ Route::get('/debug-category-title', function() {
     if (!$category) {
         return 'No categories found';
     }
-    
+
     // Check current title values
     $beforeAr = $category->getTranslation('ar')->title ?? 'NULL';
     $beforeEn = $category->getTranslation('en')->title ?? 'NULL';
-    
+
     // Try to update with title
     $category->update([
         'ar' => [
@@ -178,12 +179,12 @@ Route::get('/debug-category-title', function() {
             'description' => $category->getTranslation('en')->description,
         ]
     ]);
-    
+
     // Reload category
     $category = $category->fresh();
     $afterAr = $category->getTranslation('ar')->title ?? 'NULL';
     $afterEn = $category->getTranslation('en')->title ?? 'NULL';
-    
+
     return [
         'before_ar' => $beforeAr,
         'before_en' => $beforeEn,

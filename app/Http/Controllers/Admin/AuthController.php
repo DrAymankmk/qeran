@@ -13,185 +13,292 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-
-    public function loginForm(){
+    public function loginForm()
+    {
         return view('login.login');
-
     }
-    public function login(Request $request){
 
-        $credentials = array(
+    public function login(Request $request)
+    {
+        $credentials = [
             'email' => $request->email,
-            'password' =>$request->password
-        );
+            'password' => $request->password,
+        ];
 
         if (Auth::guard('admin')->attempt($credentials)) {
-
             return redirect()->route('admin.dashboard');
-
+        } else {
+            return redirect()->route('admin.login.form')->with('error', 'Email Or Password not correct');
         }
-        else{
-
-            return redirect()->route('admin.login.form')->with('error','Email Or Password not correct');
-
-        }
-
     }
-    public function dashboard(){
-        $usersCount=User::count();
-        $invitationsCount=Invitation::count();
-        $contactUsCount=ContactUs::count();
-        $invitations=Invitation::orderBy('created_at','desc')
+
+    public function dashboard(Request $request)
+    {
+        // Get filter parameter (today, week, month, year, all)
+        $filter = $request->get('filter', 'all');
+
+        // Get custom date range if provided
+        $fromDate = $request->get('from_date');
+        $toDate = $request->get('to_date');
+
+        // Get date range based on filter or custom dates
+        $dateRange = $this->getDateRange($filter, $fromDate, $toDate);
+
+        // Get counts with date filter
+        $usersQuery = User::query();
+        $invitationsQuery = Invitation::query();
+        $contactUsQuery = ContactUs::query();
+
+        if ($dateRange['start'] && $dateRange['end']) {
+            $usersQuery->whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
+            $invitationsQuery->whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
+            $contactUsQuery->whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
+        }
+
+        $usersCount = $usersQuery->count();
+        $invitationsCount = $invitationsQuery->count();
+        $contactUsCount = $contactUsQuery->count();
+
+        // Get recent invitations
+        $invitations = Invitation::orderBy('created_at', 'desc')
             ->with('user')
             ->whereHas('user')
+            ->when($dateRange['start'] && $dateRange['end'], function($query) use ($dateRange) {
+                $query->whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
+            })
             ->take(10)->get();
-        $verifiedUsers11=User::where('verified',2)->whereMonth('created_at', Carbon::now()->subMonths(11)->month)->count();
-        $verifiedUsers10=User::where('verified',2)->whereMonth('created_at', Carbon::now()->subMonths(10)->month)->count();
-        $verifiedUsers9=User::where('verified',2)->whereMonth('created_at', Carbon::now()->subMonths(9)->month)->count();
-        $verifiedUsers8=User::where('verified',2)->whereMonth('created_at', Carbon::now()->subMonths(8)->month)->count();
-        $verifiedUsers7=User::where('verified',2)->whereMonth('created_at', Carbon::now()->subMonths(7)->month)->count();
-        $verifiedUsers6=User::where('verified',2)->whereMonth('created_at', Carbon::now()->subMonths(6)->month)->count();
-        $verifiedUsers5=User::where('verified',2)->whereMonth('created_at', Carbon::now()->subMonths(5)->month)->count();
-        $verifiedUsers4=User::where('verified',2)->whereMonth('created_at', Carbon::now()->subMonths(4)->month)->count();
-        $verifiedUsers3=User::where('verified',2)->whereMonth('created_at', Carbon::now()->subMonths(3)->month)->count();
-        $verifiedUsers2=User::where('verified',2)->whereMonth('created_at', Carbon::now()->subMonths(2)->month)->count();
-        $verifiedUsers1=User::where('verified',2)->whereMonth('created_at', Carbon::now()->subMonths(1)->month)->count();
-        $verifiedUsers=User::where('verified',2)->whereMonth('created_at', Carbon::now()->month)->count();
 
-        $notVerifiedUsers11=User::where('verified',0)->whereMonth('created_at', Carbon::now()->subMonths(11)->month)->count();
-        $notVerifiedUsers10=User::where('verified',0)->whereMonth('created_at', Carbon::now()->subMonths(10)->month)->count();
-        $notVerifiedUsers9=User::where('verified',0)->whereMonth('created_at', Carbon::now()->subMonths(9)->month)->count();
-        $notVerifiedUsers8=User::where('verified',0)->whereMonth('created_at', Carbon::now()->subMonths(8)->month)->count();
-        $notVerifiedUsers7=User::where('verified',0)->whereMonth('created_at', Carbon::now()->subMonths(7)->month)->count();
-        $notVerifiedUsers6=User::where('verified',0)->whereMonth('created_at', Carbon::now()->subMonths(6)->month)->count();
-        $notVerifiedUsers5=User::where('verified',0)->whereMonth('created_at', Carbon::now()->subMonths(5)->month)->count();
-        $notVerifiedUsers4=User::where('verified',0)->whereMonth('created_at', Carbon::now()->subMonths(4)->month)->count();
-        $notVerifiedUsers3=User::where('verified',0)->whereMonth('created_at', Carbon::now()->subMonths(3)->month)->count();
-        $notVerifiedUsers2=User::where('verified',0)->whereMonth('created_at', Carbon::now()->subMonths(2)->month)->count();
-        $notVerifiedUsers1=User::where('verified',0)->whereMonth('created_at', Carbon::now()->subMonths(1)->month)->count();
-        $notVerifiedUsers=User::where('verified',0)->whereMonth('created_at', Carbon::now()->month)->count();
+        // Get statistics data based on filter
+        $statistics = $this->getStatisticsData($filter);
 
-        $invitationsAppDesign11=Invitation::where('invitation_type',Constant::INVITATION_TYPE['App Design'])
-        ->whereMonth('created_at', Carbon::now()->subMonths(11)->month)->count();
-        $invitationsContactDesign11=Invitation::where('invitation_type',Constant::INVITATION_TYPE['Contact Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(11)->month)->count();
-        $invitationsUserDesign11= Invitation::where('invitation_type',Constant::INVITATION_TYPE['User Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(11)->month)->count();
+        // Get most used categories
+        $categoriesData = $this->getMostUsedCategories($dateRange);
 
-        $invitationsAppDesign10=Invitation::where('invitation_type',Constant::INVITATION_TYPE['App Design'])
-        ->whereMonth('created_at', Carbon::now()->subMonths(10)->month)->count();
-        $invitationsContactDesign10=Invitation::where('invitation_type',Constant::INVITATION_TYPE['Contact Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(10)->month)->count();
-        $invitationsUserDesign10= Invitation::where('invitation_type',Constant::INVITATION_TYPE['User Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(10)->month)->count();
-
-        $invitationsAppDesign9=Invitation::where('invitation_type',Constant::INVITATION_TYPE['App Design'])
-        ->whereMonth('created_at', Carbon::now()->subMonths(9)->month)->count();
-        $invitationsContactDesign9=Invitation::where('invitation_type',Constant::INVITATION_TYPE['Contact Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(9)->month)->count();
-        $invitationsUserDesign9= Invitation::where('invitation_type',Constant::INVITATION_TYPE['User Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(9)->month)->count();
-
-        $invitationsAppDesign8=Invitation::where('invitation_type',Constant::INVITATION_TYPE['App Design'])
-        ->whereMonth('created_at', Carbon::now()->subMonths(8)->month)->count();
-        $invitationsContactDesign8=Invitation::where('invitation_type',Constant::INVITATION_TYPE['Contact Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(8)->month)->count();
-        $invitationsUserDesign8= Invitation::where('invitation_type',Constant::INVITATION_TYPE['User Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(8)->month)->count();
-
-        $invitationsAppDesign7=Invitation::where('invitation_type',Constant::INVITATION_TYPE['App Design'])
-        ->whereMonth('created_at', Carbon::now()->subMonths(7)->month)->count();
-        $invitationsContactDesign7=Invitation::where('invitation_type',Constant::INVITATION_TYPE['Contact Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(7)->month)->count();
-        $invitationsUserDesign7= Invitation::where('invitation_type',Constant::INVITATION_TYPE['User Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(7)->month)->count();
-
-        $invitationsAppDesign6=Invitation::where('invitation_type',Constant::INVITATION_TYPE['App Design'])
-        ->whereMonth('created_at', Carbon::now()->subMonths(6)->month)->count();
-        $invitationsContactDesign6=Invitation::where('invitation_type',Constant::INVITATION_TYPE['Contact Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(6)->month)->count();
-        $invitationsUserDesign6= Invitation::where('invitation_type',Constant::INVITATION_TYPE['User Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(6)->month)->count();
-
-        $invitationsAppDesign5=Invitation::where('invitation_type',Constant::INVITATION_TYPE['App Design'])
-        ->whereMonth('created_at', Carbon::now()->subMonths(5)->month)->count();
-        $invitationsContactDesign5=Invitation::where('invitation_type',Constant::INVITATION_TYPE['Contact Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(5)->month)->count();
-        $invitationsUserDesign5= Invitation::where('invitation_type',Constant::INVITATION_TYPE['User Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(5)->month)->count();
-
-        $invitationsAppDesign4=Invitation::where('invitation_type',Constant::INVITATION_TYPE['App Design'])
-        ->whereMonth('created_at', Carbon::now()->subMonths(4)->month)->count();
-        $invitationsContactDesign4=Invitation::where('invitation_type',Constant::INVITATION_TYPE['Contact Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(4)->month)->count();
-        $invitationsUserDesign4= Invitation::where('invitation_type',Constant::INVITATION_TYPE['User Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(4)->month)->count();
-
-        $invitationsAppDesign3=Invitation::where('invitation_type',Constant::INVITATION_TYPE['App Design'])
-        ->whereMonth('created_at', Carbon::now()->subMonths(3)->month)->count();
-        $invitationsContactDesign3=Invitation::where('invitation_type',Constant::INVITATION_TYPE['Contact Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(3)->month)->count();
-        $invitationsUserDesign3= Invitation::where('invitation_type',Constant::INVITATION_TYPE['User Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(3)->month)->count();
-
-        $invitationsAppDesign2=Invitation::where('invitation_type',Constant::INVITATION_TYPE['App Design'])
-        ->whereMonth('created_at', Carbon::now()->subMonths(2)->month)->count();
-        $invitationsContactDesign2=Invitation::where('invitation_type',Constant::INVITATION_TYPE['Contact Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(2)->month)->count();
-        $invitationsUserDesign2= Invitation::where('invitation_type',Constant::INVITATION_TYPE['User Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(2)->month)->count();
-
-        $invitationsAppDesign1=Invitation::where('invitation_type',Constant::INVITATION_TYPE['App Design'])
-        ->whereMonth('created_at', Carbon::now()->subMonths(1)->month)->count();
-        $invitationsContactDesign1=Invitation::where('invitation_type',Constant::INVITATION_TYPE['Contact Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(1)->month)->count();
-        $invitationsUserDesign1= Invitation::where('invitation_type',Constant::INVITATION_TYPE['User Design'])
-            ->whereMonth('created_at', Carbon::now()->subMonths(1)->month)->count();
-
-        $invitationsAppDesign=Invitation::where('invitation_type',Constant::INVITATION_TYPE['App Design'])
-        ->whereMonth('created_at', Carbon::now()->month)->count();
-        $invitationsContactDesign=Invitation::where('invitation_type',Constant::INVITATION_TYPE['Contact Design'])
-            ->whereMonth('created_at', Carbon::now()->month)->count();
-        $invitationsUserDesign= Invitation::where('invitation_type',Constant::INVITATION_TYPE['User Design'])
-            ->whereMonth('created_at', Carbon::now()->month)->count();
-
-
-        $requestInvitations=Invitation::where('status',Constant::INVITATION_STATUS['Pending admin'])
-            ->orderBy('created_at','desc')
+        // Get request invitations
+        $requestInvitations = Invitation::where('status', Constant::INVITATION_STATUS['Pending admin'])
+            ->orderBy('created_at', 'desc')
             ->with('user')
             ->whereHas('user')
+            ->when($dateRange['start'] && $dateRange['end'], function($query) use ($dateRange) {
+                $query->whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
+            })
             ->take(10)
             ->get();
-        $contactUs=ContactUs::orderBy('created_at','desc')
+        
+        $requestInvitationsCount = Invitation::where('status', Constant::INVITATION_STATUS['Pending admin'])
+            ->count();
+
+        // Get contact us
+        $contactUs = ContactUs::orderBy('created_at', 'desc')
+            ->when($dateRange['start'] && $dateRange['end'], function($query) use ($dateRange) {
+                $query->whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
+            })
             ->take(10)
             ->get();
-        return view('pages.index',compact('usersCount','invitationsCount'
-        ,'contactUsCount','invitations','requestInvitations','contactUs',
-        'verifiedUsers','verifiedUsers2','verifiedUsers3','verifiedUsers1','verifiedUsers4',
-        'verifiedUsers5','verifiedUsers6','verifiedUsers7','verifiedUsers8','verifiedUsers9','verifiedUsers10',
-        'verifiedUsers11',
-        'notVerifiedUsers','notVerifiedUsers2','notVerifiedUsers3','notVerifiedUsers1','notVerifiedUsers4',
-        'notVerifiedUsers5','notVerifiedUsers6','notVerifiedUsers7','notVerifiedUsers8','notVerifiedUsers9','notVerifiedUsers10',
-        'notVerifiedUsers11',
-        'invitationsAppDesign','invitationsAppDesign1','invitationsAppDesign2','invitationsAppDesign3','invitationsAppDesign4',
-        'invitationsAppDesign5','invitationsAppDesign6','invitationsAppDesign7','invitationsAppDesign8',
-        'invitationsAppDesign9','invitationsAppDesign10','invitationsAppDesign11',
 
-        'invitationsContactDesign','invitationsContactDesign1','invitationsContactDesign2','invitationsContactDesign3','invitationsContactDesign4',
-        'invitationsContactDesign5','invitationsContactDesign6','invitationsContactDesign7','invitationsContactDesign8',
-        'invitationsContactDesign9','invitationsContactDesign10','invitationsContactDesign11',
-
-        'invitationsUserDesign','invitationsUserDesign1','invitationsUserDesign2','invitationsUserDesign3','invitationsUserDesign4',
-        'invitationsUserDesign5','invitationsUserDesign6','invitationsUserDesign7','invitationsUserDesign8',
-        'invitationsUserDesign9','invitationsUserDesign10','invitationsUserDesign11',
-        ));
-
-
+        return view('pages.dashboard.index', array_merge([
+            'usersCount' => $usersCount,
+            'invitationsCount' => $invitationsCount,
+            'contactUsCount' => $contactUsCount,
+            'invitations' => $invitations,
+            'requestInvitations' => $requestInvitations,
+            'requestInvitationsCount' => $requestInvitationsCount,
+            'contactUs' => $contactUs,
+            'filter' => $filter,
+            'fromDate' => $fromDate,
+            'toDate' => $toDate,
+            'categoriesData' => $categoriesData,
+        ], $statistics));
     }
-    public function logout(){
+
+    /**
+     * Get date range based on filter or custom dates
+     */
+    private function getDateRange($filter, $fromDate = null, $toDate = null)
+    {
+        // If custom dates are provided, use them
+        if ($fromDate && $toDate) {
+            try {
+                return [
+                    'start' => Carbon::parse($fromDate)->startOfDay(),
+                    'end' => Carbon::parse($toDate)->endOfDay(),
+                ];
+            } catch (\Exception $e) {
+                // If date parsing fails, fall back to filter
+            }
+        }
+
+        $now = Carbon::now();
+
+        switch ($filter) {
+            case 'today':
+                return [
+                    'start' => $now->copy()->startOfDay(),
+                    'end' => $now->copy()->endOfDay(),
+                ];
+            case 'week':
+                return [
+                    'start' => $now->copy()->startOfWeek(),
+                    'end' => $now->copy()->endOfWeek(),
+                ];
+            case 'month':
+                return [
+                    'start' => $now->copy()->startOfMonth(),
+                    'end' => $now->copy()->endOfMonth(),
+                ];
+            case 'year':
+                return [
+                    'start' => $now->copy()->startOfYear(),
+                    'end' => $now->copy()->endOfYear(),
+                ];
+            case 'all':
+            default:
+                return [
+                    'start' => null,
+                    'end' => null,
+                ];
+        }
+    }
+
+    /**
+     * Get statistics data for charts based on filter
+     */
+    private function getStatisticsData($filter)
+    {
+        $verifiedUsers = [];
+        $notVerifiedUsers = [];
+        $invitationsAppDesign = [];
+        $invitationsContactDesign = [];
+        $invitationsUserDesign = [];
+        $categories = [];
+
+        $now = Carbon::now();
+
+        // Determine number of periods based on filter
+        switch ($filter) {
+            case 'today':
+                // 24 hours
+                $periods = 24;
+                $periodType = 'hour';
+                break;
+            case 'week':
+                // 7 days
+                $periods = 7;
+                $periodType = 'day';
+                break;
+            case 'month':
+                // 30 days
+                $periods = 30;
+                $periodType = 'day';
+                break;
+            case 'year':
+                // 12 months
+                $periods = 12;
+                $periodType = 'month';
+                break;
+            case 'all':
+            default:
+                // 12 months
+                $periods = 12;
+                $periodType = 'month';
+                break;
+        }
+
+        // Generate data for each period
+        for ($i = $periods - 1; $i >= 0; $i--) {
+            $periodStart = $now->copy();
+            $periodEnd = $now->copy();
+
+            if ($periodType === 'hour') {
+                $periodStart->subHours($i)->startOfHour();
+                $periodEnd->subHours($i)->endOfHour();
+            } elseif ($periodType === 'day') {
+                $periodStart->subDays($i)->startOfDay();
+                $periodEnd->subDays($i)->endOfDay();
+            } else { // month
+                $periodStart->subMonths($i)->startOfMonth();
+                $periodEnd->subMonths($i)->endOfMonth();
+            }
+
+            // Get verified users count
+            $verifiedUsers[] = User::where('verified', 2)
+                ->whereBetween('created_at', [$periodStart, $periodEnd])
+                ->count();
+
+            // Get not verified users count
+            $notVerifiedUsers[] = User::where('verified', 0)
+                ->whereBetween('created_at', [$periodStart, $periodEnd])
+                ->count();
+
+            // Get invitations by type
+            $invitationsAppDesign[] = Invitation::where('invitation_type', Constant::INVITATION_TYPE['App Design'])
+                ->whereBetween('created_at', [$periodStart, $periodEnd])
+                ->count();
+
+            $invitationsContactDesign[] = Invitation::where('invitation_type', Constant::INVITATION_TYPE['Contact Design'])
+                ->whereBetween('created_at', [$periodStart, $periodEnd])
+                ->count();
+
+            $invitationsUserDesign[] = Invitation::where('invitation_type', Constant::INVITATION_TYPE['User Design'])
+                ->whereBetween('created_at', [$periodStart, $periodEnd])
+                ->count();
+
+            // Store period labels for chart
+            if ($periodType === 'hour') {
+                $categories[] = $periodStart->format('H:i');
+            } elseif ($periodType === 'day') {
+                $categories[] = $periodStart->format('M d');
+            } else { // month
+                $categories[] = $periodStart->locale('ar')->translatedFormat('F');
+            }
+        }
+
+        return [
+            'verifiedUsers' => $verifiedUsers,
+            'notVerifiedUsers' => $notVerifiedUsers,
+            'invitationsAppDesign' => $invitationsAppDesign,
+            'invitationsContactDesign' => $invitationsContactDesign,
+            'invitationsUserDesign' => $invitationsUserDesign,
+            'categories' => $categories,
+            'periodType' => $periodType,
+        ];
+    }
+
+    /**
+     * Get most used categories statistics
+     */
+    private function getMostUsedCategories($dateRange)
+    {
+        $query = Invitation::selectRaw('category_id, COUNT(*) as count')
+            ->whereNotNull('category_id')
+            ->groupBy('category_id')
+            ->orderBy('count', 'desc')
+            ->limit(10);
+
+        if ($dateRange['start'] && $dateRange['end']) {
+            $query->whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
+        }
+
+        $categoryStats = $query->get();
+
+        $categoriesData = [];
+        foreach ($categoryStats as $stat) {
+            $category = \App\Models\Category::with('translations')->find($stat->category_id);
+            if ($category) {
+                $categoriesData[] = [
+                    'name' => $category->name ?? 'Unknown',
+                    'count' => $stat->count,
+                ];
+            }
+        }
+
+        return $categoriesData;
+    }
+
+    public function logout()
+    {
         Auth::guard('admin')->logout();
+
         return redirect()->route('admin.login');
-
     }
-
 }

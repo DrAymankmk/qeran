@@ -122,13 +122,18 @@ Route::group(['prefix' => 'admin'], function () {
         Route::controller(ContactsController::class)->group(function () {
 
             Route::get('/contacts', 'index')->name('contact.index');
+            // show
+            Route::get('/contacts/{id}', 'show')->name('contact.show');
             Route::delete('/contacts', 'destroy')->name('contact.destroy');
             Route::get('/reply', 'reply')->name('contact.reply');
             Route::post('/contacts', 'sendReply')->name('contact.reply.submit');
 
         });
         Route::resource('category', CategoryController::class);
+        Route::get('category/export/pdf', [CategoryController::class, 'exportPdf'])->name('category.export.pdf');
         Route::resource('notifications', NotificationsController::class);
+        Route::get('app-settings', [AppSettingsController::class, 'index'])->name('app-settings.index');
+
         Route::get('app-settings/{key}', [AppSettingsController::class, 'edit'])->name('app-settings.edit');
         Route::post('app-settings/{key}', [AppSettingsController::class, 'update'])->name('app-settings.update');
 

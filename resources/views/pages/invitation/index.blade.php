@@ -52,7 +52,7 @@
                         {{--                        @endcan--}}
                     </div>
                     <div class="table-responsive mt-2">
-                        <table class="table table-hover datatable  nowrap"
+                        <table id="invitationsTable" class="table table-hover nowrap"
                                style="border-collapse: collapse; border-spacing: 0; width: 100%;">
                             <thead>
                             <tr class="tr-colored">
@@ -62,10 +62,11 @@
                                 <th scope="col">{{__('admin.name')}}</th>
                                 <th scope="col">{{__('admin.invitation-mime-type')}}</th>
                                 <th scope="col">{{__('admin.invitation-uploaded-image')}}</th>
+                                 <!--
                                 <th scope="col">{{__('admin.invitation-uploaded-video')}}</th>
                                 <th scope="col">{{__('admin.invitation-uploaded-audio')}}</th>
                                 <th scope="col">{{__('admin.desc')}}</th>
-                                <th scope="col">{{__('admin.receipt-image')}}</th>
+                                <th scope="col">{{__('admin.receipt-image')}}</th> -->
                                 {{--  <th scope="col">{{__('admin.paid-status')}}</th> --}}
                                 <th scope="col">{{__('admin.created_at')}}</th>
                                 <th scope="col">{{__('admin.more')}}</th>
@@ -97,6 +98,7 @@
                                             {{ __('admin.no-data-available') }}
                                         @endif
                                     </td>
+                                     <!--
                                     <td>
                                         @if($invitation->designVideo())
 
@@ -140,16 +142,8 @@
                                         @else
                                             {{__('admin.no-data-available')}}
                                         @endif
-                                    </td>
-                                    {{-- <td>
-                                        <div class="form-check form-switch form-switch-lg mb-3" dir="ltr">
-                                            <input class="form-check-input" type="checkbox"
-                                                   onchange="return window.location.href = '{{route('invitations.change-status',$invitation->id)}}'"
-                                                   @if($invitation->paid==1) checked @endif>
-
-                                        </div>
-                                    </td>
-                                    --}}
+                                    </td> -->
+                                  
 
                                     <td>
                                         {{Carbon\Carbon::parse($invitation->created_at)->locale(app()->getLocale())->translatedFormat('l dS F G:i - Y')}}
@@ -159,20 +153,27 @@
                                             <a href="https://api.whatsapp.com/send?phone={{str_replace('+','',$invitation->user?->country_code)}}{{$invitation->user?->phone}}"
                                                title="{{__('admin.whatsapp')}}" class="text-success" target="_blank"><i
                                                     class="mdi mdi-whatsapp font-size-18"></i></a>
-                                            <a href="{{route('invitation.edit',$invitation->id)}}"
-                                               title="{{__('admin.edit')}}" class="text-success"><i
-                                                    class="mdi mdi-pencil font-size-18"></i></a>
+                                            
+                                              <a href="javascript:void(0);"
+											onclick="showInvitationDetails({{$invitation->id}})"
+											title="{{__('admin.show')}}"
+											class="text-info"><i
+												class="mdi mdi-eye font-size-22"></i></a>
+
+                                                    <a href="{{route('invitation.edit',$invitation->id)}}"
+                                               title="{{__('admin.edit')}}" class="text-warning"><i
+                                                    class="mdi mdi-file-edit-outline font-size-22"></i></a>
 
                                             <a href="{{route('invitations.getPackagesByInvitationId',['invitation_id'=>$invitation->id])}}"
                                                title="{{__('admin.packages')}}" class="text-success"><i
-                                                    class="mdi mdi-package font-size-18"></i></a>
+                                                    class="mdi mdi-package font-size-22"></i></a>
                                             <a href="{{route('invitation.guards',$invitation->id)}}"
                                                title="{{__('admin.guards')}}" class="text-success"><i
-                                                    class="mdi mdi-account font-size-18"></i></a>
+                                                    class="mdi mdi-account font-size-22"></i></a>
 
                                             <a onclick="openModalDelete({{$invitation->id}})"
                                                title="{{__('admin.delete')}}" class="text-danger"><i
-                                                    class="mdi mdi-delete font-size-18"></i></a>
+                                                    class="mdi mdi-trash-can-outline font-size-22"></i></a>
                                         </div>
                                     </td>
                                 </tr>
@@ -181,7 +182,6 @@
 
                             </tbody>
                         </table>
-                        {{$invitations->withQueryString()->links()}}
 
                     </div>
 
@@ -192,63 +192,118 @@
     <!-- end row -->
 @endsection
 
-@section('extra-js')
-    <script src="{{asset('admin_assets/libs/select2/js/select2.min.js')}}"></script>
-    <!-- bootstrap-datepicker js -->
-    <script src="{{asset('admin_assets/libs/bootstrap-datepicker/js/bootstrap-datepicker.min.js')}}"></script>
+@include('pages.invitation.scripts.invitation-scripts')
 
-    <!-- Required datatable js -->
-    <script src="{{asset('admin_assets/libs/datatables.net/js/jquery.dataTables.min.js')}}"></script>
-    <script src="{{asset('admin_assets/libs/datatables.net-bs4/js/dataTables.bootstrap4.min.js')}}"></script>
-
-    <!-- Responsive examples -->
-    <script src="{{asset('admin_assets/libs/datatables.net-responsive/js/dataTables.responsive.min.js')}}"></script>
-    <script src="{{asset('admin_assets/libs/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js')}}"></script>
-
-    <!-- init js -->
-    <script src="{{asset('admin_assets/js/pages/crypto-orders.init.js')}}"></script>
-
-    <script src="{{asset('admin_assets/js/jquery.printPage.js') }}"></script>
-
-    <script src="{{asset('admin_assets/js/print.js') }}"></script>
-
-    <script>
-        $('.btnprn').printPage();
-    </script>
-
-    <script>
-        function change_status(id) {
-
-            axios.get('category/status/' + id)
-                .then(function (response) {
-                    console.log(response.data);
-                })
-                .catch(function (error) {
-                    console.log(error);
-                });
-        }
-
-        function featured(id) {
-
-            axios.get('category/featured/' + id)
-                .then(function (response) {
-                    console.log(response.data);
-                })
-                .catch(function (error) {
-                    console.log(error);
-                });
-        }
-
-    </script>
-    <script>
-        function openModalDelete(invitation_id) {
-            $('.action_form').attr('action', '{{route('invitation.destroy', '')}}' + '/' + invitation_id);
-            $('#deleteModal').modal('show');
-        }
-    </script>
-
-@endsection
 @section('modal')
+
+<!-- Invitation Details Modal -->
+<div class="modal fade" id="invitationDetailsModal" tabindex="-1"
+	aria-labelledby="invitationDetailsModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg modal-dialog-scrollable">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="invitationDetailsModalLabel">
+					{{__('admin.invitation-details')}}</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal"
+					aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<div class="row">
+					
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.invitation-code')}}:</strong> <span
+							id="modal_invitation_code"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.user')}}:</strong> <span
+							id="modal_user_name"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.email')}}:</strong> <span
+							id="modal_user_email"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.invitation-type')}}:</strong> <span
+							id="modal_invitation_type"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.name')}}:</strong> <span
+							id="modal_name"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.category')}}:</strong> <span
+							id="modal_category_name"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.invitation-mime-type')}}:</strong> <span
+							id="modal_media_type"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.status')}}:</strong> <span
+							id="modal_status"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.host-name')}}:</strong> <span
+							id="modal_host_name"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.date')}}:</strong> <span
+							id="modal_date"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.time')}}:</strong> <span
+							id="modal_time"></span>
+					</div>
+					<div class="col-12 mb-3">
+						<strong>{{__('admin.address')}}:</strong> <span
+							id="modal_address"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.groom')}}:</strong> <span
+							id="modal_groom"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.bride')}}:</strong> <span
+							id="modal_bride"></span>
+					</div>
+					<div class="col-12 mb-3">
+						<strong>{{__('admin.event-name')}}:</strong> <span
+							id="modal_event_name"></span>
+					</div>
+					<div class="col-12 mb-3">
+						<strong>{{__('admin.description')}}:</strong>
+						<p id="modal_description" class="mt-2"></p>
+					</div>
+					<div class="col-12 mb-3">
+						<strong>{{__('admin.invitation-uploaded-image')}}:</strong>
+						<div id="modal_design_image" class="mt-2"></div>
+					</div>
+					<div class="col-12 mb-3">
+						<strong>{{__('admin.invitation-uploaded-video')}}:</strong>
+						<div id="modal_design_video" class="mt-2"></div>
+					</div>
+					<div class="col-12 mb-3">
+						<strong>{{__('admin.invitation-uploaded-audio')}}:</strong>
+						<div id="modal_design_audio" class="mt-2"></div>
+					</div>
+					<div class="col-12 mb-3">
+						<strong>{{__('admin.receipt-image')}}:</strong>
+						<div id="modal_receipt_image" class="mt-2"></div>
+					</div>
+					<div class="col-12 mb-3">
+						<strong>{{__('admin.created_at')}}:</strong> <span
+							id="modal_created_at"></span>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary"
+					data-bs-dismiss="modal">{{__('admin.close')}}</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 @component('layouts.includes.modal')
     @slot('modalID')
         deleteModal

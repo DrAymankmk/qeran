@@ -84,8 +84,8 @@ class CategoryController extends Controller
             'en_description'=>$category->getTranslation('en')->description,
             'ar_description'=>$category->getTranslation('ar')->description,
             'image' => $category->image(),
-            'created_at' => $category->created_at,
-            'updated_at' => $category->updated_at,
+            'created_at' => \Carbon\Carbon::parse($category->created_at)->locale(app()->getLocale())->translatedFormat('l dS F G:i - Y'),
+            'updated_at' => \Carbon\Carbon::parse($category->updated_at)->locale(app()->getLocale())->translatedFormat('l dS F G:i - Y'),
         ]);
     }
 

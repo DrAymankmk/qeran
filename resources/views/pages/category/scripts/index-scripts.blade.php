@@ -157,7 +157,10 @@ $(document).ready(function() {
 function openModalDelete(category_id) {
 	const form = document.querySelector('#deleteModal .action_form');
 	if (form) {
-		form.action = "{{route('category.destroy', 'category_id ')}}" + '/' + category_id;
+		// Build the correct route URL for category destroy
+		// Use route helper with dummy ID and replace it with actual ID
+		const baseUrl = "{{route('category.destroy', 999)}}".replace('/999', '');
+		form.action = baseUrl + '/' + category_id;
 	}
 	const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
 	modal.show();
@@ -207,9 +210,7 @@ window.showCategoryDetails = function(categoryId) {
 				'ar_title',
 				'en_description',
 				'ar_description',
-				'image',
-				'created_at',
-				'updated_at'
+				'image'
 			];
 
 			fields.forEach(field => {
@@ -228,6 +229,19 @@ window.showCategoryDetails = function(categoryId) {
 						'{{ __("admin.no-data-available") }}';
 				}
 			});
+
+			// Handle date fields with formatted dates
+			const createdEl = document.getElementById('modal_created_at');
+			if (createdEl) {
+				createdEl.textContent = data.created_at ||
+					'{{ __("admin.no-data-available") }}';
+			}
+
+			const updatedEl = document.getElementById('modal_updated_at');
+			if (updatedEl) {
+				updatedEl.textContent = data.updated_at ||
+					'{{ __("admin.no-data-available") }}';
+			}
 
 			// Handle media
 			const imageEl = document

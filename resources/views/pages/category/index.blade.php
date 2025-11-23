@@ -37,14 +37,14 @@
 				<div class="row mb-2">
 					<div class="col-12 col-md 12">
 						<a href="{{route('category.create')}}"
-								class="btn btn-primary btn-rounded waves-effect waves-light mb-2 me-2"><i
-									class="mdi mdi-plus me-1"></i>
-								{{__('admin.add-new')}} </a>
+							class="btn btn-primary btn-rounded waves-effect waves-light mb-2 me-2"><i
+								class="mdi mdi-plus me-1"></i>
+							{{__('admin.add-new')}} </a>
 					</div>
 
 					<div class="col-sm-8">
 						<div class="text-sm-end">
-							
+
 
 						</div>
 					</div>
@@ -171,7 +171,7 @@
 						<strong>{{__('admin.updated_at')}}:</strong> <span
 							id="modal_updated_at"></span>
 					</div>
-					
+
 				</div>
 			</div>
 			<div class="modal-footer">

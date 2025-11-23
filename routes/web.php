@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\ContactsController;
 use App\Http\Controllers\Admin\PackagesController;
 use App\Http\Controllers\Admin\NotificationsController;
 use App\Http\Controllers\Admin\AppSettingsController;
+use App\Http\Controllers\Admin\InvitationRequestController;
 use App\Http\Controllers\Website\V1\Invitation\InvitationsController as WebsiteInvitationController;
 use Illuminate\Support\Facades\Artisan;
 
@@ -77,11 +78,11 @@ Route::get('/run-optimize', function () {
     // ];
 
     return 'Optimization completed';
-        // 'composer_execution' => $composerResult
+    // 'composer_execution' => $composerResult
 
 });
 
-Route::get('/migrate',function (){
+Route::get('/migrate', function () {
     Artisan::call('migrate');
     return "migrated successfully.";
 });
@@ -89,20 +90,20 @@ Route::get('/migrate',function (){
 
 
 
-Route::get('/email',function (){
-    $invitation =Invitation::whereId(128)->first();
+Route::get('/email', function () {
+    $invitation = Invitation::whereId(128)->first();
 
-    return view('emails.new-invitation-mail',compact('invitation'));
+    return view('emails.new-invitation-mail', compact('invitation'));
 });
 // Route::resource('category', CategoryController::class);
 
-Route::get('/invitation/{invitation_code}/{user_id}/{inserted_by?}', [WebsiteInvitationController::class,'show'])->name('user.invitation.show');
-Route::post('/invitation/{invitation_code}/{user_id}/accept', [WebsiteInvitationController::class,'accept'])->name('user.invitation.accept');
-Route::post('/invitation/{invitation_code}/{user_id}/decline', [WebsiteInvitationController::class,'decline'])->name('user.invitation.decline');
-Route::get('/delete-account-instruction',function (){
+Route::get('/invitation/{invitation_code}/{user_id}/{inserted_by?}', [WebsiteInvitationController::class, 'show'])->name('user.invitation.show');
+Route::post('/invitation/{invitation_code}/{user_id}/accept', [WebsiteInvitationController::class, 'accept'])->name('user.invitation.accept');
+Route::post('/invitation/{invitation_code}/{user_id}/decline', [WebsiteInvitationController::class, 'decline'])->name('user.invitation.decline');
+Route::get('/delete-account-instruction', function () {
     return view('instruction');
 });
-Route::get('/privacy-policy',function (){
+Route::get('/privacy-policy', function () {
     return view('privacy_policy');
 });
 Route::group(['prefix' => 'admin'], function () {
@@ -117,7 +118,6 @@ Route::group(['prefix' => 'admin'], function () {
 
             Route::get('/dashboard', 'dashboard')->name('admin.dashboard');
             Route::get('/logout', 'logout')->name('admin.logout');
-
         });
         Route::controller(ContactsController::class)->group(function () {
 
@@ -127,6 +127,7 @@ Route::group(['prefix' => 'admin'], function () {
             Route::delete('/contacts', 'destroy')->name('contact.destroy');
             Route::get('/reply', 'reply')->name('contact.reply');
             Route::post('/contacts', 'sendReply')->name('contact.reply.submit');
+            Route::get('contacts/export/pdf', 'contactExportPdf')->name('contact.export.pdf');
 
         });
         Route::resource('category', CategoryController::class);
@@ -141,25 +142,32 @@ Route::group(['prefix' => 'admin'], function () {
             Route::get('/invitations/status/{invitation}', 'changeStatus')->name('invitations.change-status');
             Route::get('/invitations/get-packages-by-invitation', 'getPackagesByInvitationId')->name('invitations.getPackagesByInvitationId');
             Route::get('/invitations/packages/change', 'changePackageStatus')->name('invitations.packages.change-status');
-            Route::get('/invitations/requests', 'requests')->name('invitation.requests');
             Route::get('/invitations/guards/{invitation}', 'guards')->name('invitation.guards');
             Route::get('/invitations/details/{id}', 'show')->name('invitations.details');
+            Route::get('/invitations/export/pdf', 'invitationsExportPdf')->name('invitations.export.pdf');
         });
+
+        Route::controller(InvitationRequestController::class)->group(function () {
+            Route::get('/invitation-requests', 'index')->name('invitation-request.index');
+            Route::get('/invitation-requests/export/pdf', 'invitationRequestExportPdf')->name('invitation-request.export.pdf');
+        });
+
 
         Route::resource('invitation', InvitationsController::class);
         Route::resource('users', UsersController::class);
         Route::controller(UsersController::class)->group(function () {
             Route::get('users/status/{user}', 'status')->name('users.change-status');
+            Route::get('/users/export/pdf', 'usersExportPdf')->name('users.export.pdf');
         });
 
 
         Route::resource('package', PackagesController::class);
+        Route::get('package/export/pdf', [PackagesController::class, 'packageExportPdf'])->name('packages.export.pdf');
 
     });
-
 });
 
-Route::get('/debug-category-title', function() {
+Route::get('/debug-category-title', function () {
     $category = App\Models\Category::first();
     if (!$category) {
         return 'No categories found';

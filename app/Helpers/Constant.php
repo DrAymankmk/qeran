@@ -9,7 +9,6 @@ class Constant
     const USER_STATUS = [
         'Verified' => 1,
         'Not verified' => 2,
-
         'Suspended' => 3,
     ];
     const USER_TYPE = [
@@ -99,7 +98,7 @@ class Constant
         'Pending admin' => 2,
         'Pending user approval' => 3,
         'Rejected' => 4,
-        'Cancelled'=>-1,
+        'Cancelled'=> -1,
         'Finished Invitation'=>5
     ];
 

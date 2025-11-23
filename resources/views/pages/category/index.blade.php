@@ -97,11 +97,12 @@
 											title="{{__('admin.edit')}}"
 											class="text-warning"><i
 												class="mdi mdi-file-edit-outline font-size-22"></i></a>
-
+										@if($category->invitations_count=== 0)
 										<a onclick="openModalDelete({{$category->id}})"
 											title="{{__('admin.delete')}}"
 											class="text-danger"><i
 												class="mdi mdi-trash-can-outline font-size-22"></i></a>
+										@endif
 									</div>
 								</td>
 							</tr>

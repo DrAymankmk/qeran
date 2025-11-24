@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\PackageRequest;
 use App\Models\Invitation;
 use App\Models\Package;
 use Illuminate\Http\Request;
+use Mpdf\Mpdf;
 
 class PackagesController extends Controller
 {
@@ -100,19 +101,45 @@ class PackagesController extends Controller
 
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
+   
     public function destroy(Package $package)
     {
-//        abort_if(Gate::denies('delete_categories'), 403);
 
         $package->delete();
 
         return redirect()->back()->with('success','Deleted');
 
+    }
+
+     public function packageExportPdf()
+    {
+        $packages = Package::orderBy('created_at', 'desc')->get();
+
+        // Configure mPDF with Arabic font support
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4-L', // Landscape
+            'orientation' => 'L',
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 16,
+            'margin_bottom' => 16,
+            'margin_header' => 9,
+            'margin_footer' => 9,
+            'autoLangToFont' => true, // Automatically detect and use appropriate fonts
+            'autoScriptToLang' => true, // Automatically set language
+            'autoVietnamese' => true,
+            'autoArabic' => true, // Enable Arabic support
+            'direction' => app()->getLocale() == 'ar' ? 'rtl' : 'ltr',
+        ]);
+
+        // Build HTML content
+        $html = view('pages.packages.pdf-export', compact('packages'))->render();
+
+        $mpdf->WriteHTML($html);
+
+        $filename = 'packages_' . date('Y-m-d_His') . '.pdf';
+
+        return $mpdf->Output($filename, 'D'); // D = Download
     }
 }

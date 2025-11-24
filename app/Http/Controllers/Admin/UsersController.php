@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\External\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Mpdf\Mpdf;
 
 class UsersController extends Controller
 {
@@ -99,34 +100,31 @@ class UsersController extends Controller
 
     public function status(User $user)
     {
-
+        // Toggle verified status: if 3 (blocked), set to 2 (not verified), otherwise set to 3 (blocked)
+        $newStatus = $user->verified == 3 ? 2 : 3;
+        
         $user->update([
-            'verified' => 3
+            'verified' => $newStatus
         ]);
-        if($user->verified==3) {
+        
+        if ($newStatus == 3) {
             Notification::notify('users',
                 Constant::NOTIFICATIONS_TYPE['Admin'],
                 [$user->id],
                 null,
                 'Modern Invitation',
                 __('You are blocked by admin!'));
-
         }
-        return redirect()->back()->with('success', 'Updated');
-
-
+        
+        return response()->json([
+            'success' => true,
+            'message' => __('admin.updated-successfully'),
+            'verified' => $newStatus
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return Response
-     */
     public function update(UserRequest $request, $id)
     {
-//        abort_if(Gate::denies('edit_users'), 403);
 
         $user = User::whereId($id)->first();
         $user->update($request->validated());
@@ -141,6 +139,37 @@ class UsersController extends Controller
 
         return redirect()->route('users.index')->with('success', 'Update');
 
+    }
+
+      public function usersExportPdf(){
+         $users = User::orderBy('created_at', 'desc')->get();
+
+        // Configure mPDF with Arabic font support
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4-L', // Landscape
+            'orientation' => 'L',
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 16,
+            'margin_bottom' => 16,
+            'margin_header' => 9,
+            'margin_footer' => 9,
+            'autoLangToFont' => true, // Automatically detect and use appropriate fonts
+            'autoScriptToLang' => true, // Automatically set language
+            'autoVietnamese' => true,
+            'autoArabic' => true, // Enable Arabic support
+            'direction' => app()->getLocale() == 'ar' ? 'rtl' : 'ltr',
+        ]);
+
+        // Build HTML content
+        $html = view('pages.users.pdf-export', compact('users'))->render();
+
+        $mpdf->WriteHTML($html);
+
+        $filename = 'users_' . date('Y-m-d_His') . '.pdf';
+
+        return $mpdf->Output($filename, 'D'); // D = Download
     }
 
 }

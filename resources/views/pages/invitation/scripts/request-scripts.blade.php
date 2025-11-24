@@ -78,8 +78,8 @@ $(document).ready(function() {
 		responsive: true,
 		pageLength: 10,
 		lengthMenu: [
-			[10, 25, 50, 100, -1],
-			[10, 25, 50, 100, "{{__('admin.all')}}"]
+			[10, 25, 50, 100],
+			[10, 25, 50, 100]
 		],
 		order: [
 			[0, 'desc']

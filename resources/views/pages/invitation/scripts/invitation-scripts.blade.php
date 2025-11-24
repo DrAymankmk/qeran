@@ -66,8 +66,8 @@
 		responsive: true,
 		pageLength: 10,
 		lengthMenu: [
-			[10, 25, 50, 100, -1],
-			[10, 25, 50, 100, "{{__('admin.all')}}"]
+			[10, 25, 50, 100],
+			[10, 25, 50, 100]
 		],
 		order: [[0, 'desc']],
 		language: {
@@ -219,8 +219,9 @@ window.showInvitationDetails = function(invitationId) {
 				'price',
 				'description',
 				'package_id',
-				'invitation_media_type',
-				'code'
+				'media_type',
+				'code',
+				'created_at'
 			];
 
 			fields.forEach(field => {

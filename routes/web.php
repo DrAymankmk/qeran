@@ -164,6 +164,14 @@ Route::group(['prefix' => 'admin'], function () {
         Route::resource('package', PackagesController::class);
         Route::get('package/export/pdf', [PackagesController::class, 'packageExportPdf'])->name('packages.export.pdf');
 
+        Route::controller(\App\Http\Controllers\Admin\FinancialController::class)->group(function () {
+            Route::get('/financial', 'index')->name('financial.index');
+            Route::get('/financial/monthly-report', 'monthlyReport')->name('financial.monthly-report');
+            Route::get('/financial/annual-report', 'annualReport')->name('financial.annual-report');
+            Route::get('/financial/export/pdf', 'exportPdf')->name('financial.export.pdf');
+            Route::get('/financial/chart-data', 'getChartData')->name('financial.chart-data');
+        });
+
     });
 });
 

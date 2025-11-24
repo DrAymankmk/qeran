@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\Log;
 
 class InvitationRequestController extends Controller
 {
-    
-    
+
+
         /**
      * Display invitations by type and status.
      *
@@ -156,11 +156,10 @@ class InvitationRequestController extends Controller
         // Apply search filter
         if (! empty($searchValue)) {
             $query->where(function ($q) use ($searchValue) {
-                $q->where('id', 'like', '%'.$searchValue.'%')
-                    ->orWhere('name', 'like', '%'.$searchValue.'%')
-                    ->orWhereHas('category.translations', function ($catQuery) use ($searchValue) {
-                        $catQuery->where('name', 'like', '%'.$searchValue.'%');
-                    });
+                $q->where('invitations.id', 'like', '%'.$searchValue.'%')
+                ->orWhere('invitations.name', 'like', '%'.$searchValue.'%')
+                ->orWhereRaw('invitations.category_id IN (SELECT category_id FROM category_translations WHERE name LIKE ? OR title LIKE ?)', ['%'.$searchValue.'%', '%'.$searchValue.'%']);
+
             });
         }
 

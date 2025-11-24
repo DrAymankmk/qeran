@@ -39,20 +39,18 @@
                     <div class="row mb-2">
                         <div class="col-sm-4">
                         </div>
-{{--                        @can('create_categories')--}}
 
-                            <div class="col-sm-8">
-                                <div class="text-sm-end">
+                            <div class="col-sm-12">
+                                <div class="text-sm-start">
                                     <a href="{{route('package.create')}}"
                                        class="btn btn-primary btn-rounded waves-effect waves-light mb-2 me-2"><i
                                             class="mdi mdi-plus me-1"></i> {{__('admin.add-new')}} </a>
 
                                 </div>
-                            </div><!-- end col-->
-{{--                        @endcan--}}
+                            </div>
                     </div>
                     <div class="table-responsive mt-2">
-                        <table class="table table-hover datatable dt-responsive nowrap"
+                        <table id="packagesTable" class="table table-hover dt-responsive nowrap"
                                style="border-collapse: collapse; border-spacing: 0; width: 100%;">
                             <thead>
                             <tr class="tr-colored">
@@ -63,7 +61,7 @@
                                 <th scope="col">{{__('admin.price')}}</th>
                                 <th scope="col">{{__('admin.free_invitations_count')}}</th>
                                 <th scope="col">{{__('admin.created_at')}}</th>
-                                <th scope="col">{{__('admin.more')}}</th>
+                                <th scope="col">{{__('admin.actions')}}</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -82,16 +80,13 @@
                                     </td>
                                     <td>
                                         <div class="d-flex gap-3">
-{{--                                            @can('edit_categories')--}}
 
-                                                <a href="{{route('package.edit',$package->id)}}" title="{{__('admin.edit')}}" class="text-success"><i
-                                                        class="mdi mdi-pencil font-size-18"></i></a>
-{{--                                            @endcan--}}
-{{--                                            @can('delete_categories')--}}
+                                                <a href="{{route('package.edit',$package->id)}}" title="{{__('admin.edit')}}" class="text-warning"><i
+                                                        class="mdi mdi-file-edit-outline font-size-22"></i></a>
+
 
                                                 <a onclick="openModalDelete({{$package->id}})" title="{{__('admin.delete')}}" class="text-danger"><i
-                                                        class="mdi mdi-delete font-size-18"></i></a>
-{{--                                            @endcan--}}
+                                                        class="mdi mdi-trash-can-outline font-size-22"></i></a>
                                         </div>
                                     </td>
                                 </tr>
@@ -101,7 +96,6 @@
                             </tbody>
                         </table>
                     </div>
-                    {{$packages->links()}}
 
                 </div>
             </div>
@@ -110,34 +104,9 @@
     <!-- end row -->
 @endsection
 
-@section('extra-js')
-    <script src="{{asset('admin_assets/libs/select2/js/select2.min.js')}}"></script>
-    <!-- bootstrap-datepicker js -->
-    <script src="{{asset('admin_assets/libs/bootstrap-datepicker/js/bootstrap-datepicker.min.js')}}"></script>
+@include('pages.packages.scripts.index-scripts')
 
-    <!-- Required datatable js -->
-    <script src="{{asset('admin_assets/libs/datatables.net/js/jquery.dataTables.min.js')}}"></script>
-    <script src="{{asset('admin_assets/libs/datatables.net-bs4/js/dataTables.bootstrap4.min.js')}}"></script>
 
-    <!-- Responsive examples -->
-    <script src="{{asset('admin_assets/libs/datatables.net-responsive/js/dataTables.responsive.min.js')}}"></script>
-    <script src="{{asset('admin_assets/libs/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js')}}"></script>
-
-    <!-- init js -->
-    <script src="{{asset('admin_assets/js/pages/crypto-orders.init.js')}}"></script>
-
-    <script src="{{asset('admin_assets/js/jquery.printPage.js') }}"></script>
-
-    <script src="{{asset('admin_assets/js/print.js') }}"></script>
-
-    <script>
-        function openModalDelete(package_id) {
-            $('.action_form').attr('action', '{{route('package.destroy', '')}}' + '/' + package_id);
-            $('#deleteModal').modal('show');
-        }
-    </script>
-
-@endsection
 @section('modal')
 @component('layouts.includes.modal')
     @slot('modalID')

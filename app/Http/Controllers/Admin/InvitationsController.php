@@ -81,22 +81,24 @@ class InvitationsController extends Controller
             },
         ])
             ->whereNotNull('user_id')
-            ->select('id', 'name', 'invitation_media_type', 'invitation_type', 'created_at', 'user_id', 'category_id', 'status');
+            ->select('invitations.id', 'invitations.name', 'invitations.invitation_media_type',
+                    'invitations.invitation_type', 'invitations.created_at',
+                    'invitations.user_id', 'invitations.category_id', 'invitations.status');
 
         // Apply status filter
         $statusFilter = $request->input('status');
         if (! empty($statusFilter)) {
-            $query->where('status', $statusFilter);
+            $query->where('invitations.status', $statusFilter);
         }
 
         // Apply date range filter
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
         if (! empty($dateFrom)) {
-            $query->whereDate('created_at', '>=', $dateFrom);
+            $query->whereDate('invitations.created_at', '>=', $dateFrom);
         }
         if (! empty($dateTo)) {
-            $query->whereDate('created_at', '<=', $dateTo);
+            $query->whereDate('invitations.created_at', '<=', $dateTo);
         }
 
         // Get total records count (before filtering)
@@ -115,11 +117,9 @@ class InvitationsController extends Controller
         // Apply search filter
         if (! empty($searchValue)) {
             $query->where(function ($q) use ($searchValue) {
-                $q->where('id', 'like', '%'.$searchValue.'%')
-                    ->orWhere('name', 'like', '%'.$searchValue.'%')
-                    ->orWhereHas('category.translations', function ($catQuery) use ($searchValue) {
-                        $catQuery->where('name', 'like', '%'.$searchValue.'%');
-                    });
+                $q->where('invitations.id', 'like', '%'.$searchValue.'%')
+                    ->orWhere('invitations.name', 'like', '%'.$searchValue.'%')
+                    ->orWhereRaw('invitations.category_id IN (SELECT category_id FROM category_translations WHERE name LIKE ? OR title LIKE ?)', ['%'.$searchValue.'%', '%'.$searchValue.'%']);
             });
         }
 
@@ -133,9 +133,9 @@ class InvitationsController extends Controller
         // Apply ordering
         if ($orderColumnName === 'category_id') {
             // Order by category name requires a join or subquery
-            $query->orderBy('created_at', $orderDir);
+            $query->orderBy('invitations.created_at', $orderDir);
         } else {
-            $query->orderBy($orderColumnName, $orderDir);
+            $query->orderBy('invitations.'.$orderColumnName, $orderDir);
         }
 
         // Apply pagination
@@ -260,7 +260,7 @@ class InvitationsController extends Controller
 
             $data = [
                 'invitation_id' => $invitation->id,
-                'invitation_code' => $invitation->invitation_code ?? '',
+                'code' => $invitation->code ?? '',
                 'user_name' => $invitation->user?->name ?? '',
                 'user_phone' => $invitation->user?->phone ?? '',
                 'invitation_type' => __('admin.invitation-type-'.$invitation->invitation_type),
@@ -362,11 +362,22 @@ class InvitationsController extends Controller
 
             DB::commit();
 
-            return redirect()
-                ->route('invitation.index', [
-                    'invitation_type' => Constant::INVITATION_TYPE['Contact Design'],
-                ])
-                ->with('success', __('admin.invitation-updated-successfully'));
+            if($request->invitation_type == Constant::INVITATION_TYPE['Contact Design'])
+            {
+                return redirect()
+                    ->route('invitation.index', [
+                        'invitation_type' => Constant::INVITATION_TYPE['Contact Design'],
+                    ])
+                    ->with('success', __('admin.invitation-updated-successfully'));
+            }
+            else
+            {
+                return redirect()
+                    ->route('invitation-request.index', [
+                        'invitation_type' => Constant::INVITATION_TYPE['Contact Design'],
+                    ])
+                    ->with('success', __('admin.invitation-updated-successfully'));
+            }
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollBack();
             Log::warning('Invitation not found for update', ['invitation_id' => $id]);

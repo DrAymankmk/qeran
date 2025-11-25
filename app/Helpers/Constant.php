@@ -142,6 +142,7 @@ class Constant
 
 
     const USER_IMAGE_FOLDER_NAME = 'users';
+    const ADMIN_IMAGE_FOLDER_NAME = 'admins';
     const CATEGORY_IMAGE_FOLDER_NAME = 'categories';
     const INVITATION_IMAGE_FOLDER_NAME = 'invitations/images';
     const INVITATION_MAIN_IMAGE_FOLDER_NAME = 'invitations/main_images';

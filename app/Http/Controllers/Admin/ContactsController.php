@@ -9,7 +9,8 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Mail;
 use App\Helpers\Constant;
 use App\Services\External\Notification as PushNotificationService;
-
+use Carbon\Carbon;
+use Mpdf\Mpdf;
 
 class ContactsController extends Controller
 {
@@ -25,6 +26,22 @@ class ContactsController extends Controller
         $contacts = ContactUs::orderBy('created_at', 'desc')->paginate();
         return view('pages.contact-us.index', compact('contacts'));
 
+    }
+
+    public function show($id)
+    {
+        $contact = ContactUs::whereId($id)->first();
+        return response()->json([
+            'id' => $contact->id,
+            'name' => $contact->name,
+            'email' => $contact->email,
+            'country_code' => $contact->country_code,
+            'phone' => $contact->phone,
+            'subject' => $contact->subject,
+            'message' => $contact->message,
+            'created_at' => Carbon::parse($contact->created_at)->locale(app()->getLocale())->translatedFormat('l dS F G:i - Y'),
+            'status' => $contact->status,
+        ]);
     }
 
     public function reply(Request $request)
@@ -66,5 +83,37 @@ class ContactsController extends Controller
 
         return redirect()->back()->with('success', 'Deleted');
 
+    }
+
+     public function contactExportPdf()
+    {
+        $contacts = ContactUs::orderBy('created_at', 'desc')->get();
+
+        // Configure mPDF with Arabic font support
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4-L', // Landscape
+            'orientation' => 'L',
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 16,
+            'margin_bottom' => 16,
+            'margin_header' => 9,
+            'margin_footer' => 9,
+            'autoLangToFont' => true, // Automatically detect and use appropriate fonts
+            'autoScriptToLang' => true, // Automatically set language
+            'autoVietnamese' => true,
+            'autoArabic' => true, // Enable Arabic support
+            'direction' => app()->getLocale() == 'ar' ? 'rtl' : 'ltr',
+        ]);
+
+        // Build HTML content
+        $html = view('pages.contact-us.pdf-export', compact('contacts'))->render();
+
+        $mpdf->WriteHTML($html);
+
+        $filename = 'contacts_' . date('Y-m-d_His') . '.pdf';
+
+        return $mpdf->Output($filename, 'D'); // D = Download
     }
 }

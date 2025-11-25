@@ -84,7 +84,7 @@ class AuthController extends Controller
             })
             ->take(10)
             ->get();
-        
+
         $requestInvitationsCount = Invitation::where('status', Constant::INVITATION_STATUS['Pending admin'])
             ->count();
 
@@ -299,6 +299,53 @@ class AuthController extends Controller
     {
         Auth::guard('admin')->logout();
 
-        return redirect()->route('admin.login');
+        return redirect()->route('admin.login.form');
+    }
+
+    /**
+     * Show the admin profile page
+     */
+    public function profile()
+    {
+        $admin = auth('admin')->user();
+        return view('pages.admin.profile', compact('admin'));
+    }
+
+    /**
+     * Update the admin profile
+     */
+    public function updateProfile(\App\Http\Requests\Admin\ProfileRequest $request)
+    {
+        $admin = auth('admin')->user();
+
+        $data = [
+            'name' => $request->name,
+            'email' => $request->email,
+        ];
+
+        // Update password if provided
+        if ($request->filled('password')) {
+            $data['password'] = bcrypt($request->password);
+        }
+
+        $admin->update($data);
+
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($admin->hubFiles()->exists()) {
+                deleteImage($admin->hubFiles->get_folder_file(), $admin->hubFiles());
+            }
+
+            // Store new image
+            storeImage([
+                'value' => $request->file('image'),
+                'folderName' => \App\Helpers\Constant::ADMIN_IMAGE_FOLDER_NAME,
+                'model' => $admin,
+                'saveInDatabase' => true
+            ]);
+        }
+
+        return redirect()->route('admin.profile')->with('success', __('admin.profile-updated-successfully'));
     }
 }

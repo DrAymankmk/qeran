@@ -157,9 +157,9 @@
                 </button>
                 <div class="dropdown-menu dropdown-menu-end">
                     <!-- item-->
-{{--                    <a class="dropdown-item" href="{{route('admins.profile')}}"><i--}}
-{{--                            class="bx bx-user font-size-16 align-middle me-1"></i> <span--}}
-{{--                            key="t-profile">{{__('admin.my-profile')}}</span></a>--}}
+                    <a class="dropdown-item" href="{{route('admin.profile')}}"><i
+                            class="bx bx-user font-size-16 align-middle me-1"></i> <span
+                            key="t-profile">{{__('admin.my-profile')}}</span></a>
                     {{--                    <a class="dropdown-item" href="index.html#"><i class="bx bx-wallet font-size-16 align-middle me-1"></i> <span key="t-my-wallet">المحفظة</span></a>--}}
                     {{--                    <a class="dropdown-item d-block" href="index.html#"><span class="badge bg-success float-end">11</span><i class="bx bx-wrench font-size-16 align-middle me-1"></i> <span key="t-settings">الإعدادات</span></a>--}}
                     {{--                    <a class="dropdown-item" href="index.html#"><i class="bx bx-lock-open font-size-16 align-middle me-1"></i> <span key="t-lock-screen">قفل الشاشة</span></a>--}}

@@ -27,6 +27,7 @@ function initAdminDataTable(options) {
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'All']],
         buttons: ['copy', 'excel', 'pdf', 'print'],
+        hasPdf: true,
         customButtons: [],
         responsive: true,
         language: null // Will use default or locale-based language
@@ -55,7 +56,7 @@ function initAdminDataTable(options) {
                 text: '<i class="mdi mdi-file-excel"></i> ' + (window.adminTranslations?.excel || 'Excel')
             });
         }
-        if (config.buttons.includes('pdf')) {
+        if (config.buttons.includes('pdf') && config.hasPdf) {
             if (config.pdfRoute) {
                 // Custom PDF export route
                 buttons.push({

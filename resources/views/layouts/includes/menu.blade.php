@@ -19,7 +19,8 @@
 					</a>
 				</li>
 				<li @if(Route::is('invitation-request.index') &&
-					request('invitation_type')==\App\Helpers\Constant::INVITATION_TYPE['Contact Design']) class="mm-active" @endif>
+					request('invitation_type')==\App\Helpers\Constant::INVITATION_TYPE['Contact
+					Design']) class="mm-active" @endif>
 					<a href="{{route('invitation-request.index',['invitation_type'=>\App\Helpers\Constant::INVITATION_TYPE['Contact Design']])}}"
 						class="waves-effect">
 						<i class="bx bx-list-ul"></i>
@@ -45,6 +46,20 @@
 						<span key="t-chat">{{__('admin.packages')}}</span>
 					</a>
 				</li>
+				<!-- <li @if(Route::is('promo-code.index')) class="mm-active" @endif>
+					<a href="{{route('promo-code.index')}}" class="waves-effect">
+						<i class="bx bx-list-ul"></i>
+						<span key="t-chat">{{__('admin.promo-codes')}}</span>
+					</a>
+				</li>
+				<li @if(Route::is('financial.index') || Route::is('financial.monthly-report') ||
+					Route::is('financial.annual-report')) class="mm-active" @endif>
+					<a href="{{route('financial.index')}}" class="waves-effect">
+						<i class="bx bx-money"></i>
+						<span
+							key="t-chat">{{__('admin.financial-transactions')}}</span>
+					</a>
+				</li> -->
 				<li @if(Route::is('contact.index')) class="mm-active" @endif>
 					<a href="{{route('contact.index')}}" class="waves-effect">
 						<i class="bx bx-list-ul"></i>
@@ -63,7 +78,11 @@
 						<span key="t-dashboards">{{__('admin.settings')}}</span>
 					</a>
 					<ul class="sub-menu" aria-expanded="false">
-						<li><a href="{{route('app-settings.edit',['key'=>'extra_guard_fees'])}}"
+						<li><a href="{{route('app-settings.index')}}"
+								key="t-full-calendar">
+								{{__('admin.settings')}}</a>
+						</li>
+						<!-- <li><a href="{{route('app-settings.edit',['key'=>'extra_guard_fees'])}}"
 								key="t-full-calendar">
 								{{__('admin.extra_guard_fees')}}</a>
 						</li>
@@ -88,7 +107,7 @@
 								{{__('admin.youtube')}}</a></li>
 						<li><a href="{{route('app-settings.edit',['key'=>'tiktok'])}}"
 								key="t-full-calendar">
-								{{__('admin.tiktok')}}</a></li>
+								{{__('admin.tiktok')}}</a></li> -->
 					</ul>
 				</li>
 

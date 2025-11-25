@@ -269,6 +269,25 @@ $(document).ready(function() {
 		// Get content from TinyMCE
 		if (createEditorInstance) {
 			createEditorInstance.save();
+		} else if (typeof tinymce !== 'undefined' && tinymce.get(
+				'create_value')) {
+			tinymce.get('create_value').save();
+		}
+
+		// Validate value field
+		const valueField = form.find('[name="value"]');
+		const valueContent = valueField.val() || '';
+		const trimmedValue = valueContent.replace(/<[^>]*>/g, '')
+			.trim(); // Remove HTML tags and trim
+
+		if (!trimmedValue) {
+			valueField.addClass('is-invalid');
+			valueField.siblings('.invalid-feedback').text(
+				'The value field is required.'
+				);
+			submitBtn.prop('disabled', false).html(
+				originalText);
+			return false;
 		}
 
 		// Disable submit button
@@ -365,6 +384,25 @@ $(document).ready(function() {
 		// Get content from TinyMCE
 		if (editEditorInstance) {
 			editEditorInstance.save();
+		} else if (typeof tinymce !== 'undefined' && tinymce.get(
+				'edit_value')) {
+			tinymce.get('edit_value').save();
+		}
+
+		// Validate value field
+		const valueField = form.find('[name="value"]');
+		const valueContent = valueField.val() || '';
+		const trimmedValue = valueContent.replace(/<[^>]*>/g, '')
+			.trim(); // Remove HTML tags and trim
+
+		if (!trimmedValue) {
+			valueField.addClass('is-invalid');
+			valueField.siblings('.invalid-feedback').text(
+				'The value field is required.'
+				);
+			submitBtn.prop('disabled', false).html(
+				originalText);
+			return false;
 		}
 
 		// Disable submit button
@@ -535,7 +573,7 @@ function openModalDelete(settingId) {
 							class="form-label">{{__('admin.value')}} <span
 								class="text-danger">*</span></label>
 						<textarea class="form-control" id="create_value"
-							name="value" rows="10" required></textarea>
+							name="value" rows="10"></textarea>
 						<div class="invalid-feedback"></div>
 					</div>
 				</div>
@@ -575,7 +613,7 @@ function openModalDelete(settingId) {
 							class="form-label">{{__('admin.value')}} <span
 								class="text-danger">*</span></label>
 						<textarea class="form-control" id="edit_value" name="value"
-							rows="10" required></textarea>
+							rows="10"></textarea>
 						<div class="invalid-feedback"></div>
 					</div>
 				</div>

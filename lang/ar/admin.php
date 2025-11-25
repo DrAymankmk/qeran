@@ -610,4 +610,5 @@ return[
     'package-updated-at'=>'تاريخ التحديث',
     'key' => 'key',
     'setting' => 'الإعدادات',
+    'cancel'=>'الغاء'
 ];

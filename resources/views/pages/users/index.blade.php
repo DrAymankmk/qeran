@@ -87,15 +87,23 @@
 										{{$user->country_code}}{{$user->phone}}
 									</a></td>
 								<td>
-									<div class="form-check form-switch form-switch-lg mb-3"
-										dir="ltr">
-										<input class="form-check-input status-switch"
-											type="checkbox"
-											data-user-id="{{$user->id}}"
-											data-url="{{route('users.change-status',$user->id)}}"
-											@if($user->verified==3) checked = "" @endif>
-
-									</div>
+									<select class="form-select status-select"
+										data-user-id="{{$user->id}}"
+										data-url="{{route('users.change-status',$user->id)}}"
+										style="min-width: 150px;">
+										<option value="1"
+											{{$user->verified == 1 ? 'selected' : ''}}>
+											{{__('admin.verified')}}
+										</option>
+										<option value="2"
+											{{$user->verified == 2 ? 'selected' : ''}}>
+											{{__('admin.not-verified')}}
+										</option>
+										<option value="3"
+											{{$user->verified == 3 ? 'selected' : ''}}>
+											{{__('admin.suspended')}}
+										</option>
+									</select>
 								</td>
 
 								<td>

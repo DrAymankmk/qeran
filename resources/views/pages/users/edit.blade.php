@@ -83,7 +83,8 @@
                         </div>
                         <div class="mb-3">
                             <label for="formrow-firstname-input" class="form-label">    {{__('admin.img')}}  </label>
-                            <input class="form-control" type="file" name="img" id="formFile">
+                            <input class="form-control" type="file" name="img" id="formFile" accept="image/*">
+                            <small class="form-text text-muted">{{__('admin.image-help')}}</small>
                         </div>
 
                         <div class="col-lg-3">

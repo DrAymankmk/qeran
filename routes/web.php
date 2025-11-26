@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\PackagesController;
 use App\Http\Controllers\Admin\NotificationsController;
 use App\Http\Controllers\Admin\AppSettingsController;
 use App\Http\Controllers\Admin\PromoCodeController;
+use App\Http\Controllers\Admin\AdminsController;
 use App\Http\Controllers\Admin\InvitationRequestController;
 use App\Http\Controllers\Website\V1\Invitation\InvitationsController as WebsiteInvitationController;
 use Illuminate\Support\Facades\Artisan;
@@ -127,7 +128,7 @@ Route::group(['prefix' => 'admin'], function () {
             Route::get('/contacts', 'index')->name('contact.index');
             // show
             Route::get('/contacts/{id}', 'show')->name('contact.show');
-            Route::delete('/contacts', 'destroy')->name('contact.destroy');
+            Route::delete('/contacts/{id}', 'destroy')->name('contact.destroy');
             Route::get('/reply', 'reply')->name('contact.reply');
             Route::post('/contacts', 'sendReply')->name('contact.reply.submit');
             Route::get('contacts/export/pdf', 'contactExportPdf')->name('contact.export.pdf');
@@ -143,8 +144,8 @@ Route::group(['prefix' => 'admin'], function () {
         Route::post('app-settings/{key}', [AppSettingsController::class, 'update'])->name('app-settings.update');
         Route::delete('app-settings/{key}', [AppSettingsController::class, 'destroy'])->name('app-settings.destroy');
         Route::get('app-settings/export/pdf', [AppSettingsController::class, 'exportPdf'])->name('app-settings.export.pdf');
-        Route::resource('promo-code', PromoCodeController::class);
-
+        // Route::resource('promo-code', PromoCodeController::class);
+        // Route::get('promo-code/export/pdf', [PromoCodeController::class, 'exportPdf'])->name('promo-code.export.pdf');
         Route::controller(InvitationsController::class)->group(function () {
             Route::get('/invitations/status/{invitation}', 'changeStatus')->name('invitations.change-status');
             Route::get('/invitations/get-packages-by-invitation', 'getPackagesByInvitationId')->name('invitations.getPackagesByInvitationId');
@@ -163,9 +164,12 @@ Route::group(['prefix' => 'admin'], function () {
         Route::resource('invitation', InvitationsController::class);
         Route::resource('users', UsersController::class);
         Route::controller(UsersController::class)->group(function () {
-            Route::get('users/status/{user}', 'status')->name('users.change-status');
+            Route::post('users/status/{user}', 'status')->name('users.change-status');
             Route::get('/users/export/pdf', 'usersExportPdf')->name('users.export.pdf');
         });
+
+        Route::resource('admins', AdminsController::class);
+        Route::get('admins/export/pdf', [AdminsController::class, 'adminsExportPdf'])->name('admins.export.pdf');
 
 
         Route::resource('package', PackagesController::class);
@@ -181,10 +185,7 @@ Route::group(['prefix' => 'admin'], function () {
 
         // promo code
         Route::resource('promo-code', PromoCodeController::class);
-        Route::get('promo-code/export/pdf', [PromoCodeController::class, 'promoCodeExportPdf'])->name('promo-code.export.pdf');
-        Route::get('promo-code/status/{promoCode}', [PromoCodeController::class, 'status'])->name('promo-code.change-status');
-        Route::get('promo-code/details/{id}', [PromoCodeController::class, 'show'])->name('promo-code.details');
-        Route::get('promo-code/export/pdf', [PromoCodeController::class, 'promoCodeExportPdf'])->name('promo-code.export.pdf');
+        Route::get('promo-code/export/pdf', [PromoCodeController::class, 'exportPdf'])->name('promo-code.export.pdf');
         Route::get('promo-code/status/{promoCode}', [PromoCodeController::class, 'status'])->name('promo-code.change-status');
         Route::get('promo-code/details/{id}', [PromoCodeController::class, 'show'])->name('promo-code.details');
     });

@@ -29,12 +29,12 @@
             </button>
 
             <!-- App Search-->
-            <form class="app-search d-none d-lg-block" method="get" >
+            <!-- <form class="app-search d-none d-lg-block" method="get" >
                 <div class="position-relative">
                     <input type="text" name="name" class="form-control" placeholder="بحث ٫٫٫">
                     <span class="bx bx-search-alt"></span>
                 </div>
-            </form>
+            </form> -->
 
         </div>
 

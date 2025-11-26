@@ -31,7 +31,7 @@
 	});
 });
 
-    
+
 
 
     function openModalDelete(user_id) {
@@ -39,46 +39,58 @@
         $('#deleteModal').modal('show');
     }
 
-    // Handle status switch toggle
-    $(document).on('change', '.status-switch', function() {
-        const checkbox = $(this);
-        const userId = checkbox.data('user-id');
-        const url = checkbox.data('url');
-        const isChecked = checkbox.is(':checked');
-        
-        // Disable checkbox during request
-        checkbox.prop('disabled', true);
-        
+    // Handle status select change
+    $(document).on('change', '.status-select', function() {
+        const select = $(this);
+        const userId = select.data('user-id');
+        const url = select.data('url');
+        const selectedStatus = select.val();
+        const previousStatus = select.data('previous-value') || select.find('option:selected').val();
+
+        // Store previous value
+        select.data('previous-value', selectedStatus);
+
+        // Disable select during request
+        select.prop('disabled', true);
+
         // Make AJAX request
         $.ajax({
             url: url,
-            type: 'GET',
+            type: 'POST',
+            data: {
+                _token: '{{csrf_token()}}',
+                status: selectedStatus
+            },
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             },
             success: function(response) {
                 if (response.success) {
-                    // Show success message if needed
-                    // The checkbox state is already updated by the user's click
+                    // Show success message
+                    @if(app()->getLocale() == 'ar')
+                    toastr.success('تم تحديث الحالة بنجاح');
+                    @else
+                    toastr.success('Status updated successfully');
+                    @endif
                 } else {
-                    // Revert checkbox state on error
-                    checkbox.prop('checked', !isChecked);
+                    // Revert select value on error
+                    select.val(previousStatus);
                 }
             },
             error: function(xhr) {
-                // Revert checkbox state on error
-                checkbox.prop('checked', !isChecked);
-                
+                // Revert select value on error
+                select.val(previousStatus);
+
                 // Show error message
                 @if(app()->getLocale() == 'ar')
-                alert('حدث خطأ أثناء تحديث الحالة');
+                toastr.error('حدث خطأ أثناء تحديث الحالة');
                 @else
-                alert('Error updating status');
+                toastr.error('Error updating status');
                 @endif
             },
             complete: function() {
-                // Re-enable checkbox
-                checkbox.prop('disabled', false);
+                // Re-enable select
+                select.prop('disabled', false);
             }
         });
     });

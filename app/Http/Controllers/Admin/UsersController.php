@@ -98,24 +98,36 @@ class UsersController extends Controller
 
     }
 
-    public function status(User $user)
+    public function status(Request $request, User $user)
     {
-        // Toggle verified status: if 3 (blocked), set to 2 (not verified), otherwise set to 3 (blocked)
-        $newStatus = $user->verified == 3 ? 2 : 3;
-        
+        $request->validate([
+            'status' => 'required|in:1,2,3'
+        ]);
+
+        $newStatus = (int) $request->status;
+
         $user->update([
             'verified' => $newStatus
         ]);
-        
-        if ($newStatus == 3) {
+
+        if ($newStatus == Constant::USER_STATUS['Suspended']) {
             Notification::notify('users',
                 Constant::NOTIFICATIONS_TYPE['Admin'],
                 [$user->id],
                 null,
                 'Modern Invitation',
-                __('You are blocked by admin!'));
+                'You are blocked by admin!',
+                false);
+        } elseif ($newStatus == Constant::USER_STATUS['Verified']) {
+            Notification::notify('users',
+                Constant::NOTIFICATIONS_TYPE['Admin'],
+                [$user->id],
+                null,
+                'Modern Invitation',
+                'Your account has been verified!',
+                false);
         }
-        
+
         return response()->json([
             'success' => true,
             'message' => __('admin.updated-successfully'),
@@ -125,20 +137,39 @@ class UsersController extends Controller
 
     public function update(UserRequest $request, $id)
     {
-
         $user = User::whereId($id)->first();
-        $user->update($request->validated());
-        if ($request->img) {
-            $user->img = $request->img;
-            $user->save();
-        }
-        if ($request->password) {
-            $user->password = $request->password;
-            $user->save();
+        $data = $request->validated();
+
+        // Hash password if provided
+        if (isset($data['password']) && !empty($data['password'])) {
+            $data['password'] = bcrypt($data['password']);
+        } else {
+            unset($data['password']);
         }
 
-        return redirect()->route('users.index')->with('success', 'Update');
+        $user->update($data);
 
+        // Handle image upload (support both 'img' and 'image' field names)
+        $imageFile = $request->hasFile('img') ? $request->file('img') : ($request->hasFile('image') ? $request->file('image') : null);
+
+        if ($imageFile) {
+            // Delete old image if exists
+            if ($user->hubFiles) {
+                deleteImage($user->hubFiles->get_folder_file(), $user->hubFiles);
+            }
+
+            // Store new image
+            storeImage([
+                'value' => $imageFile,
+                'folderName' => Constant::USER_IMAGE_FOLDER_NAME,
+                'file_key' => Constant::FILE_KEY['Main'],
+                'file_type' => Constant::FILE_TYPE['Image'],
+                'model' => $user,
+                'saveInDatabase' => true
+            ]);
+        }
+
+        return redirect()->route('users.index')->with('success', __('admin.updated-successfully'));
     }
 
       public function usersExportPdf(){

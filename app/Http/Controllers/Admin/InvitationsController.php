@@ -82,8 +82,8 @@ class InvitationsController extends Controller
         ])
             ->whereNotNull('user_id')
             ->select('invitations.id', 'invitations.name', 'invitations.invitation_media_type',
-                    'invitations.invitation_type', 'invitations.created_at',
-                    'invitations.user_id', 'invitations.category_id', 'invitations.status');
+                'invitations.invitation_type', 'invitations.created_at',
+                'invitations.user_id', 'invitations.category_id', 'invitations.status');
 
         // Apply status filter
         $statusFilter = $request->input('status');
@@ -117,9 +117,9 @@ class InvitationsController extends Controller
         // Apply search filter
         if (! empty($searchValue)) {
             $query->where(function ($q) use ($searchValue) {
-                $q->where('invitations.id', 'like', '%'.$searchValue.'%')
-                    ->orWhere('invitations.name', 'like', '%'.$searchValue.'%')
-                    ->orWhereRaw('invitations.category_id IN (SELECT category_id FROM category_translations WHERE name LIKE ? OR title LIKE ?)', ['%'.$searchValue.'%', '%'.$searchValue.'%']);
+                $q->where('id', 'like', '%'.$searchValue.'%')
+                    ->orWhere('name', 'like', '%'.$searchValue.'%')
+                    ->orWhereRaw('category_id IN (SELECT category_id FROM category_translations WHERE name LIKE ?)', ['%'.$searchValue.'%']);
             });
         }
 
@@ -200,8 +200,6 @@ class InvitationsController extends Controller
         ]);
     }
 
-
-
     /**
      * Display guards for a specific invitation.
      */
@@ -263,6 +261,7 @@ class InvitationsController extends Controller
                 'code' => $invitation->code ?? '',
                 'user_name' => $invitation->user?->name ?? '',
                 'user_phone' => $invitation->user?->phone ?? '',
+                'user_email' => $invitation->user?->email ?? '',
                 'invitation_type' => __('admin.invitation-type-'.$invitation->invitation_type),
                 'name' => $invitation->name ?? '',
                 'media_type' => __('admin.media-type-'.$invitation->invitation_media_type),
@@ -362,21 +361,18 @@ class InvitationsController extends Controller
 
             DB::commit();
 
-            if($request->invitation_type == Constant::INVITATION_TYPE['Contact Design'])
-            {
+            if ($request->invitation_type == Constant::INVITATION_TYPE['Contact Design']) {
                 return redirect()
-                    ->route('invitation.index', [
-                        'invitation_type' => Constant::INVITATION_TYPE['Contact Design'],
-                    ])
-                    ->with('success', __('admin.invitation-updated-successfully'));
-            }
-            else
-            {
+                ->route('invitation-request.index', [
+                    'invitation_type' => Constant::INVITATION_TYPE['Contact Design'],
+                ])
+                ->with('success', __('admin.invitation-updated-successfully'));
+            } else {
                 return redirect()
-                    ->route('invitation-request.index', [
-                        'invitation_type' => Constant::INVITATION_TYPE['Contact Design'],
-                    ])
-                    ->with('success', __('admin.invitation-updated-successfully'));
+                ->route('invitation.index', [
+                    'invitation_type' => Constant::INVITATION_TYPE['Contact Design'],
+                ])
+                ->with('success', __('admin.invitation-updated-successfully'));
             }
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollBack();

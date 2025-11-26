@@ -19,8 +19,7 @@
 					</a>
 				</li>
 				<li @if(Route::is('invitation-request.index') &&
-					request('invitation_type')==\App\Helpers\Constant::INVITATION_TYPE['Contact
-					Design']) class="mm-active" @endif>
+					request('invitation_type')==\App\Helpers\Constant::INVITATION_TYPE['Contact Design']) class="mm-active" @endif>
 					<a href="{{route('invitation-request.index',['invitation_type'=>\App\Helpers\Constant::INVITATION_TYPE['Contact Design']])}}"
 						class="waves-effect">
 						<i class="bx bx-list-ul"></i>
@@ -46,7 +45,7 @@
 						<span key="t-chat">{{__('admin.packages')}}</span>
 					</a>
 				</li>
-				<!-- <li @if(Route::is('promo-code.index')) class="mm-active" @endif>
+				<li @if(Route::is('promo-code.index')) class="mm-active" @endif>
 					<a href="{{route('promo-code.index')}}" class="waves-effect">
 						<i class="bx bx-list-ul"></i>
 						<span key="t-chat">{{__('admin.promo-codes')}}</span>
@@ -59,7 +58,7 @@
 						<span
 							key="t-chat">{{__('admin.financial-transactions')}}</span>
 					</a>
-				</li> -->
+				</li>
 				<li @if(Route::is('contact.index')) class="mm-active" @endif>
 					<a href="{{route('contact.index')}}" class="waves-effect">
 						<i class="bx bx-list-ul"></i>

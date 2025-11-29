@@ -116,6 +116,9 @@ return[
     'text-required'=>'الرجاء إدخال النص',
     'socials'=>'التواصل الاجتماعي',
     'text'=>'نص',
+    'number'=>'رقم',
+    'textarea'=>'منطقة نصية',
+    'editor'=>'محرر',
     'social-type'=>'نوع رابط التواصل الاجتماعي',
     'reasons'=>'أسباب المرتجعات',
     'suggestions'=>'المقترحات',
@@ -644,5 +647,6 @@ return[
     'user-management'=>'إدارة المستخدمين',
     'business-management'=>'إدارة الأعمال',
     'communication'=>'التواصل',
-    'system'=>'النظام'
+    'system'=>'النظام',
+    'select-package'=>'اختر باقة'
 ];

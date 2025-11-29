@@ -35,11 +35,10 @@
 		<div class="card">
 			<div class="card-body">
 				<div class="row mb-2">
-					<div class="col-sm-4">
-					</div>
 
-					<div class="col-sm-8">
-						<div class="text-sm-end">
+
+					<div class="col-sm-12">
+						<div class="text-sm-start">
 							<button type="button"
 								class="btn btn-primary waves-effect waves-light"
 								data-bs-toggle="modal"
@@ -91,7 +90,7 @@
 										class="text-body fw-bold">{{$promoCode->id}}</a>
 								</td>
 								<td>{{$promoCode->name}}</td>
-								<td><span class="badge bg-primary">{{$promoCode->code}}</span>
+								<td><span>{{$promoCode->code}}</span>
 								</td>
 								<td>{{$promoCode->discount_percentage}}%
 								</td>
@@ -198,10 +197,20 @@ $(document).ready(function() {
 		form.find('.is-invalid').removeClass('is-invalid');
 		form.find('.invalid-feedback').text('');
 
+		// Ensure is_active is always sent (0 if unchecked, 1 if checked)
+		// Remove existing is_active from serialized data if present, then add the correct value
+		let formData = form.serialize();
+		// Remove is_active parameter (handles both at start and middle/end)
+		formData = formData.replace(/(^|&)is_active=\d*/g, '')
+			.replace(/^&+/, '');
+		const isActive = $('#create_is_active').is(':checked') ?
+			'1' : '0';
+		formData += (formData ? '&' : '') + 'is_active=' + isActive;
+
 		$.ajax({
 			url: '{{ route("promo-code.store") }}',
 			type: 'POST',
-			data: form.serialize(),
+			data: formData,
 			headers: {
 				'X-Requested-With': 'XMLHttpRequest'
 			},
@@ -209,9 +218,9 @@ $(document).ready(function() {
 				if (response
 					.success
 				) {
-					alert(
+					toastr.success(
 						'{{__("admin.created-successfully")}}'
-					);
+						);
 					$('#createPromoCodeModal')
 						.modal(
 							'hide'
@@ -250,9 +259,9 @@ $(document).ready(function() {
 							]);
 					});
 				} else {
-					alert(
+					toastr.error(
 						'{{__("admin.error-saving")}}'
-					);
+						);
 				}
 			},
 			complete: function() {
@@ -284,14 +293,24 @@ $(document).ready(function() {
 		form.find('.is-invalid').removeClass('is-invalid');
 		form.find('.invalid-feedback').text('');
 
+		// Ensure is_active is always sent (0 if unchecked, 1 if checked)
+		// Remove existing is_active from serialized data if present, then add the correct value
+		let formData = form.serialize();
+		// Remove is_active parameter (handles both at start and middle/end)
+		formData = formData.replace(/(^|&)is_active=\d*/g, '')
+			.replace(/^&+/, '');
+		const isActive = $('#edit_is_active').is(':checked') ? '1' :
+			'0';
+		formData += (formData ? '&' : '') +
+			'_method=PUT&is_active=' + isActive;
+
 		$.ajax({
 			url: '{{ route("promo-code.update", ":id") }}'
 				.replace(':id',
 					promoCodeId
 				),
 			type: 'POST',
-			data: form.serialize() +
-				'&_method=PUT',
+			data: formData,
 			headers: {
 				'X-Requested-With': 'XMLHttpRequest'
 			},
@@ -299,9 +318,9 @@ $(document).ready(function() {
 				if (response
 					.success
 				) {
-					alert(
+					toastr.success(
 						'{{__("admin.updated-successfully")}}'
-					);
+						);
 					$('#editPromoCodeModal')
 						.modal(
 							'hide'
@@ -338,9 +357,9 @@ $(document).ready(function() {
 							]);
 					});
 				} else {
-					alert(
+					toastr.error(
 						'{{__("admin.error-updating")}}'
-					);
+						);
 				}
 			},
 			complete: function() {
@@ -411,13 +430,87 @@ function openEditModal(promoCodeId) {
 				$('#edit_promo_code_id').val(data.id);
 				$('#edit_name').val(data.name);
 				$('#edit_code').val(data.code);
-				$('#edit_valid_date').val(data.valid_date);
-				$('#edit_expire_date').val(data.expire_date);
+
+				// Format dates for date input (YYYY-MM-DD)
+				if (data.valid_date) {
+					// Handle different date formats
+					let validDateStr = data.valid_date;
+					// If it's already in YYYY-MM-DD format, use it directly
+					if (!/^\d{4}-\d{2}-\d{2}$/.test(
+							validDateStr)) {
+						// Parse and format the date
+						const validDate = new Date(
+							validDateStr
+						);
+						if (!isNaN(validDate
+								.getTime()
+								)) {
+							validDateStr =
+								validDate
+								.getFullYear() +
+								'-' +
+								String(validDate
+									.getMonth() +
+									1
+								)
+								.padStart(2,
+									'0'
+								) +
+								'-' +
+								String(validDate
+									.getDate()
+								)
+								.padStart(2,
+									'0'
+								);
+						}
+					}
+					$('#edit_valid_date').val(validDateStr);
+				}
+
+				if (data.expire_date) {
+					// Handle different date formats
+					let expireDateStr = data.expire_date;
+					// If it's already in YYYY-MM-DD format, use it directly
+					if (!/^\d{4}-\d{2}-\d{2}$/.test(
+							expireDateStr)) {
+						// Parse and format the date
+						const expireDate = new Date(
+							expireDateStr
+						);
+						if (!isNaN(expireDate
+								.getTime()
+								)) {
+							expireDateStr =
+								expireDate
+								.getFullYear() +
+								'-' +
+								String(expireDate
+									.getMonth() +
+									1
+								)
+								.padStart(2,
+									'0'
+								) +
+								'-' +
+								String(expireDate
+									.getDate()
+								)
+								.padStart(2,
+									'0'
+								);
+						}
+					}
+					$('#edit_expire_date').val(
+						expireDateStr);
+				}
+
 				$('#edit_discount_percentage').val(data
 					.discount_percentage);
 				$('#edit_usage_limit').val(data.usage_limit);
 				$('#edit_is_active').prop('checked', data
-					.is_active);
+					.is_active == 1 || data
+					.is_active === true);
 
 				// Handle package selection
 				if (data.package_id) {
@@ -436,7 +529,7 @@ function openEditModal(promoCodeId) {
 			}
 		},
 		error: function() {
-			alert('{{__("admin.error-loading-data")}}');
+			toastr.error('{{__("admin.error-loading-data")}}');
 		}
 	});
 }
@@ -632,9 +725,7 @@ function openModalDelete(promoCodeId) {
 					<div class="row">
 						<div class="col-md-6 mb-3">
 							<label for="edit_valid_date"
-								class="form-label">{{__('admin.valid-date')}}
-								<span
-									class="text-danger">*</span></label>
+								{{__('admin.valid-date')}}> <span class="text-danger">*</span></label>
 							<input type="date" class="form-control"
 								id="edit_valid_date" name="valid_date"
 								required>

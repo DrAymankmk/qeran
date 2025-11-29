@@ -34,12 +34,14 @@ class AppSettingsController extends Controller
     {
         $request->validate([
             'key' => 'required|string|unique:app_settings,key',
-            'value' => 'required|string'
+            'value' => 'required|string',
+            'type' => 'required|string|in:text,number,email,textarea,editor'
         ]);
 
         $appSetting = AppSetting::create([
             'key' => $request->key,
-            'value' => $request->value
+            'value' => $request->value,
+            'type' => $request->type
         ]);
 
         if ($request->ajax()) {

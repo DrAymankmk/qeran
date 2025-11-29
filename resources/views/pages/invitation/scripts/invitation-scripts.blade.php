@@ -200,6 +200,7 @@ window.showInvitationDetails = function(invitationId) {
 				'invitation_step',
 				'category_name',
 				'user_name',
+				'user_email',
 				'paid',
 				'status',
 				'host_name',

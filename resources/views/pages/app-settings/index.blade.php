@@ -62,6 +62,7 @@
 								<th scope="col">{{__('admin.id')}}</th>
 
 								<th scope="col">{{__('admin.key')}}</th>
+								<th scope="col">{{__('admin.type')}}</th>
 								<th scope="col">{{__('admin.value')}}
 								</th>
 								<th scope="col">
@@ -82,6 +83,9 @@
 									{{$appSetting->key}}
 								</td>
 								<td>
+									<span class="badge bg-info">{{$appSetting->type ?? 'text'}}</span>
+								</td>
+								<td>
 									<div class="text-truncate"
 										style="max-width: 300px;"
 										title="{{strip_tags($appSetting->value)}}">
@@ -96,7 +100,7 @@
 									<div class="d-flex gap-3">
 
 										<a href="javascript:void(0);"
-											onclick="openEditModal({{json_encode($appSetting->key)}}, {{json_encode($appSetting->value)}})"
+											onclick="openEditModal({{json_encode($appSetting->key)}}, {{json_encode($appSetting->value)}}, {{json_encode($appSetting->type ?? 'text')}})"
 											title="{{__('admin.edit')}}"
 											class="text-warning"><i
 												class="mdi mdi-file-edit-outline font-size-22"></i></a>
@@ -150,6 +154,52 @@ $('.btnprn').printPage();
 let createEditorInstance = null;
 let editEditorInstance = null;
 
+// Global function to show appropriate input based on type in edit modal
+function showEditInputByType(type, value) {
+	// Hide and disable all inputs
+	$('.edit-value-input').hide().prop('disabled', true);
+	
+	// Remove TinyMCE if exists
+	if (editEditorInstance) {
+		tinymce.remove('#edit_value_editor');
+		editEditorInstance = null;
+	}
+
+	// Show and enable appropriate input and set value
+	if (type === 'text') {
+		$('#edit_value_text').show().prop('disabled', false).val(value || '');
+	} else if (type === 'number') {
+		$('#edit_value_number').show().prop('disabled', false).val(value || '');
+	} else if (type === 'email') {
+		$('#edit_value_email').show().prop('disabled', false).val(value || '');
+	} else if (type === 'textarea') {
+		$('#edit_value_textarea').show().prop('disabled', false).val(value || '');
+	} else if (type === 'editor') {
+		$('#edit_value_editor').show().prop('disabled', false);
+		// Initialize TinyMCE for editor
+		if (typeof tinymce !== 'undefined') {
+			tinymce.init({
+				selector: '#edit_value_editor',
+				height: 400,
+				menubar: false,
+				plugins: 'lists link table code',
+				toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter alignright | bullist numlist | link | code',
+				content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; }',
+				branding: false,
+				promotion: false,
+				setup: function(editor) {
+					editor.on('init', function() {
+						if (value) {
+							editor.setContent(value);
+						}
+					});
+				}
+			});
+			editEditorInstance = tinymce.get('edit_value_editor');
+		}
+	}
+}
+
 $(document).ready(function() {
 	// Initialize DataTable using reusable function
 	var table = initAdminDataTable({
@@ -158,11 +208,11 @@ $(document).ready(function() {
 		orderColumn: 0,
 		orderDirection: 'desc',
 		nonOrderableColumns: [1,
-			4
+			5
 		], // Key and Actions columns are not orderable
 		nonSearchableColumns: [
-			4
-		], // Only Actions column is not searchable (Key and Value should be searchable)
+			5
+		], // Only Actions column is not searchable (Key, Type and Value should be searchable)
 		pageLength: 10,
 		lengthMenu: [
 			[10, 25, 50, 100],
@@ -171,91 +221,64 @@ $(document).ready(function() {
 		hasPdf: false,
 	});
 
-	// Initialize TinyMCE when create modal is shown
-	$('#createSettingModal').on('shown.bs.modal', function() {
-		// Check if TinyMCE is loaded
-		if (typeof tinymce === 'undefined') {
-			console.error('TinyMCE is not loaded');
-			return;
-		}
-
-		if (!createEditorInstance || !tinymce.get('create_value')) {
-			// Remove any existing instance first
-			if (tinymce.get('create_value')) {
-				tinymce.remove('#create_value');
-			}
-
-			tinymce.init({
-				selector: '#create_value',
-				height: 400,
-				menubar: false,
-				plugins: 'lists link table code',
-				toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter alignright | bullist numlist | link | code',
-				content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; }',
-				branding: false,
-				promotion: false
-			});
-			createEditorInstance = tinymce.get(
-				'create_value');
-		}
+	// Handle type change in create modal
+	$('#create_type').on('change', function() {
+		const type = $(this).val();
+		showCreateInputByType(type);
 	});
 
-	// Initialize TinyMCE when edit modal is shown
+	// Function to show appropriate input based on type
+	function showCreateInputByType(type) {
+		// Hide and disable all inputs
+		$('.create-value-input').hide().prop('disabled', true);
+		
+		// Remove TinyMCE if exists
+		if (createEditorInstance) {
+			tinymce.remove('#create_value_editor');
+			createEditorInstance = null;
+		}
+
+		// Show and enable appropriate input
+		if (type === 'text') {
+			$('#create_value_text').show().prop('disabled', false);
+		} else if (type === 'number') {
+			$('#create_value_number').show().prop('disabled', false);
+		} else if (type === 'email') {
+			$('#create_value_email').show().prop('disabled', false);
+		} else if (type === 'textarea') {
+			$('#create_value_textarea').show().prop('disabled', false);
+		} else if (type === 'editor') {
+			$('#create_value_editor').show().prop('disabled', false);
+			// Initialize TinyMCE for editor
+			if (typeof tinymce !== 'undefined') {
+				tinymce.init({
+					selector: '#create_value_editor',
+					height: 400,
+					menubar: false,
+					plugins: 'lists link table code',
+					toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter alignright | bullist numlist | link | code',
+					content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; }',
+					branding: false,
+					promotion: false
+				});
+				createEditorInstance = tinymce.get('create_value_editor');
+			}
+		}
+	}
+
+	// Initialize TinyMCE when create modal is shown
+	$('#createSettingModal').on('shown.bs.modal', function() {
+		// Show default input (text)
+		const defaultType = $('#create_type').val() || 'text';
+		showCreateInputByType(defaultType);
+	});
+
+	// Initialize when edit modal is shown
 	$('#editSettingModal').on('shown.bs.modal', function() {
-		// Check if TinyMCE is loaded
-		if (typeof tinymce === 'undefined') {
-			console.error('TinyMCE is not loaded');
-			return;
-		}
-
-		// Get value to set
-		const valueToSet = $('#edit_value').data('value-to-set') ||
-			'';
-
-		if (!editEditorInstance || !tinymce.get('edit_value')) {
-			// Remove any existing instance first
-			if (tinymce.get('edit_value')) {
-				tinymce.remove('#edit_value');
-			}
-
-			tinymce.init({
-				selector: '#edit_value',
-				height: 400,
-				menubar: false,
-				plugins: 'lists link table code',
-				toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter alignright | bullist numlist | link | code',
-				content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; }',
-				branding: false,
-				promotion: false,
-				setup: function(
-					editor
-				) {
-					editor.on('init', function() {
-						// Set content after editor is initialized
-						if (
-							valueToSet
-						) {
-							editor.setContent(
-								valueToSet
-							);
-							$('#edit_value')
-								.removeData(
-									'value-to-set'
-								);
-						}
-					});
-				}
-			});
-			editEditorInstance = tinymce.get('edit_value');
-		} else {
-			// Editor already exists, set content
-			if (valueToSet) {
-				editEditorInstance.setContent(
-					valueToSet);
-				$('#edit_value').removeData(
-					'value-to-set');
-			}
-		}
+		// Get type and value from data attributes
+		const type = $('#editSettingModal').data('edit-type') || 'text';
+		const value = $('#editSettingModal').data('edit-value') || '';
+		showEditInputByType(type, value);
 	});
 
 	// Handle create form submission
@@ -266,27 +289,33 @@ $(document).ready(function() {
 		const submitBtn = form.find('button[type="submit"]');
 		const originalText = submitBtn.html();
 
-		// Get content from TinyMCE
-		if (createEditorInstance) {
-			createEditorInstance.save();
-		} else if (typeof tinymce !== 'undefined' && tinymce.get(
-				'create_value')) {
-			tinymce.get('create_value').save();
+		// Get content from appropriate input based on type
+		const type = $('#create_type').val();
+		let valueContent = '';
+		
+		if (type === 'editor') {
+			// Get content from TinyMCE
+			if (createEditorInstance) {
+				createEditorInstance.save();
+				valueContent = $('#create_value_editor').val() || '';
+			} else if (typeof tinymce !== 'undefined' && tinymce.get('create_value_editor')) {
+				tinymce.get('create_value_editor').save();
+				valueContent = $('#create_value_editor').val() || '';
+			}
+		} else {
+			// Get value from visible input
+			const visibleInput = $('.create-value-input:visible');
+			valueContent = visibleInput.val() || '';
 		}
 
 		// Validate value field
-		const valueField = form.find('[name="value"]');
-		const valueContent = valueField.val() || '';
-		const trimmedValue = valueContent.replace(/<[^>]*>/g, '')
-			.trim(); // Remove HTML tags and trim
+		const trimmedValue = valueContent.replace(/<[^>]*>/g, '').trim();
 
 		if (!trimmedValue) {
+			const valueField = $('.create-value-input:visible');
 			valueField.addClass('is-invalid');
-			valueField.siblings('.invalid-feedback').text(
-				'The value field is required.'
-				);
-			submitBtn.prop('disabled', false).html(
-				originalText);
+			valueField.siblings('.invalid-feedback').text('The value field is required.');
+			submitBtn.prop('disabled', false).html(originalText);
 			return false;
 		}
 
@@ -381,27 +410,33 @@ $(document).ready(function() {
 		const originalText = submitBtn.html();
 		const key = $('#edit_key').val();
 
-		// Get content from TinyMCE
-		if (editEditorInstance) {
-			editEditorInstance.save();
-		} else if (typeof tinymce !== 'undefined' && tinymce.get(
-				'edit_value')) {
-			tinymce.get('edit_value').save();
+		// Get content from appropriate input based on type
+		const type = $('#edit_type_display').data('type') || 'text';
+		let valueContent = '';
+		
+		if (type === 'editor') {
+			// Get content from TinyMCE
+			if (editEditorInstance) {
+				editEditorInstance.save();
+				valueContent = $('#edit_value_editor').val() || '';
+			} else if (typeof tinymce !== 'undefined' && tinymce.get('edit_value_editor')) {
+				tinymce.get('edit_value_editor').save();
+				valueContent = $('#edit_value_editor').val() || '';
+			}
+		} else {
+			// Get value from visible input
+			const visibleInput = $('.edit-value-input:visible');
+			valueContent = visibleInput.val() || '';
 		}
 
 		// Validate value field
-		const valueField = form.find('[name="value"]');
-		const valueContent = valueField.val() || '';
-		const trimmedValue = valueContent.replace(/<[^>]*>/g, '')
-			.trim(); // Remove HTML tags and trim
+		const trimmedValue = valueContent.replace(/<[^>]*>/g, '').trim();
 
 		if (!trimmedValue) {
+			const valueField = $('.edit-value-input:visible');
 			valueField.addClass('is-invalid');
-			valueField.siblings('.invalid-feedback').text(
-				'The value field is required.'
-				);
-			submitBtn.prop('disabled', false).html(
-				originalText);
+			valueField.siblings('.invalid-feedback').text('The value field is required.');
+			submitBtn.prop('disabled', false).html(originalText);
 			return false;
 		}
 
@@ -489,45 +524,44 @@ $(document).ready(function() {
 	$('#createSettingModal').on('hidden.bs.modal', function() {
 		// Destroy TinyMCE instance
 		if (createEditorInstance) {
-			tinymce.remove('#create_value');
+			tinymce.remove('#create_value_editor');
 			createEditorInstance = null;
 		}
 		$('#createSettingForm')[0].reset();
-		$('#createSettingForm').find('.is-invalid').removeClass(
-			'is-invalid');
+		$('#createSettingForm').find('.is-invalid').removeClass('is-invalid');
 		$('#createSettingForm').find('.invalid-feedback').text('');
+		// Hide all inputs
+		$('.create-value-input').hide();
 	});
 
 	$('#editSettingModal').on('hidden.bs.modal', function() {
 		// Destroy TinyMCE instance
 		if (editEditorInstance) {
-			tinymce.remove('#edit_value');
+			tinymce.remove('#edit_value_editor');
 			editEditorInstance = null;
 		}
-		$('#editSettingForm').find('.is-invalid').removeClass(
-			'is-invalid');
+		$('#editSettingForm').find('.is-invalid').removeClass('is-invalid');
 		$('#editSettingForm').find('.invalid-feedback').text('');
+		// Hide all inputs
+		$('.edit-value-input').hide().prop('disabled', true);
+		// Clear data attributes
+		$('#editSettingModal').removeData('edit-type');
+		$('#editSettingModal').removeData('edit-value');
 	});
 });
 
 // Function to open edit modal
-function openEditModal(key, value) {
+function openEditModal(key, value, type) {
 	$('#edit_key').val(key);
 	$('#edit_key_display').val(key);
+	$('#edit_type_display').val(type || 'text');
+	$('#edit_type_display').data('type', type || 'text');
 
-	// Store value to set in the textarea (will be picked up by TinyMCE setup function)
-	$('#edit_value').data('value-to-set', value || '');
+	// Store type and value in modal data attributes
+	$('#editSettingModal').data('edit-type', type || 'text');
+	$('#editSettingModal').data('edit-value', value || '');
 
 	$('#editSettingModal').modal('show');
-
-	// Wait for modal to be shown and editor to be initialized, then set content
-	setTimeout(function() {
-		if (editEditorInstance && typeof editEditorInstance.setContent === 'function') {
-			editEditorInstance.setContent(value || '');
-		} else if (tinymce.get('edit_value')) {
-			tinymce.get('edit_value').setContent(value || '');
-		}
-	}, 500);
 }
 
 function openModalDelete(settingId) {
@@ -569,11 +603,37 @@ function openModalDelete(settingId) {
 						<div class="invalid-feedback"></div>
 					</div>
 					<div class="mb-3">
+						<label for="create_type"
+							class="form-label">{{__('admin.type')}} <span
+								class="text-danger">*</span></label>
+						<select class="form-select" id="create_type" name="type" required>
+							<option value="text">{{__('admin.text')}}</option>
+							<option value="number">{{__('admin.number')}}</option>
+							<option value="email">{{__('admin.email')}}</option>
+							<option value="textarea">{{__('admin.textarea')}}</option>
+							<option value="editor">{{__('admin.editor')}}</option>
+						</select>
+						<div class="invalid-feedback"></div>
+					</div>
+					<div class="mb-3">
 						<label for="create_value"
 							class="form-label">{{__('admin.value')}} <span
 								class="text-danger">*</span></label>
-						<textarea class="form-control" id="create_value"
-							name="value" rows="10"></textarea>
+						<!-- Text Input -->
+						<input type="text" class="form-control create-value-input" id="create_value_text"
+							name="value" style="display: none;">
+						<!-- Number Input -->
+						<input type="number" class="form-control create-value-input" id="create_value_number"
+							name="value" style="display: none;">
+						<!-- Email Input -->
+						<input type="email" class="form-control create-value-input" id="create_value_email"
+							name="value" style="display: none;">
+						<!-- Textarea Input -->
+						<textarea class="form-control create-value-input" id="create_value_textarea"
+							name="value" rows="5" style="display: none;"></textarea>
+						<!-- Editor Input -->
+						<textarea class="form-control create-value-input" id="create_value_editor"
+							name="value" rows="10" style="display: none;"></textarea>
 						<div class="invalid-feedback"></div>
 					</div>
 				</div>
@@ -609,11 +669,30 @@ function openModalDelete(settingId) {
 							id="edit_key_display" disabled>
 					</div>
 					<div class="mb-3">
+						<label for="edit_type_display"
+							class="form-label">{{__('admin.type')}}</label>
+						<input type="text" class="form-control"
+							id="edit_type_display" disabled>
+					</div>
+					<div class="mb-3">
 						<label for="edit_value"
 							class="form-label">{{__('admin.value')}} <span
 								class="text-danger">*</span></label>
-						<textarea class="form-control" id="edit_value" name="value"
-							rows="10"></textarea>
+						<!-- Text Input -->
+						<input type="text" class="form-control edit-value-input" id="edit_value_text"
+							name="value" style="display: none;">
+						<!-- Number Input -->
+						<input type="number" class="form-control edit-value-input" id="edit_value_number"
+							name="value" style="display: none;">
+						<!-- Email Input -->
+						<input type="email" class="form-control edit-value-input" id="edit_value_email"
+							name="value" style="display: none;">
+						<!-- Textarea Input -->
+						<textarea class="form-control edit-value-input" id="edit_value_textarea"
+							name="value" rows="5" style="display: none;"></textarea>
+						<!-- Editor Input -->
+						<textarea class="form-control edit-value-input" id="edit_value_editor"
+							name="value" rows="10" style="display: none;"></textarea>
 						<div class="invalid-feedback"></div>
 					</div>
 				</div>

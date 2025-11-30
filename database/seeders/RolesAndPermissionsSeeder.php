@@ -20,6 +20,7 @@ class RolesAndPermissionsSeeder extends Seeder
         // Create default roles
         PermissionHelper::createDefaultRoles();
         
+        
         $this->command->info('Roles and Permissions seeded successfully!');
     }
 }

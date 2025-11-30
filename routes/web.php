@@ -13,6 +13,8 @@ use App\Http\Controllers\Admin\AppSettingsController;
 use App\Http\Controllers\Admin\PromoCodeController;
 use App\Http\Controllers\Admin\AdminsController;
 use App\Http\Controllers\Admin\InvitationRequestController;
+use App\Http\Controllers\Admin\RolesController;
+use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Website\V1\Invitation\InvitationsController as WebsiteInvitationController;
 use Illuminate\Support\Facades\Artisan;
 
@@ -188,6 +190,10 @@ Route::group(['prefix' => 'admin'], function () {
         Route::get('promo-code/export/pdf', [PromoCodeController::class, 'exportPdf'])->name('promo-code.export.pdf');
         Route::get('promo-code/status/{promoCode}', [PromoCodeController::class, 'status'])->name('promo-code.change-status');
         Route::get('promo-code/details/{id}', [PromoCodeController::class, 'show'])->name('promo-code.details');
+
+        // Roles and Permissions
+        Route::resource('roles', RolesController::class);
+        Route::resource('permissions', PermissionsController::class);
     });
 });
 

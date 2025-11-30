@@ -26,15 +26,16 @@
 
 			<!-- Left Menu Start -->
 			<ul class="metismenu list-unstyled" id="side-menu">
+				@can('view-dashboard')
 				<li class="{{Route::is('admin.dashboard') ? 'mm-active' : ''}}">
 					<a href="{{route('admin.dashboard')}}" class="waves-effect">
 						<i class="bx bx-home-circle"></i>
 						<span key="t-chat">{{__('admin.Dashboard')}}</span>
 					</a>
 				</li>
-
+				@endcan
 				<li class="menu-title">{{__('admin.content-management')}}</li>
-
+				@can('view-categories')
 				<li @if(Route::is('category.index') || Route::is('category.create') ||
 					Route::is('category.edit')) class="mm-active" @endif>
 					<a href="{{route('category.index')}}" class="waves-effect">
@@ -42,7 +43,8 @@
 						<span key="t-chat">{{__('admin.categories')}}</span>
 					</a>
 				</li>
-
+				@endcan
+				@can('view-invitation-requests')
 				<li @if(Route::is('invitation-request.index') &&
 					request('invitation_type')==\App\Helpers\Constant::INVITATION_TYPE['Contact Design']) class="mm-active" @endif>
 					<a href="{{route('invitation-request.index',['invitation_type'=>\App\Helpers\Constant::INVITATION_TYPE['Contact Design']])}}"
@@ -52,7 +54,8 @@
 							key="t-chat">{{__('admin.invitation-requests')}}</span>
 					</a>
 				</li>
-
+				@endcan
+				@can('view-invitations')
 				<li @if(Route::is('invitation.index') || Route::is('invitation.create') ||
 					Route::is('invitation.edit') || Route::is('invitations.details'))
 					class="mm-active" @endif>
@@ -61,7 +64,8 @@
 						<span key="t-chat">{{__('admin.invitations')}}</span>
 					</a>
 				</li>
-
+				@endcan
+				@can('view-users')
 				<li class="menu-title">{{__('admin.user-management')}}</li>
 
 				<li @if(Route::is('users.index') || Route::is('users.show') ||
@@ -71,7 +75,8 @@
 						<span key="t-chat">{{__('admin.users')}}</span>
 					</a>
 				</li>
-
+				@endcan
+				@can('view-admins')
 				<li @if(Route::is('admins.index') || Route::is('admins.create') ||
 					Route::is('admins.edit') || Route::is('admins.show'))
 					class="mm-active" @endif>
@@ -80,9 +85,28 @@
 						<span key="t-chat">{{__('admin.admins')}}</span>
 					</a>
 				</li>
-
+				@endcan
+				@can('view-roles')
+				<li @if(Route::is('roles.index') || Route::is('roles.create') ||
+					Route::is('roles.edit') || Route::is('roles.show')) class="mm-active"
+					@endif>
+					<a href="{{route('roles.index')}}" class="waves-effect">
+						<i class="bx bx-shield-quarter"></i>
+						<span key="t-chat">{{__('admin.roles')}}</span>
+					</a>
+				</li>
+				@endcan
+				@can('view-permissions')
+				<!-- <li @if(Route::is('permissions.index') || Route::is('permissions.create') ||
+					Route::is('permissions.edit') || Route::is('permissions.show')) class="mm-active" @endif>
+					<a href="{{route('permissions.index')}}" class="waves-effect">
+						<i class="bx bx-lock"></i>
+						<span key="t-chat">{{__('admin.permissions')}}</span>
+					</a>
+				</li> -->
+				@endcan
 				<li class="menu-title">{{__('admin.business-management')}}</li>
-
+				@can('view-packages')
 				<li @if(Route::is('package.index') || Route::is('package.create') ||
 					Route::is('package.edit')) class="mm-active" @endif>
 					<a href="{{route('package.index')}}" class="waves-effect">
@@ -90,7 +114,8 @@
 						<span key="t-chat">{{__('admin.packages')}}</span>
 					</a>
 				</li>
-
+				@endcan
+				@can('view-promo-codes')
 				<li @if(Route::is('promo-code.index') || Route::is('promo-code.create') ||
 					Route::is('promo-code.edit') || Route::is('promo-code.details'))
 					class="mm-active" @endif>
@@ -99,7 +124,8 @@
 						<span key="t-chat">{{__('admin.promo-codes')}}</span>
 					</a>
 				</li>
-
+				@endcan
+				@can('view-financial')
 				<li @if(Route::is('financial.index') || Route::is('financial.monthly-report') ||
 					Route::is('financial.annual-report')) class="mm-active" @endif>
 					<a href="{{route('financial.index')}}" class="waves-effect">
@@ -108,9 +134,9 @@
 							key="t-chat">{{__('admin.financial-transactions')}}</span>
 					</a>
 				</li>
-
+				@endcan
 				<li class="menu-title">{{__('admin.communication')}}</li>
-
+				@can('view-contact-us')
 				<li @if(Route::is('contact.index') || Route::is('contact.show') ||
 					Route::is('contact.reply')) class="mm-active" @endif>
 					<a href="{{route('contact.index')}}" class="waves-effect">
@@ -118,7 +144,8 @@
 						<span key="t-chat">{{__('admin.contact-us')}}</span>
 					</a>
 				</li>
-
+				@endcan
+				@can('view-notifications')
 				<li @if(Route::is('notifications.index') || Route::is('notifications.create') ||
 					Route::is('notifications.edit')) class="mm-active" @endif>
 					<a href="{{route('notifications.index')}}" class="waves-effect">
@@ -126,8 +153,10 @@
 						<span key="t-chat">{{__('admin.notifications')}}</span>
 					</a>
 				</li>
-
+				@endcan
 				<li class="menu-title">{{__('admin.system')}}</li>
+
+				@can('view-app-settings')
 
 				<li>
 					<a href="javascript: void(0);" class="has-arrow waves-effect">
@@ -146,7 +175,7 @@
 						</li>
 					</ul>
 				</li>
-
+				@endcan
 			</ul>
 		</div>
 		<!-- Sidebar -->

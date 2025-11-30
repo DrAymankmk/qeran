@@ -36,10 +36,12 @@
 			<div class="card-body">
 				<div class="row mb-2">
 					<div class="col-12 col-md 12">
+						@can('view-categories')
 						<a href="{{route('category.create')}}"
 							class="btn btn-primary btn-rounded waves-effect waves-light mb-2 me-2"><i
 								class="mdi mdi-plus me-1"></i>
 							{{__('admin.add-new')}} </a>
+						@endcan
 					</div>
 
 					<div class="col-sm-8">
@@ -88,21 +90,27 @@
 								</td>
 								<td>
 									<div class="d-flex gap-3">
+										@can('view-categories')
 										<a href="javascript:void(0);"
 											onclick="showCategoryDetails({{$category->id}})"
 											title="{{__('admin.show')}}"
 											class="text-info"><i
 												class="mdi mdi-eye font-size-22"></i></a>
+										@endcan
+										@can('edit-categories')
 										<a href="{{route('category.edit',$category->id)}}"
 											title="{{__('admin.edit')}}"
 											class="text-warning"><i
 												class="mdi mdi-file-edit-outline font-size-22"></i></a>
+										@endcan
+										@can('delete-categories')
 										@if($category->invitations_count=== 0)
 										<a onclick="openModalDelete({{$category->id}})"
 											title="{{__('admin.delete')}}"
 											class="text-danger"><i
 												class="mdi mdi-trash-can-outline font-size-22"></i></a>
 										@endif
+										@endcan
 									</div>
 								</td>
 							</tr>

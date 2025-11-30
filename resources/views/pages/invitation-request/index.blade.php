@@ -121,7 +121,7 @@
 <!-- end row -->
 @endsection
 
-@include('pages.invitation.scripts.request-scripts')
+@include('pages.invitation-request.scripts.request-scripts')
 
 
 @section('modal')

@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -171,14 +172,25 @@ class InvitationsController extends Controller
 
             // Format actions HTML
             $whatsappUrl = 'https://api.whatsapp.com/send?phone='.str_replace('+', '', $invitation->user?->country_code ?? '').($invitation->user?->phone ?? '');
+
             $actionsHtml = '<div class="d-flex gap-3">'.
                 '<a href="'.e($whatsappUrl).'" title="'.__('admin.whatsapp').'" class="text-success" target="_blank"><i class="mdi mdi-whatsapp font-size-18"></i></a>'.
-                '<a href="javascript:void(0);" onclick="showInvitationDetails('.$invitation->id.')" title="'.__('admin.show').'" class="text-info"><i class="mdi mdi-eye font-size-22"></i></a>'.
-                '<a href="'.route('invitation.edit', $invitation->id).'" title="'.__('admin.edit').'" class="text-warning"><i class="mdi mdi-file-edit-outline font-size-22"></i></a>'.
-                '<a href="'.route('invitations.getPackagesByInvitationId', ['invitation_id' => $invitation->id]).'" title="'.__('admin.packages').'" class="text-success"><i class="mdi mdi-package font-size-22"></i></a>'.
-                '<a href="'.route('invitation.guards', $invitation->id).'" title="'.__('admin.guards').'" class="text-success"><i class="mdi mdi-account font-size-22"></i></a>'.
-                '<a onclick="openModalDelete('.$invitation->id.')" title="'.__('admin.delete').'" class="text-danger"><i class="mdi mdi-trash-can-outline font-size-22"></i></a>'.
-                '</div>';
+                '<a href="javascript:void(0);" onclick="showInvitationDetails('.$invitation->id.')" title="'.__('admin.show').'" class="text-info"><i class="mdi mdi-eye font-size-22"></i></a>';
+
+            // Check permission for edit
+            if (Gate::allows('edit-invitations')) {
+                $actionsHtml .= '<a href="'.route('invitation.edit', $invitation->id).'" title="'.__('admin.edit').'" class="text-warning"><i class="mdi mdi-file-edit-outline font-size-22"></i></a>';
+            }
+
+            $actionsHtml .= '<a href="'.route('invitations.getPackagesByInvitationId', ['invitation_id' => $invitation->id]).'" title="'.__('admin.packages').'" class="text-success"><i class="mdi mdi-package font-size-22"></i></a>'.
+                '<a href="'.route('invitation.guards', $invitation->id).'" title="'.__('admin.guards').'" class="text-success"><i class="mdi mdi-account font-size-22"></i></a>';
+
+            // Check permission for delete
+            if (Gate::allows('delete-invitations')) {
+                $actionsHtml .= '<a onclick="openModalDelete('.$invitation->id.')" title="'.__('admin.delete').'" class="text-danger"><i class="mdi mdi-trash-can-outline font-size-22"></i></a>';
+            }
+
+            $actionsHtml .= '</div>';
 
             $data[] = [
                 $invitation->id,

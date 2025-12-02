@@ -36,12 +36,15 @@
 			<div class="card-body">
 
 				<div class="table-responsive mt-2">
-					<table id="contactTable" class="table table-hover dt-responsive nowrap"
+					<table id="contactTable"
+						class="table table-hover dt-responsive nowrap"
 						style="border-collapse: collapse; border-spacing: 0; width: 100%;">
 						<thead>
 							<tr class="tr-colored">
 								<th scope="col">{{__('admin.id')}}</th>
-
+								<th scope="col">
+									{{__('admin.conversation_status')}}
+								</th>
 								<th scope="col">{{__('admin.status')}}
 								</th>
 								<th scope="col">{{__('admin.name')}}
@@ -50,61 +53,80 @@
 								</th>
 								<th scope="col">{{__('admin.phone')}}
 								</th>
-								<!-- <th scope="col">{{__('admin.subject')}}
-								</th>
-								<th scope="col">{{__('admin.message')}}
-								</th> -->
 								<th scope="col">
 									{{__('admin.created_at')}}
 								</th>
 								<th scope="col">{{__('admin.actions')}}
 								</th>
-
 							</tr>
 						</thead>
 						<tbody>
 							@foreach($contacts as $contact)
-
+							@php
+							$conversationStatus =
+							$contact->conversation_status ??
+							\App\Helpers\Constant::CONTACT_CONVERSATION_STATUS['New'];
+							$statusClass = '';
+							$statusText = '';
+							if($conversationStatus ==
+							\App\Helpers\Constant::CONTACT_CONVERSATION_STATUS['New'])
+							{
+							$statusClass = 'badge bg-danger';
+							$statusText = __('admin.new');
+							} elseif($conversationStatus ==
+							\App\Helpers\Constant::CONTACT_CONVERSATION_STATUS['Under Review']) {
+							$statusClass = 'badge bg-warning';
+							$statusText = __('admin.under_review');
+							} else {
+							$statusClass = 'badge bg-success';
+							$statusText = __('admin.closed');
+							}
+							@endphp
 							<tr>
-								<td>{{$contact->id}}</a></td>
-								<td>{{$contact->status==2?__('admin.not-replied-yet'):__('admin.replied')}}
+								<td>{{$contact->id}}</td>
+								<td>
+									<span
+										class="{{$statusClass}}">{{$statusText}}</span>
 								</td>
-
+								<td>
+									<span
+										class="badge {{$contact->status==2?'bg-info':'bg-success'}}">
+										{{$contact->status==2?__('admin.not-replied-yet'):__('admin.replied')}}
+									</span>
+								</td>
 								<td>{{$contact->name}}</td>
 								<td>{{$contact->email??__('admin.no-data-available')}}
 								</td>
-								<td style="direction: ltr;"><a
-										href="tel:{{$contact->phone}}{{$contact->country_code}}">
+								<td style="direction: ltr;">
+									<a
+										href="tel:{{$contact->country_code}}{{$contact->phone}}">
 										{{$contact->country_code}}{{$contact->phone}}
-									</a></td>
-								<!-- <td>{{$contact->subject}}</td>
-								<td>{{$contact->message}}</td> -->
-
+									</a>
+								</td>
 								<td>
 									{{Carbon\Carbon::parse($contact->created_at)->locale(app()->getLocale())->translatedFormat('l dS F G:i - Y')}}
 								</td>
 								<td>
 									<div class="d-flex gap-3">
-
+										@can('view-contact-us')
 										<a href="javascript:void(0);"
 											onclick="showContactDetails({{$contact->id}})"
 											title="{{__('admin.show')}}"
 											class="text-info"><i
 												class="mdi mdi-eye font-size-22"></i></a>
-
+										@endcan
+										@can('reply-contact-us')
 										<a href="{{route('contact.reply',['contact_id'=>$contact->id])}}"
 											title="{{__('admin.reply')}}"
 											class="text-success"><i
 												class="mdi mdi-message font-size-22"></i></a>
-
-
-
-
+										@endcan
+										@can('delete-contact-us')
 										<a onclick="openModalDelete({{$contact->id}})"
 											title="{{__('admin.delete')}}"
 											class="text-danger"><i
 												class="mdi mdi-trash-can-outline font-size-22"></i></a>
-
+										@endcan
 									</div>
 								</td>
 							</tr>
@@ -176,6 +198,12 @@
 						<div class="form-group">
 							<strong>{{__('admin.status')}}:</strong> <span
 								id="modal_status"></span>
+						</div>
+					</div>
+					<div class="col-12">
+						<div class="form-group">
+							<strong>{{__('admin.conversation_status')}}:</strong>
+							<span id="modal_conversation_status"></span>
 						</div>
 					</div>
 				</div>

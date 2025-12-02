@@ -111,21 +111,27 @@ class UsersController extends Controller
         ]);
 
         if ($newStatus == Constant::USER_STATUS['Suspended']) {
+            // User category: Account Banned or Unbanned
             Notification::notify('users',
                 Constant::NOTIFICATIONS_TYPE['Admin'],
                 [$user->id],
-                null,
+                $user->id,
                 'Modern Invitation',
                 'You are blocked by admin!',
-                false);
+                false,
+                Constant::NOTIFICATION_CATEGORY['User'],
+                Constant::NOTIFICATION_USER_TYPES['Account Banned or Unbanned']);
         } elseif ($newStatus == Constant::USER_STATUS['Verified']) {
+            // User category: Account Activated
             Notification::notify('users',
                 Constant::NOTIFICATIONS_TYPE['Admin'],
                 [$user->id],
-                null,
+                $user->id,
                 'Modern Invitation',
                 'Your account has been verified!',
-                false);
+                false,
+                Constant::NOTIFICATION_CATEGORY['User'],
+                Constant::NOTIFICATION_USER_TYPES['Account Activated']);
         }
 
         return response()->json([

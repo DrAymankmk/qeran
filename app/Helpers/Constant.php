@@ -150,11 +150,46 @@ class Constant
         'Suggestion' => 3,
     ];
 
+    const CONTACT_CONVERSATION_STATUS = [
+        'New' => 1,
+        'Under Review' => 2,
+        'Closed' => 3,
+    ];
+
     const NOTIFICATIONS_TYPE = [
         'Admin' => 0,
         'Invitations' => 1,
         'Updated Invitations' => 2,
         'Invitation Request' => 3,
+    ];
+
+    const NOTIFICATION_CATEGORY = [
+        'Order' => 1,
+        'Payment' => 2,
+        'User' => 3,
+        'Contact Us' => 4,
+    ];
+
+    const NOTIFICATION_ORDER_TYPES = [
+        'New Order Created' => 1,
+        'Order Modified or Canceled' => 2,
+        'Final Design Delivered' => 3,
+    ];
+
+    const NOTIFICATION_PAYMENT_TYPES = [
+        'New Payment Received' => 1,
+        'Payment Failed' => 2,
+        'Refund Issued' => 3,
+    ];
+
+    const NOTIFICATION_USER_TYPES = [
+        'New User Registered' => 1,
+        'Account Activated' => 2,
+        'Account Banned or Unbanned' => 3,
+    ];
+
+    const NOTIFICATION_CONTACT_TYPES = [
+        'New Message' => 1,
     ];
 
     const USER_IMAGE_FOLDER_NAME = 'users';

@@ -362,13 +362,17 @@ class InvitationsController extends Controller
                 'status' => Constant::INVITATION_STATUS['Pending user approval'],
             ]);
 
-            // Send notification
+            // Send notification - Order category: New Order Created
             Notification::notify(
                 'users',
                 Constant::NOTIFICATIONS_TYPE['Invitation Request'],
                 [$invitation->user_id],
                 $invitation->id,
-                'invitation_confirmation_request'
+                'invitation_confirmation_request',
+                [],
+                true,
+                Constant::NOTIFICATION_CATEGORY['Order'],
+                Constant::NOTIFICATION_ORDER_TYPES['New Order Created']
             );
 
             DB::commit();
@@ -478,22 +482,31 @@ class InvitationsController extends Controller
                 $userIds = $invitation->users->pluck('id')->toArray();
 
                 if (! empty($userIds)) {
+                    // Order category: New Order Created (invitation received)
                     Notification::notify(
                         'users',
                         Constant::NOTIFICATIONS_TYPE['Invitations'],
                         $userIds,
                         $invitation->id,
-                        'invitation_received'
+                        'invitation_received',
+                        [],
+                        true,
+                        Constant::NOTIFICATION_CATEGORY['Order'],
+                        Constant::NOTIFICATION_ORDER_TYPES['New Order Created']
                     );
                 }
 
-                // Notify the invitation owner
+                // Notify the invitation owner - Payment category: New Payment Received
                 Notification::notify(
                     'users',
                     Constant::NOTIFICATIONS_TYPE['Invitations'],
                     [$invitation->user_id],
                     $invitation->id,
-                    'payment_approved'
+                    'payment_approved',
+                    [],
+                    true,
+                    Constant::NOTIFICATION_CATEGORY['Payment'],
+                    Constant::NOTIFICATION_PAYMENT_TYPES['New Payment Received']
                 );
             }
 
@@ -578,14 +591,18 @@ class InvitationsController extends Controller
 
             $invitationPackage->invitation->update(['paid' => $newInvitationPaidStatus]);
 
-            // Send notification when payment is approved
+            // Send notification when payment is approved - Payment category: New Payment Received
             if ($newPackageStatus == Constant::PAID_STATUS['Paid']) {
                 Notification::notify(
                     'users',
                     Constant::NOTIFICATIONS_TYPE['Invitations'],
                     [$invitationPackage->invitation->user_id],
                     $invitationPackage->invitation_id,
-                    'payment_approved'
+                    'payment_approved',
+                    [],
+                    true,
+                    Constant::NOTIFICATION_CATEGORY['Payment'],
+                    Constant::NOTIFICATION_PAYMENT_TYPES['New Payment Received']
                 );
             }
 

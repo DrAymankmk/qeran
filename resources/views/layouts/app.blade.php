@@ -146,6 +146,167 @@
 
 @endif
 
+@can('view-notifications')
+<style>
+    .unread-notification {
+        background-color: rgba(85, 110, 230, 0.05) !important;
+    }
+    .unread-notification:hover {
+        background-color: rgba(85, 110, 230, 0.1) !important;
+    }
+    
+    /* Notification dropdown scrollable styles */
+    #notifications-dropdown-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    #notifications-dropdown-list .simplebar-scrollbar::before {
+        background-color: rgba(0, 0, 0, 0.3);
+    }
+    
+    #notifications-dropdown-list .simplebar-track.simplebar-vertical {
+        width: 8px;
+    }
+    
+    #notifications-dropdown-list .simplebar-content-wrapper {
+        padding-right: 0;
+    }
+    
+    /* Smooth scrolling */
+    #notifications-dropdown-list {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+    }
+    
+    #notifications-dropdown-list::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #notifications-dropdown-list::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    #notifications-dropdown-list::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 3px;
+    }
+    
+    #notifications-dropdown-list::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+</style>
+<script>
+    // Load notifications on page load
+    $(document).ready(function() {
+        loadNotificationCount();
+        // Refresh count every 30 seconds
+        setInterval(loadNotificationCount, 30000);
+    });
+
+    function loadNotificationCount() {
+        fetch('{{ route("notifications.recent") }}')
+            .then(response => response.json())
+            .then(data => {
+                const badge = document.getElementById('notification-badge-count');
+                if (badge) {
+                    if (data.unread_count > 0) {
+                        badge.textContent = data.unread_count;
+                        badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            })
+            .catch(error => console.error('Error loading notification count:', error));
+    }
+
+    function loadNotifications() {
+        const listContainer = document.getElementById('notifications-dropdown-list');
+        if (!listContainer) return;
+
+        listContainer.innerHTML = '<div class="text-center p-3"><div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+
+        fetch('{{ route("notifications.recent") }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.notifications.length === 0) {
+                    listContainer.innerHTML = '<div class="text-center p-3 text-muted">{{__("admin.no-notifications")}}</div>';
+                    // Reinitialize simplebar after content change
+                    if (typeof SimpleBar !== 'undefined') {
+                        new SimpleBar(listContainer);
+                    }
+                    return;
+                }
+
+                let html = '';
+                data.notifications.forEach(notification => {
+                    const iconClass = notification.category === '{{__("admin.order_notifications")}}' ? 'bx-cart' :
+                                     notification.category === '{{__("admin.payment_notifications")}}' ? 'bx-credit-card' :
+                                     notification.category === '{{__("admin.user_notifications")}}' ? 'bx-user' :
+                                     notification.category === '{{__("admin.contact_us_notification")}}' ? 'bx-envelope' : 'bx-bell';
+                    
+                    const bgClass = notification.is_read ? 'bg-light' : 'bg-primary';
+                    const fontWeight = notification.is_read ? '' : 'font-weight-bold';
+
+                    html += `
+                        <a href="${notification.url || 'javascript:void(0);'}" 
+                           class="text-reset notification-item ${notification.is_read ? '' : 'unread-notification'}"
+                           ${notification.url ? 'onclick="markNotificationAsRead(' + notification.id + ')"' : ''}>
+                            <div class="d-flex">
+                                <div class="avatar-xs me-3">
+                                    <span class="avatar-title ${bgClass} rounded-circle font-size-16">
+                                        <i class="bx ${iconClass}"></i>
+                                    </span>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 ${fontWeight}">${notification.title || '{{__("admin.no-title")}}'}</h6>
+                                    <div class="font-size-12 text-muted">
+                                        <p class="mb-1">${notification.description || ''}</p>
+                                        <p class="mb-0"><i class="mdi mdi-clock-outline"></i> <span>${notification.created_at}</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    `;
+                });
+
+                listContainer.innerHTML = html;
+                
+                // Reinitialize simplebar after content change
+                if (typeof SimpleBar !== 'undefined') {
+                    new SimpleBar(listContainer);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading notifications:', error);
+                listContainer.innerHTML = '<div class="text-center p-3 text-danger">{{__("admin.error-loading-notifications")}}</div>';
+                // Reinitialize simplebar after content change
+                if (typeof SimpleBar !== 'undefined') {
+                    new SimpleBar(listContainer);
+                }
+            });
+    }
+
+    function markNotificationAsRead(notificationId) {
+        fetch('{{ route("notifications.mark-as-read", ":id") }}'.replace(':id', notificationId), {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadNotificationCount();
+                loadNotifications();
+            }
+        })
+        .catch(error => console.error('Error marking notification as read:', error));
+    }
+</script>
+@endcan
 
 </body>
 

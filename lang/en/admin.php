@@ -643,5 +643,56 @@ return[
     'module-contact-us'=>'Contact Us',
     'module-app-settings'=>'App Settings',
     'module-roles'=>'Roles',
-    'module-permissions'=>'Permissions'
+    'module-permissions'=>'Permissions',
+    // Contact Us Conversation Status
+    'conversation_status'=>'Conversation Status',
+    'new'=>'New',
+    'under_review'=>'Under Review',
+    'closed'=>'Closed',
+    'send_reply_via_whatsapp'=>'Send Reply via WhatsApp',
+    'whatsapp_reply_note'=>'Check this box to send the reply message to the customer via WhatsApp',
+    'send_reply'=>'Send Reply',
+    'contact-information'=>'Contact Information',
+    'cancel'=>'Cancel',
+    // Notification System
+    'category'=>'Category',
+    'notification_type'=>'Notification Type',
+    'read'=>'Read',
+    'unread'=>'Unread',
+    'view_notification'=>'View Notification',
+    'notification-viewed'=>'Notification viewed',
+    'notification-marked-as-read'=>'Notification marked as read',
+    'all-notifications-marked-as-read'=>'All notifications marked as read',
+    'read-all'=>'Read All',
+    'confirm-mark-all-read'=>'Are you sure you want to mark all notifications as read?',
+    'no-notifications'=>'No notifications',
+    'error-loading-notifications'=>'Error loading notifications',
+    'no-title'=>'No title',
+    'view_related_item'=>'View Related Item',
+    'order_notifications'=>'Order Notifications',
+    'payment_notifications'=>'Payment Notifications',
+    'user_notifications'=>'User Notifications',
+    'contact_us_notification'=>'Contact Us Notification',
+    // Order Notification Types
+    'new_order_created'=>'New Order Created',
+    'order_modified_or_canceled'=>'Order Modified or Canceled',
+    'final_design_delivered'=>'Final Design Delivered',
+    // Payment Notification Types
+    'new_payment_received'=>'New Payment Received',
+    'payment_failed'=>'Payment Failed',
+    'refund_issued'=>'Refund Issued',
+    // User Notification Types
+    'new_user_registered'=>'New User Registered',
+    'account_activated'=>'Account Activated',
+    'account_banned_or_unbanned'=>'Account Banned or Unbanned',
+    // Contact Us Notification Types
+    'new_message'=>'New Message',
+    // Notification Modal
+    'notification-details'=>'Notification Details',
+    'view_details'=>'View Details',
+    'notification-not-found'=>'Notification not found',
+    'user_id'=>'User ID',
+    'target_id'=>'Target ID',
+    'read_at'=>'Read At',
+    'type'=>'Type'
 ];

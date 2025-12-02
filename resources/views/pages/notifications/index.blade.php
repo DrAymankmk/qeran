@@ -22,27 +22,109 @@
 		<div class="card">
 			<div class="card-body">
 				<div class="row mb-2">
-					<div class="col-sm-4">
-					</div>
-
-					{{--                            @can('create_notifications')--}}
-
-					<div class="col-sm-8">
-						<div class="text-sm-end">
+					<div class="col-md-12 col-sm-12">
+						<div class="text-sm-start d-flex gap-2">
+							@can('view-notifications')
 							<a href="{{route('notifications.create')}}"
-								class="btn btn-primary btn-rounded waves-effect waves-light mb-2 me-2"><i
+								class="btn btn-primary btn-rounded waves-effect waves-light mb-2"><i
 									class="mdi mdi-plus me-1"></i>
 								{{__('admin.add-new')}} </a>
-
+							<button type="button"
+								class="btn btn-success btn-rounded waves-effect waves-light mb-2"
+								onclick="markAllNotificationsAsRead()">
+								<i class="mdi mdi-check-all me-1"></i>
+								{{__('admin.read-all')}}
+							</button>
+							@endcan
 						</div>
-					</div><!-- end col-->
+					</div>
 				</div>
+
+				<!-- Category Tabs -->
+				@php
+				$currentCategory = $category ?? null;
+				$orderCategory = \App\Helpers\Constant::NOTIFICATION_CATEGORY['Order'];
+				$paymentCategory = \App\Helpers\Constant::NOTIFICATION_CATEGORY['Payment'];
+				$userCategory = \App\Helpers\Constant::NOTIFICATION_CATEGORY['User'];
+				$contactCategory = \App\Helpers\Constant::NOTIFICATION_CATEGORY['Contact Us'];
+				@endphp
+				<ul class="nav nav-tabs nav-tabs-custom nav-justified mb-3" role="tablist">
+					<li class="nav-item">
+						<a class="nav-link {{$currentCategory == null ? 'active' : ''}}"
+							href="{{route('notifications.index')}}"
+							role="tab">
+							<span class="d-block d-sm-none"><i
+									class="mdi mdi-home"></i></span>
+							<span class="d-none d-sm-block">{{__('admin.all')}}
+								<span
+									class="badge bg-primary rounded-pill ms-1">{{$categoryCounts['all'] ?? 0}}</span>
+							</span>
+						</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link {{$currentCategory == $orderCategory ? 'active' : ''}}"
+							href="{{route('notifications.index', ['category' => $orderCategory])}}"
+							role="tab">
+							<span class="d-block d-sm-none"><i
+									class="mdi mdi-cart"></i></span>
+							<span class="d-none d-sm-block">{{__('admin.order_notifications')}}
+								<span
+									class="badge bg-primary rounded-pill ms-1">{{$categoryCounts[$orderCategory] ?? 0}}</span>
+							</span>
+						</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link {{$currentCategory == $paymentCategory ? 'active' : ''}}"
+							href="{{route('notifications.index', ['category' => $paymentCategory])}}"
+							role="tab">
+							<span class="d-block d-sm-none"><i
+									class="mdi mdi-credit-card"></i></span>
+							<span class="d-none d-sm-block">{{__('admin.payment_notifications')}}
+								<span
+									class="badge bg-primary rounded-pill ms-1">{{$categoryCounts[$paymentCategory] ?? 0}}</span>
+							</span>
+						</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link {{$currentCategory == $userCategory ? 'active' : ''}}"
+							href="{{route('notifications.index', ['category' => $userCategory])}}"
+							role="tab">
+							<span class="d-block d-sm-none"><i
+									class="mdi mdi-account"></i></span>
+							<span class="d-none d-sm-block">{{__('admin.user_notifications')}}
+								<span
+									class="badge bg-primary rounded-pill ms-1">{{$categoryCounts[$userCategory] ?? 0}}</span>
+							</span>
+						</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link {{$currentCategory == $contactCategory ? 'active' : ''}}"
+							href="{{route('notifications.index', ['category' => $contactCategory])}}"
+							role="tab">
+							<span class="d-block d-sm-none"><i
+									class="mdi mdi-email"></i></span>
+							<span class="d-none d-sm-block">{{__('admin.contact_us_notification')}}
+								<span
+									class="badge bg-primary rounded-pill ms-1">{{$categoryCounts[$contactCategory] ?? 0}}</span>
+							</span>
+						</a>
+					</li>
+				</ul>
+
 				<div class="table-responsive mt-2">
-					<table id="notificationsTable" class="table table-hover dt-responsive nowrap"
+					<table id="notificationsTable"
+						class="table table-hover dt-responsive nowrap"
 						style="border-collapse: collapse; border-spacing: 0; width: 100%;">
 						<thead>
 							<tr class="tr-colored">
 								<th scope="col">{{__('admin.id')}}</th>
+								<th scope="col">{{__('admin.status')}}
+								</th>
+								<th scope="col">{{__('admin.category')}}
+								</th>
+								<th scope="col">
+									{{__('admin.notification_type')}}
+								</th>
 								<th scope="col">
 									{{__('admin.title-text')}}
 								</th>
@@ -54,35 +136,10 @@
 								</th>
 								<th scope="col">{{__('admin.actions')}}
 								</th>
-
 							</tr>
 						</thead>
 						<tbody>
-							@foreach($notifications as $notification)
-
-							<tr>
-								<td>{{$notification->id}} </td>
-
-								<td>{{$notification->title}}</td>
-								<td>{{$notification->description}}</td>
-
-								<td>
-									{{$notification->created_at}}
-								</td>
-								<td>
-									<div class="d-flex gap-3">
-										
-										<a onclick="openModalDelete({{$notification->id}})"
-											title="{{__('admin.delete')}}"
-											class="text-danger"><i
-												class="mdi mdi-delete font-size-18"></i></a>
-
-									</div>
-								</td>
-							</tr>
-							@endforeach
-
-
+							<!-- Data will be loaded via AJAX -->
 						</tbody>
 					</table>
 				</div>
@@ -93,46 +150,84 @@
 </div>
 @endsection
 
-@section('extra-js')
-<script src="{{asset('admin_assets/libs/select2/js/select2.min.js')}}"></script>
-<!-- bootstrap-datepicker js -->
-<script src="{{asset('admin_assets/libs/bootstrap-datepicker/js/bootstrap-datepicker.min.js')}}"></script>
+@include('pages.notifications.scripts.index-scripts')
 
-@include('pages.global.scripts.datatable-scripts')
-@include('pages.global.scripts.datatable-admin-init')
-
-<!-- init js -->
-<script src="{{asset('admin_assets/js/pages/crypto-orders.init.js')}}"></script>
-
-
-
-<script>
-	$(document).ready(function() {
-	// Initialize DataTable using reusable function
-	var table = initAdminDataTable({
-		tableId: '#notificationsTable',
-		pdfRoute: '{{route("notifications.export.pdf")}}',
-		orderColumn: 0,
-		orderDirection: 'desc',
-		nonOrderableColumns: [1, 4],
-		nonSearchableColumns: [1, 4],
-		pageLength: 10,
-		lengthMenu: [
-			[10, 25, 50, 100],
-			[10, 25, 50, 100]
-		]
-	});
-});
-function openModalDelete(shipper_id) {
-	$('.action_form').attr('action', '{{route('notifications.destroy', '')}}' + '/' + shipper_id);
-	$('#deleteModal').modal('show');
-
-}
-</script>
-
-
-@endsection
 @section('modal')
+<!-- Notification Details Modal -->
+<div class="modal fade" id="notificationDetailsModal" tabindex="-1" aria-labelledby="notificationDetailsModalLabel"
+	aria-hidden="true">
+	<div class="modal-dialog modal-lg modal-dialog-scrollable">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="notificationDetailsModalLabel">
+					{{__('admin.notification-details')}}</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal"
+					aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.id')}}:</strong> <span
+							id="modal_id"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.status')}}:</strong> <span
+							id="modal_status"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.type')}}:</strong> <span
+							id="modal_type"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.category')}}:</strong> <span
+							id="modal_category"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.notification_type')}}:</strong> <span
+							id="modal_notification_type"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.user_id')}}:</strong> <span
+							id="modal_user_id"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.target_id')}}:</strong> <span
+							id="modal_target_id"></span>
+					</div>
+					<div class="col-md-12 mb-3">
+						<strong>{{__('admin.title-text')}}:</strong>
+						<div class="alert alert-light mt-2">
+							<span id="modal_title"></span>
+						</div>
+					</div>
+					<div class="col-md-12 mb-3">
+						<strong>{{__('admin.description')}}:</strong>
+						<div class="alert alert-light mt-2">
+							<span id="modal_description"></span>
+						</div>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.created_at')}}:</strong> <span
+							id="modal_created_at"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.read_at')}}:</strong> <span
+							id="modal_read_at"></span>
+					</div>
+					<div class="col-md-6 mb-3">
+						<strong>{{__('admin.updated_at')}}:</strong> <span
+							id="modal_updated_at"></span>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary"
+					data-bs-dismiss="modal">{{__('admin.close')}}</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 @component('layouts.includes.modal')
 @slot('modalID')
 deleteModal

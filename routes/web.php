@@ -133,6 +133,7 @@ Route::group(['prefix' => 'admin'], function () {
             Route::delete('/contacts/{id}', 'destroy')->name('contact.destroy');
             Route::get('/reply', 'reply')->name('contact.reply');
             Route::post('/contacts', 'sendReply')->name('contact.reply.submit');
+            Route::post('/contacts/{id}/update-status', 'updateStatus')->name('contact.update-status');
             Route::get('contacts/export/pdf', 'contactExportPdf')->name('contact.export.pdf');
 
         });
@@ -140,6 +141,10 @@ Route::group(['prefix' => 'admin'], function () {
         Route::get('category/export/pdf', [CategoryController::class, 'exportPdf'])->name('category.export.pdf');
         Route::resource('notifications', NotificationsController::class);
         Route::get('notifications/export/pdf', [NotificationsController::class, 'notificationsExportPdf'])->name('notifications.export.pdf');
+        Route::get('notifications/{id}/details', [NotificationsController::class, 'getDetails'])->name('notifications.details');
+        Route::post('notifications/{id}/mark-as-read', [NotificationsController::class, 'markAsRead'])->name('notifications.mark-as-read');
+        Route::get('notifications/recent/list', [NotificationsController::class, 'getRecent'])->name('notifications.recent');
+        Route::post('notifications/mark-all-read', [NotificationsController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
         Route::get('app-settings', [AppSettingsController::class, 'index'])->name('app-settings.index');
         Route::post('app-settings', [AppSettingsController::class, 'store'])->name('app-settings.store');
         Route::get('app-settings/{key}', [AppSettingsController::class, 'edit'])->name('app-settings.edit');

@@ -39,6 +39,7 @@
 
 					<div class="col-sm-12">
 						<div class="text-sm-start">
+						@can('create-promo-codes')
 							<button type="button"
 								class="btn btn-primary waves-effect waves-light"
 								data-bs-toggle="modal"
@@ -47,6 +48,7 @@
 								{{__('admin.add')}}
 								{{__('admin.promo-code')}}
 							</button>
+						@endcan	
 						</div>
 					</div><!-- end col-->
 				</div>
@@ -130,16 +132,19 @@
 								</td>
 								<td>
 									<div class="d-flex gap-3">
+									@can('edit-promo-codes')
 										<a href="javascript:void(0);"
 											onclick="openEditModal({{$promoCode->id}})"
 											title="{{__('admin.edit')}}"
 											class="text-warning"><i
 												class="mdi mdi-file-edit-outline font-size-22"></i></a>
-
+									@endcan
+									@can('delete-promo-codes')
 										<a onclick="openModalDelete({{$promoCode->id}})"
 											title="{{__('admin.delete')}}"
 											class="text-danger"><i
 												class="mdi mdi-trash-can-outline font-size-22"></i></a>
+									@endcan			
 									</div>
 								</td>
 							</tr>
@@ -724,8 +729,7 @@ function openModalDelete(promoCodeId) {
 					</div>
 					<div class="row">
 						<div class="col-md-6 mb-3">
-							<label for="edit_valid_date"
-								{{__('admin.valid-date')}}> <span class="text-danger">*</span></label>
+							<label for="edit_valid_date"> {{__('admin.valid-date')}} <span class="text-danger">*</span></label>
 							<input type="date" class="form-control"
 								id="edit_valid_date" name="valid_date"
 								required>

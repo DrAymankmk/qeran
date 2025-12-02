@@ -36,9 +36,11 @@
 			<div class="card-body">
 				<div class="d-flex justify-content-between align-items-center mb-3">
 					<!-- <h4 class="card-title mb-0">{{__('admin.admins-list')}}</h4> -->
+					@can('create-admins')
 					<a href="{{route('admins.create')}}" class="btn btn-primary waves-effect waves-light">
 						<i class="bx bx-plus"></i> {{__('admin.add-admin')}}
 					</a>
+					@endcan
 				</div>
 
 				@if(session('success'))
@@ -101,16 +103,21 @@
 								</td>
 								<td>
 									<div class="d-flex gap-3">
+									@can('view-admins')
 										<a href="{{route('admins.show',$admin->id)}}"
 											title="{{__('admin.show')}}"
 											class="text-info"><i
 												class="mdi mdi-eye-check font-size-22"></i></a>
+									@endcan
+									@can('edit-admins')			
 										<a href="{{route('admins.edit',$admin->id)}}"
 											title="{{__('admin.edit')}}"
 											class="text-warning"><i
 												class="mdi mdi-file-edit-outline font-size-22"></i></a>
-
+									@endcan
+									@can('delete-admins')
 										@if($admin->id !== auth()->guard('admin')->id())
+										
 										<a onclick="openModalDelete({{$admin->id}})"
 											title="{{__('admin.delete')}}"
 											class="text-danger"><i
@@ -120,6 +127,7 @@
 											<i class="mdi mdi-trash-can-outline font-size-22"></i>
 										</span>
 										@endif
+									@endcan	
 									</div>
 								</td>
 							</tr>

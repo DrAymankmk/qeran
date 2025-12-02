@@ -188,7 +188,7 @@ class InvitationsController extends Controller
                 ->subject("دعوة جديدة");
         });
 
-          
+
 
         $data['packages'] = PackageResource::collection(
             Package::active()
@@ -196,7 +196,7 @@ class InvitationsController extends Controller
                 ->PackageType(Constant::PACKAGE_TYPE['Static Package'])
                 ->get(),
         );
-            
+
 
         $data['single_invitation_price'] = Package::active()
         ->invitationPackageType($invitation->invitation_type)
@@ -235,7 +235,7 @@ class InvitationsController extends Controller
                                     'price' => (($request->count ?? 0)) * $singleInvitationPrice,
                                     'status' => Constant::PAID_STATUS["Not Paid"]
                                 ]);
-                                
+
                     Mail::send('emails.payment-receipt', ['invitationPackage' => $invitationPackage, 'invitation' => $invitation], function ($message) {
                         $message->to('moderninvitation420@gmail.com', 'دفع باقة جديدة')
                             ->from('info@modern-invitation.com', 'Modern Invitation')
@@ -372,7 +372,7 @@ class InvitationsController extends Controller
                     ->PackageType(Constant::PACKAGE_TYPE['Static Package'])
                     ->get(),
             ),
-            'invitation_type' => $invitation->invitation_type       
+            'invitation_type' => $invitation->invitation_type
         ];
         return RespondActive::success(__('action ran successfully'), $data);
 }
@@ -388,12 +388,12 @@ class InvitationsController extends Controller
             $data['host_name'] = $invitation->usersByRole(Constant::INVITATION_USER_ROLE['Admin'])->where('user_id', auth()->user()->id)->first()?->pivot?->host_name;
         }
 
-        
+
         return  RespondActive::success('action ran successfully', $data);
 
     }
 
-   
+
     public function users(GetUserRequest $request, Invitation $invitation)
     {
 
@@ -420,7 +420,7 @@ class InvitationsController extends Controller
         $users                            = UserResource::collection(
             $invitation->users()
                 ->when($request->seen > 1 && $request->seen != null, function ($query) use ($request) {
-                    
+
                     if($request->seen == 2){
                         $query->whereIn('invitation_user.seen', [Constant::SEEN_STATUS['accepted'], Constant::SEEN_STATUS['seen'] , Constant::SEEN_STATUS['scanned']]);
                     } else if($request->seen == 5){
@@ -496,7 +496,7 @@ class InvitationsController extends Controller
             if ($invitation->totalInvitationsCount() < $invitationCountForEveryUser) {
                 return RespondActive::clientError(__('validation.exceeded_number_of_invited_users'));
             }
-            
+
             $phone = checkCountryCode(str_replace(' ', '',$userArray['phone']));
             $user = User::where(
                 [
@@ -532,17 +532,22 @@ class InvitationsController extends Controller
             $output_file = 'public/qr-code/Qr-' . $invitation->id . '-' . $user->id . '.png';
             Storage::disk('local')->put($output_file, $image);
             if ($invitation->paid == Constant::PAID_STATUS['Paid']) {
+                // Order category: New Order Created
                 Notification::notify('users',
                     Constant::NOTIFICATIONS_TYPE['Invitations'],
                     [$user->id],
                     $invitation->id,
-                    'invitation_received');
+                    'invitation_received',
+                    [],
+                    true,
+                    Constant::NOTIFICATION_CATEGORY['Order'],
+                    Constant::NOTIFICATION_ORDER_TYPES['New Order Created']);
             }
             $user['invitation_link'] = route('user.invitation.show', ['invitation_code' => $invitation->code, 'user_id' => $user->id, 'inserted_by' => auth()->id()]);
         }
 
         return RespondActive::success('Action ran successfully', (UserResource::collection($invitation->users)));
-        
+
     }
 
 
@@ -576,7 +581,7 @@ class InvitationsController extends Controller
                 return RespondActive::clientError(__('validation.exceeded_number_of_invited_users'));
             }
         }
-        
+
         $invitation->users()
             ->sync([
                 $user->id => [
@@ -589,11 +594,16 @@ class InvitationsController extends Controller
 
             $user->update(['phone' => $phone['phone'], 'country_code' => $phone['country_code']]);
         if ($invitation->paid == Constant::PAID_STATUS['Paid']) {
+            // Order category: New Order Created
             Notification::notify('users',
                 Constant::NOTIFICATIONS_TYPE['Invitations'],
                 [$user->id],
                 $invitation->id,
-                'invitation_received');
+                'invitation_received',
+                [],
+                true,
+                Constant::NOTIFICATION_CATEGORY['Order'],
+                Constant::NOTIFICATION_ORDER_TYPES['New Order Created']);
         }
 
         return RespondActive::success('Action ran successfully', (new UserResource($user)));
@@ -607,10 +617,10 @@ class InvitationsController extends Controller
         if ($invitation->user_id !== auth()->id()) {
             return RespondActive::clientError(__('validation.unauthorized_to_add_admin'), [], 403);
         }
-     
+
         // Parse phone number with country code
         $phone = checkCountryCode(str_replace(' ', '', $request->phone));
-        
+
         // Check if user exists
         $user = User::where([
             'phone' => $phone['phone'],
@@ -645,7 +655,7 @@ class InvitationsController extends Controller
 
         // Wrap in database transaction for consistency
         DB::beginTransaction();
-        
+
         try {
             // Add user as admin
             $invitation->usersByRole(Constant::INVITATION_USER_ROLE['Admin'])->sync([
@@ -657,12 +667,16 @@ class InvitationsController extends Controller
                 ],
             ], false);
 
-            // Send notification after successful database operation
+            // Send notification after successful database operation - Order category: New Order Created
             Notification::notify('users',
                 Constant::NOTIFICATIONS_TYPE['Updated Invitations'],
                 [$user->id],
                 $invitation->id,
-                'admin_added');
+                'admin_added',
+                [],
+                true,
+                Constant::NOTIFICATION_CATEGORY['Order'],
+                Constant::NOTIFICATION_ORDER_TYPES['New Order Created']);
 
             DB::commit();
 
@@ -724,13 +738,16 @@ class InvitationsController extends Controller
         $admin['admin_name'] = $updatedAdmin->pivot->name;
         $admin['invitation_count'] = $request->invitation_count;
 
-        // Send notification to the admin about the update
+        // Send notification to the admin about the update - Order category: Order Modified or Canceled
         Notification::notify('users',
             Constant::NOTIFICATIONS_TYPE['Updated Invitations'],
             [$admin->id],
             $invitation->id,
             'admin_invitation_count_updated',
-            ['count' => $request->invitation_count]);
+            ['count' => $request->invitation_count],
+            true,
+            Constant::NOTIFICATION_CATEGORY['Order'],
+            Constant::NOTIFICATION_ORDER_TYPES['Order Modified or Canceled']);
 
         return RespondActive::success(__('validation.invitation_count_updated_successfully'), new AdminResource($admin));
     }
@@ -784,11 +801,16 @@ class InvitationsController extends Controller
 
         }
 
+        // Order category: New Order Created
         Notification::notify('users',
             Constant::NOTIFICATIONS_TYPE['Invitations'],
             [$guard->id],
             $invitation->id,
-            'guard_added');
+            'guard_added',
+            [],
+            true,
+            Constant::NOTIFICATION_CATEGORY['Order'],
+            Constant::NOTIFICATION_ORDER_TYPES['New Order Created']);
 
         return RespondActive::success('Action ran successfully', new GuardResource($invitation->guards()->where('user_id',$guard->id)->first()));
 
@@ -834,12 +856,12 @@ class InvitationsController extends Controller
         ]);
     }
 
-    
+
     private function buildStyledInvitationMessage(Invitation $invitation, $messageBody, $templateType = 'styled_invitation_template')
     {
         $eventType = $invitation->category ? $invitation->category->name : $invitation->event_name;
         $hostName = auth()->user()->id == $invitation->user_id ? $invitation->host_name : $invitation->user->name;
-      
+
 
         return __('messages.' . $templateType, [
             'event_type' => $eventType,
@@ -853,7 +875,7 @@ class InvitationsController extends Controller
     public function sendNotificationToUser(SendNotificationToUserRequest $request, Invitation $invitation)
     {
 
-        
+
         if($invitation->users()->count() > 0){
             // Use generic invitation notification key for translated notifications
             foreach($invitation->users()->where('invited_by', auth()->id())->get() as $user) {
@@ -861,11 +883,11 @@ class InvitationsController extends Controller
                 $message = $this->buildStyledInvitationMessage($invitation, $request->message);
 
                 UltraMessage::send(
-                    $user->country_code . $user->phone, 
+                    $user->country_code . $user->phone,
                     $message,
-                    '', 
+                    '',
                 );
-    
+
             }
             return RespondActive::success('Action ran successfully');
         } else {
@@ -877,7 +899,7 @@ class InvitationsController extends Controller
     {
         foreach ($invitation->users as $user) {
             // Use template message if use_template is true or no custom message provided
-            $message = $request->use_template || !$request->message 
+            $message = $request->use_template || !$request->message
                 ? $this->buildInvitationMessage($invitation, 'invitation_sms_template')
                 : $request->message;
 
@@ -893,12 +915,16 @@ class InvitationsController extends Controller
         //    ]);
         }
 
-        // Send app notification using translation key
+        // Send app notification using translation key - Order category: New Order Created
         Notification::notify('users',
             Constant::NOTIFICATIONS_TYPE['Invitations'],
             $invitation->users()->pluck('users.id')->toArray(),
             $invitation->id,
-            'invitation_notification');
+            'invitation_notification',
+            [],
+            true,
+            Constant::NOTIFICATION_CATEGORY['Order'],
+            Constant::NOTIFICATION_ORDER_TYPES['New Order Created']);
         return RespondActive::success('Action ran successfully');
     }
 
@@ -920,13 +946,17 @@ class InvitationsController extends Controller
                 UltraMessage::send($user->country_code . $user->phone, $personalizedMessage);
             }
 
-            // Send in-app notification using translation key
+            // Send in-app notification using translation key - Order category: New Order Created
             Notification::notify('users',
                 Constant::NOTIFICATIONS_TYPE['Invitations'],
                 $invitation->users()->pluck('users.id')->toArray(),
                 $invitation->id,
-                'invitation_notification');
-                
+                'invitation_notification',
+                [],
+                true,
+                Constant::NOTIFICATION_CATEGORY['Order'],
+                Constant::NOTIFICATION_ORDER_TYPES['New Order Created']);
+
             return RespondActive::success('Template message sent successfully');
         } else {
             return RespondActive::clientError('no_users_found_for_this_invitation');
@@ -937,12 +967,17 @@ class InvitationsController extends Controller
     {
         $invitation->update($request->validated());
         if ($invitation->paid == Constant::PAID_STATUS['Paid'] && $request->status == Constant::INVITATION_STATUS['Cancelled']) {
+            // Order category: Order Modified or Canceled
             foreach ($invitation->users as $user) {
                 Notification::notify('users',
                     Constant::NOTIFICATIONS_TYPE['Invitations'],
                     [$user->id],
                     $invitation->id,
-                    'invitation_cancelled');
+                    'invitation_cancelled',
+                    [],
+                    true,
+                    Constant::NOTIFICATION_CATEGORY['Order'],
+                    Constant::NOTIFICATION_ORDER_TYPES['Order Modified or Canceled']);
             }
 
         }
@@ -964,18 +999,18 @@ class InvitationsController extends Controller
         if ($invitation) {
             // First check if user exists in this invitation at all
             $userInInvitation = $invitation->users()->where('user_id', $request->user_id)->first();
-            
+
             if (!$userInInvitation) {
                 // User doesn't exist in this invitation
                 return RespondActive::clientError(__('messages.sorry_user_not_invited'), ['status' => false, "message" => __("messages.sorry_user_not_invited"), 'invitation_count' => 0]);
             }
-            
+
             // Check if user is already scanned
             if ($userInInvitation->pivot->seen == Constant::SEEN_STATUS['scanned']) {
                 // User is already scanned
                 return RespondActive::success(__('messages.already_scanned'), ['status' => false, "message" => __("messages.already_scanned"), 'invitation_count' => 0]);
             }
-            
+
             // User exists and is not scanned yet - mark as scanned
             $invitation->users()->where('user_id', $request->user_id)->update(['seen' => Constant::SEEN_STATUS['scanned']]);
             return RespondActive::success('Action ran successfully', ['status' => true, "message" => __("messages.user_scanned_successfully"), 'invitation_count' => $userInInvitation->pivot->invitation_count, 'guest_name' => $userInInvitation->pivot->name, "guest_phone" => $userInInvitation->country_code . $userInInvitation->phone]);
@@ -1011,7 +1046,7 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
         ]);
 
 
-   
+
         storeImage(['value' => $request->image,
                     'folderName' => Constant::INVITATION_RECEIPT_FOLDER_NAME,
                     'file_key' => Constant::FILE_KEY['Receipt'],
@@ -1033,17 +1068,17 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
     public function shareInvitation(Invitation $invitation)
     {
         foreach ($invitation->users()->whereIn('seen', [Constant::SEEN_STATUS['in app'] , Constant::SEEN_STATUS['not in the app'] ] )->where('invited_by', auth()->id())->get() as $user) {
-            
+
             // Build dynamic message template for this user
             $message = $this->buildInvitationMessage($invitation, $user->id, 'invitation_sms_template');
-            
+
             $response = UltraMessage::send(
-                $user->country_code . $user->phone, 
+                $user->country_code . $user->phone,
                 $message,
-                '', 
+                '',
                 $invitation->id . '-' . $user->id
             );
-            
+
             if (isset($response->sent) && $response->sent=="true") {
                 $invitation->users()->where('user_id', $user->id)->update(['seen' => Constant::SEEN_STATUS['Sent']]);
             }
@@ -1055,7 +1090,7 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
     public function shareSmsInvitationApp(Invitation $invitation , User $user)
     {
         $message = $this->buildInvitationMessage($invitation, $user->id, 'invitation_sms_template');
-      
+
         return RespondActive::success('Action ran successfully', $message);
     }
 
@@ -1064,16 +1099,16 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
         $sentCount = 0;
         $failedCount = 0;
         $errors = [];
-        
+
         foreach ($invitation->users()->where('seen', Constant::SEEN_STATUS['Sent'] )->where('invited_by', auth()->id())->get() as $user) {
-            
+
             // Build dynamic message template for this user
             $message = $this->buildInvitationMessage($invitation, $user->id, 'invitation_sms_template');
-            
+
             // $response = UltraMessage::send(
             //     $user->country_code . $user->phone,
             //     $message,
-            //     '', 
+            //     '',
             //     $invitation->id . '-' . $user->id
             // );
 
@@ -1082,7 +1117,7 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
                 'country_code' => $user->country_code,
                 'message' => $message
            ]);
-            
+
             if (isset($response->sent) && $response->sent == "true") {
                 $invitation->users()->where('user_id', $user->id)->update(['seen' => Constant::SEEN_STATUS['delivered']]);
                 $sentCount++;
@@ -1095,14 +1130,14 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
                 ];
             }
         }
-        
+
         return RespondActive::success('SMS sent successfully', [
             'sent_count' => $sentCount,
             'failed_count' => $failedCount,
             'errors' => $errors
         ]);
     }
-    
+
        public function completeRequestInvitation(Invitation $invitation)
     {
         if (!is_object($invitation)) {
@@ -1128,7 +1163,7 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
 
             $appSetting = AppSetting::query()
             ->where('key', '=', 'account_number')
-            ->first();  
+            ->first();
 
         $data['package'] = [
                 'id' => $invitationPackages->id,
@@ -1136,7 +1171,7 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
                 'price' => $invitationPackages->price,
                 'free_invitations_count' => $invitationPackages->free_invitations_count
             ];
-        
+
         $data['extra'] = [
             'count' => $invitationPackages->extra_count,
             'price' => $invitationPackages->extra_price
@@ -1147,10 +1182,10 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
         $data['total_price'] = $data['package']['price'] + ($data['extra'] ? $data['extra']['price'] : 0);
 
         return RespondActive::success('Action ran successfully', $data);
-    } 
+    }
 
 
-    
+
          public function addExtraPackages(Request $request, Invitation $invitation)
     {
         // Check if there are existing unpaid packages

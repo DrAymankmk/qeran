@@ -42,10 +42,11 @@
 
                             <div class="col-sm-12">
                                 <div class="text-sm-start">
+			  @can('view-packages')
                                     <a href="{{route('package.create')}}"
                                        class="btn btn-primary btn-rounded waves-effect waves-light mb-2 me-2"><i
                                             class="mdi mdi-plus me-1"></i> {{__('admin.add-new')}} </a>
-
+			  @endcan
                                 </div>
                             </div>
                     </div>
@@ -80,13 +81,14 @@
                                     </td>
                                     <td>
                                         <div class="d-flex gap-3">
-
+				@can('edit-packages')
                                                 <a href="{{route('package.edit',$package->id)}}" title="{{__('admin.edit')}}" class="text-warning"><i
                                                         class="mdi mdi-file-edit-outline font-size-22"></i></a>
-
-
+				@endcan
+				@can('delete-packages')
                                                 <a onclick="openModalDelete({{$package->id}})" title="{{__('admin.delete')}}" class="text-danger"><i
                                                         class="mdi mdi-trash-can-outline font-size-22"></i></a>
+				@endcan	      
                                         </div>
                                     </td>
                                 </tr>

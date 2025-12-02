@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\Constant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -12,6 +13,7 @@ class ContactUs extends Model
     protected $fillable = [
         'contact_type',
         'status',
+        'conversation_status',
         'name',
         'email',
         'country_code',
@@ -35,6 +37,31 @@ class ContactUs extends Model
     {
         $query->whereMonth('created_at', now()->subMonth()->month);
     }
+
+    /**
+     * Scope to order conversations by priority:
+     * 1. New (Not Yet Replied by Admin) - newest first
+     * 2. Under Review
+     * 3. Closed
+     */
+    public function scopeOrderByConversationPriority($query)
+    {
+        $newStatus = Constant::CONTACT_CONVERSATION_STATUS['New'];
+        $notActiveStatus = Constant::STATUS['Not active'];
+        $underReviewStatus = Constant::CONTACT_CONVERSATION_STATUS['Under Review'];
+        $closedStatus = Constant::CONTACT_CONVERSATION_STATUS['Closed'];
+        
+        return $query->orderByRaw("
+            CASE 
+                WHEN conversation_status = {$newStatus} AND status = {$notActiveStatus} THEN 1
+                WHEN conversation_status = {$underReviewStatus} THEN 2
+                WHEN conversation_status = {$closedStatus} THEN 3
+                ELSE 4
+            END,
+            created_at DESC
+        ");
+    }
+
     public function image()
     {
         $this->load('hubFiles');

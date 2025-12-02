@@ -146,11 +146,19 @@
 				</li>
 				@endcan
 				@can('view-notifications')
+				@php
+					$unreadNotificationsCount = \App\Models\Notification::where('type', \App\Helpers\Constant::NOTIFICATIONS_TYPE['Admin'])
+						->whereNull('read_at')
+						->count();
+				@endphp
 				<li @if(Route::is('notifications.index') || Route::is('notifications.create') ||
 					Route::is('notifications.edit')) class="mm-active" @endif>
 					<a href="{{route('notifications.index')}}" class="waves-effect">
 						<i class="bx bx-bell"></i>
 						<span key="t-chat">{{__('admin.notifications')}}</span>
+						@if($unreadNotificationsCount > 0)
+							<span class="badge bg-danger rounded-pill ms-2">{{$unreadNotificationsCount}}</span>
+						@endif
 					</a>
 				</li>
 				@endcan
@@ -275,7 +283,25 @@
 	transition: height 0.35s ease;
 }
 
-/* Badge/Notification Count Styling (if needed in future) */
+/* Badge/Notification Count Styling */
+#side-menu>li>a .badge {
+	font-size: 10px;
+	padding: 3px 6px;
+	min-width: 18px;
+	text-align: center;
+	font-weight: 600;
+	animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+	0%, 100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.7;
+	}
+}
+
 .menu-badge {
 	margin-right: auto;
 	margin-left: 10px;

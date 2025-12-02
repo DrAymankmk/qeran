@@ -35,10 +35,12 @@
 		<div class="card">
 			<div class="card-body">
 				<div class="d-flex justify-content-between align-items-center mb-3">
+					@can('create-roles')
 					<a href="{{route('roles.create')}}"
 						class="btn btn-primary waves-effect waves-light">
 						<i class="bx bx-plus"></i> {{__('admin.add-role')}}
 					</a>
+					@endcan
 				</div>
 
 				@if(session('success'))
@@ -105,21 +107,26 @@
 								</td>
 								<td>
 									<div class="d-flex gap-3">
+										@can('view-roles')
 										<a href="{{route('roles.show',$role->id)}}"
 											title="{{__('admin.show')}}"
 											class="text-info"><i
 												class="mdi mdi-eye-check font-size-22"></i></a>
+										@endcan
+										@can('edit-roles')		
 										<a href="{{route('roles.edit',$role->id)}}"
 											title="{{__('admin.edit')}}"
 											class="text-warning"><i
 												class="mdi mdi-file-edit-outline font-size-22"></i></a>
-
+										@endcan		
+										@can('delete-roles')
 										@if($role->name !== 'Super Admin')
 										<a onclick="openModalDelete({{$role->id}})"
 											title="{{__('admin.delete')}}"
 											class="text-danger"><i
 												class="mdi mdi-trash-can-outline font-size-22"></i></a>
 										@endif
+										@endcan
 									</div>
 								</td>
 							</tr>

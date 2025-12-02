@@ -9,8 +9,10 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Mail;
 use App\Helpers\Constant;
 use App\Services\External\Notification as PushNotificationService;
+use App\Services\External\UltraMessage;
 use Carbon\Carbon;
 use Mpdf\Mpdf;
+use Illuminate\Support\Facades\Log;
 
 class ContactsController extends Controller
 {
@@ -21,11 +23,9 @@ class ContactsController extends Controller
      */
     public function index()
     {
-
-
-        $contacts = ContactUs::orderBy('created_at', 'desc')->paginate();
+        // Order by: Newest (Not Yet Replied by Admin) - Under Review - Closed
+        $contacts = ContactUs::orderByConversationPriority()->paginate();
         return view('pages.contact-us.index', compact('contacts'));
-
     }
 
     public function show($id)
@@ -41,38 +41,93 @@ class ContactsController extends Controller
             'message' => $contact->message,
             'created_at' => Carbon::parse($contact->created_at)->locale(app()->getLocale())->translatedFormat('l dS F G:i - Y'),
             'status' => $contact->status,
+            'conversation_status' => $contact->conversation_status,
         ]);
     }
 
     public function reply(Request $request)
     {
-        $contact=ContactUs::whereId($request->contact_id)->first();
-        return view('pages.contact-us.reply', compact('contact'));
+        $contact = ContactUs::whereId($request->contact_id)->first();
 
+        // Update conversation status to "Under Review" when admin opens it
+        if ($contact->conversation_status == Constant::CONTACT_CONVERSATION_STATUS['New']) {
+            $contact->update([
+                'conversation_status' => Constant::CONTACT_CONVERSATION_STATUS['Under Review']
+            ]);
+        }
+
+        return view('pages.contact-us.reply', compact('contact'));
     }
+
     public function sendReply(Request $request)
     {
-        $contact=ContactUs::whereId($request->contact_id)->first();
-        $contact->update(['status'=>1]);
-        // $data['name'] = $contact->name;
-        // $data['text'] = $request->message;
-        // Mail::send('mail', $data, function ($message) use ($contact) {
-        //     $message->to($contact->email)->subject('Contact Us Reply');
-        //     $message->from('info@modern-invitation.com', 'Modern Invitation Application');
-        // });
-        PushNotificationService::notify(
-            'users',
-            Constant::NOTIFICATIONS_TYPE['Admin'],
-            [$contact->user_id],
-            $contact->id,
-            __('admin.contact_us_reply') . ' ' . $contact->subject,
-            $request->message,
-            false  // Don't use translation - send as plain text
-        );
+        $request->validate([
+            'contact_id' => 'required|exists:contact_us,id',
+            'message' => 'required|string|max:1000',
+            'send_whatsapp' => 'nullable|boolean',
+        ]);
+
+        $contact = ContactUs::whereId($request->contact_id)->first();
+
+        // Update status to replied
+        $contact->update([
+            'status' => Constant::STATUS['Active'],
+            'conversation_status' => Constant::CONTACT_CONVERSATION_STATUS['Closed']
+        ]);
+
+        // Send WhatsApp message if requested
+        if ($request->has('send_whatsapp') && $request->send_whatsapp) {
+            try {
+                $phone = $contact->country_code . $contact->phone;
+                $message = "مرحباً {$contact->name} 👋\n\n";
+                $message .= "رداً على استفسارك:\n";
+                $message .= "{$request->message}\n\n";
+                $message .= "شكراً لتواصلك معنا!";
+
+                UltraMessage::send($phone, '', $message);
+            } catch (\Exception $e) {
+                Log::error('Failed to send WhatsApp reply', [
+                    'contact_id' => $contact->id,
+                    'error' => $e->getMessage()
+                ]);
+                return redirect()->route('contact.index')
+                    ->with('error', 'تم حفظ الرد ولكن فشل إرسال رسالة الواتساب');
+            }
+        }
+
+        // Send push notification - Contact Us category: New Message
+        if ($contact->user_id) {
+            PushNotificationService::notify(
+                'users',
+                Constant::NOTIFICATIONS_TYPE['Admin'],
+                [$contact->user_id],
+                $contact->id,
+                __('admin.contact_us_reply') . ' ' . $contact->subject,
+                $request->message,
+                false,
+                Constant::NOTIFICATION_CATEGORY['Contact Us'],
+                Constant::NOTIFICATION_CONTACT_TYPES['New Message']
+            );
+        }
 
         return redirect()->route('contact.index')->with('success', 'تم إرسال الرد بنجاح');
+    }
 
+    /**
+     * Update conversation status
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'conversation_status' => 'required|in:' . implode(',', array_values(Constant::CONTACT_CONVERSATION_STATUS))
+        ]);
 
+        $contact = ContactUs::whereId($id)->first();
+        $contact->update([
+            'conversation_status' => $request->conversation_status
+        ]);
+
+        return redirect()->back()->with('success', 'تم تحديث حالة المحادثة بنجاح');
     }
 
     public function destroy($id)
@@ -87,7 +142,7 @@ class ContactsController extends Controller
 
      public function contactExportPdf()
     {
-        $contacts = ContactUs::orderBy('created_at', 'desc')->get();
+        $contacts = ContactUs::orderByConversationPriority()->get();
 
         // Configure mPDF with Arabic font support
         $mpdf = new Mpdf([

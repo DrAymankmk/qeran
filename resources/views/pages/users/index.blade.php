@@ -112,20 +112,24 @@
 								<td>
 									<div class="d-flex gap-3">
 
-
+										@can('view-users')
 										<a href="{{route('users.show',$user->id)}}"
 											title="{{__('admin.show')}}"
 											class="text-info"><i
 												class="mdi mdi-eye-check font-size-22"></i></a>
+										@endcan	
+										@can('edit-users')
 										<a href="{{route('users.edit',$user->id)}}"
 											title="{{__('admin.edit')}}"
 											class="text-warning"><i
 												class="mdi mdi-file-edit-outline font-size-22"></i></a>
-
+@endcan
+@can('delete-users')
 										<a onclick="openModalDelete({{$user->id}})"
 											title="{{__('admin.delete')}}"
 											class="text-danger"><i
 												class="mdi mdi-trash-can-outline font-size-22"></i></a>
+												@endcan
 
 									</div>
 								</td>

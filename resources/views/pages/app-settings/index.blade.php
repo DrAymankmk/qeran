@@ -41,6 +41,7 @@
 
 					<div class="col-md-12 col-sm-12">
 						<div class="text-sm-start">
+						@can('view-app-settings')
 							<button type="button"
 								class="btn btn-primary waves-effect waves-light"
 								data-bs-toggle="modal"
@@ -49,6 +50,7 @@
 								{{__('admin.add')}}
 								{{__('admin.setting')}}
 							</button>
+						@endcan	
 						</div>
 					</div><!-- end col-->
 					{{--                        @endcan--}}
@@ -99,17 +101,20 @@
 								<td>
 									<div class="d-flex gap-3">
 
+									@can('view-app-settings')
 										<a href="javascript:void(0);"
 											onclick="openEditModal({{json_encode($appSetting->key)}}, {{json_encode($appSetting->value)}}, {{json_encode($appSetting->type ?? 'text')}})"
 											title="{{__('admin.edit')}}"
 											class="text-warning"><i
 												class="mdi mdi-file-edit-outline font-size-22"></i></a>
 
-
+									@endcan
+									@can('delete-app-settings')
 										<a onclick="openModalDelete({{$appSetting->id}})"
 											title="{{__('admin.delete')}}"
 											class="text-danger"><i
 												class="mdi mdi-trash-can-outline font-size-22"></i></a>
+									@endcan			
 									</div>
 								</td>
 							</tr>

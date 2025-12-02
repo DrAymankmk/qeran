@@ -179,7 +179,59 @@ $(document).ready(function() {
 		console.error('Daily orders chart element not found');
 	}
 	}, 300); // 300ms delay to ensure DOM is ready
+
+	// Highlight payment row if highlight parameter exists
+	const urlParams = new URLSearchParams(window.location.search);
+	const highlightId = urlParams.get('highlight');
+	if (highlightId) {
+		// Wait a bit for table to render
+		setTimeout(function() {
+			$('#paymentsTable tbody tr').each(function() {
+				const firstCell = $(this).find('td:first');
+				const cellText = firstCell.find('a').text().trim() || firstCell.text().trim();
+				if (cellText == highlightId) {
+					$(this).addClass('table-warning highlight-row');
+					$(this).css({
+						'background-color': '#fff3cd',
+						'border-left': '4px solid #ffc107',
+						'animation': 'pulse-highlight 2s ease-in-out'
+					});
+					
+					// Scroll to the row
+					$('html, body').animate({
+						scrollTop: $(this).offset().top - 100
+					}, 500);
+					
+					// Remove highlight after 5 seconds
+					setTimeout(function() {
+						$(this).removeClass('table-warning highlight-row');
+						$(this).css({
+							'background-color': '',
+							'border-left': '',
+							'animation': ''
+						});
+					}.bind(this), 5000);
+					
+					return false;
+				}
+			});
+		}, 500);
+	}
 });
 </script>
+
+<style>
+@keyframes pulse-highlight {
+	0%, 100% {
+		box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+	}
+	50% {
+		box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+	}
+}
+.highlight-row {
+	transition: all 0.3s ease;
+}
+</style>
 @endsection
 

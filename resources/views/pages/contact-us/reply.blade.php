@@ -49,33 +49,75 @@
                         @endforeach
                     @endif
                     <div class="crypto-buy-sell-nav">
+                        <!-- Contact Information Card -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">{{__('admin.contact-information')}}</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>{{__('admin.name')}}:</strong> {{$contact->name}}</p>
+                                        <p><strong>{{__('admin.email')}}:</strong> {{$contact->email ?? __('admin.no-data-available')}}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>{{__('admin.phone')}}:</strong> 
+                                            <a href="tel:{{$contact->country_code}}{{$contact->phone}}" style="direction: ltr;">
+                                                {{$contact->country_code}}{{$contact->phone}}
+                                            </a>
+                                        </p>
+                                        <p><strong>{{__('admin.subject')}}:</strong> {{$contact->subject}}</p>
+                                    </div>
+                                    <div class="col-12">
+                                        <p><strong>{{__('admin.message')}}:</strong></p>
+                                        <div class="alert alert-light">
+                                            {{$contact->message}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <form action="{{route('contact.reply.submit')}}" method="post" enctype="multipart/form-data">
                             @csrf
                             <input type="hidden" name="contact_id" value="{{$contact->id}}">
 
                             <div class="row">
-
-
                                 <div class="col-sm-12">
-
                                     <div class="mb-3">
-                                        <label for="description"
-                                               class="form-label">     {{__('admin.reply')}}   </label>
+                                        <label for="reply" class="form-label">{{__('admin.reply')}}</label>
                                         <textarea class="form-control" id="reply"
                                                   name="message" rows="10"
-                                                  placeholder=" {{__('admin.reply')}}">{{old('ar.reply')}}</textarea>
+                                                  placeholder="{{__('admin.reply')}}"
+                                                  required>{{old('message')}}</textarea>
+                                    </div>
+                                </div>
+                                <div class="col-sm-12">
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   id="send_whatsapp" name="send_whatsapp" value="1"
+                                                   {{old('send_whatsapp') ? 'checked' : ''}}>
+                                            <label class="form-check-label" for="send_whatsapp">
+                                                <i class="mdi mdi-whatsapp text-success"></i> 
+                                                {{__('admin.send_reply_via_whatsapp')}}
+                                            </label>
+                                        </div>
+                                        <small class="text-muted">
+                                            {{__('admin.whatsapp_reply_note')}}
+                                        </small>
                                     </div>
                                 </div>
                             </div>
                             <div class="d-flex flex-wrap gap-2">
-                                <button type="submit"
-                                        class="btn btn-primary waves-effect waves-light"> {{__('admin.add')}}</button>
-
+                                <button type="submit" class="btn btn-primary waves-effect waves-light">
+                                    <i class="mdi mdi-send"></i> {{__('admin.send_reply')}}
+                                </button>
+                                <a href="{{route('contact.index')}}" class="btn btn-secondary waves-effect waves-light">
+                                    {{__('admin.cancel')}}
+                                </a>
                             </div>
-
                         </form>
-
                     </div>
                 </div>
             </div>

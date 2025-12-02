@@ -125,7 +125,79 @@
 		$('#dateToFilter').val('');
 		table.draw();
 	});
+
+	// Highlight row if highlight parameter exists
+	const urlParams = new URLSearchParams(window.location.search);
+	const highlightId = urlParams.get('highlight');
+	if (highlightId) {
+		let highlightAttempts = 0;
+		const maxAttempts = 10;
+		
+		// Function to highlight the row
+		const highlightRow = function() {
+			$('#invitationsTable tbody tr').each(function() {
+				const firstCell = $(this).find('td:first');
+				const cellText = firstCell.text().trim();
+				if (cellText == highlightId) {
+					$(this).addClass('table-warning highlight-row');
+					$(this).css({
+						'background-color': '#fff3cd',
+						'border-left': '4px solid #ffc107',
+						'animation': 'pulse-highlight 2s ease-in-out'
+					});
+					
+					// Scroll to the row
+					$('html, body').animate({
+						scrollTop: $(this).offset().top - 100
+					}, 500);
+					
+					// Remove highlight after 5 seconds
+					setTimeout(function() {
+						$(this).removeClass('table-warning highlight-row');
+						$(this).css({
+							'background-color': '',
+							'border-left': '',
+							'animation': ''
+						});
+					}.bind(this), 5000);
+					
+					return false;
+				}
+			});
+		};
+		
+		// Try to highlight after each draw
+		table.on('draw', function() {
+			highlightAttempts++;
+			if (highlightAttempts <= maxAttempts) {
+				setTimeout(highlightRow, 300);
+			}
+		});
+		
+		// Also try immediately after initialization
+		setTimeout(highlightRow, 1000);
+	}
 });
+
+// Add CSS for pulse animation
+if (document.getElementById('highlight-style') === null) {
+	const style = document.createElement('style');
+	style.id = 'highlight-style';
+	style.textContent = `
+		@keyframes pulse-highlight {
+			0%, 100% {
+				box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+			}
+			50% {
+				box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+			}
+		}
+		.highlight-row {
+			transition: all 0.3s ease;
+		}
+	`;
+	document.head.appendChild(style);
+}
 
     
         

@@ -38,8 +38,10 @@
 			<div class="card-body">
 				<div class="d-flex justify-content-between">
 					<div class="flex-1">
-						<p class="text-truncate font-size-14 mb-2">{{__('admin.total-amount')}}</p>
-						<h4 class="mb-2">{{number_format($totalAmount, 2)}} {{__('admin.currency')}}</h4>
+						<p class="text-truncate font-size-14 mb-2">
+							{{__('admin.total-amount')}}</p>
+						<h4 class="mb-2">{{number_format($totalAmount, 2)}}
+							{{__('admin.currency')}}</h4>
 					</div>
 					<div class="avatar-sm">
 						<span class="avatar-title bg-light text-primary rounded-3">
@@ -55,7 +57,8 @@
 			<div class="card-body">
 				<div class="d-flex justify-content-between">
 					<div class="flex-1">
-						<p class="text-truncate font-size-14 mb-2">{{__('admin.total-orders')}}</p>
+						<p class="text-truncate font-size-14 mb-2">
+							{{__('admin.total-orders')}}</p>
 						<h4 class="mb-2">{{number_format($totalOrders)}}</h4>
 					</div>
 					<div class="avatar-sm">
@@ -72,12 +75,14 @@
 			<div class="card-body">
 				<div class="d-flex justify-content-between">
 					<div class="flex-1">
-						<p class="text-truncate font-size-14 mb-2">{{__('admin.total-customers')}}</p>
+						<p class="text-truncate font-size-14 mb-2">
+							{{__('admin.total-customers')}}</p>
 						<h4 class="mb-2">{{number_format($totalCustomers)}}</h4>
 					</div>
 					<div class="avatar-sm">
 						<span class="avatar-title bg-light text-info rounded-3">
-							<i class="mdi mdi-account-multiple font-size-18"></i>
+							<i
+								class="mdi mdi-account-multiple font-size-18"></i>
 						</span>
 					</div>
 				</div>
@@ -92,7 +97,7 @@
 		<div class="card">
 			<div class="card-body">
 				<h4 class="card-title mb-4">{{__('admin.monthly-breakdown')}}</h4>
-				<div id="monthly-breakdown-chart" data-colors='["#b49946"]'></div>
+				<div id="monthly-breakdown-chart" data-colors='["#556ee6", "#34c38f"]'></div>
 			</div>
 		</div>
 	</div>
@@ -108,19 +113,32 @@
 						<div class="col-md-4">
 							<label>{{__('admin.status')}}</label>
 							<select name="status" class="form-control">
-								<option value="all" {{request('status') == 'all' ? 'selected' : ''}}>{{__('admin.all')}}</option>
-								<option value="{{App\Helpers\Constant::PAID_STATUS['Paid']}}" {{request('status') == App\Helpers\Constant::PAID_STATUS['Paid'] ? 'selected' : (!request()->has('status') ? 'selected' : '')}}>{{__('admin.paid')}}</option>
-								<option value="{{App\Helpers\Constant::PAID_STATUS['Not Paid']}}" {{request('status') == App\Helpers\Constant::PAID_STATUS['Not Paid'] ? 'selected' : ''}}>{{__('admin.not-paid')}}</option>
-								<option value="{{App\Helpers\Constant::PAID_STATUS['Pending Admin Payment']}}" {{request('status') == App\Helpers\Constant::PAID_STATUS['Pending Admin Payment'] ? 'selected' : ''}}>{{__('admin.pending-admin-payment')}}</option>
+								<option value="all"
+									{{request('status') == 'all' ? 'selected' : ''}}>
+									{{__('admin.all')}}</option>
+								<option value="{{App\Helpers\Constant::PAID_STATUS['Paid']}}"
+									{{request('status') == App\Helpers\Constant::PAID_STATUS['Paid'] ? 'selected' : (!request()->has('status') ? 'selected' : '')}}>
+									{{__('admin.paid')}}</option>
+								<option value="{{App\Helpers\Constant::PAID_STATUS['Not Paid']}}"
+									{{request('status') == App\Helpers\Constant::PAID_STATUS['Not Paid'] ? 'selected' : ''}}>
+									{{__('admin.not-paid')}}
+								</option>
+								<option value="{{App\Helpers\Constant::PAID_STATUS['Pending Admin Payment']}}"
+									{{request('status') == App\Helpers\Constant::PAID_STATUS['Pending Admin Payment'] ? 'selected' : ''}}>
+									{{__('admin.pending-admin-payment')}}
+								</option>
 							</select>
 						</div>
 						<div class="col-md-4">
 							<label>{{__('admin.select-year')}}</label>
-							<input type="number" name="year" class="form-control" value="{{$year}}" min="2020" max="{{date('Y')}}">
+							<input type="number" name="year"
+								class="form-control" value="{{$year}}"
+								min="2020" max="{{date('Y')}}">
 						</div>
 						<div class="col-md-4">
 							<label>&nbsp;</label>
-							<button type="submit" class="btn btn-primary w-100">{{__('admin.filter')}}</button>
+							<button type="submit"
+								class="btn btn-primary w-100">{{__('admin.filter')}}</button>
 						</div>
 					</div>
 				</form>
@@ -132,11 +150,18 @@
 						<thead>
 							<tr class="tr-colored">
 								<th scope="col">{{__('admin.id')}}</th>
-								<th scope="col">{{__('admin.customer-name')}}</th>
-								<th scope="col">{{__('admin.amount')}}</th>
-								<th scope="col">{{__('admin.count')}}</th>
-								<th scope="col">{{__('admin.payment-method')}}</th>
-								<th scope="col">{{__('admin.date')}}</th>
+								<th scope="col">
+									{{__('admin.customer-name')}}
+								</th>
+								<th scope="col">{{__('admin.amount')}}
+								</th>
+								<th scope="col">{{__('admin.count')}}
+								</th>
+								<th scope="col">
+									{{__('admin.payment-method')}}
+								</th>
+								<th scope="col">{{__('admin.date')}}
+								</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -145,8 +170,10 @@
 								<td><a href="javascript: void(0);"
 										class="text-body fw-bold">{{$payment->id}}</a>
 								</td>
-								<td>{{$payment->invitation->user->name ?? __('admin.no-data-available')}}</td>
-								<td>{{number_format($payment->price, 2)}} {{__('admin.currency')}}</td>
+								<td>{{$payment->invitation->user->name ?? __('admin.no-data-available')}}
+								</td>
+								<td>{{number_format($payment->price, 2)}}
+									{{__('admin.currency')}}</td>
 								<td>{{$payment->count}}</td>
 								<td>{{__('admin.bank-transfer')}}</td>
 								<td>
@@ -198,6 +225,14 @@ $(document).ready(function() {
 	var monthlyBreakdownChartColors = getChartColorsArray("monthly-breakdown-chart");
 	if (monthlyBreakdownChartColors) {
 		var monthlyData = @json($monthlyData);
+
+		// Define specific colors for each series
+		// First color for Amount, Second color for Orders
+		var amountColor = monthlyBreakdownChartColors[0] ||
+			"#556ee6"; // Blue/Primary color
+		var ordersColor = monthlyBreakdownChartColors[1] ||
+			"#34c38f"; // Green/Success color
+
 		var monthlyBreakdownChartOptions = {
 			chart: {
 				height: 360,
@@ -218,15 +253,21 @@ $(document).ready(function() {
 			},
 			series: [{
 				name: "{{__('admin.amount')}}",
-				data: monthlyData.map(item => item.amount)
+				data: monthlyData.map(item =>
+					item
+					.amount),
+				color: amountColor
 			}, {
 				name: "{{__('admin.orders')}}",
-				data: monthlyData.map(item => item.orders)
+				data: monthlyData.map(item =>
+					item
+					.orders),
+				color: ordersColor
 			}],
 			xaxis: {
 				categories: monthlyData.map(item => item.month)
 			},
-			colors: monthlyBreakdownChartColors,
+			colors: [amountColor, ordersColor],
 			legend: {
 				position: "bottom"
 			},
@@ -235,20 +276,11 @@ $(document).ready(function() {
 			}
 		};
 
-		var monthlyBreakdownChart = new ApexCharts(document.querySelector("#monthly-breakdown-chart"), monthlyBreakdownChartOptions);
+		var monthlyBreakdownChart = new ApexCharts(document.querySelector(
+				"#monthly-breakdown-chart"),
+			monthlyBreakdownChartOptions);
 		monthlyBreakdownChart.render();
 	}
 });
 </script>
 @endsection
-
-
-
-
-
-
-
-
-
-
-

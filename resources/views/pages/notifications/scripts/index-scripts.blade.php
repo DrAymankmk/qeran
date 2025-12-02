@@ -186,14 +186,27 @@ window.showNotificationDetails = function(notificationId) {
 	const modal = new bootstrap.Modal(modalElement);
 	modal.show();
 
-	// Make AJAX request
-	fetch('{{ route("notifications.details", ":id") }}'.replace(':id', notificationId), {
-			method: 'GET',
+	// First, mark notification as read
+	fetch('{{ route("notifications.mark-as-read", ":id") }}'.replace(':id', notificationId), {
+			method: 'POST',
 			headers: {
+				'X-CSRF-TOKEN': '{{ csrf_token() }}',
 				'X-Requested-With': 'XMLHttpRequest',
 				'Accept': 'application/json',
 				'Content-Type': 'application/json'
 			}
+		})
+		.then(response => response.json())
+		.then(markReadData => {
+			// After marking as read, fetch notification details
+			return fetch('{{ route("notifications.details", ":id") }}'.replace(':id', notificationId), {
+				method: 'GET',
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest',
+					'Accept': 'application/json',
+					'Content-Type': 'application/json'
+				}
+			});
 		})
 		.then(response => {
 			if (!response.ok) {
@@ -246,6 +259,9 @@ window.showNotificationDetails = function(notificationId) {
 						field];
 				}
 			});
+
+			// Update the row in DataTable
+			updateNotificationRow(notificationId, true);
 		})
 		.catch(error => {
 			console.error('Error:', error);
@@ -256,6 +272,33 @@ window.showNotificationDetails = function(notificationId) {
 		</div>`;
 		});
 };
+
+// Function to update notification row after marking as read
+function updateNotificationRow(notificationId, isRead) {
+	if (!notificationsTable) return;
+
+	// Find the row with this notification ID
+	const row = notificationsTable.rows().nodes().to$().filter(function() {
+		return $(this).find('td:first').text() == notificationId;
+	});
+
+	if (row.length > 0) {
+		// Update status badge
+		const statusCell = $(row).find('td:eq(1)');
+		if (isRead) {
+			statusCell.html('<span class="badge bg-success">{{__("admin.read")}}</span>');
+			// Remove table-warning class
+			$(row).removeClass('table-warning');
+		} else {
+			statusCell.html('<span class="badge bg-danger">{{__("admin.unread")}}</span>');
+			// Add table-warning class
+			$(row).addClass('table-warning');
+		}
+
+		// Remove eye button
+		$(row).find('.eye-btn-' + notificationId).remove();
+	}
+}
 </script>
 
 

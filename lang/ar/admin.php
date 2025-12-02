@@ -611,7 +611,7 @@ return[
     'package-status'=>'حالة الباقة',
     'package-created-at'=>'تاريخ الأضافة',
     'package-updated-at'=>'تاريخ التحديث',
-    'key' => 'key',
+    'key' => 'اسم الإعداد',
     'setting' => 'الإعدادات',
     'cancel'=>'الغاء',
     // Admins Module

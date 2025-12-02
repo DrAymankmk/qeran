@@ -213,7 +213,11 @@ class NotificationsController extends Controller
                 $actionsHtml .= '<a href="' . $redirectUrl . '" title="' . __('admin.view_related_item') . '" class="text-success"><i class="mdi mdi-open-in-new font-size-18"></i></a>';
             }
 
-            $actionsHtml .= '<a href="' . route('notifications.show', $notification->id) . '" title="' . __('admin.view_notification') . '" class="text-primary"><i class="mdi mdi-eye font-size-18"></i></a>';
+            // Only show eye button if notification is unread
+            // if (!$isRead) {
+            //     $actionsHtml .= '<a href="' . route('notifications.show', $notification->id) . '" title="' . __('admin.view_notification') . '" class="text-primary eye-btn-' . $notification->id . '"><i class="mdi mdi-eye font-size-18"></i></a>';
+            // }
+
             $actionsHtml .= '<a onclick="openModalDelete(' . $notification->id . ')" title="' . __('admin.delete') . '" class="text-danger"><i class="mdi mdi-delete font-size-18"></i></a>';
             $actionsHtml .= '</div>';
 
@@ -280,6 +284,11 @@ class NotificationsController extends Controller
     public function getDetails($id)
     {
         $notification = Notification::whereId($id)->firstOrFail();
+
+        // Mark as read when viewing details
+        if (!$notification->isRead()) {
+            $notification->markAsRead();
+        }
 
         // Get category and type text
         $categoryText = '';

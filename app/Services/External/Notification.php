@@ -6,6 +6,9 @@ use App\Models\Notification as NotificationModel;
 use App\Models\PersonalFirebaseToken;
 use App\Models\User;
 use App\Services\External\NotifyTo;
+use App\Services\PusherNotificationService;
+use Illuminate\Support\Facades\Log;
+use Pusher\Pusher;
 
 class Notification
 {
@@ -58,6 +61,9 @@ class Notification
                     // Update user's notifications count
                     $user->update(['notifications_count' => ($user->notifications_count + 1)]);
 
+                    // Send real-time notification via Pusher
+                    self::sendPusherNotification($user_type, $user_id, $notify_type, $target_id, $translatedContent['title'], $translatedContent['body'], $category, $notification_type);
+
                     // Send push notification with translated content
                     $data = [
                         'type' => $notify_type,
@@ -91,6 +97,9 @@ class Notification
 
                     // Update user's notifications count
                     $user->update(['notifications_count' => ($user->notifications_count + 1)]);
+
+                    // Send real-time notification via Pusher
+                    self::sendPusherNotification($user_type, $user_id, $notify_type, $target_id, $title, $body, $category, $notification_type);
 
                     // Send push notification with plain text
                     $data = [
@@ -195,6 +204,59 @@ class Notification
     public static function sendAdminNotification($interest = 'all', $type = 'admin_message')
     {
         self::notifyFor($interest, $type);
+    }
+
+    /**
+     * Send real-time notification via Pusher
+     */
+    private static function sendPusherNotification(
+        string $userType,
+        int $userId,
+        string $notifyType,
+        int $targetId,
+        string $title,
+        string $body,
+        ?string $category = null,
+        ?string $notificationType = null
+    ): void {
+        try {
+            $pusher = new Pusher(
+                config('broadcasting.connections.pusher.key'),
+                config('broadcasting.connections.pusher.secret'),
+                config('broadcasting.connections.pusher.app_id'),
+                config('broadcasting.connections.pusher.options')
+            );
+
+            $channel = $userType . '-' . $userId;
+            $event = 'notification-received';
+
+            $data = [
+                'type' => $notifyType,
+                'target_id' => $targetId,
+                'title' => $title,
+                'body' => $body,
+                'category' => $category,
+                'notification_type' => $notificationType,
+                'timestamp' => now()->utc()->toIso8601String(),
+            ];
+
+            $pusher->trigger($channel, $event, $data);
+
+            // Also trigger for admin dashboard
+            $pusher->trigger('admin-notifications', 'new-notification', [
+                'user_id' => $userId,
+                'user_type' => $userType,
+                'type' => $notifyType,
+                'target_id' => $targetId,
+                'title' => $title,
+                'body' => $body,
+                'category' => $category,
+                'notification_type' => $notificationType,
+                'timestamp' => now()->utc()->toIso8601String(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Error sending Pusher notification: " . $e->getMessage());
+        }
     }
 
 }

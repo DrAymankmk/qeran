@@ -144,6 +144,10 @@ Route::group(['prefix' => 'admin'], function () {
         Route::get('notifications/{id}/details', [NotificationsController::class, 'getDetails'])->name('notifications.details');
         Route::post('notifications/{id}/mark-as-read', [NotificationsController::class, 'markAsRead'])->name('notifications.mark-as-read');
         Route::get('notifications/recent/list', [NotificationsController::class, 'getRecent'])->name('notifications.recent');
+        
+        // Test Pusher routes (remove in production)
+        Route::get('test-pusher', [\App\Http\Controllers\Admin\TestPusherController::class, 'test'])->name('test.pusher');
+        Route::get('test-pusher/config', [\App\Http\Controllers\Admin\TestPusherController::class, 'checkConfig'])->name('test.pusher.config');
         Route::post('notifications/mark-all-read', [NotificationsController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
         Route::get('app-settings', [AppSettingsController::class, 'index'])->name('app-settings.index');
         Route::post('app-settings', [AppSettingsController::class, 'store'])->name('app-settings.store');

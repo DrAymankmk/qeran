@@ -186,6 +186,7 @@ class Constant
         'New User Registered' => 1,
         'Account Activated' => 2,
         'Account Banned or Unbanned' => 3,
+        'User Deleted' => 4,
     ];
 
     const NOTIFICATION_CONTACT_TYPES = [

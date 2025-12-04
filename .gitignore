@@ -21,3 +21,4 @@ yarn-error.log
 DB_BAK
 /reports
 /public/vendor
+/docs

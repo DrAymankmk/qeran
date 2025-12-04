@@ -30,6 +30,10 @@ return [
     ],
     
     // User notifications
+    'user_registered' => [
+        'title' => 'New User Registered',
+        'body' => 'A new user has registered in the system'
+    ],
     'profile_updated' => [
         'title' => 'Profile Updated',
         'body' => 'Your profile has been updated successfully'

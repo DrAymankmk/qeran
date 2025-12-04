@@ -25,6 +25,13 @@
     <link href="{{asset('admin_assets/css/app-rtl.min.css')}}" id="app-style" rel="stylesheet" type="text/css"/>
     @yield('extra-last-css')
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script>
+        // Verify Pusher loads
+        if (typeof Pusher === 'undefined') {
+            console.error('❌ Pusher library failed to load from CDN');
+        }
+    </script>
 
 </head>
 
@@ -147,6 +154,114 @@
 @endif
 
 @can('view-notifications')
+<script>
+    // Debug: Check if Pusher is loaded
+    console.log('Checking Pusher setup...');
+    console.log('Pusher library loaded:', typeof Pusher !== 'undefined');
+    console.log('Broadcast driver:', '{{ config('broadcasting.default') }}');
+    console.log('Pusher key configured:', {{ config('broadcasting.connections.pusher.key') ? 'true' : 'false' }});
+    
+    // Initialize Pusher for real-time notifications
+    @if(config('broadcasting.default') === 'pusher' && config('broadcasting.connections.pusher.key'))
+    @php
+        $pusherKey = config('broadcasting.connections.pusher.key');
+        $pusherCluster = env('PUSHER_APP_CLUSTER', 'mt1');
+        $options = config('broadcasting.connections.pusher.options', []);
+        $useTLS = isset($options['useTLS']) && $options['useTLS'];
+    @endphp
+    @if($pusherKey)
+    console.log('Initializing Pusher with key:', '{{ substr($pusherKey, 0, 10) }}...');
+    console.log('Cluster:', '{{ $pusherCluster }}');
+    
+    try {
+        const pusher = new Pusher('{{ $pusherKey }}', {
+            cluster: '{{ $pusherCluster }}',
+            encrypted: true,
+            forceTLS: {{ $useTLS ? 'true' : 'false' }},
+            enabledTransports: ['ws', 'wss']
+        });
+
+        // Connection state logging
+        pusher.connection.bind('state_change', function(states) {
+            console.log('Pusher connection state:', states.previous, '->', states.current);
+        });
+
+        pusher.connection.bind('connected', function() {
+            console.log('✅ Pusher connected successfully!');
+        });
+
+        pusher.connection.bind('disconnected', function() {
+            console.log('❌ Pusher disconnected');
+        });
+
+        pusher.connection.bind('error', function(err) {
+            console.error('❌ Pusher connection error:', err);
+        });
+
+        // Subscribe to admin notifications channel
+        console.log('Subscribing to admin-notifications channel...');
+        const adminChannel = pusher.subscribe('admin-notifications');
+        
+        adminChannel.bind('pusher:subscription_succeeded', function() {
+            console.log('✅ Successfully subscribed to admin-notifications channel');
+        });
+
+        adminChannel.bind('pusher:subscription_error', function(err) {
+            console.error('❌ Subscription error:', err);
+        });
+        
+        // Listen for new notifications
+        adminChannel.bind('new-notification', function(data) {
+            console.log('🔔 New notification received:', data);
+            
+            // Reload notification count and list
+            loadNotificationCount();
+            loadNotifications();
+            
+            // Show browser notification if permission granted
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(data.title || 'New Notification', {
+                    body: data.body || '',
+                    icon: '{{ asset('admin_assets/images/logo.png') }}',
+                    badge: '{{ asset('admin_assets/images/logo.png') }}'
+                });
+            }
+            
+            // Show toast notification
+            if (typeof toastr !== 'undefined') {
+                toastr.info(data.body || '', data.title || 'New Notification', {
+                    timeOut: 5000,
+                    positionClass: 'toast-top-right'
+                });
+            }
+        });
+        
+        // Test event listener
+        adminChannel.bind('pusher:error', function(err) {
+            console.error('❌ Pusher channel error:', err);
+        });
+
+        // Make pusher available globally for testing
+        window.pusher = pusher;
+        window.adminChannel = adminChannel;
+        console.log('Pusher initialized. Test with: window.pusher.trigger("admin-notifications", "new-notification", {title: "Test", body: "Test message"})');
+        
+        // Request notification permission on page load
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission().then(function(permission) {
+                console.log('Notification permission:', permission);
+            });
+        }
+    } catch (error) {
+        console.error('❌ Error initializing Pusher:', error);
+    }
+    @else
+    console.error('❌ Pusher key is not configured. Check your .env file.');
+    @endif
+    @else
+    console.warn('⚠️ Pusher is not configured. Set BROADCAST_DRIVER=pusher in .env');
+    @endif
+</script>
 <style>
     .unread-notification {
         background-color: rgba(85, 110, 230, 0.05) !important;

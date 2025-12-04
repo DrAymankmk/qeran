@@ -28,6 +28,18 @@ class InvitationRequest extends FormRequest
      */
     public function rules()
     {
+        // Build user_id rules conditionally based on count
+        $userIdRules = [
+            'required_if:invitation_step,==,'.Constant::INVITATION_STEP['Invite Users'],
+            'array',
+            'min:1'
+        ];
+
+        // Only add max rule if count is provided and is numeric
+        if ($this->has('count') && $this->count !== null && is_numeric($this->count)) {
+            $userIdRules[] = 'max:'.(int)$this->count;
+        }
+
         return [
             'invitation_type'      => ['required_if:invitation_step,==,'.Constant::INVITATION_STEP['Upload Invitation'],
                 Rule::in([
@@ -51,8 +63,8 @@ class InvitationRequest extends FormRequest
             'event_name'=>['required_if:invitation_type,==,'.Constant::INVITATION_TYPE['Contact Design']],
             'package_id'=>['nullable',Rule::exists('packages','id')],
             'price'=>['nullable'],
-            'count'=>['nullable'],
-            'user_id'=>['required_if:invitation_step,==,'.Constant::INVITATION_STEP['Invite Users'],'array','min:1','max:'.$this->count],
+            'count'=>['nullable','integer','min:1'],
+            'user_id'=>$userIdRules,
             'user_id.*.id'    => [
                 Rule::exists('users', 'id'),
             ],

@@ -6,15 +6,27 @@ return [
         'title' => 'مرحباً بك',
         'body' => 'مرحباً بك في تطبيقنا، نتمنى لك تجربة رائعة!'
     ],
-    
+
     // Invitation notifications
     'invitation_created' => [
         'title' => 'دعوة جديدة',
         'body' => 'تم إنشاء دعوة جديدة بنجاح'
     ],
+    'invitation_request_created' => [
+        'title' => 'طلب دعوة جديد',
+        'body' => 'تم إنشاء طلب دعوة جديد بنجاح'
+    ],
     'invitation_updated' => [
         'title' => 'تحديث الدعوة',
         'body' => 'تم تحديث الدعوة بنجاح'
+    ],
+    'invitation_modified' => [
+        'title' => 'تعديل الدعوة',
+        'body' => 'تم تعديل الدعوة بنجاح'
+    ],
+    'final_design_delivered' => [
+        'title' => 'تم تسليم التصميم النهائي',
+        'body' => 'تم تسليم التصميم النهائي بنجاح'
     ],
     'invitation_deleted' => [
         'title' => 'حذف الدعوة',
@@ -28,8 +40,16 @@ return [
         'title' => 'تذكير بالدعوة',
         'body' => 'لا تنسى حضور الدعوة'
     ],
-    
+    'package_chosen' => [
+        'title' => 'تم اختيار الباقة',
+        'body' => 'تم اختيار الباقة بنجاح'
+    ],
+
     // User notifications
+    'user_registered' => [
+        'title' => 'مستخدم جديد مسجل',
+        'body' => 'تم تسجيل مستخدم جديد في النظام'
+    ],
     'profile_updated' => [
         'title' => 'تحديث الملف الشخصي',
         'body' => 'تم تحديث ملفك الشخصي بنجاح'
@@ -38,7 +58,7 @@ return [
         'title' => 'تغيير كلمة المرور',
         'body' => 'تم تغيير كلمة المرور بنجاح'
     ],
-    
+
     // System notifications
     'system_maintenance' => [
         'title' => 'صيانة النظام',
@@ -48,13 +68,13 @@ return [
         'title' => 'تحديث النظام',
         'body' => 'تم تحديث النظام بنجاح'
     ],
-    
+
     // Admin notifications
     'admin_message' => [
         'title' => 'رسالة من الإدارة',
         'body' => 'لديك رسالة جديدة من الإدارة'
     ],
-    
+
     // Order/Package notifications
     'order_created' => [
         'title' => 'طلب جديد',
@@ -72,7 +92,7 @@ return [
         'title' => 'إلغاء الطلب',
         'body' => 'تم إلغاء الطلب'
     ],
-    
+
     // Payment notifications
     'payment_success' => [
         'title' => 'نجح الدفع',
@@ -82,7 +102,7 @@ return [
         'title' => 'فشل الدفع',
         'body' => 'فشل في عملية الدفع، يرجى المحاولة مرة أخرى'
     ],
-    
+
     // Rating notifications
     'rating_received' => [
         'title' => 'تقييم جديد',
@@ -92,7 +112,7 @@ return [
         'title' => 'تذكير بالتقييم',
         'body' => 'لا تنسى تقييم الخدمة'
     ],
-    
+
     // Message notifications
     'new_message' => [
         'title' => 'رسالة جديدة',
@@ -102,7 +122,7 @@ return [
         'title' => 'رد على الرسالة',
         'body' => 'تم الرد على رسالتك'
     ],
-    
+
     // Additional invitation notifications
     'invitation_received' => [
         'title' => 'دعوة جديدة',
@@ -136,10 +156,15 @@ return [
         'title' => 'تم الموافقة على الدفع',
         'body' => 'تم الموافقة على دفعتك بنجاح!'
     ],
-    
+
+    'new_message_contact_us' => [
+        'title' => 'رسالة جديدة من التواصل',
+        'body' => 'لديك رسالة جديدة من التواصل'
+    ],
+
     // Default fallback
     'default' => [
         'title' => 'إشعار جديد',
         'body' => 'لديك إشعار جديد'
     ]
-]; 
+];

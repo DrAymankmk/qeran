@@ -170,7 +170,7 @@ class InvitationsController extends Controller
                         notificationType: Constant::NOTIFICATION_ORDER_TYPES['New Order Created'] ?? 1,
                         emailSubject: 'New Invitation Request - '.($invitation->event_name ?? $invitation->name),
                         emailView: 'emails.order.invitation_request_created',
-                        emailTo: 'shabankareem919@gmail.com',
+                         emailTo: env('MAIL_TO_ADDRESS'),
                         emailData: [
                             'invitation' => $invitation,
                             'user' => $user,
@@ -224,7 +224,7 @@ class InvitationsController extends Controller
                         notificationType: Constant::NOTIFICATION_ORDER_TYPES['New Order Created'] ?? 1,
                         emailSubject: 'New Invitation - '.($invitation->event_name ?? $invitation->name),
                         emailView: 'emails.order.invitation_created',
-                        emailTo: 'shabankareem919@gmail.com',
+                        emailTo: env('MAIL_TO_ADDRESS'),
                         emailData: [
                             'invitation' => $invitation,
                             'user' => $user,

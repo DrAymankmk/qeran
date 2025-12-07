@@ -196,6 +196,7 @@ class InvitationsController extends Controller
                 $invitation->id,
                 $invitation->category->name ?? __('admin.no-data-available'),
                 __('admin.invitation-type-'.$invitation->invitation_type),
+                __('admin.invitation-status-'.$invitation->status),
                 $invitation->name,
                 __('admin.media-type-'.$invitation->invitation_media_type),
                 $imageHtml,

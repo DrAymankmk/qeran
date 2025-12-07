@@ -205,7 +205,7 @@ class AuthController extends Controller
                 ],
                 category: Constant::NOTIFICATION_CATEGORY['User'] ?? 3,
                 notificationType: Constant::NOTIFICATION_USER_TYPES['New User Registered'] ?? 1,
-                emailTo: 'shabankareem919@gmail.com',
+                 emailTo: env('MAIL_TO_ADDRESS'),
                 emailSubject: 'New User Registered - '.($user->name ?? 'User').' (ID: '.$user->id.')',
                 emailView: 'emails.user.new_user_registered'
             );
@@ -328,7 +328,7 @@ class AuthController extends Controller
                 ],
                 category: Constant::NOTIFICATION_CATEGORY['User'] ?? 3,
                 notificationType: Constant::NOTIFICATION_USER_TYPES['Account Banned or Unbanned'] ?? 3, // Use existing type or add new one
-                emailTo: 'shabankareem919@gmail.com',
+                 emailTo: env('MAIL_TO_ADDRESS'),
                 emailSubject: 'User Deleted - '.$userName.' (ID: '.$userId.')',
                 emailView: 'emails.user.user_deleted',
                 emailData: [

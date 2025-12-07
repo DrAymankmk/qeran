@@ -65,7 +65,7 @@
 						<thead>
 							<tr class="tr-colored">
 								<th scope="col">{{__('admin.id')}}</th>
-								<th scope="col">{{__('admin.name')}}
+								<th scope="col">{{__('admin.role-name')}}
 								</th>
 								<th scope="col">
 									{{__('admin.permissions')}}

@@ -168,6 +168,8 @@ Route::group(['prefix' => 'admin'], function () {
 
         Route::controller(InvitationRequestController::class)->group(function () {
             Route::get('/invitation-requests', 'index')->name('invitation-request.index');
+             Route::get('/invitation-requests/edit/{id}', 'edit')->name('invitation-request.edit');
+            Route::put('/invitation-requests/update/{id}', 'updateInvitationRequest')->name('invitation-request.update');
             Route::get('/invitation-requests/export/pdf', 'invitationRequestExportPdf')->name('invitation-request.export.pdf');
         });
 

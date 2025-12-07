@@ -38,25 +38,38 @@
 					<div class="col-md-12">
 						<div class="row g-3 align-items-end">
 							<div class="col-md-3">
-								<label for="statusFilter" class="form-label">{{__('admin.status')}}</label>
-								<select id="statusFilter" class="form-select form-select-sm">
-									<option value="">{{__('admin.all')}}</option>
+								<label for="statusFilter"
+									class="form-label">{{__('admin.status')}}</label>
+								<select id="statusFilter"
+									class="form-select form-select-sm">
+									<option value="">
+										{{__('admin.all')}}
+									</option>
 									@foreach(\App\Helpers\Constant::INVITATION_STATUS as $key => $value)
-										<option value="{{$value}}">{{__('admin.invitation-status-'.$value)}}</option>
+									<option value="{{$value}}">
+										{{__('admin.invitation-status-'.$value)}}
+									</option>
 									@endforeach
 								</select>
 							</div>
 							<div class="col-md-3">
-								<label for="dateFromFilter" class="form-label">{{__('admin.date-from')}}</label>
-								<input type="date" id="dateFromFilter" class="form-control form-control-sm">
+								<label for="dateFromFilter"
+									class="form-label">{{__('admin.date-from')}}</label>
+								<input type="date" id="dateFromFilter"
+									class="form-control form-control-sm">
 							</div>
 							<div class="col-md-3">
-								<label for="dateToFilter" class="form-label">{{__('admin.date-to')}}</label>
-								<input type="date" id="dateToFilter" class="form-control form-control-sm">
+								<label for="dateToFilter"
+									class="form-label">{{__('admin.date-to')}}</label>
+								<input type="date" id="dateToFilter"
+									class="form-control form-control-sm">
 							</div>
 							<div class="col-md-3">
-								<button type="button" id="resetFilters" class="btn btn-sm btn-secondary">
-									<i class="mdi mdi-refresh"></i> {{__('admin.reset')}}
+								<button type="button" id="resetFilters"
+									class="btn btn-sm btn-secondary">
+									<i
+										class="mdi mdi-refresh"></i>
+									{{__('admin.reset')}}
 								</button>
 							</div>
 						</div>
@@ -72,6 +85,9 @@
 								</th>
 								<th scope="col">
 									{{__('admin.invitation-type')}}
+								</th>
+								<th scope="col">
+									{{__('admin.status')}}
 								</th>
 								<th scope="col">{{__('admin.name')}}
 								</th>

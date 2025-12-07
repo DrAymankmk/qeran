@@ -4,12 +4,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Helpers\Constant;
+use App\Http\Requests\Admin\InvitationRequest;
 use App\Models\Invitation;
+use App\Services\External\Notification;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Mpdf\Mpdf;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Gate;
@@ -218,7 +222,7 @@ class InvitationRequestController extends Controller
 
             // Check permission for edit using Gate
             if (Gate::allows('edit-invitations')) {
-                $actionsHtml .= '<a href="'.route('invitation.edit', $invitation->id).'" title="'.__('admin.edit').'" class="text-warning"><i class="mdi mdi-file-edit-outline font-size-22"></i></a>';
+                $actionsHtml .= '<a href="'.route('invitation-request.edit', $invitation->id).'" title="'.__('admin.edit').'" class="text-warning"><i class="mdi mdi-file-edit-outline font-size-22"></i></a>';
             }
 
             $actionsHtml .= '<a href="'.route('invitations.getPackagesByInvitationId', ['invitation_id' => $invitation->id]).'" title="'.__('admin.packages').'" class="text-success"><i class="mdi mdi-package font-size-18"></i></a>';
@@ -234,6 +238,7 @@ class InvitationRequestController extends Controller
                 $invitation->id,
                 $invitation->category->name ?? __('admin.no-data-available'),
                 $invitation->name,
+                __('admin.invitation-status-'.$invitation->status),
                 __('admin.media-type-'.$invitation->invitation_media_type),
                 $imageHtml,
                 \Carbon\Carbon::parse($invitation->created_at)->locale(app()->getLocale())->translatedFormat('l dS F G:i - Y'),
@@ -248,6 +253,85 @@ class InvitationRequestController extends Controller
             'data' => $data,
         ]);
     }
+
+     /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(int $id): View|RedirectResponse
+    {
+        // TODO: Enable authorization check
+        // $this->authorize('update', Invitation::class);
+
+        try {
+            $invitation = Invitation::with(['user', 'category'])->findOrFail($id);
+
+            return view('pages.invitation-request.edit', compact('invitation'));
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::warning('Invitation not found for editing', ['invitation_id' => $id]);
+
+            return redirect()->route('invitation.index')
+                ->with('error', __('admin.invitation-not-found'));
+        }
+    }
+
+
+    public function updateInvitationRequest(InvitationRequest $request, int $id): RedirectResponse
+    {
+        DB::beginTransaction();
+
+        try {
+            $invitation = Invitation::findOrFail($id);
+
+            // Update basic fields
+            $invitation->update([
+                'address'   => $request->address,
+                'latitude'  => $request->latitude,
+                'longitude' => $request->longitude ?: $request->latitude, // fallback
+                'date'      => $request->date,
+            ]);
+
+            // Handle file upload
+            if ($request->hasFile('file')) {
+                $this->handleFileUpload($request->file('file'), $invitation);
+
+                // Update status after uploading file
+                $invitation->update([
+                    'status' => Constant::INVITATION_STATUS['Pending user approval'],
+                ]);
+            }
+
+            DB::commit();
+
+            // Redirect according to new status
+            $route = $invitation->status == Constant::INVITATION_STATUS['Pending user approval']
+                ? 'invitation.index'
+                : 'invitation-request.index';
+
+            $message = $invitation->status == Constant::INVITATION_STATUS['Pending user approval']
+                ? __('admin.invitation-request-updated-successfully')
+                : __('admin.invitation-updated-successfully');
+
+            return redirect()
+                ->route($route, ['invitation_type' => Constant::INVITATION_TYPE['Contact Design']])
+                ->with('success', $message);
+
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+            Log::warning('Invitation not found for update', ['invitation_id' => $id]);
+
+            return redirect()->back()->with('error', __('admin.invitation-not-found'));
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating invitation', [
+                'error' => $e->getMessage(),
+                'invitation_id' => $id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return redirect()->back()->with('error', __('admin.error-updating-invitation'));
+        }
+    }
+
     //
     public function invitationRequestExportPdf(){
          $invitationRequests = Invitation::where('invitation_type', Constant::INVITATION_TYPE['Contact Design'])->orderBy('created_at', 'desc')->get();
@@ -278,5 +362,35 @@ class InvitationRequestController extends Controller
         $filename = 'invitation-requests_' . date('Y-m-d_His') . '.pdf';
 
         return $mpdf->Output($filename, 'D'); // D = Download
+    }
+
+
+     /**
+     * Handle file upload based on file type.
+     *
+     * @param  \Illuminate\Http\UploadedFile  $file
+     *
+     * @throws \Exception
+     */
+    protected function handleFileUpload($file, Invitation $invitation): void
+    {
+        $mimeType = $file->getMimeType();
+        $fileConfig = [
+            'value' => $file,
+            'folderName' => Constant::INVITATION_IMAGE_FOLDER_NAME,
+            'model' => $invitation,
+            'saveInDatabase' => true,
+            'file_key' => Constant::FILE_KEY['Main'],
+            'file_type' => Constant::FILE_TYPE['Image'],
+        ];
+
+        if (str_contains($mimeType, 'video/')) {
+            storeVideo($fileConfig);
+        } elseif ($mimeType === 'image/gif') {
+            storeGif($fileConfig);
+        } else {
+            $fileConfig['extension'] = $file->getClientOriginalExtension();
+            storeImage($fileConfig);
+        }
     }
 }

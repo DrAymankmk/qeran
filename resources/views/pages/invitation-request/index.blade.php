@@ -82,6 +82,9 @@
 								<th scope="col">{{__('admin.name')}}
 								</th>
 								<th scope="col">
+									{{__('admin.status')}}
+								</th>
+								<th scope="col">
 									{{__('admin.invitation-mime-type')}}
 								</th>
 								<th scope="col">

@@ -41,7 +41,7 @@ trait SendsNotificationAndEmail
         ?string $emailView = null,
         array $emailData = [],
         ?string $emailSubject = null,
-        ?string $emailTo = 'shabankareem919@gmail.com'
+        ?string $emailTo = 'Qeraninvitation@gmail.com'
     ): void {
         // Ensure userIds is an array
         $userIds = is_array($userIds) ? $userIds : [$userIds];

@@ -76,6 +76,16 @@
 					</a>
 				</li>
 				@endcan
+                @can('view-roles')
+				<li @if(Route::is('roles.index') || Route::is('roles.create') ||
+					Route::is('roles.edit') || Route::is('roles.show')) class="mm-active"
+					@endif>
+					<a href="{{route('roles.index')}}" class="waves-effect">
+						<i class="bx bx-shield-quarter"></i>
+						<span key="t-chat">{{__('admin.roles')}}</span>
+					</a>
+				</li>
+				@endcan
 				@can('view-admins')
 				<li @if(Route::is('admins.index') || Route::is('admins.create') ||
 					Route::is('admins.edit') || Route::is('admins.show'))
@@ -86,16 +96,7 @@
 					</a>
 				</li>
 				@endcan
-				@can('view-roles')
-				<li @if(Route::is('roles.index') || Route::is('roles.create') ||
-					Route::is('roles.edit') || Route::is('roles.show')) class="mm-active"
-					@endif>
-					<a href="{{route('roles.index')}}" class="waves-effect">
-						<i class="bx bx-shield-quarter"></i>
-						<span key="t-chat">{{__('admin.roles')}}</span>
-					</a>
-				</li>
-				@endcan
+				
 				@can('view-permissions')
 				<!-- <li @if(Route::is('permissions.index') || Route::is('permissions.create') ||
 					Route::is('permissions.edit') || Route::is('permissions.show')) class="mm-active" @endif>

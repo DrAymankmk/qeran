@@ -9,15 +9,15 @@ use Spatie\Permission\Traits\HasRoles;
 class Admin extends Authenticatable
 {
     use Notifiable, HasRoles;
-    
+
     protected $guard = 'admin';
-    
+
     protected $guard_name = 'admin';
 
     protected $table="admins";
 
     protected $fillable = [
-        'name', 'email', 'password'
+        'name', 'email', 'password', 'active'
     ];
     protected $hidden = [
         'password','created_at','updated_at'

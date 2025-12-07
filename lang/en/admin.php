@@ -482,6 +482,11 @@ return[
     'category'=>'Category',
     'extra_package' => 'Extra Package',
     'contact_us_reply' => 'Replied to',
+    'contact_reply_greeting' => 'Thank you for contacting us. We would like to inform you that we have replied to your inquiry.',
+    'contact_reply_closing' => 'If you have any other inquiries, please do not hesitate to contact us.',
+    'your_message' => 'Your Message',
+    'our_reply' => 'Our Reply',
+    'subject' => 'Subject',
     'filter-by-date' => 'Filter by Date',
     'quick-filter' => 'Quick Filter',
     'apply-filter' => 'Apply Filter',
@@ -694,5 +699,7 @@ return[
     'user_id'=>'User ID',
     'target_id'=>'Target ID',
     'read_at'=>'Read At',
-    'type'=>'Type'
+    'type'=>'Type',
+    'active'=>'Active',
+    'inactive'=>'Inactive'
 ];

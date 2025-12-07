@@ -50,6 +50,9 @@ class AdminsController extends Controller
             $data['password'] = Hash::make($data['password']);
         }
 
+        // Handle active checkbox - default to true if not provided
+        $data['active'] = $request->has('active') ? (bool) $request->input('active') : true;
+
         $admin = Admin::create($data);
 
         // Assign roles
@@ -116,6 +119,9 @@ class AdminsController extends Controller
         } else {
             unset($data['password']);
         }
+
+        // Handle active checkbox - if not present in request, set to false
+        $data['active'] = $request->has('active') ? (bool) $request->input('active') : false;
 
         $admin->update($data);
 

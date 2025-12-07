@@ -34,6 +34,7 @@ class AdminRequest extends FormRequest
                 'min:6',
                 'max:255'
             ],
+            'active' => ['nullable', 'boolean'],
             'image' => ['nullable', 'mimes:jpeg,jpg,png,gif', 'max:20000'],
             'roles' => ['required', 'array', 'min:1'],
             'roles.*' => ['exists:roles,id'],

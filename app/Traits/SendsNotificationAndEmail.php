@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Models\AppSetting;
 use App\Models\Notification as NotificationModel;
 use App\Models\User;
 use App\Services\External\NotifyTo;
@@ -11,6 +12,19 @@ use Pusher\Pusher;
 
 trait SendsNotificationAndEmail
 {
+    /**
+     * Get email recipient from settings or environment
+     */
+    protected function getEmailTo(): ?string
+    {
+        $appSetting = AppSetting::key('email-to')->first();
+        if ($appSetting && $appSetting->value) {
+            return $appSetting->value;
+        }
+
+        return env('MAIL_TO_ADDRESS');
+    }
+
     /**
      * Send notification via Pusher and email sequentially
      *
@@ -26,7 +40,7 @@ trait SendsNotificationAndEmail
      * @param  string|null  $emailView - Email view name (optional)
      * @param  array  $emailData - Email data (optional)
      * @param  string|null  $emailSubject - Email subject (optional)
-     * @param  string|null  $emailTo - Email recipient (optional, defaults to user email)
+     * @param  string|null  $emailTo - Email recipient (optional, defaults to settings or env)
      */
     public function sendNotificationAndEmail(
         string $userType,
@@ -41,8 +55,12 @@ trait SendsNotificationAndEmail
         ?string $emailView = null,
         array $emailData = [],
         ?string $emailSubject = null,
-        ?string $emailTo = 'Qeraninvitation@gmail.com'
+        ?string $emailTo = null
     ): void {
+        // Get default emailTo from settings or env if not provided
+        if ($emailTo === null) {
+            $emailTo = $this->getEmailTo();
+        }
         // Ensure userIds is an array
         $userIds = is_array($userIds) ? $userIds : [$userIds];
 
@@ -181,7 +199,7 @@ trait SendsNotificationAndEmail
                 'target_id' => $targetId,
                 'title' => $title,
                 'body' => $body,
-                'timestamp' => now()->utc()->toIso8601String(),
+                'timestamp' => now()->toIso8601String(),
             ];
 
             $pusher->trigger($channel, $event, $data);
@@ -602,6 +620,11 @@ trait SendsNotificationAndEmail
                         'target_id' => $targetId,
                     ]);
                 }
+            }
+
+            // Get default emailTo from settings or env if not provided
+            if ($emailTo === null) {
+                $emailTo = $this->getEmailTo();
             }
 
             // Send email if recipient is provided

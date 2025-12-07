@@ -11,6 +11,9 @@
 								<th scope="col">{{__('admin.user')}}
 								</th>
 								<th scope="col">
+									{{__('admin.status')}}
+								</th>
+								<th scope="col">
 									{{__('admin.invitation-type')}}
 								</th>
 								<th scope="col">{{__('admin.name')}}
@@ -52,6 +55,8 @@
 										target="_blank">
 										{{$invitation->user?->name}}
 									</a></td>
+								<td> {{__('admin.invitation-status-'.$invitation->status)}}
+								</td>
 								<td> {{__('admin.invitation-type-'.$invitation->invitation_type)}}
 								</td>
 

@@ -82,6 +82,13 @@
 						<small class="form-text text-muted">{{__('admin.select-at-least-one-role')}}</small>
 					</div>
 
+					<div class="mb-3">
+						<div class="form-check form-switch">
+							<input class="form-check-input" type="checkbox" name="active" id="active" value="1" {{old('active', $admin->active) ? 'checked' : ''}}>
+							<label class="form-check-label" for="active">{{__('admin.active')}}</label>
+						</div>
+					</div>
+
 					<div class="d-flex flex-wrap gap-2">
 						<button type="submit" class="btn btn-primary waves-effect waves-light">{{__('admin.update')}}</button>
 						<a href="{{route('admins.index')}}" class="btn btn-secondary waves-effect waves-light">{{__('admin.cancel')}}</a>

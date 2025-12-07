@@ -26,9 +26,17 @@ class AuthController extends Controller
         ];
 
         if (Auth::guard('admin')->attempt($credentials)) {
+            $admin = Auth::guard('admin')->user();
+
+            // Check if admin is active
+            if (!$admin->active) {
+                Auth::guard('admin')->logout();
+                return redirect()->route('admin.login.form')->with('error', __('admin.account-is-inactive'));
+            }
+
             return redirect()->route('admin.dashboard');
         } else {
-            return redirect()->route('admin.login.form')->with('error', 'Email Or Password not correct');
+            return redirect()->route('admin.login.form')->with('error', __('auth.email-or-password-not-correct'));
         }
     }
 

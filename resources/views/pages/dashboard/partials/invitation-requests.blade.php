@@ -12,6 +12,10 @@
 								</th>
 								<th scope="col">{{__('admin.name')}}
 								</th>
+								<!-- status -->
+								<th scope="col">
+									{{__('admin.status')}}
+								</th>
 								<th scope="col">
 									{{__('admin.invitation-mime-type')}}
 								</th>
@@ -52,6 +56,8 @@
 									</a></td>
 
 								<td> {{$requestInvitation->name}}</td>
+								<td> {{__('admin.invitation-status-'.$requestInvitation->status)}}
+								</td>
 								<td> {{__('admin.media-type-'.$requestInvitation->invitation_media_type)}}
 								</td>
 								<!-- <td>

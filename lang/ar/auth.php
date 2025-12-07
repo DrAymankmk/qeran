@@ -17,4 +17,6 @@ return [
     'password' => 'The provided password is incorrect.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
     'language_changed' => 'تم تغيير اللغة بنجاح.',
+
+    'email-or-password-not-correct'=>'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
 ];

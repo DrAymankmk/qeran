@@ -67,6 +67,7 @@
 								<th scope="col">{{__('admin.name')}}</th>
 								<th scope="col">{{__('admin.email')}}</th>
 								<th scope="col">{{__('admin.roles')}}</th>
+								<th scope="col">{{__('admin.active')}}</th>
 								<th scope="col">{{__('admin.created_at')}}</th>
 								<th scope="col">{{__('admin.actions')}}</th>
 							</tr>
@@ -99,6 +100,13 @@
 									@endif
 								</td>
 								<td>
+									@if($admin->active)
+										<span class="badge bg-success">{{__('admin.active')}}</span>
+									@else
+										<span class="badge bg-danger">{{__('admin.inactive')}}</span>
+									@endif
+								</td>
+								<td>
 									{{Carbon\Carbon::parse($admin->created_at)->locale(app()->getLocale())->translatedFormat('l dS F G:i - Y')}}
 								</td>
 								<td>
@@ -109,7 +117,7 @@
 											class="text-info"><i
 												class="mdi mdi-eye-check font-size-22"></i></a>
 									@endcan
-									@can('edit-admins')			
+									@can('edit-admins')
 										<a href="{{route('admins.edit',$admin->id)}}"
 											title="{{__('admin.edit')}}"
 											class="text-warning"><i
@@ -117,7 +125,7 @@
 									@endcan
 									@can('delete-admins')
 										@if($admin->id !== auth()->guard('admin')->id())
-										
+
 										<a onclick="openModalDelete({{$admin->id}})"
 											title="{{__('admin.delete')}}"
 											class="text-danger"><i
@@ -127,7 +135,7 @@
 											<i class="mdi mdi-trash-can-outline font-size-22"></i>
 										</span>
 										@endif
-									@endcan	
+									@endcan
 									</div>
 								</td>
 							</tr>

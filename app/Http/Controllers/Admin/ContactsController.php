@@ -110,6 +110,61 @@ class ContactsController extends Controller
             );
         }
 
+        // Send email notification to contact
+        if ($contact->email) {
+            try {
+                // Get sender email from configuration - prioritize MAIL_USERNAME to avoid blocked domains
+                $senderEmail = env('MAIL_USERNAME');
+                if (empty($senderEmail)) {
+                    $senderEmail = config('mail.mailers.smtp.username');
+                }
+                if (empty($senderEmail)) {
+                    $senderEmail = env('MAIL_FROM_ADDRESS');
+                }
+                // Only use config('mail.from.address') as last resort if it's not the blocked domain
+                if (empty($senderEmail)) {
+                    $fallbackEmail = config('mail.from.address');
+                    // Avoid using blocked domain
+                    if ($fallbackEmail && ! str_contains($fallbackEmail, 'modern-invitation.com') && ! str_contains($fallbackEmail, 'example.com')) {
+                        $senderEmail = $fallbackEmail;
+                    }
+                }
+
+                $senderName = config('mail.from.name', 'Modern Invitation');
+                if (empty($senderName) || $senderName === 'Example') {
+                    $senderName = config('app.name', 'Modern Invitation');
+                }
+
+                if (empty($senderEmail) || ! filter_var($senderEmail, FILTER_VALIDATE_EMAIL)) {
+                    throw new \Exception('No valid sender email configured. Please set MAIL_USERNAME in .env file');
+                }
+
+                $subject = __('admin.contact_us_reply') . ' - ' . $contact->subject;
+
+                Mail::send('emails.contact-reply', [
+                    'contact' => $contact,
+                    'replyMessage' => $request->message,
+                ], function ($message) use ($contact, $subject, $senderEmail, $senderName) {
+                    $message->to($contact->email, $contact->name)
+                        ->from($senderEmail, $senderName)
+                        ->subject($subject);
+                });
+
+                Log::info('Contact reply email sent', [
+                    'contact_id' => $contact->id,
+                    'email' => $contact->email,
+                    'sender_email' => $senderEmail,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to send contact reply email', [
+                    'contact_id' => $contact->id,
+                    'email' => $contact->email,
+                    'error' => $e->getMessage()
+                ]);
+                // Don't fail the request if email fails, just log it
+            }
+        }
+
         return redirect()->route('contact.index')->with('success', 'تم إرسال الرد بنجاح');
     }
 

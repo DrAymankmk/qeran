@@ -512,6 +512,11 @@ return[
     'category'=>'القسم',
     'extra_package' => 'باقة إضافية',
     'contact_us_reply' => 'تم الرد علي',
+    'contact_reply_greeting' => 'شكراً لتواصلك معنا. نود إعلامك بأننا قد قمنا بالرد على استفسارك.',
+    'contact_reply_closing' => 'إذا كان لديك أي استفسارات أخرى، لا تتردد في التواصل معنا.',
+    'your_message' => 'رسالتك',
+    'our_reply' => 'ردنا',
+    'subject' => 'الموضوع',
     'title' => 'العنوان',
     'name' => 'الاسم',
     'english-name' => 'الاسم بالإنجليزية',
@@ -819,4 +824,10 @@ return[
     'read_at'=>'وقت القراءة',
     'type'=>'النوع',
     'role-name'=>"أسم الدور",
+    'profile'=>'الملف الشخصى',
+    'confirm-password'=>'تأكيد كلمة السر',
+    'profile-image'=>'صورة الملف الشخصى',
+    'current-profile-image'=>'صورة الملف الشخصى الحاليه',
+    'account-is-inactive'=>'حسابك غير فعال. يرجى الاتصال بالمسؤول.',
+
 ];

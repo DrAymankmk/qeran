@@ -17,6 +17,8 @@ use App\Http\Controllers\Admin\RolesController;
 use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Website\V1\Invitation\InvitationsController as WebsiteInvitationController;
 use Illuminate\Support\Facades\Artisan;
+use App\Http\Controllers\Frontend\HomeController;
+use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
 /*
 |--------------------------------------------------------------------------
@@ -52,6 +54,29 @@ use Illuminate\Support\Facades\Artisan;
 // }
 // });
 
+// Handle direct locale access (e.g., /en or /ar) - must be BEFORE localized group
+Route::get('/en', function () {
+    app()->setLocale('en');
+    return app(HomeController::class)->index();
+})->middleware(['localeViewPath'])->name('locale.en');
+
+Route::get('/ar', function () {
+    app()->setLocale('ar');
+    return app(HomeController::class)->index();
+})->middleware(['localeViewPath'])->name('locale.ar');
+
+Route::group(
+    [
+        'prefix' => LaravelLocalization::setLocale(),
+        'middleware' => [
+            'localeCookieRedirect',
+            'localizationRedirect',
+            'localeViewPath'
+        ]
+    ],
+    function () {
+        Route::get('/home', [HomeController::class, 'index'])->name('home');
+});
 
 
 // Route::get('/run-storage-link', function () {
@@ -144,7 +169,7 @@ Route::group(['prefix' => 'admin'], function () {
         Route::get('notifications/{id}/details', [NotificationsController::class, 'getDetails'])->name('notifications.details');
         Route::post('notifications/{id}/mark-as-read', [NotificationsController::class, 'markAsRead'])->name('notifications.mark-as-read');
         Route::get('notifications/recent/list', [NotificationsController::class, 'getRecent'])->name('notifications.recent');
-        
+
         // Test Pusher routes (remove in production)
         Route::get('test-pusher', [\App\Http\Controllers\Admin\TestPusherController::class, 'test'])->name('test.pusher');
         Route::get('test-pusher/config', [\App\Http\Controllers\Admin\TestPusherController::class, 'checkConfig'])->name('test.pusher.config');

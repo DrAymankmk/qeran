@@ -65,7 +65,7 @@
 									testimonial</small>
 							</div>
 						</div>
-						<div class="col-md-6">
+						<!-- <div class="col-md-6">
 							<div class="mb-3">
 								<label
 									class="form-label">Template</label>
@@ -75,7 +75,7 @@
 								<small class="form-text text-muted">Optional
 									Blade template name</small>
 							</div>
-						</div>
+						</div> -->
 					</div>
 
 					<div class="row">
@@ -448,7 +448,9 @@
 
 @section('extra-css')
 <link href="{{ asset('frontend/assets/fonts/simple/simple-line-icons.css') }}" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+	integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+	crossorigin="anonymous" referrerpolicy="no-referrer" />
 <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
 <style>
 .icon-picker-modal .icon-grid {
@@ -486,6 +488,7 @@
 	margin-bottom: 5px;
 	line-height: 1;
 }
+
 .icon-picker-modal .icon-item i[class*="icon-"] {
 	font-family: 'Simple-Line-Icons' !important;
 	speak: none;
@@ -496,21 +499,26 @@
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
+
 .icon-picker-modal .icon-item i[class*="fa-"] {
 	font-family: 'Font Awesome 6 Free' !important;
 	font-weight: 900;
 }
+
 .icon-picker-modal .icon-item i[class*="fas"],
 .icon-picker-modal .icon-item i[class*="far"],
 .icon-picker-modal .icon-item i[class*="fab"] {
 	font-family: 'Font Awesome 6 Free' !important;
 }
+
 .icon-picker-modal .icon-item i[class*="fas"] {
 	font-weight: 900;
 }
+
 .icon-picker-modal .icon-item i[class*="far"] {
 	font-weight: 400;
 }
+
 .icon-picker-modal .icon-item i[class*="fab"] {
 	font-weight: 400;
 	font-family: 'Font Awesome 6 Brands' !important;
@@ -536,6 +544,7 @@
 	font-size: 24px;
 	color: #007bff;
 }
+
 .icon-preview i[class*="icon-"] {
 	font-family: 'Simple-Line-Icons' !important;
 	speak: none;
@@ -546,17 +555,21 @@
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
+
 .icon-preview i[class*="fas"],
 .icon-preview i[class*="far"],
 .icon-preview i[class*="fab"] {
 	font-family: 'Font Awesome 6 Free' !important;
 }
+
 .icon-preview i[class*="fas"] {
 	font-weight: 900;
 }
+
 .icon-preview i[class*="far"] {
 	font-weight: 400;
 }
+
 .icon-preview i[class*="fab"] {
 	font-weight: 400;
 	font-family: 'Font Awesome 6 Brands' !important;
@@ -903,136 +916,238 @@ $(document).ready(function() {
 	// Using 'fas' (solid) prefix for Font Awesome 6
 	const fontAwesomeIcons = [
 		// User & People
-		'fas fa-user', 'fas fa-users', 'fas fa-user-group', 'fas fa-user-circle', 'fas fa-user-doctor', 'fas fa-user-nurse',
-		'fas fa-user-graduate', 'fas fa-user-tie', 'fas fa-user-astronaut', 'fas fa-user-secret', 'fas fa-user-shield',
-		'fas fa-user-gear', 'fas fa-user-pen', 'fas fa-user-plus', 'fas fa-user-minus', 'fas fa-user-xmark',
-		'fas fa-user-friends', 'fas fa-user-clock', 'fas fa-user-check', 'fas fa-user-slash', 'fas fa-user-lock',
+		'fas fa-user', 'fas fa-users', 'fas fa-user-group',
+		'fas fa-user-circle', 'fas fa-user-doctor', 'fas fa-user-nurse',
+		'fas fa-user-graduate', 'fas fa-user-tie', 'fas fa-user-astronaut',
+		'fas fa-user-secret', 'fas fa-user-shield',
+		'fas fa-user-gear', 'fas fa-user-pen', 'fas fa-user-plus',
+		'fas fa-user-minus', 'fas fa-user-xmark',
+		'fas fa-user-friends', 'fas fa-user-clock', 'fas fa-user-check',
+		'fas fa-user-slash', 'fas fa-user-lock',
 		// Business & Finance
-		'fas fa-briefcase', 'fas fa-building', 'fas fa-chart-line', 'fas fa-chart-column', 'fas fa-chart-pie',
-		'fas fa-chart-area', 'fas fa-dollar-sign', 'fas fa-euro-sign', 'fas fa-sterling-sign', 'fas fa-yen-sign',
-		'fas fa-credit-card', 'fas fa-wallet', 'fas fa-money-bill', 'fas fa-money-bill-wave', 'fas fa-coins',
-		'fas fa-hand-holding-dollar', 'fas fa-piggy-bank', 'fas fa-cash-register', 'fas fa-receipt', 'fas fa-file-invoice-dollar',
+		'fas fa-briefcase', 'fas fa-building', 'fas fa-chart-line',
+		'fas fa-chart-column', 'fas fa-chart-pie',
+		'fas fa-chart-area', 'fas fa-dollar-sign', 'fas fa-euro-sign',
+		'fas fa-sterling-sign', 'fas fa-yen-sign',
+		'fas fa-credit-card', 'fas fa-wallet', 'fas fa-money-bill',
+		'fas fa-money-bill-wave', 'fas fa-coins',
+		'fas fa-hand-holding-dollar', 'fas fa-piggy-bank',
+		'fas fa-cash-register', 'fas fa-receipt',
+		'fas fa-file-invoice-dollar',
 		// Technology & Devices
-		'fas fa-laptop', 'fas fa-desktop', 'fas fa-tablet', 'fas fa-mobile-screen-button', 'fas fa-phone', 'fas fa-phone-flip',
-		'fas fa-server', 'fas fa-database', 'fas fa-microchip', 'fas fa-memory', 'fas fa-hard-drive', 'fas fa-usb',
-		'fas fa-wifi', 'fas fa-bluetooth', 'fas fa-satellite', 'fas fa-satellite-dish', 'fas fa-router',
+		'fas fa-laptop', 'fas fa-desktop', 'fas fa-tablet',
+		'fas fa-mobile-screen-button', 'fas fa-phone', 'fas fa-phone-flip',
+		'fas fa-server', 'fas fa-database', 'fas fa-microchip',
+		'fas fa-memory', 'fas fa-hard-drive', 'fas fa-usb',
+		'fas fa-wifi', 'fas fa-bluetooth', 'fas fa-satellite',
+		'fas fa-satellite-dish', 'fas fa-router',
 		// Communication
-		'fas fa-envelope', 'fas fa-envelope-open', 'fas fa-mail-bulk', 'fas fa-inbox', 'fas fa-paper-plane',
-		'fas fa-comments', 'fas fa-comment', 'fas fa-comment-dots', 'fas fa-comment', 'fas fa-comment-slash',
-		'fas fa-bullhorn', 'fas fa-megaphone', 'fas fa-broadcast-tower', 'fas fa-rss', 'fas fa-bell', 'fas fa-bell-slash',
+		'fas fa-envelope', 'fas fa-envelope-open', 'fas fa-mail-bulk',
+		'fas fa-inbox', 'fas fa-paper-plane',
+		'fas fa-comments', 'fas fa-comment', 'fas fa-comment-dots',
+		'fas fa-comment', 'fas fa-comment-slash',
+		'fas fa-bullhorn', 'fas fa-megaphone', 'fas fa-broadcast-tower',
+		'fas fa-rss', 'fas fa-bell', 'fas fa-bell-slash',
 		// Social Media (using fab for brands)
-		'fab fa-facebook', 'fab fa-facebook-f', 'fab fa-twitter', 'fab fa-instagram', 'fab fa-linkedin', 'fab fa-youtube',
-		'fab fa-whatsapp', 'fab fa-telegram', 'fab fa-skype', 'fab fa-discord', 'fab fa-reddit', 'fab fa-pinterest',
-		'fab fa-snapchat', 'fab fa-tiktok', 'fab fa-vimeo', 'fab fa-twitch', 'fab fa-github', 'fab fa-gitlab',
+		'fab fa-facebook', 'fab fa-facebook-f', 'fab fa-twitter',
+		'fab fa-instagram', 'fab fa-linkedin', 'fab fa-youtube',
+		'fab fa-whatsapp', 'fab fa-telegram', 'fab fa-skype',
+		'fab fa-discord', 'fab fa-reddit', 'fab fa-pinterest',
+		'fab fa-snapchat', 'fab fa-tiktok', 'fab fa-vimeo', 'fab fa-twitch',
+		'fab fa-github', 'fab fa-gitlab',
 		// Shopping & E-commerce
-		'fas fa-shopping-cart', 'fa fa-shopping-bag', 'fa fa-shopping-basket', 'fa fa-store', 'fa fa-store-alt',
-		'fas fa-tags', 'fa fa-tag', 'fa fa-gift', 'fa fa-gift-card', 'fa fa-box', 'fa fa-boxes',
-		'fas fa-shipping-fast', 'fa fa-truck', 'fa fa-truck-loading', 'fa fa-dolly', 'fa fa-pallet',
+		'fas fa-shopping-cart', 'fa fa-shopping-bag', 'fa fa-shopping-basket',
+		'fa fa-store', 'fa fa-store-alt',
+		'fas fa-tags', 'fa fa-tag', 'fa fa-gift', 'fa fa-gift-card',
+		'fa fa-box', 'fa fa-boxes',
+		'fas fa-shipping-fast', 'fa fa-truck', 'fa fa-truck-loading',
+		'fa fa-dolly', 'fa fa-pallet',
 		// Education & Learning
-		'fas fa-graduation-cap', 'fa fa-school', 'fa fa-book', 'fa fa-book-open', 'fa fa-book-reader',
-		'fas fa-chalkboard', 'fa fa-chalkboard-teacher', 'fa fa-user-graduate', 'fa fa-certificate', 'fa fa-award',
-		'fas fa-medal', 'fa fa-trophy', 'fa fa-ribbon', 'fa fa-star', 'fa fa-star-half-alt',
+		'fas fa-graduation-cap', 'fa fa-school', 'fa fa-book',
+		'fa fa-book-open', 'fa fa-book-reader',
+		'fas fa-chalkboard', 'fa fa-chalkboard-teacher',
+		'fa fa-user-graduate', 'fa fa-certificate', 'fa fa-award',
+		'fas fa-medal', 'fa fa-trophy', 'fa fa-ribbon', 'fa fa-star',
+		'fa fa-star-half-alt',
 		// Health & Medical
-		'fas fa-heart', 'fa fa-heartbeat', 'fa fa-hospital', 'fa fa-hospital-alt', 'fa fa-clinic-medical',
-		'fas fa-user-md', 'fa fa-user-nurse', 'fa fa-stethoscope', 'fa fa-pills', 'fa fa-syringe',
-		'fas fa-ambulance', 'fa fa-band-aid', 'fa fa-first-aid', 'fa fa-prescription', 'fa fa-x-ray',
+		'fas fa-heart', 'fa fa-heartbeat', 'fa fa-hospital',
+		'fa fa-hospital-alt', 'fa fa-clinic-medical',
+		'fas fa-user-md', 'fa fa-user-nurse', 'fa fa-stethoscope',
+		'fa fa-pills', 'fa fa-syringe',
+		'fas fa-ambulance', 'fa fa-band-aid', 'fa fa-first-aid',
+		'fa fa-prescription', 'fa fa-x-ray',
 		// Food & Restaurant
-		'fas fa-utensils', 'fa fa-utensil-spoon', 'fa fa-coffee', 'fa fa-wine-glass', 'fa fa-wine-glass-alt',
-		'fas fa-cocktail', 'fa fa-beer', 'fa fa-pizza-slice', 'fa fa-hamburger', 'fa fa-ice-cream',
-		'fas fa-birthday-cake', 'fa fa-cookie', 'fa fa-cookie-bite', 'fa fa-fish', 'fa fa-drumstick-bite',
+		'fas fa-utensils', 'fa fa-utensil-spoon', 'fa fa-coffee',
+		'fa fa-wine-glass', 'fa fa-wine-glass-alt',
+		'fas fa-cocktail', 'fa fa-beer', 'fa fa-pizza-slice',
+		'fa fa-hamburger', 'fa fa-ice-cream',
+		'fas fa-birthday-cake', 'fa fa-cookie', 'fa fa-cookie-bite',
+		'fa fa-fish', 'fa fa-drumstick-bite',
 		// Travel & Transportation
-		'fas fa-plane', 'fa fa-plane-departure', 'fa fa-plane-arrival', 'fa fa-car', 'fa fa-car-side',
-		'fas fa-taxi', 'fa fa-bus', 'fa fa-train', 'fa fa-subway', 'fa fa-ship', 'fa fa-anchor',
-		'fas fa-bicycle', 'fa fa-motorcycle', 'fa fa-walking', 'fa fa-hiking', 'fa fa-map', 'fa fa-map-marked-alt',
-		'fas fa-map-marker-alt', 'fa fa-compass', 'fa fa-route', 'fa fa-suitcase', 'fa fa-suitcase-rolling',
-		'fas fa-hotel', 'fa fa-bed', 'fa fa-umbrella-beach', 'fa fa-passport', 'fa fa-globe', 'fa fa-globe-americas',
+		'fas fa-plane', 'fa fa-plane-departure', 'fa fa-plane-arrival',
+		'fa fa-car', 'fa fa-car-side',
+		'fas fa-taxi', 'fa fa-bus', 'fa fa-train', 'fa fa-subway',
+		'fa fa-ship', 'fa fa-anchor',
+		'fas fa-bicycle', 'fa fa-motorcycle', 'fa fa-walking', 'fa fa-hiking',
+		'fa fa-map', 'fa fa-map-marked-alt',
+		'fas fa-map-marker-alt', 'fa fa-compass', 'fa fa-route',
+		'fa fa-suitcase', 'fa fa-suitcase-rolling',
+		'fas fa-hotel', 'fa fa-bed', 'fa fa-umbrella-beach', 'fa fa-passport',
+		'fa fa-globe', 'fa fa-globe-americas',
 		// Sports & Fitness
-		'fas fa-futbol', 'fa fa-basketball-ball', 'fa fa-volleyball-ball', 'fa fa-football-ball', 'fa fa-baseball-ball',
-		'fas fa-table-tennis', 'fa fa-golf-ball', 'fa fa-swimming-pool', 'fa fa-dumbbell', 'fa fa-running',
-		'fas fa-biking', 'fa fa-skiing', 'fa fa-skiing-nordic', 'fa fa-snowboarding', 'fa fa-skating',
+		'fas fa-futbol', 'fa fa-basketball-ball', 'fa fa-volleyball-ball',
+		'fa fa-football-ball', 'fa fa-baseball-ball',
+		'fas fa-table-tennis', 'fa fa-golf-ball', 'fa fa-swimming-pool',
+		'fa fa-dumbbell', 'fa fa-running',
+		'fas fa-biking', 'fa fa-skiing', 'fa fa-skiing-nordic',
+		'fa fa-snowboarding', 'fa fa-skating',
 		// Music & Entertainment
-		'fas fa-music', 'fa fa-headphones', 'fa fa-headphones-alt', 'fa fa-microphone', 'fa fa-microphone-alt',
-		'fas fa-microphone-alt-slash', 'fa fa-guitar', 'fa fa-drum', 'fa fa-video', 'fa fa-film', 'fa fa-tv',
-		'fas fa-theater-masks', 'fa fa-magic', 'fa fa-gamepad', 'fa fa-chess', 'fa fa-puzzle-piece',
+		'fas fa-music', 'fa fa-headphones', 'fa fa-headphones-alt',
+		'fa fa-microphone', 'fa fa-microphone-alt',
+		'fas fa-microphone-alt-slash', 'fa fa-guitar', 'fa fa-drum',
+		'fa fa-video', 'fa fa-film', 'fa fa-tv',
+		'fas fa-theater-masks', 'fa fa-magic', 'fa fa-gamepad', 'fa fa-chess',
+		'fa fa-puzzle-piece',
 		// Weather & Nature
-		'fas fa-sun', 'fa fa-moon', 'fa fa-cloud', 'fa fa-cloud-sun', 'fa fa-cloud-moon', 'fa fa-cloud-rain',
-		'fas fa-cloud-showers-heavy', 'fa fa-snowflake', 'fa fa-wind', 'fa fa-umbrella', 'fa fa-tree',
-		'fas fa-leaf', 'fa fa-seedling', 'fa fa-mountain', 'fa fa-water', 'fa fa-fire', 'fa fa-volcano',
+		'fas fa-sun', 'fa fa-moon', 'fa fa-cloud', 'fa fa-cloud-sun',
+		'fa fa-cloud-moon', 'fa fa-cloud-rain',
+		'fas fa-cloud-showers-heavy', 'fa fa-snowflake', 'fa fa-wind',
+		'fa fa-umbrella', 'fa fa-tree',
+		'fas fa-leaf', 'fa fa-seedling', 'fa fa-mountain', 'fa fa-water',
+		'fa fa-fire', 'fa fa-volcano',
 		// Time & Calendar
-		'fas fa-clock', 'fa fa-calendar', 'fa fa-calendar-alt', 'fa fa-calendar-check', 'fa fa-calendar-day',
-		'fas fa-calendar-week', 'fa fa-calendar-month', 'fa fa-calendar-times', 'fa fa-hourglass', 'fa fa-hourglass-half',
-		'fas fa-hourglass-start', 'fa fa-hourglass-end', 'fa fa-stopwatch', 'fa fa-history',
+		'fas fa-clock', 'fa fa-calendar', 'fa fa-calendar-alt',
+		'fa fa-calendar-check', 'fa fa-calendar-day',
+		'fas fa-calendar-week', 'fa fa-calendar-month',
+		'fa fa-calendar-times', 'fa fa-hourglass', 'fa fa-hourglass-half',
+		'fas fa-hourglass-start', 'fa fa-hourglass-end', 'fa fa-stopwatch',
+		'fa fa-history',
 		// Files & Documents
-		'fas fa-file', 'fa fa-file-alt', 'fa fa-file-pdf', 'fa fa-file-word', 'fa fa-file-excel', 'fa fa-file-powerpoint',
-		'fas fa-file-image', 'fa fa-file-video', 'fa fa-file-audio', 'fa fa-file-archive', 'fa fa-file-code',
-		'fas fa-folder', 'fa fa-folder-open', 'fa fa-folder-plus', 'fa fa-folder-minus', 'fa fa-archive',
+		'fas fa-file', 'fa fa-file-alt', 'fa fa-file-pdf', 'fa fa-file-word',
+		'fa fa-file-excel', 'fa fa-file-powerpoint',
+		'fas fa-file-image', 'fa fa-file-video', 'fa fa-file-audio',
+		'fa fa-file-archive', 'fa fa-file-code',
+		'fas fa-folder', 'fa fa-folder-open', 'fa fa-folder-plus',
+		'fa fa-folder-minus', 'fa fa-archive',
 		// Security & Safety
-		'fas fa-shield-alt', 'fa fa-shield-virus', 'fa fa-lock', 'fa fa-unlock', 'fa fa-lock-open', 'fa fa-key',
-		'fas fa-fingerprint', 'fa fa-user-shield', 'fa fa-user-secret', 'fa fa-eye', 'fa fa-eye-slash',
-		'fas fa-camera', 'fa fa-camera-retro', 'fa fa-video', 'fa fa-video-slash', 'fa fa-search', 'fa fa-search-plus',
-		'fas fa-search-minus', 'fa fa-bug', 'fa fa-virus', 'fa fa-virus-slash', 'fa fa-mask',
+		'fas fa-shield-alt', 'fa fa-shield-virus', 'fa fa-lock',
+		'fa fa-unlock', 'fa fa-lock-open', 'fa fa-key',
+		'fas fa-fingerprint', 'fa fa-user-shield', 'fa fa-user-secret',
+		'fa fa-eye', 'fa fa-eye-slash',
+		'fas fa-camera', 'fa fa-camera-retro', 'fa fa-video',
+		'fa fa-video-slash', 'fa fa-search', 'fa fa-search-plus',
+		'fas fa-search-minus', 'fa fa-bug', 'fa fa-virus',
+		'fa fa-virus-slash', 'fa fa-mask',
 		// Tools & Settings
-		'fas fa-wrench', 'fa fa-tools', 'fa fa-screwdriver', 'fa fa-hammer', 'fa fa-cog', 'fa fa-cogs',
-		'fas fa-sliders-h', 'fa fa-toggle-on', 'fa fa-toggle-off', 'fa fa-power-off', 'fa fa-plug',
-		'fas fa-bolt', 'fa fa-lightbulb', 'fa fa-flashlight', 'fa fa-battery-full', 'fa fa-battery-half',
+		'fas fa-wrench', 'fa fa-tools', 'fa fa-screwdriver', 'fa fa-hammer',
+		'fa fa-cog', 'fa fa-cogs',
+		'fas fa-sliders-h', 'fa fa-toggle-on', 'fa fa-toggle-off',
+		'fa fa-power-off', 'fa fa-plug',
+		'fas fa-bolt', 'fa fa-lightbulb', 'fa fa-flashlight',
+		'fa fa-battery-full', 'fa fa-battery-half',
 		'fas fa-battery-empty', 'fa fa-plug', 'fa fa-plug-circle-bolt',
 		// Arrows & Navigation
-		'fas fa-arrow-up', 'fa fa-arrow-down', 'fa fa-arrow-left', 'fa fa-arrow-right', 'fa fa-arrows-alt',
-		'fas fa-arrow-circle-up', 'fa fa-arrow-circle-down', 'fa fa-arrow-circle-left', 'fa fa-arrow-circle-right',
-		'fas fa-chevron-up', 'fa fa-chevron-down', 'fa fa-chevron-left', 'fa fa-chevron-right',
-		'fas fa-angle-up', 'fa fa-angle-down', 'fa fa-angle-left', 'fa fa-angle-right', 'fa fa-caret-up',
-		'fas fa-caret-down', 'fa fa-caret-left', 'fa fa-caret-right', 'fa fa-hand-point-up', 'fa fa-hand-point-down',
-		'fas fa-hand-point-left', 'fa fa-hand-point-right', 'fa fa-long-arrow-alt-up', 'fa fa-long-arrow-alt-down',
+		'fas fa-arrow-up', 'fa fa-arrow-down', 'fa fa-arrow-left',
+		'fa fa-arrow-right', 'fa fa-arrows-alt',
+		'fas fa-arrow-circle-up', 'fa fa-arrow-circle-down',
+		'fa fa-arrow-circle-left', 'fa fa-arrow-circle-right',
+		'fas fa-chevron-up', 'fa fa-chevron-down', 'fa fa-chevron-left',
+		'fa fa-chevron-right',
+		'fas fa-angle-up', 'fa fa-angle-down', 'fa fa-angle-left',
+		'fa fa-angle-right', 'fa fa-caret-up',
+		'fas fa-caret-down', 'fa fa-caret-left', 'fa fa-caret-right',
+		'fa fa-hand-point-up', 'fa fa-hand-point-down',
+		'fas fa-hand-point-left', 'fa fa-hand-point-right',
+		'fa fa-long-arrow-alt-up', 'fa fa-long-arrow-alt-down',
 		'fas fa-long-arrow-alt-left', 'fa fa-long-arrow-alt-right',
 		// Status & Actions
-		'fas fa-check', 'fa fa-check-circle', 'fa fa-check-square', 'fa fa-times', 'fa fa-times-circle',
-		'fas fa-ban', 'fa fa-exclamation', 'fa fa-exclamation-circle', 'fa fa-exclamation-triangle',
-		'fas fa-question', 'fa fa-question-circle', 'fa fa-info', 'fa fa-info-circle', 'fa fa-plus', 'fa fa-plus-circle',
-		'fas fa-plus-square', 'fa fa-minus', 'fa fa-minus-circle', 'fa fa-minus-square', 'fa fa-edit', 'fa fa-pencil-alt',
-		'fas fa-trash', 'fa fa-trash-alt', 'fa fa-undo', 'fa fa-redo', 'fa fa-save', 'fa fa-download', 'fa fa-upload',
-		'fas fa-share', 'fa fa-share-alt', 'fa fa-share-square', 'fa fa-link', 'fa fa-unlink', 'fa fa-copy', 'fa fa-cut',
-		'fas fa-paste', 'fa fa-clone', 'fa fa-expand', 'fa fa-compress', 'fa fa-compress-alt', 'fa fa-expand-alt',
+		'fas fa-check', 'fa fa-check-circle', 'fa fa-check-square',
+		'fa fa-times', 'fa fa-times-circle',
+		'fas fa-ban', 'fa fa-exclamation', 'fa fa-exclamation-circle',
+		'fa fa-exclamation-triangle',
+		'fas fa-question', 'fa fa-question-circle', 'fa fa-info',
+		'fa fa-info-circle', 'fa fa-plus', 'fa fa-plus-circle',
+		'fas fa-plus-square', 'fa fa-minus', 'fa fa-minus-circle',
+		'fa fa-minus-square', 'fa fa-edit', 'fa fa-pencil-alt',
+		'fas fa-trash', 'fa fa-trash-alt', 'fa fa-undo', 'fa fa-redo',
+		'fa fa-save', 'fa fa-download', 'fa fa-upload',
+		'fas fa-share', 'fa fa-share-alt', 'fa fa-share-square', 'fa fa-link',
+		'fa fa-unlink', 'fa fa-copy', 'fa fa-cut',
+		'fas fa-paste', 'fa fa-clone', 'fa fa-expand', 'fa fa-compress',
+		'fa fa-compress-alt', 'fa fa-expand-alt',
 		// Shapes & Symbols
-		'fas fa-circle', 'fa fa-square', 'fa fa-square-full', 'fa fa-dot-circle', 'fa fa-certificate',
-		'fas fa-star', 'fa fa-star-half', 'fa fa-star-half-alt', 'fa fa-heart', 'fa fa-heart-broken',
-		'fas fa-thumbs-up', 'fa fa-thumbs-down', 'fa fa-hand-rock', 'fa fa-hand-paper', 'fa fa-hand-scissors',
-		'fas fa-hand-lizard', 'fa fa-hand-spock', 'fa fa-hand-peace', 'fa fa-hand-point-up', 'fa fa-hand-point-down',
-		'fas fa-hand-point-left', 'fa fa-hand-point-right', 'fa fa-flag', 'fa fa-flag-checkered',
+		'fas fa-circle', 'fa fa-square', 'fa fa-square-full',
+		'fa fa-dot-circle', 'fa fa-certificate',
+		'fas fa-star', 'fa fa-star-half', 'fa fa-star-half-alt',
+		'fa fa-heart', 'fa fa-heart-broken',
+		'fas fa-thumbs-up', 'fa fa-thumbs-down', 'fa fa-hand-rock',
+		'fa fa-hand-paper', 'fa fa-hand-scissors',
+		'fas fa-hand-lizard', 'fa fa-hand-spock', 'fa fa-hand-peace',
+		'fa fa-hand-point-up', 'fa fa-hand-point-down',
+		'fas fa-hand-point-left', 'fa fa-hand-point-right', 'fa fa-flag',
+		'fa fa-flag-checkered',
 		// Home & Living
-		'fas fa-home', 'fa fa-home-lg-alt', 'fa fa-couch', 'fa fa-chair', 'fa fa-bed', 'fa fa-door-open',
-		'fas fa-door-closed', 'fa fa-window-maximize', 'fa fa-window-minimize', 'fa fa-window-restore',
-		'fas fa-lightbulb', 'fa fa-lamp', 'fa fa-fan', 'fa fa-thermometer-half', 'fa fa-fire', 'fa fa-fire-alt',
-		'fas fa-shower', 'fa fa-bath', 'fa fa-toilet', 'fa fa-sink', 'fa fa-utensils', 'fa fa-blender',
-		'fas fa-microwave', 'fa fa-refrigerator', 'fa fa-oven', 'fa fa-dishwasher',
+		'fas fa-home', 'fa fa-home-lg-alt', 'fa fa-couch', 'fa fa-chair',
+		'fa fa-bed', 'fa fa-door-open',
+		'fas fa-door-closed', 'fa fa-window-maximize',
+		'fa fa-window-minimize', 'fa fa-window-restore',
+		'fas fa-lightbulb', 'fa fa-lamp', 'fa fa-fan',
+		'fa fa-thermometer-half', 'fa fa-fire', 'fa fa-fire-alt',
+		'fas fa-shower', 'fa fa-bath', 'fa fa-toilet', 'fa fa-sink',
+		'fa fa-utensils', 'fa fa-blender',
+		'fas fa-microwave', 'fa fa-refrigerator', 'fa fa-oven',
+		'fa fa-dishwasher',
 		// Animals & Pets
-		'fas fa-dog', 'fa fa-cat', 'fa fa-dove', 'fa fa-crow', 'fa fa-fish', 'fa fa-horse', 'fa fa-hippo',
-		'fas fa-spider', 'fa fa-bug', 'fa fa-paw', 'fa fa-feather', 'fa fa-feather-alt',
+		'fas fa-dog', 'fa fa-cat', 'fa fa-dove', 'fa fa-crow', 'fa fa-fish',
+		'fa fa-horse', 'fa fa-hippo',
+		'fas fa-spider', 'fa fa-bug', 'fa fa-paw', 'fa fa-feather',
+		'fa fa-feather-alt',
 		// Science & Research
-		'fas fa-flask', 'fa fa-vial', 'fa fa-microscope', 'fa fa-atom', 'fa fa-dna', 'fa fa-virus',
-		'fas fa-virus-slash', 'fa fa-brain', 'fa fa-rocket', 'fa fa-satellite', 'fa fa-satellite-dish',
-		'fas fa-telescope', 'fa fa-magnet', 'fa fa-radiation', 'fa fa-radiation-alt',
+		'fas fa-flask', 'fa fa-vial', 'fa fa-microscope', 'fa fa-atom',
+		'fa fa-dna', 'fa fa-virus',
+		'fas fa-virus-slash', 'fa fa-brain', 'fa fa-rocket',
+		'fa fa-satellite', 'fa fa-satellite-dish',
+		'fas fa-telescope', 'fa fa-magnet', 'fa fa-radiation',
+		'fa fa-radiation-alt',
 		// Law & Justice
-		'fas fa-gavel', 'fa fa-balance-scale', 'fa fa-balance-scale-left', 'fa fa-balance-scale-right',
-		'fas fa-landmark', 'fa fa-scroll', 'fa fa-stamp', 'fa fa-file-contract', 'fa fa-handshake',
+		'fas fa-gavel', 'fa fa-balance-scale', 'fa fa-balance-scale-left',
+		'fa fa-balance-scale-right',
+		'fas fa-landmark', 'fa fa-scroll', 'fa fa-stamp',
+		'fa fa-file-contract', 'fa fa-handshake',
 		// Religion & Spirituality
-		'fas fa-church', 'fa fa-mosque', 'fa fa-synagogue', 'fa fa-place-of-worship', 'fa fa-star-and-crescent',
-		'fas fa-om', 'fa fa-yin-yang', 'fa fa-cross', 'fa fa-dove', 'fa fa-pray', 'fa fa-praying-hands',
+		'fas fa-church', 'fa fa-mosque', 'fa fa-synagogue',
+		'fa fa-place-of-worship', 'fa fa-star-and-crescent',
+		'fas fa-om', 'fa fa-yin-yang', 'fa fa-cross', 'fa fa-dove',
+		'fa fa-pray', 'fa fa-praying-hands',
 		// Industry & Manufacturing
-		'fas fa-industry', 'fa fa-warehouse', 'fa fa-hard-hat', 'fa fa-tools', 'fa fa-hammer', 'fa fa-wrench',
-		'fas fa-cog', 'fa fa-cogs', 'fa fa-oil-can', 'fa fa-gas-pump', 'fa fa-fire-extinguisher',
-		'fas fa-truck-pickup', 'fa fa-truck-moving', 'fa fa-forklift', 'fa fa-pallet', 'fa fa-boxes',
+		'fas fa-industry', 'fa fa-warehouse', 'fa fa-hard-hat', 'fa fa-tools',
+		'fa fa-hammer', 'fa fa-wrench',
+		'fas fa-cog', 'fa fa-cogs', 'fa fa-oil-can', 'fa fa-gas-pump',
+		'fa fa-fire-extinguisher',
+		'fas fa-truck-pickup', 'fa fa-truck-moving', 'fa fa-forklift',
+		'fa fa-pallet', 'fa fa-boxes',
 		// Art & Design
-		'fas fa-paint-brush', 'fa fa-paint-roller', 'fa fa-palette', 'fa fa-brush', 'fa fa-pencil-alt',
-		'fas fa-pen', 'fa fa-pen-fancy', 'fa fa-pen-nib', 'fa fa-marker', 'fa fa-highlighter',
-		'fas fa-eraser', 'fa fa-stamp', 'fa fa-image', 'fa fa-images', 'fa fa-photo-video',
-		'fas fa-camera-retro', 'fa fa-film', 'fa fa-video', 'fa fa-magic', 'fa fa-theater-masks',
+		'fas fa-paint-brush', 'fa fa-paint-roller', 'fa fa-palette',
+		'fa fa-brush', 'fa fa-pencil-alt',
+		'fas fa-pen', 'fa fa-pen-fancy', 'fa fa-pen-nib', 'fa fa-marker',
+		'fa fa-highlighter',
+		'fas fa-eraser', 'fa fa-stamp', 'fa fa-image', 'fa fa-images',
+		'fa fa-photo-video',
+		'fas fa-camera-retro', 'fa fa-film', 'fa fa-video', 'fa fa-magic',
+		'fa fa-theater-masks',
 		// Miscellaneous
-		'fas fa-gift', 'fa fa-birthday-cake', 'fa fa-cake-candles', 'fa fa-candy-cane', 'fa fa-lollipop',
-		'fas fa-ice-cream', 'fa fa-cookie', 'fa fa-cookie-bite', 'fa fa-mug-hot', 'fa fa-coffee',
-		'fas fa-wine-glass', 'fa fa-cocktail', 'fa fa-beer', 'fa fa-champagne-glasses', 'fa fa-wine-bottle',
-		'fas fa-gem', 'fa fa-ring', 'fa fa-crown', 'fa fa-trophy', 'fa fa-medal', 'fa fa-award',
-		'fas fa-ribbon', 'fa fa-certificate', 'fa fa-badge', 'fa fa-id-badge', 'fa fa-id-card',
-		'fas fa-credit-card', 'fa fa-wallet', 'fa fa-money-bill', 'fa fa-coins', 'fa fa-hand-holding-usd'
+		'fas fa-gift', 'fa fa-birthday-cake', 'fa fa-cake-candles',
+		'fa fa-candy-cane', 'fa fa-lollipop',
+		'fas fa-ice-cream', 'fa fa-cookie', 'fa fa-cookie-bite',
+		'fa fa-mug-hot', 'fa fa-coffee',
+		'fas fa-wine-glass', 'fa fa-cocktail', 'fa fa-beer',
+		'fa fa-champagne-glasses', 'fa fa-wine-bottle',
+		'fas fa-gem', 'fa fa-ring', 'fa fa-crown', 'fa fa-trophy',
+		'fa fa-medal', 'fa fa-award',
+		'fas fa-ribbon', 'fa fa-certificate', 'fa fa-badge', 'fa fa-id-badge',
+		'fa fa-id-card',
+		'fas fa-credit-card', 'fa fa-wallet', 'fa fa-money-bill',
+		'fa fa-coins', 'fa fa-hand-holding-usd'
 	];
 
 	function createIconPickerModal() {
@@ -1041,7 +1156,8 @@ $(document).ready(function() {
 		// Generate Simple Line Icons grid
 		let simpleLineGridHtml = '<div class="icon-grid" id="simpleLineIconsGrid">';
 		simpleLineIcons.forEach(icon => {
-			const iconName = icon.replace('icon-', '').replace(/-/g, ' ');
+			const iconName = icon.replace('icon-', '')
+				.replace(/-/g, ' ');
 			simpleLineGridHtml += `<div class="icon-item" data-icon="${icon}" title="${iconName}">
 				<i class="${icon}"></i>
 				<small>${iconName}</small>
@@ -1050,16 +1166,20 @@ $(document).ready(function() {
 		simpleLineGridHtml += '</div>';
 
 		// Generate Font Awesome Icons grid
-		let fontAwesomeGridHtml = '<div class="icon-grid" id="fontAwesomeIconsGrid" style="display:none;">';
+		let fontAwesomeGridHtml =
+			'<div class="icon-grid" id="fontAwesomeIconsGrid" style="display:none;">';
 		fontAwesomeIcons.forEach(icon => {
 			// Ensure icon has proper prefix (fas, far, or fab)
 			let iconClass = icon;
 			if (icon.startsWith('fa fa-')) {
-				iconClass = icon.replace('fa fa-', 'fas fa-');
+				iconClass = icon.replace('fa fa-',
+					'fas fa-');
 			} else if (!icon.match(/^(fas|far|fab) fa-/)) {
 				iconClass = 'fas ' + icon;
 			}
-			const iconName = iconClass.replace(/^(fas|far|fab) fa-/, '').replace(/-/g, ' ');
+			const iconName = iconClass.replace(
+					/^(fas|far|fab) fa-/, '')
+				.replace(/-/g, ' ');
 			fontAwesomeGridHtml += `<div class="icon-item" data-icon="${iconClass}" title="${iconName}">
 				<i class="${iconClass}"></i>
 				<small>${iconName}</small>

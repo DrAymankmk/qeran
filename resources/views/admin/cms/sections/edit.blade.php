@@ -63,7 +63,7 @@
 								@enderror
 							</div>
 						</div>
-						<div class="col-md-6">
+						<!-- <div class="col-md-6">
 							<div class="mb-3">
 								<label
 									class="form-label">Template</label>
@@ -71,7 +71,7 @@
 									class="form-control"
 									value="{{old('template', $section->template)}}">
 							</div>
-						</div>
+						</div> -->
 					</div>
 
 					<div class="row">

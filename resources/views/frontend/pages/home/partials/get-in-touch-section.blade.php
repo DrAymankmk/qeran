@@ -3,11 +3,10 @@
 		<div class="col-md-12">
 			<section data-stellar-background-ratio="0.4"
 				class="b-info section-texture section-radius stellar section-texture_green section-radius">
-				<h2 class="b-info__title">Get in Touch With Us!</h2>
-				<div class="b-info__text">Ask questions, schedule a meeting
-					or request a proposal. Let’s Get Started</div><a href="home.html"
-					class="b-info__btn btn btn-default btn-sm btn-effect">contact
-					us now</a>
+				<h2 class="b-info__title">{{ __('frontend.get_in_touch') }}</h2>
+				<div class="b-info__text">{{ __('frontend.get_in_touch_text') }}</div><a
+					href="{{ route('contact') }}"
+					class="b-info__btn btn btn-default btn-sm btn-effect">{{ __('frontend.contact_us') }}</a>
 			</section>
 			<!-- end b-info-->
 		</div>

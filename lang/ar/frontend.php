@@ -16,4 +16,8 @@ return[
     'send'=>'إرسال',
     'contact'=>'الاتصال',
     'home'=>'الرئيسية',
+    'get_in_touch'=>'اتصل بنا',
+    'get_in_touch_text'=>'اتصل بنا لمعلومات اكثر',
+    'contact_us'=>'اتصل بنا',
+    'all designs'=>'جميع التصاميم',
 ];

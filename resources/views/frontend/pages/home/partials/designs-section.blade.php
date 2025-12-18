@@ -18,8 +18,9 @@ $designsSection = $homePage->activeSections->where('name', 'designs')->first();
 			<div class="row">
 				<div class="col-xs-12">
 					<ul class="b-isotope-filter list-inline">
-						<li><a href="" data-filter="*" class="current">all
-								designs</a></li>
+						<li><a href="" data-filter="*"
+								class="current">{{ __('frontend.all designs') }}</a>
+						</li>
 						@foreach($categories as $category)
 						<li><a href=""
 								data-filter=".category-{{ $category->id }}">{{ $category->name }}</a>

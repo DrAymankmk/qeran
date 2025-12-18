@@ -15,213 +15,30 @@
 				</div>
 				<div class="col-md-7">
 					<div class="bxslider">
+						@foreach($servicesSection->items as $item)
 						<section class="b-advantages-2 b-advantages-2_light">
+							@if($item->icon)
+							@php
+							$iconClass = trim($item->icon);
+							@endphp
 							<i
-								class="b-advantages-2__icon flaticon-people"></i>
+								class="b-advantages-2__icon text-primary {{ $iconClass }}"></i>
+							@endif
 							<div class="b-advantages-2__inner">
 								<h3
 									class="b-advantages-2__title ui-title-inner bg-primary_b">
-									Wedding
-									Events
+									{{ $item->title }}
 								</h3>
 								<div class="b-advantages-2__info">
-									Sit amet
-									consectetur
-									elit sed
-									lusm
-									tempor
-									incidant
-									temdore ut
-									labore
-									dolore
-									lorem
-									ipsum
-									dolor sit
-									amet
-									consectetur
-									adipisicing
-									elit sed
-									do eiusmod
-									tempor
-									incididunt
-									ut labore
-									et dolore.
+									{!!
+									formatCmsContent($item->content)
+									!!}
 								</div>
 							</div>
 						</section>
-						<!-- end .b-advantages-->
-						<section class="b-advantages-2 b-advantages-2_light">
-							<i class="b-advantages-2__icon flaticon-food"></i>
-							<div class="b-advantages-2__inner">
-								<h3
-									class="b-advantages-2__title ui-title-inner bg-primary_b">
-									Birthday
-									Parties
-								</h3>
-								<div class="b-advantages-2__info">
-									Sit amet
-									consectetur
-									elit sed
-									lusm
-									tempor
-									incidant
-									temdore ut
-									labore
-									dolore
-									lorem
-									ipsum
-									dolor sit
-									amet
-									consectetur
-									adipisicing
-									elit sed
-									do eiusmod
-									tempor
-									incididunt
-									ut labore
-									et dolore.
-								</div>
-							</div>
-						</section>
-						<!-- end .b-advantages-->
-						<section class="b-advantages-2 b-advantages-2_light">
-							<i
-								class="b-advantages-2__icon flaticon-karaoke"></i>
-							<div class="b-advantages-2__inner">
-								<h3
-									class="b-advantages-2__title ui-title-inner bg-primary_b">
-									Corporate
-									Seminars
-								</h3>
-								<div class="b-advantages-2__info">
-									Sit amet
-									consectetur
-									elit sed
-									lusm
-									tempor
-									incidant
-									temdore ut
-									labore
-									dolore
-									lorem
-									ipsum
-									dolor sit
-									amet
-									consectetur
-									adipisicing
-									elit sed
-									do eiusmod
-									tempor
-									incididunt
-									ut labore
-									et dolore.
-								</div>
-							</div>
-						</section>
-						<!-- end .b-advantages-->
-						<section class="b-advantages-2 b-advantages-2_light">
-							<i
-								class="b-advantages-2__icon flaticon-people"></i>
-							<div class="b-advantages-2__inner">
-								<h3
-									class="b-advantages-2__title ui-title-inner bg-primary_b">
-									Wedding
-									Events
-								</h3>
-								<div class="b-advantages-2__info">
-									Sit amet
-									consectetur
-									elit sed
-									lusm
-									tempor
-									incidant
-									temdore ut
-									labore
-									dolore
-									lorem
-									ipsum
-									dolor sit
-									amet
-									consectetur
-									adipisicing
-									elit sed
-									do eiusmod
-									tempor
-									incididunt
-									ut labore
-									et dolore.
-								</div>
-							</div>
-						</section>
-						<!-- end .b-advantages-->
-						<section class="b-advantages-2 b-advantages-2_light">
-							<i class="b-advantages-2__icon flaticon-food"></i>
-							<div class="b-advantages-2__inner">
-								<h3
-									class="b-advantages-2__title ui-title-inner bg-primary_b">
-									Birthday
-									Parties
-								</h3>
-								<div class="b-advantages-2__info">
-									Sit amet
-									consectetur
-									elit sed
-									lusm
-									tempor
-									incidant
-									temdore ut
-									labore
-									dolore
-									lorem
-									ipsum
-									dolor sit
-									amet
-									consectetur
-									adipisicing
-									elit sed
-									do eiusmod
-									tempor
-									incididunt
-									ut labore
-									et dolore.
-								</div>
-							</div>
-						</section>
-						<!-- end .b-advantages-->
-						<section class="b-advantages-2 b-advantages-2_light">
-							<i
-								class="b-advantages-2__icon flaticon-karaoke"></i>
-							<div class="b-advantages-2__inner">
-								<h3
-									class="b-advantages-2__title ui-title-inner bg-primary_b">
-									Corporate
-									Seminars
-								</h3>
-								<div class="b-advantages-2__info">
-									Sit amet
-									consectetur
-									elit sed
-									lusm
-									tempor
-									incidant
-									temdore ut
-									labore
-									dolore
-									lorem
-									ipsum
-									dolor sit
-									amet
-									consectetur
-									adipisicing
-									elit sed
-									do eiusmod
-									tempor
-									incididunt
-									ut labore
-									et dolore.
-								</div>
-							</div>
-						</section>
+						@endforeach
+
+
 						<!-- end .b-advantages-->
 					</div>
 				</div>

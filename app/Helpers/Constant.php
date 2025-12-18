@@ -199,6 +199,10 @@ class Constant
 
     const CATEGORY_IMAGE_FOLDER_NAME = 'categories';
 
+    const DESIGN_IMAGE_FOLDER_NAME = 'designs';
+
+    const TESTIMONIAL_IMAGE_FOLDER_NAME = 'testimonials';
+
     const INVITATION_IMAGE_FOLDER_NAME = 'invitations/images';
 
     const INVITATION_MAIN_IMAGE_FOLDER_NAME = 'invitations/main_images';

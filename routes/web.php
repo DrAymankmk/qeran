@@ -1,23 +1,30 @@
 <?php
 
-use App\Models\Invitation;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\AdminsController;
+use App\Http\Controllers\Admin\AppSettingsController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\CategoryController;
-use App\Http\Controllers\Admin\InvitationsController;
-use App\Http\Controllers\Admin\UsersController;
+use App\Http\Controllers\Admin\DesignsController;
+use App\Http\Controllers\Admin\TestimonialsController;
+use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\ContactsController;
-use App\Http\Controllers\Admin\PackagesController;
-use App\Http\Controllers\Admin\NotificationsController;
-use App\Http\Controllers\Admin\AppSettingsController;
-use App\Http\Controllers\Admin\PromoCodeController;
-use App\Http\Controllers\Admin\AdminsController;
 use App\Http\Controllers\Admin\InvitationRequestController;
-use App\Http\Controllers\Admin\RolesController;
+use App\Http\Controllers\Admin\InvitationsController;
+use App\Http\Controllers\Admin\NotificationsController;
+use App\Http\Controllers\Admin\PackagesController;
 use App\Http\Controllers\Admin\PermissionsController;
-use App\Http\Controllers\Website\V1\Invitation\InvitationsController as WebsiteInvitationController;
-use Illuminate\Support\Facades\Artisan;
+use App\Http\Controllers\Admin\PromoCodeController;
+use App\Http\Controllers\Admin\RolesController;
+use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Frontend\HomeController;
+use App\Http\Controllers\Frontend\AboutController;
+use App\Http\Controllers\Frontend\ServiceController;
+use App\Http\Controllers\Frontend\FaqController;
+use App\Http\Controllers\Frontend\ContactController;
+use App\Http\Controllers\Website\V1\Invitation\InvitationsController as WebsiteInvitationController;
+use App\Models\Invitation;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Route;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
 /*
@@ -55,28 +62,39 @@ use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 // });
 
 // Handle direct locale access (e.g., /en or /ar) - must be BEFORE localized group
-Route::get('/en', function () {
-    app()->setLocale('en');
-    return app(HomeController::class)->index();
-})->middleware(['localeViewPath'])->name('locale.en');
+// Route::get('/en', function () {
+//     app()->setLocale('en');
 
-Route::get('/ar', function () {
-    app()->setLocale('ar');
-    return app(HomeController::class)->index();
-})->middleware(['localeViewPath'])->name('locale.ar');
+//     return app(HomeController::class)->index();
+// })->middleware(['localeViewPath'])->name('locale.en');
 
+// Route::get('/ar', function () {
+//     app()->setLocale('ar');
+
+//     return app(HomeController::class)->index();
+// })->middleware(['localeViewPath'])->name('locale.ar');
+
+// Localized routes group
 Route::group(
     [
         'prefix' => LaravelLocalization::setLocale(),
         'middleware' => [
             'localeCookieRedirect',
             'localizationRedirect',
-            'localeViewPath'
-        ]
+            'localeViewPath',
+        ],
     ],
     function () {
+        // Route::get('/', [HomeController::class, 'index'])->name('home');
         Route::get('/home', [HomeController::class, 'index'])->name('home');
-});
+        Route::get('/services', [ServiceController::class, 'index'])->name('services');
+        Route::get('/about', [AboutController::class, 'index'])->name('about');
+        Route::get('/faq', [FaqController::class, 'index'])->name('faq');
+        Route::get('/contact', [ContactController::class, 'index'])->name('contact');
+        // CMS Frontend Route (inside localized group)
+        Route::get('/page/{slug}', [\App\Http\Controllers\Frontend\CmsPageController::class, 'show'])
+            ->name('cms.page.show');
+    });
 
 
 // Route::get('/run-storage-link', function () {
@@ -108,16 +126,13 @@ Route::get('/run-optimize', function () {
 
     return 'Optimization completed';
     // 'composer_execution' => $composerResult
-
 });
 
 Route::get('/migrate', function () {
     Artisan::call('migrate');
-    return "migrated successfully.";
+
+    return 'migrated successfully.';
 });
-
-
-
 
 Route::get('/email', function () {
     $invitation = Invitation::whereId(128)->first();
@@ -135,8 +150,8 @@ Route::get('/delete-account-instruction', function () {
 Route::get('/privacy-policy', function () {
     return view('privacy_policy');
 });
-Route::group(['prefix' => 'admin'], function () {
 
+Route::group(['prefix' => 'admin'], function () {
     Route::controller(AuthController::class)->group(function () {
         Route::get('/', 'loginForm')->name('admin.login.form');
         Route::post('/', 'login')->name('admin.login');
@@ -144,14 +159,12 @@ Route::group(['prefix' => 'admin'], function () {
 
     Route::group(['middleware' => 'auth:admin'], function () {
         Route::controller(AuthController::class)->group(function () {
-
             Route::get('/dashboard', 'dashboard')->name('admin.dashboard');
             Route::get('/logout', 'logout')->name('admin.logout');
             Route::get('/profile', 'profile')->name('admin.profile');
             Route::post('/profile', 'updateProfile')->name('admin.profile.update');
         });
         Route::controller(ContactsController::class)->group(function () {
-
             Route::get('/contacts', 'index')->name('contact.index');
             // show
             Route::get('/contacts/{id}', 'show')->name('contact.show');
@@ -160,10 +173,14 @@ Route::group(['prefix' => 'admin'], function () {
             Route::post('/contacts', 'sendReply')->name('contact.reply.submit');
             Route::post('/contacts/{id}/update-status', 'updateStatus')->name('contact.update-status');
             Route::get('contacts/export/pdf', 'contactExportPdf')->name('contact.export.pdf');
-
         });
         Route::resource('category', CategoryController::class);
         Route::get('category/export/pdf', [CategoryController::class, 'exportPdf'])->name('category.export.pdf');
+        Route::resource('designs', DesignsController::class);
+        Route::resource('testimonials', TestimonialsController::class);
+        Route::resource('media', MediaController::class)->parameters([
+            'media' => 'medium'
+        ]);
         Route::resource('notifications', NotificationsController::class);
         Route::get('notifications/export/pdf', [NotificationsController::class, 'notificationsExportPdf'])->name('notifications.export.pdf');
         Route::get('notifications/{id}/details', [NotificationsController::class, 'getDetails'])->name('notifications.details');
@@ -193,11 +210,10 @@ Route::group(['prefix' => 'admin'], function () {
 
         Route::controller(InvitationRequestController::class)->group(function () {
             Route::get('/invitation-requests', 'index')->name('invitation-request.index');
-             Route::get('/invitation-requests/edit/{id}', 'edit')->name('invitation-request.edit');
+            Route::get('/invitation-requests/edit/{id}', 'edit')->name('invitation-request.edit');
             Route::put('/invitation-requests/update/{id}', 'updateInvitationRequest')->name('invitation-request.update');
             Route::get('/invitation-requests/export/pdf', 'invitationRequestExportPdf')->name('invitation-request.export.pdf');
         });
-
 
         Route::resource('invitation', InvitationsController::class);
         Route::resource('users', UsersController::class);
@@ -208,7 +224,6 @@ Route::group(['prefix' => 'admin'], function () {
 
         Route::resource('admins', AdminsController::class);
         Route::get('admins/export/pdf', [AdminsController::class, 'adminsExportPdf'])->name('admins.export.pdf');
-
 
         Route::resource('package', PackagesController::class);
         Route::get('package/export/pdf', [PackagesController::class, 'packageExportPdf'])->name('packages.export.pdf');
@@ -230,12 +245,74 @@ Route::group(['prefix' => 'admin'], function () {
         // Roles and Permissions
         Route::resource('roles', RolesController::class);
         Route::resource('permissions', PermissionsController::class);
+
+        // CMS Routes
+        Route::group(['prefix' => 'cms',
+            'as' => 'cms.'], function () {
+                // Pages
+                Route::resource('pages', \App\Http\Controllers\Admin\Cms\PageController::class);
+                Route::post('pages/reorder', [\App\Http\Controllers\Admin\Cms\PageController::class, 'reorder'])
+                    ->name('pages.reorder');
+
+                // Sections
+                Route::get('pages/{page}/sections', [\App\Http\Controllers\Admin\Cms\SectionController::class, 'index'])
+                    ->name('sections.index');
+                Route::get('pages/{page}/sections/create', [\App\Http\Controllers\Admin\Cms\SectionController::class, 'create'])
+                    ->name('sections.create');
+                Route::post('pages/{page}/sections', [\App\Http\Controllers\Admin\Cms\SectionController::class, 'store'])
+                    ->name('sections.store');
+                Route::get('pages/{page}/sections/{section}/edit', [\App\Http\Controllers\Admin\Cms\SectionController::class, 'edit'])
+                    ->name('sections.edit');
+                Route::put('pages/{page}/sections/{section}', [\App\Http\Controllers\Admin\Cms\SectionController::class, 'update'])
+                    ->name('sections.update');
+                Route::delete('pages/{page}/sections/{section}', [\App\Http\Controllers\Admin\Cms\SectionController::class, 'destroy'])
+                    ->name('sections.destroy');
+
+                // Items
+                Route::get('pages/{page}/sections/{section}/items', [\App\Http\Controllers\Admin\Cms\ItemController::class, 'index'])
+                    ->name('items.index');
+                Route::get('pages/{page}/sections/{section}/items/create', [\App\Http\Controllers\Admin\Cms\ItemController::class, 'create'])
+                    ->name('items.create');
+                Route::post('pages/{page}/sections/{section}/items', [\App\Http\Controllers\Admin\Cms\ItemController::class, 'store'])
+                    ->name('items.store');
+                Route::get('pages/{page}/sections/{section}/items/{item}/edit', [\App\Http\Controllers\Admin\Cms\ItemController::class, 'edit'])
+                    ->name('items.edit');
+                Route::put('pages/{page}/sections/{section}/items/{item}', [\App\Http\Controllers\Admin\Cms\ItemController::class, 'update'])
+                    ->name('items.update');
+                Route::delete('pages/{page}/sections/{section}/items/{item}', [\App\Http\Controllers\Admin\Cms\ItemController::class, 'destroy'])
+                    ->name('items.destroy');
+                Route::delete('items/images/{media}', [\App\Http\Controllers\Admin\Cms\ItemController::class, 'deleteImage'])
+                    ->name('items.images.delete');
+
+                // Links (Standalone Module) - Can be associated with Pages, Sections, or Items
+                Route::get('links/{type}/{id}', [\App\Http\Controllers\Admin\Cms\LinkController::class, 'index'])
+                    ->name('links.index')
+                    ->where('type', 'page|section|item');
+                Route::get('links/{type}/{id}/create', [\App\Http\Controllers\Admin\Cms\LinkController::class, 'create'])
+                    ->name('links.create')
+                    ->where('type', 'page|section|item');
+                Route::post('links/{type}/{id}', [\App\Http\Controllers\Admin\Cms\LinkController::class, 'store'])
+                    ->name('links.store')
+                    ->where('type', 'page|section|item');
+                Route::get('links/{type}/{id}/{link}/edit', [\App\Http\Controllers\Admin\Cms\LinkController::class, 'edit'])
+                    ->name('links.edit')
+                    ->where('type', 'page|section|item');
+                Route::put('links/{type}/{id}/{link}', [\App\Http\Controllers\Admin\Cms\LinkController::class, 'update'])
+                    ->name('links.update')
+                    ->where('type', 'page|section|item');
+                Route::delete('links/{type}/{id}/{link}', [\App\Http\Controllers\Admin\Cms\LinkController::class, 'destroy'])
+                    ->name('links.destroy')
+                    ->where('type', 'page|section|item');
+                Route::post('links/{type}/{id}/reorder', [\App\Http\Controllers\Admin\Cms\LinkController::class, 'reorder'])
+                    ->name('links.reorder')
+                    ->where('type', 'page|section|item');
+            });
     });
 });
 
 Route::get('/debug-category-title', function () {
     $category = App\Models\Category::first();
-    if (!$category) {
+    if (! $category) {
         return 'No categories found';
     }
 
@@ -256,7 +333,7 @@ Route::get('/debug-category-title', function () {
             'name' => $category->getTranslation('en')->name,
             'slug' => $category->getTranslation('en')->slug,
             'description' => $category->getTranslation('en')->description,
-        ]
+        ],
     ]);
 
     // Reload category
@@ -269,7 +346,7 @@ Route::get('/debug-category-title', function () {
         'before_en' => $beforeEn,
         'after_ar' => $afterAr,
         'after_en' => $afterEn,
-        'translated_attributes' => $category->translatedAttributes
+        'translated_attributes' => $category->translatedAttributes,
     ];
 });
 

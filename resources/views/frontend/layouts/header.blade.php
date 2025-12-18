@@ -21,19 +21,19 @@
 					<ul class="social-net list-inline">
 						<li class="social-net__item"><a href="twitter.com"
 								class="social-net__link text-primary_h"><i
-									class="icon fa fa-twitter"></i></a>
+									class="fa-brands fa-twitter"></i></a>
 						</li>
 						<li class="social-net__item"><a href="facebook.com"
 								class="social-net__link text-primary_h"><i
-									class="icon fa fa-facebook"></i></a>
+									class="fa-brands fa-facebook"></i></a>
 						</li>
 						<li class="social-net__item"><a href="plus.google.com"
 								class="social-net__link text-primary_h"><i
-									class="icon fa fa-google-plus"></i></a>
+									class="fa-brands fa-google"></i></a>
 						</li>
 						<li class="social-net__item"><a href="linkedin.com"
 								class="social-net__link text-primary_h"><i
-									class="icon fa fa-linkedin"></i></a>
+									class="fa-brands fa-linkedin"></i></a>
 						</li>
 					</ul>
 					<!-- end social-list-->
@@ -57,60 +57,20 @@
 			</div>
 			<div class="header-navibox-2">
 				<ul class="main-menu nav navbar-nav" style="display: flex; align-items: center">
-					<!-- <li class="dropdown"><a href="#" data-toggle="dropdown"
-							class="dropdown-toggle">{{ __('Home') }}<b
-								class="caret"></b></a>
-						<ul role="menu" class="dropdown-menu">
-							<li><a href="home.html">Home
-									ver
-									01</a>
-							</li>
-							<li><a href="home-2.html">Home
-									ver
-									02</a>
-							</li>
-						</ul>
-					</li> -->
-					<li><a href="">{{ __('frontend.Home') }}</a>
+
+					<li><a href="{{ route('home') }}">{{ __('frontend.Home') }}</a>
 					</li>
-					<li><a href="services.html">{{ __('frontend.Services') }}</a>
+					<li><a href="{{route('services')}}">{{ __('frontend.Services') }}</a>
 					</li>
-					<li><a href="about.html">{{ __('frontend.About') }}</a></li>
-					<li class="dropdown"><a href="#" data-toggle="dropdown"
-							class="dropdown-toggle">{{ __('frontend.News') }}<b
-								class="caret"></b></a>
-						<ul role="menu" class="dropdown-menu">
-							<li><a href="blog-main.html">Blog
-									main</a>
-							</li>
-							<li><a href="blog-post.html">Blog
-									post</a>
-							</li>
-						</ul>
+					<li><a href="{{ route('about') }}">{{ __('frontend.About') }}</a></li>
+
+					<li><a href="{{ route('faq') }}">{{ __('frontend.Faq') }}</a></li>
+
+
+					<li><a href="{{ route('contact') }}">{{ __('frontend.Contact') }}</a>
 					</li>
-					<li><a href="contact.html">{{ __('frontend.Contact') }}</a>
-					</li>
-					<li class="dropdown"><a href="#" data-toggle="dropdown"
-							class="dropdown-toggle">{{ __('frontend.Pages') }}<b
-								class="caret"></b></a>
-						<ul role="menu" class="dropdown-menu">
-							<li><a href="404.html">Page
-									404</a>
-							</li>
-							<li><a href="headers.html">Headers</a>
-							</li>
-							<li><a href="typography.html">Typography</a>
-							</li>
-							<li><a href="privacy-policy.html">Privacy
-									policy</a>
-							</li>
-							<li><a href="terms-of-use.html">Terms
-									of
-									use</a>
-							</li>
-						</ul>
-					</li>
-						<li class="dropdown">
+
+					<li class="dropdown">
 						<a href="#" data-toggle="dropdown" class="dropdown-toggle">
 							@if(app()->getLocale()
 							== 'ar')
@@ -158,7 +118,7 @@
 								class="toggle-menu-button-icon"><span></span><span></span><span></span><span></span><span></span><span></span></i></button>
 					</li>
 					<li><a href="#" class="btn_header_search"><i
-								class="fa fa-search"></i></a>
+								class="fas fa-search"></i></a>
 					</li>
 				</ul>
 			</div>

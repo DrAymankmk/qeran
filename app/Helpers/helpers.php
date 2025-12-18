@@ -346,7 +346,7 @@ if (!function_exists('checkPackageCount')) {
 
             if (count($invitationPackages) > 0) {
                 foreach ($invitationPackages as $invitationPackage) {
-    
+
                     $package_invitation += ($invitationPackage->package->count + $invitationPackage->package->free_invitations_count + $invitationPackage->count );
                 }
             }
@@ -354,7 +354,7 @@ if (!function_exists('checkPackageCount')) {
             $availableInvitationCount = $package_invitation - ($adminInvitationCount+$userInvitationCount);
 
 
-        
+
             if($availableInvitationCount < $count){
                 return false;
             }
@@ -399,7 +399,7 @@ if(!function_exists('checkPackageCountForUser')){
             return false;
         }
         return true;
-        
+
     }
 }
 
@@ -410,7 +410,7 @@ if(!function_exists('checkPackageCountForAdmin')){
         $totalInvitationCount = $invitation->admins()->where('user_id', $admin_id)->first()?->pivot?->invitation_count;
         $userInvitationCount = $invitation->users()->where('invited_by', $admin_id)->sum('invitation_count');
 
-       
+
         if($totalInvitationCount >= ($userInvitationCount+$count)){
             return true;
         }
@@ -424,9 +424,9 @@ if(!function_exists('checkPackageCountForAdmin')){
             return true;
         }
 
-       
+
         return false;
-       
+
     }
     }
 }
@@ -461,3 +461,73 @@ if (!function_exists('getImage')) {
     }
 }
 
+if (!function_exists('formatCmsContent')) {
+    /**
+     * Format CMS content with locale-specific styling
+     *
+     * @param string|null $content The HTML content to format
+     * @param string|null $locale Optional locale (defaults to current locale)
+     * @return string Formatted content wrapped in styled div
+     */
+    function formatCmsContent($content, $locale = null)
+    {
+        if (empty($content)) {
+            return '';
+        }
+
+        $locale = $locale ?? app()->getLocale();
+        $isArabic = $locale === 'ar';
+
+        // Wrap content in a div with appropriate classes
+        $wrapperClass = 'cms-content';
+        if ($isArabic) {
+            $wrapperClass .= ' cms-content-ar';
+        }
+
+        // Process the content to remove padding from ol and ul elements
+        // Handle ol with attributes
+        $processedContent = preg_replace_callback(
+            '/<ol\s+([^>]*?)>/i',
+            function($matches) {
+                $attrs = $matches[1];
+                // Remove existing padding styles
+                $attrs = preg_replace('/style\s*=\s*["\'][^"\']*padding[^"\']*["\']/i', '', $attrs);
+                // Remove existing padding-left/right styles
+                $attrs = preg_replace('/style\s*=\s*["\'][^"\']*padding-left[^"\']*["\']/i', '', $attrs);
+                $attrs = preg_replace('/style\s*=\s*["\'][^"\']*padding-right[^"\']*["\']/i', '', $attrs);
+                return '<ol' . ($attrs ? ' ' . trim($attrs) : '') . '>';
+            },
+            $content
+        );
+
+        // Handle ol without attributes
+        $processedContent = preg_replace(
+            '/<ol(?![^>]*style)/i',
+            '<ol style="padding-left: 0; padding-right: 0;"',
+            $processedContent
+        );
+
+        // Handle ul with attributes
+        $processedContent = preg_replace_callback(
+            '/<ul\s+([^>]*?)>/i',
+            function($matches) {
+                $attrs = $matches[1];
+                // Remove existing padding styles
+                $attrs = preg_replace('/style\s*=\s*["\'][^"\']*padding[^"\']*["\']/i', '', $attrs);
+                $attrs = preg_replace('/style\s*=\s*["\'][^"\']*padding-left[^"\']*["\']/i', '', $attrs);
+                $attrs = preg_replace('/style\s*=\s*["\'][^"\']*padding-right[^"\']*["\']/i', '', $attrs);
+                return '<ul' . ($attrs ? ' ' . trim($attrs) : '') . '>';
+            },
+            $processedContent
+        );
+
+        // Handle ul without attributes
+        $processedContent = preg_replace(
+            '/<ul(?![^>]*style)/i',
+            '<ul style="padding-left: 0; padding-right: 0;"',
+            $processedContent
+        );
+
+        return '<div class="' . $wrapperClass . '">' . $processedContent . '</div>';
+    }
+}

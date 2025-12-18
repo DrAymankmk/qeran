@@ -55,9 +55,35 @@ class PackagesController extends Controller
      */
     public function store(PackageRequest $request)
     {
-        Package::create($request->validated());
+        $validated = $request->validated();
+        
+        // Extract translation data
+        $enData = [
+            'title' => $validated['en']['title'] ?? null,
+            'subtitle' => $validated['en']['subtitle'] ?? null,
+            'content' => $validated['en']['content'] ?? null,
+        ];
+        $arData = [
+            'title' => $validated['ar']['title'] ?? null,
+            'subtitle' => $validated['ar']['subtitle'] ?? null,
+            'content' => $validated['ar']['content'] ?? null,
+        ];
+        
+        // Remove translation data from main data
+        unset($validated['en'], $validated['ar'], $validated['title'], $validated['subtitle'], $validated['content']);
+        
+        $package = Package::create($validated);
+        
+        // Save translations
+        $package->translateOrNew('en')->title = $enData['title'];
+        $package->translateOrNew('en')->subtitle = $enData['subtitle'];
+        $package->translateOrNew('en')->content = $enData['content'];
+        $package->translateOrNew('ar')->title = $arData['title'];
+        $package->translateOrNew('ar')->subtitle = $arData['subtitle'];
+        $package->translateOrNew('ar')->content = $arData['content'];
+        $package->save();
+        
         return redirect()->route('package.index')->with('success','Created');
-
     }
 
     /**
@@ -80,6 +106,8 @@ class PackagesController extends Controller
     public function edit(Package $package)
     {
 //        abort_if(Gate::denies('edit_categories'), 403);
+        
+        $package->load('translations');
 
         return view('pages.packages.edit',compact('package'));
     }
@@ -94,11 +122,36 @@ class PackagesController extends Controller
     public function update(PackageRequest $request, Package $package)
     {
 //        abort_if(Gate::denies('edit_categories'), 403);
-        $package->update($request->validated());
-
+        
+        $validated = $request->validated();
+        
+        // Extract translation data
+        $enData = [
+            'title' => $validated['en']['title'] ?? null,
+            'subtitle' => $validated['en']['subtitle'] ?? null,
+            'content' => $validated['en']['content'] ?? null,
+        ];
+        $arData = [
+            'title' => $validated['ar']['title'] ?? null,
+            'subtitle' => $validated['ar']['subtitle'] ?? null,
+            'content' => $validated['ar']['content'] ?? null,
+        ];
+        
+        // Remove translation data from main data
+        unset($validated['en'], $validated['ar'], $validated['title'], $validated['subtitle'], $validated['content']);
+        
+        $package->update($validated);
+        
+        // Save translations
+        $package->translateOrNew('en')->title = $enData['title'];
+        $package->translateOrNew('en')->subtitle = $enData['subtitle'];
+        $package->translateOrNew('en')->content = $enData['content'];
+        $package->translateOrNew('ar')->title = $arData['title'];
+        $package->translateOrNew('ar')->subtitle = $arData['subtitle'];
+        $package->translateOrNew('ar')->content = $arData['content'];
+        $package->save();
 
         return redirect()->route('package.index')->with('success','Updated');
-
     }
 
    

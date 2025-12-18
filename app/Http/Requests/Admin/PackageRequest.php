@@ -23,14 +23,24 @@ class PackageRequest extends FormRequest
      */
     public function rules()
     {
-            return [
-                'package_invitation_type'=>['required'],
-                'free_invitations_count'=>['required'],
-                'package_type'=>['required'],
-                'count'=>['required'],
-                'price'=>['required']
-            ];
+        $rules = [
+            'package_invitation_type'=>['required'],
+            'free_invitations_count'=>['required'],
+            'package_type'=>['required'],
+            'count'=>['required'],
+            'price'=>['required'],
+            'title'=>['nullable','string','max:255'],
+            'subtitle'=>['nullable','string','max:500'],
+            'content'=>['nullable','string'],
+            'en.title'=>['nullable','string','max:255'],
+            'en.subtitle'=>['nullable','string','max:500'],
+            'en.content'=>['nullable','string'],
+            'ar.title'=>['nullable','string','max:255'],
+            'ar.subtitle'=>['nullable','string','max:500'],
+            'ar.content'=>['nullable','string'],
+        ];
 
+        return $rules;
     }
     public function messages()
     {

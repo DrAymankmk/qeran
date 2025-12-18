@@ -1,0 +1,139 @@
+/* CMS Content Styling */
+
+/* Remove padding from ordered and unordered lists */
+.cms-content ol,
+.cms-content ul {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    list-style-position: inside;
+}
+
+/* Arabic content styling */
+.cms-content-ar {
+    font-family: 'Almarai', sans-serif !important;
+    direction: rtl;
+    text-align: right;
+}
+
+.cms-content-ar ol,
+.cms-content-ar ul {
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+    list-style-position: inside;
+}
+
+.cms-content-ar li {
+    margin-right:0 !important;
+    margin-left: 0;
+    padding-right: 0.5em;
+}
+
+/* Ensure proper spacing for Arabic content */
+.cms-content-ar p , .cms-content-ar span {
+    margin-bottom: 1em;
+    text-align: right;
+    font-family: 'Almarai', sans-serif !important;
+    font-size: 16px !important;
+}
+
+.cms-content-ar h1,
+.cms-content-ar h2,
+.cms-content-ar h3,
+.cms-content-ar h4,
+.cms-content-ar h5,
+.cms-content-ar h6 {
+    font-family: 'Almarai', sans-serif !important;
+    text-align: right;
+}
+
+.cms-content-ar div,
+.cms-content-ar span {
+    font-family: 'Almarai', sans-serif !important;
+}
+
+.cms-content-ar li {
+    font-family: 'Almarai', sans-serif !important;
+    font-size: 16px !important;
+}
+
+/* English content styling */
+.cms-content:not(.cms-content-ar) {
+    direction: ltr;
+    text-align: left;
+}
+
+.cms-content:not(.cms-content-ar) ol,
+.cms-content:not(.cms-content-ar) ul {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    list-style-position: inside;
+}
+
+.cms-content:not(.cms-content-ar) li {
+    margin-left: 1.5em;
+    margin-right: 0;
+    padding-left: 0.5em;
+}
+
+/* General content styling */
+.cms-content {
+    line-height: 1.6;
+}
+
+.cms-content img {
+    max-width: 100%;
+    height: auto;
+}
+
+.cms-content table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.cms-content-ar table {
+    direction: rtl;
+}
+
+/* Override any inline styles that might add padding */
+.cms-content ol[style*="padding"],
+.cms-content ul[style*="padding"] {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* Icon Styling for CMS Items */
+/* Font Awesome Icons */
+.b-advantages__icon[class*="fas"],
+.b-advantages__icon[class*="far"],
+.b-advantages__icon[class*="fab"] {
+    font-family: 'Font Awesome 6 Free' !important;
+    font-style: normal;
+    font-weight: 900;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.b-advantages__icon[class*="fas"] {
+    font-weight: 900;
+}
+
+.b-advantages__icon[class*="far"] {
+    font-weight: 400;
+}
+
+.b-advantages__icon[class*="fab"] {
+    font-weight: 400;
+    font-family: 'Font Awesome 6 Brands' !important;
+}
+
+/* Simple Line Icons */
+.b-advantages__icon[class*="icon-"] {
+    font-family: 'Simple-Line-Icons' !important;
+    speak: none;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}

@@ -35,6 +35,22 @@
 				</li>
 				@endcan
 				<li class="menu-title">{{__('admin.content-management')}}</li>
+				@can('view-cms-pages')
+				<li @if(Route::is('cms.*')) class="mm-active" @endif>
+					<a href="javascript: void(0);" class="has-arrow waves-effect">
+						<i class="bx bx-file"></i>
+						<span key="t-cms">CMS</span>
+					</a>
+					<ul class="sub-menu" aria-expanded="false">
+						<li @if(Route::is('cms.pages.*')) class="mm-active" @endif>
+							<a href="{{route('cms.pages.index')}}">
+								<i class="bx bx-right-arrow-alt"></i>
+								{{__('admin.pages')}}
+							</a>
+						</li>
+					</ul>
+				</li>
+				@endcan
 				@can('view-categories')
 				<li @if(Route::is('category.index') || Route::is('category.create') ||
 					Route::is('category.edit')) class="mm-active" @endif>
@@ -46,7 +62,8 @@
 				@endcan
 				@can('view-invitation-requests')
 				<li @if(Route::is('invitation-request.index') &&
-					request('invitation_type')==\App\Helpers\Constant::INVITATION_TYPE['Contact Design']) class="mm-active" @endif>
+					request('invitation_type')==\App\Helpers\Constant::INVITATION_TYPE['Contact
+					Design']) class="mm-active" @endif>
 					<a href="{{route('invitation-request.index',['invitation_type'=>\App\Helpers\Constant::INVITATION_TYPE['Contact Design']])}}"
 						class="waves-effect">
 						<i class="bx bx-file-find"></i>
@@ -76,7 +93,7 @@
 					</a>
 				</li>
 				@endcan
-                @can('view-roles')
+				@can('view-roles')
 				<li @if(Route::is('roles.index') || Route::is('roles.create') ||
 					Route::is('roles.edit') || Route::is('roles.show')) class="mm-active"
 					@endif>
@@ -96,7 +113,7 @@
 					</a>
 				</li>
 				@endcan
-				
+
 				@can('view-permissions')
 				<!-- <li @if(Route::is('permissions.index') || Route::is('permissions.create') ||
 					Route::is('permissions.edit') || Route::is('permissions.show')) class="mm-active" @endif>
@@ -148,9 +165,10 @@
 				@endcan
 				@can('view-notifications')
 				@php
-					$unreadNotificationsCount = \App\Models\Notification::where('type', \App\Helpers\Constant::NOTIFICATIONS_TYPE['Admin'])
-						->whereNull('read_at')
-						->count();
+				$unreadNotificationsCount = \App\Models\Notification::where('type',
+				\App\Helpers\Constant::NOTIFICATIONS_TYPE['Admin'])
+				->whereNull('read_at')
+				->count();
 				@endphp
 				<li @if(Route::is('notifications.index') || Route::is('notifications.create') ||
 					Route::is('notifications.edit')) class="mm-active" @endif>
@@ -158,33 +176,75 @@
 						<i class="bx bx-bell"></i>
 						<span key="t-chat">{{__('admin.notifications')}}</span>
 						@if($unreadNotificationsCount > 0)
-							<span class="badge bg-danger rounded-pill ms-2">{{$unreadNotificationsCount}}</span>
+						<span
+							class="badge bg-danger rounded-pill ms-2">{{$unreadNotificationsCount}}</span>
 						@endif
 					</a>
 				</li>
 				@endcan
-				<li class="menu-title">{{__('admin.system')}}</li>
 
-				@can('view-app-settings')
+				<!-- cms -->
+				<li class="menu-title">{{__('admin.cms')}}</li>
+
 
 				<li>
 					<a href="javascript: void(0);" class="has-arrow waves-effect">
 						<i class="bx bx-cog"></i>
-						<span key="t-dashboards">{{__('admin.settings')}}</span>
+						<span key="t-dashboards">{{__('admin.cms')}}</span>
 					</a>
 					<ul class="sub-menu" aria-expanded="false">
-						<li @if(Route::is('app-settings.index') ||
-							Route::is('app-settings.edit')) class="mm-active"
+						<li @if(Route::is('cms.pages.index') ) class="mm-active"
 							@endif>
-							<a href="{{route('app-settings.index')}}"
+							<a href="{{route('cms.pages.index')}}"
 								key="t-full-calendar">
 								<i class="bx bx-right-arrow-alt"></i>
-								{{__('admin.settings')}}
+								{{__('admin.pages')}}
 							</a>
 						</li>
-					</ul>
+						<!-- testimonials -->
+						<li @if(Route::is('testimonials.index') ) class="mm-active"
+							@endif>
+							<a href="{{route('testimonials.index')}}"
+								key="t-full-calendar">
+								<i class="bx bx-right-arrow-alt"></i>
+								{{__('admin.testimonials')}}
+							</a>
+						</li>
+
+						<!-- media -->
+						<li @if(Route::is('media.index') ) class="mm-active" @endif>
+							<a href="{{route('media.index')}}"
+								key="t-full-calendar">
+								<i class="bx bx-right-arrow-alt"></i>
+								{{__('admin.media')}}
+							</a>
+						</li>
+
 				</li>
-				@endcan
+			</ul>
+			</li>
+
+			<li class="menu-title">{{__('admin.system')}}</li>
+
+			@can('view-app-settings')
+
+			<li>
+				<a href="javascript: void(0);" class="has-arrow waves-effect">
+					<i class="bx bx-cog"></i>
+					<span key="t-dashboards">{{__('admin.settings')}}</span>
+				</a>
+				<ul class="sub-menu" aria-expanded="false">
+					<li @if(Route::is('app-settings.index') ||
+						Route::is('app-settings.edit')) class="mm-active" @endif>
+						<a href="{{route('app-settings.index')}}"
+							key="t-full-calendar">
+							<i class="bx bx-right-arrow-alt"></i>
+							{{__('admin.settings')}}
+						</a>
+					</li>
+				</ul>
+			</li>
+			@endcan
 			</ul>
 		</div>
 		<!-- Sidebar -->
@@ -295,9 +355,12 @@
 }
 
 @keyframes pulse {
-	0%, 100% {
+
+	0%,
+	100% {
 		opacity: 1;
 	}
+
 	50% {
 		opacity: 0.7;
 	}

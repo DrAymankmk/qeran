@@ -9,6 +9,7 @@
     <link href="{{asset('admin_assets/libs/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css')}}"
           id="bootstrap-style" rel="stylesheet"
           type="text/css"/>
+    <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
 
 @endsection
 @section('content')
@@ -83,11 +84,7 @@
                                     </div>
 
                                     <div class="row">
-
-
                                         <div class="col-sm-12">
-
-
                                             <div class="mb-3">
                                                 <label for="formrow-firstname-input"
                                                        class="form-label">   {{__('admin.count')}}  </label>
@@ -95,11 +92,8 @@
                                                        class="form-control" id="formrow-firstname-input"
                                                        placeholder="{{__('admin.count')}}">
                                             </div>
-
                                         </div>
                                         <div class="col-sm-12">
-
-
                                             <div class="mb-3">
                                                 <label for="formrow-firstname-input"
                                                        class="form-label">   {{__('admin.price')}}  </label>
@@ -107,11 +101,8 @@
                                                        class="form-control" id="formrow-firstname-input"
                                                        placeholder="{{__('admin.price')}}">
                                             </div>
-
                                         </div>
                                         <div class="col-sm-12">
-
-
                                             <div class="mb-3">
                                                 <label for="formrow-firstname-input"
                                                        class="form-label">   {{__('admin.free_invitations_count')}}  </label>
@@ -119,7 +110,80 @@
                                                        class="form-control" id="formrow-firstname-input"
                                                        placeholder="{{__('admin.free_invitations_count')}}">
                                             </div>
+                                        </div>
+                                    </div>
 
+                                    <!-- Language Tabs -->
+                                    <ul class="nav nav-tabs mt-4" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="en-tab" data-bs-toggle="tab" data-bs-target="#en" type="button" role="tab">
+                                                English
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="ar-tab" data-bs-toggle="tab" data-bs-target="#ar" type="button" role="tab">
+                                                العربية
+                                            </button>
+                                        </li>
+                                    </ul>
+
+                                    <div class="tab-content mt-3" id="languageTabContent">
+                                        <!-- English Tab -->
+                                        <div class="tab-pane fade show active" id="en" role="tabpanel">
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <div class="mb-3">
+                                                        <label for="en-title" class="form-label">Title (EN)</label>
+                                                        <input type="text" name="en[title]" value="{{old('en.title')}}"
+                                                               class="form-control" id="en-title"
+                                                               placeholder="Package Title">
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-12">
+                                                    <div class="mb-3">
+                                                        <label for="en-subtitle" class="form-label">Subtitle (EN)</label>
+                                                        <input type="text" name="en[subtitle]" value="{{old('en.subtitle')}}"
+                                                               class="form-control" id="en-subtitle"
+                                                               placeholder="Package Subtitle">
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-12">
+                                                    <div class="mb-3">
+                                                        <label for="en-content" class="form-label">Content (EN)</label>
+                                                        <textarea name="en[content]" class="form-control summernote" id="en-content" rows="5"
+                                                                  placeholder="Package Content">{{old('en.content')}}</textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Arabic Tab -->
+                                        <div class="tab-pane fade" id="ar" role="tabpanel">
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <div class="mb-3">
+                                                        <label for="ar-title" class="form-label">العنوان (AR)</label>
+                                                        <input type="text" name="ar[title]" value="{{old('ar.title')}}"
+                                                               class="form-control" id="ar-title"
+                                                               placeholder="عنوان الباقة">
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-12">
+                                                    <div class="mb-3">
+                                                        <label for="ar-subtitle" class="form-label">العنوان الفرعي (AR)</label>
+                                                        <input type="text" name="ar[subtitle]" value="{{old('ar.subtitle')}}"
+                                                               class="form-control" id="ar-subtitle"
+                                                               placeholder="العنوان الفرعي للباقة">
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-12">
+                                                    <div class="mb-3">
+                                                        <label for="ar-content" class="form-label">المحتوى (AR)</label>
+                                                        <textarea name="ar[content]" class="form-control summernote" id="ar-content" rows="5"
+                                                                  placeholder="محتوى الباقة">{{old('ar.content')}}</textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -160,5 +224,38 @@
     <!-- init js -->
     <script src="{{asset('admin_assets/js/pages/crypto-orders.init.js')}}"></script>
 
+    <!-- Summernote Editor -->
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
+    <script>
+        // Initialize Summernote editors
+        $(document).ready(function() {
+            function initEditors() {
+                $('.summernote').summernote({
+                    height: 200,
+                    toolbar: [
+                        ['style', ['style']],
+                        ['font', ['bold', 'italic', 'underline', 'clear']],
+                        ['color', ['color']],
+                        ['para', ['ul', 'ol', 'paragraph']],
+                        ['table', ['table']],
+                        ['insert', ['link', 'picture', 'video']],
+                        ['view', ['fullscreen', 'codeview', 'help']]
+                    ]
+                });
+            }
+
+            function reinitEditors() {
+                $('.summernote').summernote('destroy');
+                initEditors();
+            }
+
+            initEditors();
+
+            // Re-init when switching tabs to handle hidden editors
+            $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function() {
+                reinitEditors();
+            });
+        });
+    </script>
 
 @endsection

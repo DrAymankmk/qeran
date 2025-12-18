@@ -34,6 +34,9 @@ class Category extends Model
     public function invitations(){
         return $this->hasMany(Invitation::class);
     }
+    public function designs(){
+        return $this->hasMany(Design::class);
+    }
     public function scopeGetActiveCategories($query)
     {
         $query->where('active', Constant::CATEGORY_STATUS['Active'])->whereNull('parent_id');

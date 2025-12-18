@@ -3,10 +3,15 @@
 namespace App\Models;
 
 use App\Helpers\Constant;
+use Astrotomic\Translatable\Translatable;
 use Illuminate\Database\Eloquent\Model;
 
 class Package extends Model
 {
+    use Translatable;
+
+    public $translatedAttributes = ['title', 'subtitle', 'content'];
+    public $translationModel = PackageTranslation::class;
 
     protected $fillable = [
         'package_invitation_type',
@@ -14,7 +19,10 @@ class Package extends Model
         'package_type',
         'active',
         'count',
-        'price'
+        'price',
+        'title',
+        'subtitle',
+        'content'
     ];
 
     public function scopeActive($query)

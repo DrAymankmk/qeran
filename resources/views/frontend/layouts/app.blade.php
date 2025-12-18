@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8" />
 	<meta http-equiv="x-ua-compatible" content="ie=edge" />
-	<title>Template / Dvents</title>
+	<title>Qeran</title>
 	<meta content="" name="description" />
 	<meta content="" name="keywords" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,6 +14,43 @@
 	<link rel="stylesheet" href="{{ asset('frontend/assets/css/ar/master.css') }}" />
 	@else
 	<link rel="stylesheet" href="{{ asset('frontend/assets/css/en/master.css') }}" />
+	@endif
+	<!-- CMS Content Styling -->
+	<link rel="stylesheet" href="{{ asset('frontend/assets/css/cms-content.css') }}" />
+	<!-- Font Awesome 6 for CMS Icons -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+		integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+		crossorigin="anonymous" referrerpolicy="no-referrer" />
+	<style>
+		/* Ensure Font Awesome icons display correctly */
+		.fa, .fas, .far, .fal, .fab {
+			font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+			font-weight: 900;
+			-webkit-font-smoothing: antialiased;
+			display: inline-block;
+			font-style: normal;
+			font-variant: normal;
+			text-rendering: auto;
+			line-height: 1;
+		}
+		.fab {
+			font-family: "Font Awesome 6 Brands" !important;
+			font-weight: 400;
+		}
+		.far {
+			font-weight: 400;
+		}
+		/* Prevent icon class from overriding Font Awesome */
+		.fa.icon, .fas.icon, .far.icon, .fab.icon {
+			font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+		}
+	</style>
+	<!-- Google Fonts - Almarai for Arabic -->
+	@if(app()->getLocale() == 'ar')
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap"
+		rel="stylesheet">
 	@endif
 	<!-- SWITCHER-->
 	<link href="{{ asset('frontend/assets/plugins/switcher/css/switcher.css') }}" rel="stylesheet"
@@ -32,6 +69,11 @@
 	<!--[if lt IE 9 ]>
     <script src="/assets/js/separate-js/html5shiv-3.7.2.min.js" type="text/javascript"></script><meta content="no" http-equiv="imagetoolbar">
     <![endif]-->
+
+	<!-- Swiper CSS -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+	@stack('styles')
 </head>
 
 <body>
@@ -43,7 +85,7 @@
 		<!-- Start Switcher-->
 		<div class="switcher-wrapper">
 			<div class="demo_changer">
-				<div class="demo-icon text-primary"><i class="fa fa-cog fa-spin fa-2x"></i>
+				<div class="demo-icon text-primary"><i class="fas fa-cog fa-spin fa-2x"></i>
 				</div>
 				<div class="form_holder">
 					<div class="predefined_styles">
@@ -98,7 +140,7 @@
 					</div>
 				</div>
 			</div>
-			<button type="button" class="search-close close"><i class="fa fa-times"></i></button>
+			<button type="button" class="search-close close"><i class="fas fa-times"></i></button>
 		</div>
 		<!-- ==========================-->
 		<!-- MOBILE MENU-->
@@ -134,7 +176,7 @@
 
 				</div>
 			</nav>
-			<button type="button" class="fullmenu-close"><i class="fa fa-times"></i></button>
+			<button type="button" class="fullmenu-close"><i class="fas fa-times"></i></button>
 		</div>
 
 		@include('frontend.layouts.header')
@@ -373,27 +415,27 @@
 								<li class="social-net__item"><a
 										href="youtube.com"
 										class="social-net__link text-primary_h"><i
-											class="icon fa fa-youtube"></i></a>
+											class="fa-brands fa-youtube"></i></a>
 								</li>
 								<li class="social-net__item"><a
 										href="twitter.com"
 										class="social-net__link text-primary_h"><i
-											class="icon fa fa-twitter"></i></a>
+											class="fa-brands fa-twitter"></i></a>
 								</li>
 								<li class="social-net__item"><a
 										href="facebook.com"
 										class="social-net__link text-primary_h"><i
-											class="icon fa fa-facebook"></i></a>
+											class="fa-brands fa-facebook"></i></a>
 								</li>
 								<li class="social-net__item"><a
 										href="plus.google.com"
 										class="social-net__link text-primary_h"><i
-											class="icon fa fa-google-plus"></i></a>
+											class="fa-brands fa-google"></i></a>
 								</li>
 								<li class="social-net__item"><a
 										href="instagram.com"
 										class="social-net__link text-primary_h"><i
-											class="icon fa fa-instagram"></i></a>
+											class="fa-brands fa-instagram"></i></a>
 								</li>
 							</ul>
 							<!-- end social-list-->
@@ -449,6 +491,11 @@
 	<script src="{{ asset('frontend/assets/plugins/scrollreveal/scrollreveal.min.js') }}"></script>
 	<!-- Main slider-->
 	<script src="{{ asset('frontend/assets/plugins/slider-pro/jquery.sliderPro.min.js') }}"></script>
+
+	<!-- Swiper JS -->
+	<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+	@stack('scripts')
 </body>
 
 </html>

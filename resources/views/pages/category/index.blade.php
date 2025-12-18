@@ -90,6 +90,10 @@
 								</td>
 								<td>
 									<div class="d-flex gap-3">
+										<a href="{{route('designs.index', ['category_id' => $category->id])}}"
+											title="Designs"
+											class="text-primary"><i
+												class="mdi mdi-palette font-size-22"></i></a>
 										@can('view-categories')
 										<a href="javascript:void(0);"
 											onclick="showCategoryDetails({{$category->id}})"

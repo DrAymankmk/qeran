@@ -5,7 +5,7 @@
 $(document).ready(function() {
 	// Initialize DataTable - disable ordering to maintain backend order
 	var table = $('#mediaTable').DataTable({
-		dom: '<"row mb-3 align-items-center justify-content-between"<"col-auto"l><"col-auto ms-3"f><"col-auto ms-3"B>>' +
+		dom: '<"row mb-3 align-items-center justify-content-between"<"col-auto"l><"col-auto ms-3"f>>' +
 			'rt' +
 			'<"row"<"col-md-5"i><"col-md-7"p>>',
 		ordering: false, // Disable client-side ordering to maintain backend order
@@ -14,7 +14,6 @@ $(document).ready(function() {
 			[10, 25, 50, 100],
 			[10, 25, 50, 100]
 		],
-		buttons: ['copy', 'excel', 'pdf', 'print'],
 		responsive: true,
 		columnDefs: [{
 				orderable: false,

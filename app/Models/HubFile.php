@@ -40,16 +40,31 @@ class HubFile extends Model
 
     public function get_thumbnail_path()
     {
+        // Use Storage::url() for better server compatibility
+        if (\Storage::disk('public')->exists($this->bucket_name.'/thumbnail/'.$this->path)) {
+            return \Storage::disk('public')->url($this->bucket_name.'/thumbnail/'.$this->path);
+        }
+        // Fallback to asset() if file doesn't exist or storage link issue
         return asset('storage/' . $this->bucket_name.'/thumbnail/'.$this->path);
     }
 
     public function get_medium_path()
     {
+        // Use Storage::url() for better server compatibility
+        if (\Storage::disk('public')->exists($this->bucket_name.'/medium/'.$this->path)) {
+            return \Storage::disk('public')->url($this->bucket_name.'/medium/'.$this->path);
+        }
+        // Fallback to asset() if file doesn't exist or storage link issue
         return asset('storage/' . $this->bucket_name.'/medium/'.$this->path);
     }
 
     public function get_path()
     {
+        // Use Storage::url() for better server compatibility
+        if (\Storage::disk('public')->exists($this->bucket_name.'/'.$this->path)) {
+            return \Storage::disk('public')->url($this->bucket_name.'/'.$this->path);
+        }
+        // Fallback to asset() if file doesn't exist or storage link issue
         return asset('storage/' . $this->bucket_name.'/'.$this->path);
     }
 

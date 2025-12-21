@@ -149,21 +149,21 @@ class MediaController extends Controller
                 $constraint->aspectRatio();
                 $constraint->upsize();
             })->encode('webp');
-            Storage::put('public/' . $request->bucket_name . '/' . $filename, $image);
+            Storage::disk('public')->put($request->bucket_name . '/' . $filename, $image);
             
             // Store medium
             $imageMedium = \Intervention\Image\Facades\Image::make($file);
             $imageMedium->resize(256, 170, function ($constraint) {
                 $constraint->aspectRatio();
             })->encode('webp', 90);
-            Storage::put('public/' . $request->bucket_name . '/medium/' . $filename, $imageMedium);
+            Storage::disk('public')->put($request->bucket_name . '/medium/' . $filename, $imageMedium);
             
             // Store thumbnail
             $imageThumb = \Intervention\Image\Facades\Image::make($file);
             $imageThumb->resize(170, 130, function ($constraint) {
                 $constraint->aspectRatio();
             })->encode('webp', 50);
-            Storage::put('public/' . $request->bucket_name . '/thumbnail/' . $filename, $imageThumb);
+            Storage::disk('public')->put($request->bucket_name . '/thumbnail/' . $filename, $imageThumb);
         } else {
             // For video, audio, etc., store directly
             Storage::putFileAs('public/' . $request->bucket_name, $file, $filename);
@@ -265,21 +265,21 @@ class MediaController extends Controller
                     $constraint->aspectRatio();
                     $constraint->upsize();
                 })->encode('webp');
-                Storage::put('public/' . $request->bucket_name . '/' . $filename, $image);
+                Storage::disk('public')->put($request->bucket_name . '/' . $filename, $image);
                 
                 // Store medium
                 $imageMedium = \Intervention\Image\Facades\Image::make($file);
                 $imageMedium->resize(256, 170, function ($constraint) {
                     $constraint->aspectRatio();
                 })->encode('webp', 90);
-                Storage::put('public/' . $request->bucket_name . '/medium/' . $filename, $imageMedium);
+                Storage::disk('public')->put($request->bucket_name . '/medium/' . $filename, $imageMedium);
                 
                 // Store thumbnail
                 $imageThumb = \Intervention\Image\Facades\Image::make($file);
                 $imageThumb->resize(170, 130, function ($constraint) {
                     $constraint->aspectRatio();
                 })->encode('webp', 50);
-                Storage::put('public/' . $request->bucket_name . '/thumbnail/' . $filename, $imageThumb);
+                Storage::disk('public')->put($request->bucket_name . '/thumbnail/' . $filename, $imageThumb);
             } else {
                 // For video, audio, etc., store directly
                 Storage::putFileAs('public/' . $request->bucket_name, $file, $filename);

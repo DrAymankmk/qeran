@@ -5,7 +5,7 @@
 @php
 $aboutSection = $aboutPage->activeSections->where('name', 'about')->first();
 @endphp
-<section class="section-default">
+<section class="section-default" style="margin-bottom: 80px;">
 	<div class="container">
 		<div class="row">
 			<div class="col-md-8 col-md-offset-2">

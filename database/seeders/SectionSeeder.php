@@ -62,7 +62,7 @@ class SectionSeeder extends Seeder
 
         // create services section
         $servicesSection = CmsSection::create([
-            'page_id' => 1,
+            'page_id' => 2,
             'name' => 'services',
             'type' => 'default',
             'template' => 'default',
@@ -78,7 +78,7 @@ class SectionSeeder extends Seeder
 
         // why choose us section
         $whyChooseUsSection = CmsSection::create([
-            'page_id' => 1,
+            'page_id' => 2,
             'name' => 'why-choose-us',
             'type' => 'default',
             'template' => 'default',
@@ -94,7 +94,7 @@ class SectionSeeder extends Seeder
 
         // info section
         $infoSection = CmsSection::create([
-            'page_id' => 1,
+            'page_id' => 2,
             'name' => 'info',
             'type' => 'default',
             'template' => 'default',
@@ -110,7 +110,7 @@ class SectionSeeder extends Seeder
 
         // designs section
         $designsSection = CmsSection::create([
-            'page_id' => 1,
+            'page_id' => 2,
             'name' => 'designs',
             'type' => 'default',
             'template' => 'default',
@@ -126,7 +126,7 @@ class SectionSeeder extends Seeder
 
           // testimonials section
           $testimonialsSection = CmsSection::create([
-            'page_id' => 1,
+            'page_id' => 2,
             'name' => 'testimonials',
             'type' => 'default',
             'template' => 'default',
@@ -144,7 +144,7 @@ class SectionSeeder extends Seeder
 
         // guard section
         $guardAppSection = CmsSection::create([
-            'page_id' => 1,
+            'page_id' => 2,
             'name' => 'guard-application',
             'type' => 'default',
             'template' => 'default',
@@ -160,7 +160,7 @@ class SectionSeeder extends Seeder
 
         // contact
         $contactSection = CmsSection::create([
-            'page_id' => 1,
+            'page_id' => 2,
             'name' => 'contact',
             'type' => 'default',
             'template' => 'default',
@@ -178,7 +178,7 @@ class SectionSeeder extends Seeder
 
         // offers guard
         $offersSection = CmsSection::create([
-            'page_id' => 1,
+            'page_id' => 2,
             'name' => 'offers',
             'type' => 'default',
             'template' => 'default',
@@ -198,7 +198,7 @@ class SectionSeeder extends Seeder
 
 //         services page section
         $servicesSection = CmsSection::create([
-            'page_id' => 2,
+            'page_id' => 3,
             'name' => 'services',
             'type' => 'default',
             'template' => 'default',
@@ -214,7 +214,7 @@ class SectionSeeder extends Seeder
 
         //   packages section
         $packagesSection = CmsSection::create([
-            'page_id' => 2,
+            'page_id' => 3,
             'name' => 'packages',
             'type' => 'default',
             'template' => 'default',
@@ -241,7 +241,7 @@ class SectionSeeder extends Seeder
 
         // about page sections
         $aboutSection = CmsSection::create([
-            'page_id' => 3,
+            'page_id' => 4,
             'name' => 'about',
             'type' => 'default',
             'template' => 'default',
@@ -265,7 +265,7 @@ class SectionSeeder extends Seeder
 
         // faq page sections
         $faqSection = CmsSection::create([
-            'page_id' => 4,
+            'page_id' => 5,
             'name' => 'faq',
             'type' => 'default',
             'template' => 'default',
@@ -282,7 +282,7 @@ class SectionSeeder extends Seeder
 
         // contact page sections
         $contactSection = CmsSection::create([
-            'page_id' => 5,
+            'page_id' => 6,
             'name' => 'contact',
             'type' => 'default',
             'template' => 'default',

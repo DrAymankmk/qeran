@@ -26,6 +26,23 @@ class PageSeeder extends Seeder
         // Re-enable foreign key checks
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
+                // Create home page
+                $general = CmsPage::create([
+                    'slug' => 'general',
+                    'name' => 'General Page',
+                    'is_active' => true,
+                    'order' => 0,
+                ]);
+        
+                // Translate home page
+                $general->translateOrNew('en')->title = 'General';
+                $general->translateOrNew('en')->meta_description = 'Welcome to our general page';
+                $general->translateOrNew('ar')->title = 'العامة';
+                $general->translateOrNew('ar')->meta_description = 'مرحباً بكم في الصفحة العامة';
+                $general->save();
+
+
+                
         // Create home page
         $home = CmsPage::create([
             'slug' => 'home',
@@ -49,7 +66,7 @@ class PageSeeder extends Seeder
             'slug' => 'services',
             'name' => 'Services Page',
             'is_active' => true,
-            'order' => 1,
+            'order' => 2,
         ]);
 
         // Translate services page
@@ -64,7 +81,7 @@ class PageSeeder extends Seeder
             'slug' => 'about',
             'name' => 'About Page',
             'is_active' => true,
-            'order' => 1,
+            'order' => 3,
         ]);
 
         // Translate services page
@@ -80,7 +97,7 @@ class PageSeeder extends Seeder
             'slug' => 'faq',
             'name' => 'FAQ Page',
             'is_active' => true,
-            'order' => 1,
+            'order' => 4,
         ]);
         $faq->translateOrNew('en')->title = 'FAQ';
         $faq->translateOrNew('en')->meta_description = 'Welcome to FAQ page';
@@ -95,7 +112,7 @@ class PageSeeder extends Seeder
         'slug' => 'contact',
         'name' => 'Contact Page',
         'is_active' => true,
-        'order' => 1,
+        'order' => 5,
     ]);
     $contact->translateOrNew('en')->title = 'Contact';
     $contact->translateOrNew('en')->meta_description = 'Welcome to contact page';

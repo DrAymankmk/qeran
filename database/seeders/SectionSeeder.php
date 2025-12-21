@@ -28,7 +28,7 @@ class SectionSeeder extends Seeder
 
         // create hero section
         $heroSection = CmsSection::create([
-            'page_id' => 1,
+            'page_id' => 2,
             'name' => 'hero',
             'type' => 'default',
             'template' => 'default',
@@ -44,7 +44,7 @@ class SectionSeeder extends Seeder
 
         // create home section
         $aboutSection = CmsSection::create([
-            'page_id' => 1,
+            'page_id' => 2,
             'name' => 'about',
             'type' => 'default',
             'template' => 'default',

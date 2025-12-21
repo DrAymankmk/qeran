@@ -36,10 +36,12 @@
 
 						@foreach($whyChooseUsSection->items as $item)
 						<li>
-							<span>
+							<h3>
 								{{ $item->title }}
-							</span><br>
-							<p>{!! formatCmsContent( $item->content ?? '') !!}</p>
+							</h3>
+							<p>{!! formatCmsContent( $item->content
+								?? '') !!}
+							</p>
 
 						</li>
 						@endforeach

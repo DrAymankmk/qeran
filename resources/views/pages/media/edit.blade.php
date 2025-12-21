@@ -99,10 +99,20 @@
                                         </div>
                                         <div class="col-sm-12">
                                             <div class="mb-3">
-                                                <label for="original_name" class="form-label">Original Name</label>
+                                                <label for="file_name" class="form-label">File Name</label>
+                                                <input type="text" name="file_name" value="{{old('file_name', $medium->original_name)}}"
+                                                       class="form-control" id="file_name"
+                                                       placeholder="File name">
+                                                <small class="form-text text-muted">Custom name for the file.</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-12">
+                                            <div class="mb-3">
+                                                <label for="original_name" class="form-label">Original Name (Legacy)</label>
                                                 <input type="text" name="original_name" value="{{old('original_name', $medium->original_name)}}"
                                                        class="form-control" id="original_name"
-                                                       placeholder="Original file name">
+                                                       placeholder="Original file name (for backward compatibility)">
+                                                <small class="form-text text-muted">This field is kept for backward compatibility. Use "File Name" above instead.</small>
                                             </div>
                                         </div>
                                         <div class="col-sm-12">

@@ -18,30 +18,80 @@ class MediaController extends Controller
      */
     public function index(Request $request)
     {
-        $query = HubFile::query();
+        // Get HubFile media
+        $hubFileQuery = HubFile::query();
         
         // Filter by file type
         if ($request->has('file_type') && $request->file_type != '') {
-            $query->where('file_type', $request->file_type);
+            $hubFileQuery->where('file_type', $request->file_type);
         }
         
         // Filter by bucket name (folder)
         if ($request->has('bucket_name') && $request->bucket_name != '') {
-            $query->where('bucket_name', $request->bucket_name);
+            $hubFileQuery->where('bucket_name', $request->bucket_name);
         }
         
         // Search by original name
         if ($request->has('search') && $request->search != '') {
-            $query->where('original_name', 'like', '%' . $request->search . '%');
+            $hubFileQuery->where('original_name', 'like', '%' . $request->search . '%');
         }
         
-        $media = $query->orderBy('created_at', 'desc')
-        ->get();
+        $hubFiles = $hubFileQuery->orderBy('created_at', 'desc')->get();
         
-        // Get unique bucket names for filter
-        $bucketNames = HubFile::distinct()->pluck('bucket_name')->sort();
+        // Get Spatie Media Library media
+        $spatieQuery = SpatieMedia::query();
         
-        return view('pages.media.index', compact('media', 'bucketNames'));
+        // Filter by collection name (similar to bucket_name)
+        if ($request->has('bucket_name') && $request->bucket_name != '') {
+            $spatieQuery->where('collection_name', $request->bucket_name);
+        }
+        
+        // Filter by mime type (similar to file_type)
+        if ($request->has('file_type') && $request->file_type != '') {
+            if ($request->file_type == '1') { // Image
+                $spatieQuery->where('mime_type', 'like', 'image/%');
+            } elseif ($request->file_type == '2') { // Video
+                $spatieQuery->where('mime_type', 'like', 'video/%');
+            } elseif ($request->file_type == '3') { // Audio
+                $spatieQuery->where('mime_type', 'like', 'audio/%');
+            }
+        }
+        
+        // Search by name or file_name
+        if ($request->has('search') && $request->search != '') {
+            $spatieQuery->where(function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('file_name', 'like', '%' . $request->search . '%');
+            });
+        }
+        
+        $spatieMedia = $spatieQuery->orderBy('created_at', 'desc')->get();
+        
+        // Merge and sort by created_at
+        $allMedia = collect($hubFiles)->map(function($item) {
+            return (object)[
+                'id' => $item->id,
+                'type' => 'hubfile',
+                'model' => $item,
+                'created_at' => $item->created_at,
+            ];
+        })->merge(
+            collect($spatieMedia)->map(function($item) {
+                return (object)[
+                    'id' => $item->id,
+                    'type' => 'spatie',
+                    'model' => $item,
+                    'created_at' => $item->created_at,
+                ];
+            })
+        )->sortByDesc('created_at')->values();
+        
+        // Get unique bucket names for filter (from both sources)
+        $hubFileBuckets = HubFile::distinct()->pluck('bucket_name')->toArray();
+        $spatieCollections = SpatieMedia::distinct()->pluck('collection_name')->toArray();
+        $bucketNames = collect(array_merge($hubFileBuckets, $spatieCollections))->unique()->sort()->values();
+        
+        return view('pages.media.index', compact('allMedia', 'bucketNames'));
     }
 
     /**
@@ -67,6 +117,7 @@ class MediaController extends Controller
             'bucket_name' => 'required|string|max:255',
             'file_type' => 'nullable|integer|in:1,2,3,4',
             'file_key' => 'nullable|integer|in:1,2,3',
+            'file_name' => 'nullable|string|max:255',
         ]);
         
         $file = $request->file('file');
@@ -118,10 +169,13 @@ class MediaController extends Controller
             Storage::putFileAs('public/' . $request->bucket_name, $file, $filename);
         }
         
+        // Use custom file name if provided, otherwise use original name
+        $originalName = $request->file_name ?: $file->getClientOriginalName();
+        
         // Create HubFile record
         $hubFile = HubFile::create([
             'bucket_name' => $request->bucket_name,
-            'original_name' => $file->getClientOriginalName(),
+            'original_name' => $originalName,
             'path' => $filename,
             'extension' => $file->extension(),
             'size' => $file->getSize(),
@@ -160,12 +214,17 @@ class MediaController extends Controller
             'bucket_name' => 'required|string|max:255',
             'file_key' => 'nullable|integer|in:1,2,3',
             'original_name' => 'nullable|string|max:255',
+            'file_name' => 'nullable|string|max:255',
         ]);
+        
+        // Use file_name if provided, otherwise use original_name, otherwise keep existing
+        $originalName = $request->file_name 
+            ?: ($request->original_name ?? $medium->original_name);
         
         $updateData = [
             'bucket_name' => $request->bucket_name,
             'file_key' => $request->file_key ?? $medium->file_key,
-            'original_name' => $request->original_name ?? $medium->original_name,
+            'original_name' => $originalName,
         ];
         
         // Handle file replacement if a new file is uploaded
@@ -232,7 +291,8 @@ class MediaController extends Controller
             $updateData['size'] = $file->getSize();
             $updateData['getMimeType'] = $mimeType;
             $updateData['file_type'] = $fileType;
-            if (!$request->original_name) {
+            // Only update original_name if file_name is not provided and original_name is not provided
+            if (!$request->file_name && !$request->original_name) {
                 $updateData['original_name'] = $file->getClientOriginalName();
             }
         }

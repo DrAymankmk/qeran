@@ -88,6 +88,15 @@
                                                 </select>
                                             </div>
                                         </div>
+                                        <div class="col-sm-12">
+                                            <div class="mb-3">
+                                                <label for="file_name" class="form-label">File Name (Optional)</label>
+                                                <input type="text" name="file_name" value="{{old('file_name')}}"
+                                                       class="form-control" id="file_name"
+                                                       placeholder="Enter custom file name (defaults to original file name)">
+                                                <small class="form-text text-muted">Custom name for the file. If left empty, the original file name will be used.</small>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 

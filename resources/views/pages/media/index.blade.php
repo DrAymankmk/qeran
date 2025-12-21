@@ -73,7 +73,8 @@
 						</div>
 						<div class="col-md-3">
 							<select name="bucket_name" class="form-select">
-								<option value="">All Folders</option>
+								<option value="">All Folders/Collections
+								</option>
 								@foreach($bucketNames as $bucket)
 								<option value="{{$bucket}}"
 									{{request('bucket_name') == $bucket ? 'selected' : ''}}>
@@ -110,12 +111,22 @@
 							</tr>
 						</thead>
 						<tbody>
-							@foreach($media as $item)
+							@foreach($allMedia as $mediaItem)
+							@php
+							$item = $mediaItem->model;
+							$isHubFile = $mediaItem->type === 'hubfile';
+							$isSpatie = $mediaItem->type === 'spatie';
+							@endphp
 							<tr>
 								<td><a href="javascript: void(0);"
 										class="text-body fw-bold">{{$item->id}}</a>
+									@if($isSpatie)
+									<br><small
+										class="text-muted">(Spatie)</small>
+									@endif
 								</td>
 								<td>
+									@if($isHubFile)
 									@if($item->file_type == 1)
 									{{-- Image --}}
 									<a target="_blank"
@@ -141,10 +152,39 @@
 									<i
 										class="mdi mdi-file font-size-24 text-muted"></i>
 									@endif
-								</td>
-								<td>{{$item->original_name ?? 'N/A'}}
+									@elseif($isSpatie)
+									@if(str_starts_with($item->mime_type,
+									'image/'))
+									<a target="_blank"
+										href="{{$item->getUrl()}}">
+										<img class="header-profile-user"
+											src="{{$item->getUrl()}}"
+											alt="Media Preview"
+											style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+									</a>
+									@elseif(str_starts_with($item->mime_type,
+									'video/'))
+									<i
+										class="mdi mdi-video font-size-24 text-danger"></i>
+									@elseif(str_starts_with($item->mime_type,
+									'audio/'))
+									<i
+										class="mdi mdi-music font-size-24 text-primary"></i>
+									@else
+									<i
+										class="mdi mdi-file font-size-24 text-muted"></i>
+									@endif
+									@endif
 								</td>
 								<td>
+									@if($isHubFile)
+									{{$item->original_name ?? 'N/A'}}
+									@elseif($isSpatie)
+									{{$item->name ?? $item->file_name ?? 'N/A'}}
+									@endif
+								</td>
+								<td>
+									@if($isHubFile)
 									@if($item->file_type == 1)
 									<span
 										class="badge bg-info">Image</span>
@@ -161,18 +201,51 @@
 									<span
 										class="badge bg-secondary">Unknown</span>
 									@endif
-								</td>
-								<td><code>{{$item->bucket_name}}</code>
+									@elseif($isSpatie)
+									@if(str_starts_with($item->mime_type,
+									'image/'))
+									<span
+										class="badge bg-info">Image</span>
+									@elseif(str_starts_with($item->mime_type,
+									'video/'))
+									<span
+										class="badge bg-danger">Video</span>
+									@elseif(str_starts_with($item->mime_type,
+									'audio/'))
+									<span
+										class="badge bg-primary">Audio</span>
+									@else
+									<span
+										class="badge bg-secondary">{{$item->mime_type ?? 'Unknown'}}</span>
+									@endif
+									@endif
 								</td>
 								<td>
+									@if($isHubFile)
+									<code>{{$item->bucket_name}}</code>
+									@elseif($isSpatie)
+									<code>{{$item->collection_name}}</code>
+									@endif
+								</td>
+								<td>
+									@if($isHubFile)
 									@if($item->size)
 									{{number_format($item->size / 1024, 2)}}
 									KB
 									@else
 									N/A
 									@endif
+									@elseif($isSpatie)
+									@if($item->size)
+									{{number_format($item->size / 1024, 2)}}
+									KB
+									@else
+									N/A
+									@endif
+									@endif
 								</td>
 								<td>
+									@if($isHubFile)
 									@if($item->morphable_type &&
 									$item->morphable_id &&
 									$item->morphable_type !=
@@ -183,12 +256,23 @@
 									<span
 										class="text-muted">Standalone</span>
 									@endif
+									@elseif($isSpatie)
+									@if($item->model_type &&
+									$item->model_id)
+									<small>{{class_basename($item->model_type)}}
+										#{{$item->model_id}}</small>
+									@else
+									<span
+										class="text-muted">Standalone</span>
+									@endif
+									@endif
 								</td>
 								<td>
 									{{Carbon\Carbon::parse($item->created_at)->locale(app()->getLocale())->translatedFormat('l dS F G:i - Y')}}
 								</td>
 								<td>
 									<div class="d-flex gap-3">
+										@if($isHubFile)
 										<a href="{{$item->get_path()}}"
 											target="_blank"
 											title="View"
@@ -202,6 +286,20 @@
 											<i
 												class="mdi mdi-file-edit-outline font-size-22"></i>
 										</a>
+										@elseif($isSpatie)
+										<a href="{{$item->getUrl()}}"
+											target="_blank"
+											title="View"
+											class="text-info">
+											<i
+												class="mdi mdi-eye font-size-22"></i>
+										</a>
+										<span class="text-muted"
+											title="Spatie Media - Edit via parent model">
+											<i
+												class="mdi mdi-file-edit-outline font-size-22"></i>
+										</span>
+										@endif
 										<!-- <a onclick="openModalDelete({{$item->id}})"
 											title="{{__('admin.delete')}}"
 											class="text-danger">

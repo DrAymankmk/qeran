@@ -49,11 +49,16 @@
 				<button
 					class="menu-mobile-button visible-xs-block js-toggle-mobile-slidebar toggle-menu-button"><i
 						class="toggle-menu-button-icon"><span></span><span></span><span></span><span></span><span></span><span></span></i></button>
-				<!-- Mobile Trigger End--><a href="home.html" class="navbar-brand scroll"><img
-						src="{{ asset('frontend/assets/media/general/logo.png') }}"
-						alt="logo" class="normal-logo" /><img
-						src="{{ asset('frontend/assets/media/general/logo-dark.png') }}"
-						alt="logo" class="scroll-logo hidden-xs" /></a>
+				<!-- Mobile Trigger End-->
+				@php
+				$logoSetting = \App\Models\HubFile::where('original_name', 'logo_img')->first();
+				$logoUrl = $logoSetting && $logoSetting->path ? $logoSetting->get_path() :
+				asset('frontend/assets/media/logo.png');
+				@endphp
+				<a href="{{ route('home') }}" class="navbar-brand scroll"><img
+						src="{{ $logoUrl }}" style="height:41px; width:176px" alt="logo" class="normal-logo" /><img
+						src="{{ $logoUrl }}" style="height:41px; width:176px" alt="logo"
+						class="scroll-logo hidden-xs" /></a>
 			</div>
 			<div class="header-navibox-2">
 				<ul class="main-menu nav navbar-nav" style="display: flex; align-items: center">

@@ -8,6 +8,22 @@ $faqSection = $faqPage->activeSections->where('name', 'faq')->first();
 <section class="section-default">
 	<div class="container">
 		<div class="row">
+			<div class="col-md-8 col-md-offset-2">
+				<div class="ui-decor-1"><img
+						src="{{ asset('frontend/assets/media/general/ui-decor-1.png') }}"
+						alt="decor" class="center-block"></div>
+				<div class="text-center">
+					<h2 class="ui-title-block ui-title-block_weight_normal">
+						{{ $faqSection->title }}
+					</h2>
+					<div class="ui-subtitle-block">
+						{!! formatCmsContent($faqSection->description) !!}
+					</div>
+
+				</div>
+			</div>
+		</div>
+		<div class="row">
 			<div class="col-md-12">
 				<div class="l-main-content posts-group">
 					@foreach($faqSection->items as $item)

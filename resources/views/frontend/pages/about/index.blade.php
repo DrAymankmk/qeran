@@ -23,7 +23,7 @@ $aboutSection = $aboutPage->activeSections->where('name', 'about')->first();
 				</div>
 			</div>
 		</div>
-		<div class="row">
+		<div class="row" style="display:flex">
 			@foreach($aboutSection->items as $item)
 			<div class="col-sm-4">
 				<section class="b-post-sm b-post-sm-1 b-post-sm-1_align_center clearfix">
@@ -56,5 +56,7 @@ $aboutSection = $aboutPage->activeSections->where('name', 'about')->first();
 		</div>
 	</div>
 </section>
+
+
 
 @endsection

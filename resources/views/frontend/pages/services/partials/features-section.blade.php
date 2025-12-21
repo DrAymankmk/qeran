@@ -16,7 +16,7 @@ $servicesSection = $servicesPage->activeSections->where('name', 'services')->fir
 				</div>
 			</div>
 		</div>
-		<div class="row">
+		<div class="row" style="display:flex">
 			@foreach($servicesSection->activeItems as $item)
 
 			<div class="col-md-4 col-sm-6">

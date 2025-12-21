@@ -1580,6 +1580,7 @@ input:-ms-input-placeholder {
     display: block;
     margin-bottom: 32px;
     padding-right: 60px;
+    font-family: 'Almarai' !important;
 }
 
 .b-advantages-1 .b-advantages__info {

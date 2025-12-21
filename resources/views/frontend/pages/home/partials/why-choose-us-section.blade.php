@@ -39,7 +39,7 @@
 							<span>
 								{{ $item->title }}
 							</span><br>
-							<p>{{ $item->content ?? '' }}</p>
+							<p>{!! formatCmsContent( $item->content ?? '') !!}</p>
 
 						</li>
 						@endforeach

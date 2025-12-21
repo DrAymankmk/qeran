@@ -66,7 +66,7 @@ $servicesSection = $servicesPage->activeSections->where('name', 'services')->fir
 <style>
 .section-advantages .row-rtl {
 	display: flex;
-	flex-direction: row-reverse;
+	flex-direction: row;
 	flex-wrap: wrap;
 }
 

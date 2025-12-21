@@ -31,7 +31,7 @@
 					<div class="ui-subtitle-block">
 						{{ $whyChooseUsSection->subtitle ?? '' }}
 					</div>
-					{{ $whyChooseUsSection->description ?? '' }}
+					{!! formatCmsContent($whyChooseUsSection->description ?? '') !!}
 					<ul class="list list-mark-5 list_bold list_icon_color-primary">
 
 						@foreach($whyChooseUsSection->items as $item)

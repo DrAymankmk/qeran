@@ -46,12 +46,12 @@
 		}
 	</style>
 	<!-- Google Fonts - Almarai for Arabic -->
-	@if(app()->getLocale() == 'ar')
+	<!-- @if(app()->getLocale() == 'ar')
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap"
 		rel="stylesheet">
-	@endif
+	@endif -->
 	<!-- SWITCHER-->
 	<link href="{{ asset('frontend/assets/plugins/switcher/css/switcher.css') }}" rel="stylesheet"
 		id="switcher-css" />
@@ -66,9 +66,7 @@
 	<link href="{{ asset('frontend/assets/plugins/switcher/css/color5.css') }}" rel="alternate stylesheet"
 		title="color5" />
 	<link rel="icon" type="image/x-icon" href="{{ asset('frontend/favicon.ico') }}" />
-	<!--[if lt IE 9 ]>
-    <script src="/assets/js/separate-js/html5shiv-3.7.2.min.js" type="text/javascript"></script><meta content="no" http-equiv="imagetoolbar">
-    <![endif]-->
+	
 
 	<!-- Swiper CSS -->
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />

@@ -16,7 +16,7 @@ $servicesSection = $servicesPage->activeSections->where('name', 'services')->fir
 				</div>
 			</div>
 		</div>
-		<div class="row" style="display:flex">
+		<div class="row {{ app()->getLocale() == 'ar' ? 'row-rtl' : '' }}">
 			@foreach($servicesSection->activeItems as $item)
 
 			<div class="col-md-4 col-sm-6">
@@ -60,3 +60,19 @@ $servicesSection = $servicesPage->activeSections->where('name', 'services')->fir
 		</div>
 	</div>
 </section>
+
+@if(app()->getLocale() == 'ar')
+@push('styles')
+<style>
+.section-advantages .row-rtl {
+	display: flex;
+	flex-direction: row-reverse;
+	flex-wrap: wrap;
+}
+
+.section-advantages .row-rtl>[class*="col-"] {
+	float: none;
+}
+</style>
+@endpush
+@endif

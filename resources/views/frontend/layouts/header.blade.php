@@ -18,6 +18,41 @@
 					</ul>
 				</div>
 				<div class="header-topbarbox-2">
+					@php
+					$headerSection = \App\Models\CmsPage::where('slug', 'general')
+					->where('is_active', true)
+					->with(['activeSections' => function($query) {
+					$query->where('name', 'header')
+					->where('is_active', true)
+					->with(['links' => function($q) {
+					$q->where('is_active', true)->orderBy('order');
+					}]);
+					}])
+					->first()
+					?->activeSections
+					->where('name', 'header')
+					->first();
+					@endphp
+					@if($headerSection && $headerSection->links &&
+					$headerSection->links->count() > 0)
+					<ul class="social-net list-inline">
+						@foreach($headerSection->links as $link)
+						<li class="social-net__item">
+							<a href="{{ $link->url }}"
+								target="{{ $link->target }}"
+								class="social-net__link text-primary_h"
+								rel="{{ $link->target === '_blank' ? 'noopener noreferrer' : '' }}">
+								@if($link->icon)
+								{!! $link->icon_html !!}
+								@else
+								<i class="fa fa-link"></i>
+								@endif
+							</a>
+						</li>
+						@endforeach
+					</ul>
+					@else
+					{{-- Fallback to default social links if no header section found --}}
 					<ul class="social-net list-inline">
 						<li class="social-net__item"><a href="twitter.com"
 								class="social-net__link text-primary_h"><i
@@ -36,6 +71,7 @@
 									class="fa-brands fa-linkedin"></i></a>
 						</li>
 					</ul>
+					@endif
 					<!-- end social-list-->
 				</div>
 			</div>
@@ -56,23 +92,24 @@
 				asset('frontend/assets/media/logo.png');
 				@endphp
 				<a href="{{ route('home') }}" class="navbar-brand scroll"><img
-						src="{{ $logoUrl }}" style="height:41px; width:176px" alt="logo" class="normal-logo" /><img
-						src="{{ $logoUrl }}" style="height:41px; width:176px" alt="logo"
+						src="{{ $logoUrl }}" style="height:41px; width:176px"
+						alt="logo" class="normal-logo" /><img src="{{ $logoUrl }}"
+						style="height:41px; width:176px" alt="logo"
 						class="scroll-logo hidden-xs" /></a>
 			</div>
 			<div class="header-navibox-2">
 				<ul class="main-menu nav navbar-nav" style="display: flex; align-items: center">
 
-					<li><a href="{{ route('home') }}">{{ __('frontend.Home') }}</a>
+					<li><a href="{{ route('home') }}">{{ __('frontend.home') }}</a>
 					</li>
-					<li><a href="{{route('services')}}">{{ __('frontend.Services') }}</a>
+					<li><a href="{{route('services')}}">{{ __('frontend.services') }}</a>
 					</li>
-					<li><a href="{{ route('about') }}">{{ __('frontend.About') }}</a></li>
+					<li><a href="{{ route('about') }}">{{ __('frontend.about') }}</a></li>
 
-					<li><a href="{{ route('faq') }}">{{ __('frontend.Faq') }}</a></li>
+					<li><a href="{{ route('faq') }}">{{ __('frontend.faq') }}</a></li>
 
 
-					<li><a href="{{ route('contact') }}">{{ __('frontend.Contact') }}</a>
+					<li><a href="{{ route('contact') }}">{{ __('frontend.contact') }}</a>
 					</li>
 
 					<li class="dropdown">
@@ -122,9 +159,9 @@
 						<button class="js-toggle-screen toggle-menu-button"><i
 								class="toggle-menu-button-icon"><span></span><span></span><span></span><span></span><span></span><span></span></i></button>
 					</li>
-					<li><a href="#" class="btn_header_search"><i
+					<!-- <li><a href="#" class="btn_header_search"><i
 								class="fas fa-search"></i></a>
-					</li>
+					</li> -->
 				</ul>
 			</div>
 

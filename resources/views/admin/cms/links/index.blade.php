@@ -54,7 +54,7 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Name</th>
-                                <th>Link</th>
+                                <th>Link/Route</th>
                                 <th>Icon</th>
                                 <th>Type</th>
                                 <th>Target</th>
@@ -68,7 +68,15 @@
                                 <tr>
                                     <td>{{ $link->id }}</td>
                                     <td>{{ $link->name }}</td>
-                                    <td><a href="{{ $link->link }}" target="_blank">{{ Str::limit($link->link, 30) }}</a></td>
+                                    <td>
+                                        <a href="{{ $link->url }}" target="_blank">
+                                            @if($link->route_name)
+                                                <span class="badge bg-info">{{ $link->route_name }}</span>
+                                            @else
+                                                {{ Str::limit($link->link, 30) }}
+                                            @endif
+                                        </a>
+                                    </td>
                                     <td>
                                         @if($link->icon)
                                             {!! $link->icon_html !!}

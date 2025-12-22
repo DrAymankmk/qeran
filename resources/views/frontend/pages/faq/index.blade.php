@@ -5,24 +5,27 @@
 @php
 $faqSection = $faqPage->activeSections->where('name', 'faq')->first();
 @endphp
-<section class="section-default">
-	<div class="container">
-		<div class="row">
-			<div class="col-md-8 col-md-offset-2">
-				<div class="ui-decor-1"><img
-						src="{{ asset('frontend/assets/media/general/ui-decor-1.png') }}"
-						alt="decor" class="center-block"></div>
-				<div class="text-center">
-					<h2 class="ui-title-block ui-title-block_weight_normal">
-						{{ $faqSection->title }}
-					</h2>
-					<div class="ui-subtitle-block">
-						{!! formatCmsContent($faqSection->description) !!}
-					</div>
-
+<div class="b-title-page area-bg area-bg_dark parallax">
+	<div class="area-bg__inner">
+		<div class="container">
+			<div class="row">
+				<div class="col-xs-12">
+					<div class="ui-decor-2 ui-decor-2_vert bg-primary"></div>
+					<h1 class="b-title-page__title">{{ $faqSection->title }}</h1>
+					<ol class="breadcrumb">
+						<li><a href="{{ route('home') }}">{{ __('frontend.home') }}</a>
+						</li>
+						<li class="active">{{ __('frontend.faq') }}</li>
+					</ol>
+					<!-- end breadcrumb-->
 				</div>
 			</div>
 		</div>
+	</div>
+</div>
+<section class="section-default">
+	<div class="container">
+
 		<div class="row">
 			<div class="col-md-12">
 				<div class="l-main-content posts-group">

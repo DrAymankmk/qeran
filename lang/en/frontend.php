@@ -1,0 +1,23 @@
+<?php
+return [
+    'home' => 'Home',
+    'services' => 'Services',
+    'about' => 'About',
+    'news' => 'News',
+    'contact' => 'Contact',
+    'pages' => 'Pages',
+    'faq' => 'Faq',
+    'message_form' => 'message_form',
+    'name' => 'name',
+    'phone' => 'phone',
+    'email' => 'email',
+    'subject' => 'subject',
+    'message' => 'message',
+    'send' => 'send',
+    'get_in_touch' => 'Get in touch',
+    'get_in_touch_text' => 'Get in touch with us',
+    'contact_us' => 'Contact us',
+    'all_designs' => 'All designs',
+    'all_services' => 'All services',
+    'contact_success_message' => 'Thank you for contacting us! We have received your message and will get back to you soon.',
+];

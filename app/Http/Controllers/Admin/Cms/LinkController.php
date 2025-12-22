@@ -8,6 +8,7 @@ use App\Models\CmsPage;
 use App\Models\CmsSection;
 use App\Models\CmsItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 class LinkController extends Controller
 {
@@ -28,7 +29,8 @@ class LinkController extends Controller
     public function create(Request $request, $type, $id)
     {
         $model = $this->getModel($type, $id);
-        return view('admin.cms.links.create', compact('model', 'type', 'id'));
+        $routes = $this->getAvailableRoutes();
+        return view('admin.cms.links.create', compact('model', 'type', 'id', 'routes'));
     }
 
     /**
@@ -38,7 +40,9 @@ class LinkController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'link' => 'required|url|max:500',
+            'link_type' => 'required|in:route,custom',
+            'route_name' => 'required_if:link_type,route|nullable|string|max:255',
+            'link' => 'required_if:link_type,custom|nullable|url|max:500',
             'icon' => 'nullable|string|max:255',
             'target' => 'nullable|string|in:_self,_blank',
             'type' => 'nullable|string|max:255',
@@ -50,7 +54,8 @@ class LinkController extends Controller
         
         $link = $model->allLinks()->create([
             'name' => $validated['name'],
-            'link' => $validated['link'],
+            'link' => $validated['link_type'] === 'custom' ? $validated['link'] : null,
+            'route_name' => $validated['link_type'] === 'route' ? $validated['route_name'] : null,
             'icon' => $validated['icon'] ?? null,
             'target' => $validated['target'] ?? '_self',
             'type' => $validated['type'] ?? null,
@@ -74,7 +79,8 @@ class LinkController extends Controller
             abort(404);
         }
         
-        return view('admin.cms.links.edit', compact('model', 'type', 'id', 'link'));
+        $routes = $this->getAvailableRoutes();
+        return view('admin.cms.links.edit', compact('model', 'type', 'id', 'link', 'routes'));
     }
 
     /**
@@ -84,7 +90,9 @@ class LinkController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'link' => 'required|url|max:500',
+            'link_type' => 'required|in:route,custom',
+            'route_name' => 'required_if:link_type,route|nullable|string|max:255',
+            'link' => 'required_if:link_type,custom|nullable|url|max:500',
             'icon' => 'nullable|string|max:255',
             'target' => 'nullable|string|in:_self,_blank',
             'type' => 'nullable|string|max:255',
@@ -99,7 +107,18 @@ class LinkController extends Controller
             abort(404);
         }
 
-        $link->update($validated);
+        $updateData = [
+            'name' => $validated['name'],
+            'link' => $validated['link_type'] === 'custom' ? $validated['link'] : null,
+            'route_name' => $validated['link_type'] === 'route' ? $validated['route_name'] : null,
+            'icon' => $validated['icon'] ?? null,
+            'target' => $validated['target'] ?? '_self',
+            'type' => $validated['type'] ?? null,
+            'order' => $validated['order'] ?? 0,
+            'is_active' => $validated['is_active'] ?? true,
+        ];
+
+        $link->update($updateData);
 
         return redirect()->route('cms.links.index', [$type, $id])
             ->with('success', 'Link updated successfully');
@@ -152,5 +171,49 @@ class LinkController extends Controller
             default => abort(404, 'Invalid link type'),
         };
     }
-}
 
+    /**
+     * Get all available frontend named routes only
+     */
+    private function getAvailableRoutes()
+    {
+        $routes = [];
+        foreach (Route::getRoutes() as $route) {
+            $name = $route->getName();
+            
+            // Skip if no name or starts with excluded prefixes
+            if (!$name || 
+                str_starts_with($name, 'admin.') || 
+                str_starts_with($name, 'ignition.') || 
+                str_starts_with($name, '_')) {
+                continue;
+            }
+            
+            // Check if route action is in Frontend or Website namespace
+            $action = $route->getAction();
+            $isFrontendRoute = false;
+            
+            if (isset($action['controller'])) {
+                $controller = $action['controller'];
+                // Check if controller is in Frontend or Website namespace
+                if (str_contains($controller, '\\Frontend\\') || 
+                    str_contains($controller, '\\Website\\')) {
+                    $isFrontendRoute = true;
+                }
+            } else {
+                // For routes without controller (closures), check URI prefix
+                // Frontend routes typically don't start with /admin
+                $uri = $route->uri();
+                if (!str_starts_with($uri, 'admin/')) {
+                    $isFrontendRoute = true;
+                }
+            }
+            
+            if ($isFrontendRoute) {
+                $routes[$name] = $name;
+            }
+        }
+        ksort($routes);
+        return $routes;
+    }
+}

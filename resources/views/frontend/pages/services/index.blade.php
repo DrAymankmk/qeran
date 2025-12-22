@@ -2,6 +2,7 @@
 
 @section('content')
 
+
 @include('frontend.pages.services.partials.features-section')
 
 @include('frontend.pages.home.partials.info-section')

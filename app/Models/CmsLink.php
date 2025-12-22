@@ -2,24 +2,18 @@
 
 namespace App\Models;
 
-use Astrotomic\Translatable\Translatable;
 use Illuminate\Database\Eloquent\Model;
 
 class CmsLink extends Model
 {
-    use Translatable; // Only if you need translated names
-
     protected $table = 'cms_links';
-    
-    // If using translations:
-    // public $translatedAttributes = ['name'];
-    // public $translationModel = CmsLinkTranslation::class;
     
     protected $fillable = [
         'linkable_type',
         'linkable_id',
         'name',
         'link',
+        'route_name',
         'icon',
         'target',
         'type',
@@ -82,6 +76,23 @@ class CmsLink extends Model
     public function scopeOfType($query, $type)
     {
         return $query->where('type', $type);
+    }
+
+    /**
+     * Get the actual URL for the link
+     * If route_name is set, generate URL from route, otherwise use link
+     */
+    public function getUrlAttribute()
+    {
+        if ($this->route_name) {
+            try {
+                return route($this->route_name);
+            } catch (\Exception $e) {
+                // If route doesn't exist, return the link or #
+                return $this->link ?? '#';
+            }
+        }
+        return $this->link ?? '#';
     }
 }
 

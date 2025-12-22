@@ -9,7 +9,7 @@
         @if($page->links->count() > 0)
             <div class="page-links mb-4">
                 @foreach($page->links as $link)
-                    <a href="{{ $link->link }}" 
+                    <a href="{{ $link->url }}" 
                        target="{{ $link->target }}"
                        class="page-link btn btn-outline-primary me-2 mb-2"
                        rel="{{ $link->target === '_blank' ? 'noopener noreferrer' : '' }}">
@@ -42,7 +42,7 @@
                 @if($section->links->count() > 0)
                     <div class="section-links mb-4">
                         @foreach($section->links as $link)
-                            <a href="{{ $link->link }}" 
+                            <a href="{{ $link->url }}" 
                                target="{{ $link->target }}"
                                class="section-link btn btn-sm btn-outline-secondary me-2 mb-2"
                                rel="{{ $link->target === '_blank' ? 'noopener noreferrer' : '' }}">
@@ -91,7 +91,7 @@
                                     @if($item->links->count() > 0)
                                         <div class="item-links mt-3">
                                             @foreach($item->links as $link)
-                                                <a href="{{ $link->link }}" 
+                                                <a href="{{ $link->url }}" 
                                                    target="{{ $link->target }}"
                                                    class="item-link btn btn-sm btn-link"
                                                    rel="{{ $link->target === '_blank' ? 'noopener noreferrer' : '' }}">

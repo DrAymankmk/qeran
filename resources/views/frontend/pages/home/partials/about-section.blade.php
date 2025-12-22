@@ -45,10 +45,21 @@
 						</div>
 						{!! formatCmsContent($aboutSection->description) !!}
 
-
-						<a href="home.html" class="btn btn-default btn-xs"><i
-								class="icon"></i>Read
-							More</a>
+						@if($aboutSection->links && $aboutSection->links->count() >
+						0)
+						@foreach($aboutSection->links as $link)
+						<a href="{{ $link->url }}" target="{{ $link->target }}"
+							class="btn btn-default btn-xs"
+							rel="{{ $link->target === '_blank' ? 'noopener noreferrer' : '' }}">
+							@if($link->icon)
+							{!! $link->icon_html !!}
+							@else
+							<i class="icon"></i>
+							@endif
+							{{ $link->name }}
+						</a>
+						@endforeach
+						@endif
 					</div>
 				</div>
 			</div>

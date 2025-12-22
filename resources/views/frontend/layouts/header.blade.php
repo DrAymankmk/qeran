@@ -3,7 +3,57 @@
 	<div class="top-bar">
 		<div class="container container-boxed-width">
 			<div class="container">
+				@php
+				$headerSection = \App\Models\CmsPage::where('slug', 'general')
+				->where('is_active', true)
+				->with(['activeSections' => function($query) {
+				$query->where('name', 'header')
+				->where('is_active', true)
+				->with([
+				'activeItems' => function($q) {
+				$q->where('is_active', true)->orderBy('order');
+				},
+				'links' => function($q) {
+				$q->where('is_active', true)->orderBy('order');
+				}
+				]);
+				}])
+				->first()
+				?->activeSections
+				->where('name', 'header')
+				->first();
+				@endphp
 				<div class="header-topbarbox-1">
+					@if($headerSection && $headerSection->activeItems &&
+					$headerSection->activeItems->count() > 0)
+					<ul class="top-bar-contact" style="display:flex; align-items:center; gap:10px">
+						@foreach($headerSection->activeItems as $item)
+						<li class="" style="display:flex; align-items:center; gap:5px">
+							@if($item->icon)
+							@php
+							$iconClass = trim($item->icon);
+							// Normalize Font Awesome icons
+							if (strpos($iconClass, 'fa-') !== false) {
+							if (strpos($iconClass, 'fa fa-') === 0) {
+							$iconClass = str_replace('fa fa-', 'fas fa-',
+							$iconClass);
+							} elseif (strpos($iconClass, 'fa-') === 0 &&
+							!preg_match('/^(fas|far|fab)\s+fa-/', $iconClass))
+							{
+							$iconClass = 'fas ' . $iconClass;
+							}
+							}
+							@endphp
+							<i class="{{ $iconClass }}"></i>
+							@else
+							<i class="icon icon-info"></i>
+							@endif
+							{!! formatCmsContent($item->content) !!}
+						</li>
+						@endforeach
+					</ul>
+					@else
+					{{-- Fallback to default contact info if no header section items found --}}
 					<ul class="top-bar-contact">
 						<li class="top-bar-contact__item"><i
 								class="icon icon-call-in"></i>
@@ -16,23 +66,9 @@
 							Mon – Fri 9.00 am – 6.00 pm
 						</li>
 					</ul>
+					@endif
 				</div>
 				<div class="header-topbarbox-2">
-					@php
-					$headerSection = \App\Models\CmsPage::where('slug', 'general')
-					->where('is_active', true)
-					->with(['activeSections' => function($query) {
-					$query->where('name', 'header')
-					->where('is_active', true)
-					->with(['links' => function($q) {
-					$q->where('is_active', true)->orderBy('order');
-					}]);
-					}])
-					->first()
-					?->activeSections
-					->where('name', 'header')
-					->first();
-					@endphp
 					@if($headerSection && $headerSection->links &&
 					$headerSection->links->count() > 0)
 					<ul class="social-net list-inline">

@@ -138,7 +138,10 @@
 									class="form-control"
 									value="{{old('en.icon', $item->translate('en')->icon ?? '')}}"
 									placeholder="e.g., fa fa-home or icon path">
-								<small class="form-text text-muted">Icon class (FontAwesome, Material Icons) or icon image path</small>
+								<small class="form-text text-muted">Icon
+									class (FontAwesome, Material
+									Icons) or icon image
+									path</small>
 							</div>
 						</div>
 
@@ -179,7 +182,10 @@
 									class="form-control"
 									value="{{old('ar.icon', $item->translate('ar')->icon ?? '')}}"
 									placeholder="e.g., fa fa-home or icon path">
-								<small class="form-text text-muted">Icon class (FontAwesome, Material Icons) or icon image path</small>
+								<small class="form-text text-muted">Icon
+									class (FontAwesome, Material
+									Icons) or icon image
+									path</small>
 							</div>
 						</div>
 					</div>
@@ -244,47 +250,75 @@
 
 @section('extra-css')
 <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
+</link>
 @endsection
 
+@section('extra-js')
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
+<script>
 // Initialize Summernote editors
 $(document).ready(function() {
-$('.summernote').summernote({
-height: 200,
-toolbar: [
-['style', ['style']],
-['font', ['bold', 'italic', 'underline', 'clear']],
-['fontname', ['fontname']],
-['color', ['color']],
-['para', ['ul', 'ol', 'paragraph']],
-['table', ['table']],
-['insert', ['link']],
-['view', ['fullscreen', 'codeview', 'help']]
-]
-});
+	$('.summernote').summernote({
+		height: 200,
+		toolbar: [
+			['style', ['style']],
+			['font', ['bold', 'italic', 'underline',
+				'clear'
+			]],
+			['fontname', ['fontname']],
+			['color', ['color']],
+			['para', ['ul', 'ol', 'paragraph']],
+			['table', ['table']],
+			['insert', ['link']],
+			['view', ['fullscreen', 'codeview',
+				'help'
+			]]
+		]
+	});
 
-// Reinitialize editor when tab is shown (for hidden tabs)
-$('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
-$('.summernote').summernote('destroy');
-$('.summernote').summernote({
-height: 200,
-toolbar: [
-['style', ['style']],
-['font', ['bold', 'italic', 'underline', 'clear']],
-['fontname', ['fontname']],
-['color', ['color']],
-['para', ['ul', 'ol', 'paragraph']],
-['table', ['table']],
-['insert', ['link']],
-['view', ['fullscreen', 'codeview', 'help']]
-]
-});
-});
+	// Reinitialize editor when tab is shown (for hidden tabs)
+	$('button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+		$('.summernote').summernote('destroy');
+		$('.summernote').summernote({
+			height: 200,
+			toolbar: [
+				['style', [
+					'style'
+				]],
+				['font', ['bold', 'italic',
+					'underline',
+					'clear'
+				]],
+				['fontname',
+					[
+						'fontname'
+					]
+				],
+				['color', [
+					'color'
+				]],
+				['para', ['ul', 'ol',
+					'paragraph'
+				]],
+				['table', [
+					'table'
+				]],
+				['insert', [
+					'link'
+				]],
+				['view', ['fullscreen',
+					'codeview',
+					'help'
+				]]
+			]
+		});
+	});
 });
 
 document.addEventListener('click', function(e) {
-if (e.target.classList.contains('remove-image')) {
-e.target.closest('.image-item').remove();
-}
+	if (e.target.classList.contains('remove-image')) {
+		e.target.closest('.image-item').remove();
+	}
 });
 </script>
 @endsection

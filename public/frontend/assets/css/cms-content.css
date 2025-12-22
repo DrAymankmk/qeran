@@ -30,7 +30,8 @@
 
 /* Ensure proper spacing for Arabic content */
 .cms-content-ar p , .cms-content-ar span {
-    margin-bottom: 1em;
+    /* margin-bottom: 1em; */
+    margin:0px;
     text-align: right;
     font-family: 'Almarai', sans-serif !important;
     font-size: 16px !important;

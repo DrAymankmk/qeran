@@ -21,6 +21,7 @@ use App\Http\Controllers\Frontend\AboutController;
 use App\Http\Controllers\Frontend\ServiceController;
 use App\Http\Controllers\Frontend\FaqController;
 use App\Http\Controllers\Frontend\ContactController;
+use App\Http\Controllers\Frontend\GalleryController;
 use App\Http\Controllers\Website\V1\Invitation\InvitationsController as WebsiteInvitationController;
 use App\Models\Invitation;
 use Illuminate\Support\Facades\Artisan;
@@ -92,6 +93,7 @@ Route::group(
         Route::get('/faq', [FaqController::class, 'index'])->name('faq');
         Route::get('/contact', [ContactController::class, 'index'])->name('contact');
         Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+        Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery');
         // CMS Frontend Route (inside localized group)
         Route::get('/page/{slug}', [\App\Http\Controllers\Frontend\CmsPageController::class, 'show'])
             ->name('cms.page.show');

@@ -84,7 +84,7 @@
                                                     <div class="row">
                                                         <div class="col-md-6">
                                                             <label for="codeLength" class="form-label small">Length</label>
-                                                            <input type="number" id="codeLength" class="form-control form-control-sm" 
+                                                            <input type="number" id="codeLength" class="form-control form-control-sm"
                                                                    value="8" min="1" max="50">
                                                         </div>
                                                         <div class="col-md-6">
@@ -105,6 +105,48 @@
                                                 <input type="file" name="image" accept="image/*"
                                                        class="form-control" id="image">
                                                 <small class="form-text text-muted">JPEG, PNG, GIF, WebP, max 5MB</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-12">
+                                            <div class="mb-3">
+                                                <label class="form-label">Show On</label>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="show_on[]" value="home" id="show_on_home" {{ in_array('home', old('show_on', [])) ? 'checked' : '' }}>
+                                                            <label class="form-check-label" for="show_on_home">
+                                                                Home Page
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="show_on[]" value="footer" id="show_on_footer" {{ in_array('footer', old('show_on', [])) ? 'checked' : '' }}>
+                                                            <label class="form-check-label" for="show_on_footer">
+                                                                Footer
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="show_on[]" value="gallery" id="show_on_gallery" {{ in_array('gallery', old('show_on', [])) ? 'checked' : '' }}>
+                                                            <label class="form-check-label" for="show_on_gallery">
+                                                                Gallery Page
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="show_on[]" value="services" id="show_on_services" {{ in_array('services', old('show_on', [])) ? 'checked' : '' }}>
+                                                            <label class="form-check-label" for="show_on_services">
+                                                                Services Page
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="show_on[]" value="about" id="show_on_about" {{ in_array('about', old('show_on', [])) ? 'checked' : '' }}>
+                                                            <label class="form-check-label" for="show_on_about">
+                                                                About Page
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <small class="form-text text-muted">Select where this design should be displayed</small>
                                             </div>
                                         </div>
                                     </div>
@@ -197,7 +239,7 @@
         function generateCode(length, type) {
             let characters = '';
             let result = '';
-            
+
             if (type === 'numbers') {
                 characters = '0123456789';
             } else if (type === 'characters') {
@@ -205,26 +247,26 @@
             } else if (type === 'mixed') {
                 characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
             }
-            
+
             const charactersLength = characters.length;
             for (let i = 0; i < length; i++) {
                 result += characters.charAt(Math.floor(Math.random() * charactersLength));
             }
-            
+
             return result;
         }
-        
+
         // Generate Code Button Click Handler
         $(document).ready(function() {
             $('#generateCodeBtn').on('click', function() {
                 const length = parseInt($('#codeLength').val()) || 8;
                 const type = $('#codeType').val() || 'mixed';
-                
+
                 if (length < 1 || length > 50) {
                     alert('Length must be between 1 and 50');
                     return;
                 }
-                
+
                 const generatedCode = generateCode(length, type);
                 $('#code').val(generatedCode);
             });

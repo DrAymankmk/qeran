@@ -26,6 +26,8 @@ class DesignRequest extends FormRequest
         return [
             'category_id' => ['required', 'exists:categories,id'],
             'code' => ['nullable', 'string', 'max:255'],
+            'show_on' => ['nullable', 'array'],
+            'show_on.*' => ['nullable', 'string', 'in:home,footer,gallery,services,about'],
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'],
             'en.name' => ['nullable', 'string', 'max:255'],
             'ar.name' => ['nullable', 'string', 'max:255'],

@@ -17,6 +17,11 @@ class Design extends Model
     protected $fillable = [
         'category_id',
         'code',
+        'show_on',
+    ];
+
+    protected $casts = [
+        'show_on' => 'array',
     ];
 
     public function category()

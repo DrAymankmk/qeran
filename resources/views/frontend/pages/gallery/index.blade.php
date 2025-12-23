@@ -1,15 +1,16 @@
-@php
-$designsSection = $homePage->activeSections->where('name', 'designs')->first();
-@endphp
+@extends('frontend.layouts.app')
+
+@section('content')
 <section class="section-default">
 	<div class="container">
 		<div class="row">
 			<div class="col-xs-12">
-				<div class="ui-decor-1"><img
+				<div class="ui-decor-1 text-center"><img
 						src="{{ asset('frontend/assets/media/general/ui-decor-1.png') }}"
 						alt="decor"></div>
-				<h2 class="ui-title-block">{{ $designsSection->title }}</h2>
-				<div class="ui-subtitle-block">{{$designsSection->subtitle}}</div>
+				<h2 class="ui-title-block text-center">{{ __('frontend.gallery') }}</h2>
+				<div class="ui-subtitle-block text-center">{{__('frontend.gallery_subtitle')}}
+				</div>
 			</div>
 		</div>
 	</div>
@@ -35,15 +36,6 @@ $designsSection = $homePage->activeSections->where('name', 'designs')->first();
 			@foreach($categories as $category)
 			@foreach($category->designs as $design)
 			@php
-			// Filter designs that should be shown on home page
-			$showOn = $design->show_on ?? [];
-			if (!is_array($showOn)) {
-			$showOn = [];
-			}
-			// Skip if design doesn't have "home" in show_on
-			if (!in_array('home', $showOn)) {
-			continue;
-			}
 			$designImage = $design->image();
 			$designName = $design->name ?? '';
 			$designCode = $design->code ?? '';
@@ -75,10 +67,8 @@ $designsSection = $homePage->activeSections->where('name', 'designs')->first();
 			@endforeach
 		</ul>
 
-		<div class="text-center"><a href="{{ route('gallery') }}"
-				class="b-isotope__btn btn btn-primary">{{ __('frontend.visit_full_gallery') }}
-			</a>
-		</div>
+
+
 	</div>
 	<!-- end .b-isotope-->
 	<!-- <div class="text-center"><span class="b-isotope__info">See Our Full Gallery of
@@ -116,3 +106,9 @@ $designsSection = $homePage->activeSections->where('name', 'designs')->first();
 		</div>
 	</div>
 </div>
+@endsection
+@push('scripts')
+<script>
+
+</script>
+@endpush

@@ -285,7 +285,7 @@
 					</div>
 					<div class="col-md-6 mb-3">
 						<strong>{{__('admin.invitation-code')}}:</strong> <span
-							id="modal_invitation_code"></span>
+							id="modal_code"></span>
 					</div>
 					<div class="col-md-6 mb-3">
 						<strong>{{__('admin.user')}}:</strong> <span

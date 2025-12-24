@@ -72,175 +72,192 @@ class NotificationsController extends Controller
      */
     private function getDataTablesData(Request $request): JsonResponse
     {
-        // Get DataTables parameters
-        $draw = $request->input('draw', 1);
-        $start = $request->input('start', 0);
-        $length = $request->input('length', 10);
-        $searchValue = $request->input('search.value', '');
-        $orderColumn = $request->input('order.0.column', 0);
-        $orderDir = $request->input('order.0.dir', 'desc');
+        try {
+            // Get DataTables parameters
+            $draw = $request->input('draw', 1);
+            $start = $request->input('start', 0);
+            $length = $request->input('length', 10);
+            $searchValue = $request->input('search.value', '');
+            $orderColumn = $request->input('order.0.column', 0);
+            $orderDir = $request->input('order.0.dir', 'desc');
 
-        // Get category filter
-        $category = $request->input('category');
+            // Get category filter
+            $category = $request->input('category');
 
-        // Build base query - filter by admin notifications
-        $query = Notification::where('type', Constant::NOTIFICATIONS_TYPE['Admin']);
+            // Build base query - filter by admin notifications
+            $query = Notification::where('type', Constant::NOTIFICATIONS_TYPE['Admin']);
 
-        // Filter by category if provided
-        if ($category && in_array($category, array_values(Constant::NOTIFICATION_CATEGORY))) {
-            $query->where('category', $category);
-        }
+            // Filter by category if provided
+            if ($category && in_array($category, array_values(Constant::NOTIFICATION_CATEGORY))) {
+                $query->where('category', $category);
+            }
 
-        // Get total records count (before filtering)
-        $totalRecordsQuery = Notification::where('type', Constant::NOTIFICATIONS_TYPE['Admin']);
-        if ($category && in_array($category, array_values(Constant::NOTIFICATION_CATEGORY))) {
-            $totalRecordsQuery->where('category', $category);
-        }
-        $totalRecords = $totalRecordsQuery->count();
+            // Get total records count (before filtering)
+            $totalRecordsQuery = Notification::where('type', Constant::NOTIFICATIONS_TYPE['Admin']);
+            if ($category && in_array($category, array_values(Constant::NOTIFICATION_CATEGORY))) {
+                $totalRecordsQuery->where('category', $category);
+            }
+            $totalRecords = $totalRecordsQuery->count();
 
-        // Apply search filter
-        if (!empty($searchValue)) {
-            $query->where(function ($q) use ($searchValue) {
-                $q->where('id', 'like', '%' . $searchValue . '%')
-                    ->orWhere('title', 'like', '%' . $searchValue . '%')
-                    ->orWhere('description', 'like', '%' . $searchValue . '%');
-            });
-        }
+            // Apply search filter
+            if (!empty($searchValue)) {
+                $query->where(function ($q) use ($searchValue) {
+                    $q->where('id', 'like', '%' . $searchValue . '%')
+                        ->orWhereHas('translations', function ($translationQuery) use ($searchValue) {
+                            $translationQuery->where('title', 'like', '%' . $searchValue . '%')
+                                ->orWhere('description', 'like', '%' . $searchValue . '%');
+                        });
+                });
+            }
 
-        // Get filtered count (before ordering and pagination)
-        $filteredRecords = $query->count();
+            // Get filtered count (before ordering and pagination)
+            $filteredRecords = $query->count();
 
-        // Apply ordering
-        // For column-specific ordering, we need to handle it differently
-        if ($orderColumn == 0 && $orderDir == 'desc') {
-            // Default: order by read status (unread first), then by created_at DESC
-            $query->orderByReadStatus();
-        } elseif ($orderColumn == 0) {
-            // ID column (ascending)
-            $query->orderBy('id', $orderDir);
-        } elseif ($orderColumn == 1) {
-            // Status column (read/unread) - order by read_at
-            if ($orderDir == 'asc') {
-                $query->orderByRaw('read_at IS NULL ASC, read_at ASC');
+            // Apply ordering
+            // For column-specific ordering, we need to handle it differently
+            if ($orderColumn == 0 && $orderDir == 'desc') {
+                // Default: order by read status (unread first), then by created_at DESC
+                $query->orderByReadStatus();
+            } elseif ($orderColumn == 0) {
+                // ID column (ascending)
+                $query->orderBy('id', $orderDir);
+            } elseif ($orderColumn == 1) {
+                // Status column (read/unread) - order by read_at
+                if ($orderDir == 'asc') {
+                    $query->orderByRaw('read_at IS NULL ASC, read_at ASC');
+                } else {
+                    $query->orderByRaw('read_at IS NULL DESC, read_at DESC');
+                }
+            } elseif ($orderColumn == 6) {
+                // Created at column
+                $query->orderBy('created_at', $orderDir);
             } else {
-                $query->orderByRaw('read_at IS NULL DESC, read_at DESC');
-            }
-        } elseif ($orderColumn == 6) {
-            // Created at column
-            $query->orderBy('created_at', $orderDir);
-        } else {
-            // Default: order by read status (unread first), then by created_at DESC
-            $query->orderByReadStatus();
-        }
-
-        // Apply pagination
-        $notifications = $query->skip($start)->take($length)->get();
-
-        // Format data for DataTables
-        $data = [];
-        foreach ($notifications as $notification) {
-            $isRead = $notification->read_at !== null;
-            $categoryText = '';
-            $typeText = '';
-            $redirectUrl = null;
-
-            // Get category text
-            if ($notification->category) {
-                switch ($notification->category) {
-                    case Constant::NOTIFICATION_CATEGORY['Order']:
-                        $categoryText = __('admin.order_notifications');
-                        if ($notification->target_id) {
-                            $redirectUrl = route('invitation.index', ['highlight' => $notification->target_id]);
-                        }
-                        break;
-                    case Constant::NOTIFICATION_CATEGORY['Payment']:
-                        $categoryText = __('admin.payment_notifications');
-                        if ($notification->target_id) {
-                            $redirectUrl = route('financial.index', ['highlight' => $notification->target_id]);
-                        }
-                        break;
-                    case Constant::NOTIFICATION_CATEGORY['User']:
-                        $categoryText = __('admin.user_notifications');
-                        if ($notification->target_id) {
-                            $redirectUrl = route('users.index', ['highlight' => $notification->target_id]);
-                        }
-                        break;
-                    case Constant::NOTIFICATION_CATEGORY['Contact Us']:
-                        $categoryText = __('admin.contact_us_notification');
-                        if ($notification->target_id) {
-                            $redirectUrl = route('contact.index', ['highlight' => $notification->target_id]);
-                        }
-                        break;
-                }
+                // Default: order by read status (unread first), then by created_at DESC
+                $query->orderByReadStatus();
             }
 
-            // Get type text
-            if ($notification->notification_type && $notification->category) {
-                $types = [];
-                switch ($notification->category) {
-                    case Constant::NOTIFICATION_CATEGORY['Order']:
-                        $types = Constant::NOTIFICATION_ORDER_TYPES;
-                        break;
-                    case Constant::NOTIFICATION_CATEGORY['Payment']:
-                        $types = Constant::NOTIFICATION_PAYMENT_TYPES;
-                        break;
-                    case Constant::NOTIFICATION_CATEGORY['User']:
-                        $types = Constant::NOTIFICATION_USER_TYPES;
-                        break;
-                    case Constant::NOTIFICATION_CATEGORY['Contact Us']:
-                        $types = Constant::NOTIFICATION_CONTACT_TYPES;
-                        break;
-                }
+            // Apply pagination
+            $notifications = $query->skip($start)->take($length)->get();
 
-                if (!empty($types)) {
-                    $typeKey = array_search($notification->notification_type, $types);
-                    if ($typeKey !== false) {
-                        $typeText = __('admin.' . strtolower(str_replace(' ', '_', $typeKey)));
+            // Format data for DataTables
+            $data = [];
+            foreach ($notifications as $notification) {
+                $isRead = $notification->read_at !== null;
+                $categoryText = '';
+                $typeText = '';
+                $redirectUrl = null;
+
+                // Get category text
+                if ($notification->category) {
+                    switch ($notification->category) {
+                        case Constant::NOTIFICATION_CATEGORY['Order']:
+                            $categoryText = __('admin.order_notifications');
+                            if ($notification->target_id) {
+                                $redirectUrl = route('invitation.index', ['highlight' => $notification->target_id]);
+                            }
+                            break;
+                        case Constant::NOTIFICATION_CATEGORY['Payment']:
+                            $categoryText = __('admin.payment_notifications');
+                            if ($notification->target_id) {
+                                $redirectUrl = route('financial.index', ['highlight' => $notification->target_id]);
+                            }
+                            break;
+                        case Constant::NOTIFICATION_CATEGORY['User']:
+                            $categoryText = __('admin.user_notifications');
+                            if ($notification->target_id) {
+                                $redirectUrl = route('users.index', ['highlight' => $notification->target_id]);
+                            }
+                            break;
+                        case Constant::NOTIFICATION_CATEGORY['Contact Us']:
+                            $categoryText = __('admin.contact_us_notification');
+                            if ($notification->target_id) {
+                                $redirectUrl = route('contact.index', ['highlight' => $notification->target_id]);
+                            }
+                            break;
                     }
                 }
+
+                // Get type text
+                if ($notification->notification_type && $notification->category) {
+                    $types = [];
+                    switch ($notification->category) {
+                        case Constant::NOTIFICATION_CATEGORY['Order']:
+                            $types = Constant::NOTIFICATION_ORDER_TYPES;
+                            break;
+                        case Constant::NOTIFICATION_CATEGORY['Payment']:
+                            $types = Constant::NOTIFICATION_PAYMENT_TYPES;
+                            break;
+                        case Constant::NOTIFICATION_CATEGORY['User']:
+                            $types = Constant::NOTIFICATION_USER_TYPES;
+                            break;
+                        case Constant::NOTIFICATION_CATEGORY['Contact Us']:
+                            $types = Constant::NOTIFICATION_CONTACT_TYPES;
+                            break;
+                    }
+
+                    if (!empty($types)) {
+                        $typeKey = array_search($notification->notification_type, $types);
+                        if ($typeKey !== false) {
+                            $typeText = __('admin.' . strtolower(str_replace(' ', '_', $typeKey)));
+                        }
+                    }
+                }
+
+                // Build title with link if redirectUrl exists
+                $titleHtml = $redirectUrl
+                    ? '<a href="' . $redirectUrl . '" class="text-primary text-decoration-none">' . e($notification->title) . '</a>'
+                    : e($notification->title);
+
+                // Build actions HTML
+                $actionsHtml = '<div class="d-flex gap-3">';
+                $actionsHtml .= '<a href="javascript:void(0);" onclick="showNotificationDetails(' . $notification->id . ')" title="' . __('admin.view_details') . '" class="text-info"><i class="mdi mdi-information font-size-18"></i></a>';
+
+                if ($redirectUrl) {
+                    $actionsHtml .= '<a href="' . $redirectUrl . '" title="' . __('admin.view_related_item') . '" class="text-success"><i class="mdi mdi-open-in-new font-size-18"></i></a>';
+                }
+
+                // Only show eye button if notification is unread
+                // if (!$isRead) {
+                //     $actionsHtml .= '<a href="' . route('notifications.show', $notification->id) . '" title="' . __('admin.view_notification') . '" class="text-primary eye-btn-' . $notification->id . '"><i class="mdi mdi-eye font-size-18"></i></a>';
+                // }
+
+                $actionsHtml .= '<a onclick="openModalDelete(' . $notification->id . ')" title="' . __('admin.delete') . '" class="text-danger"><i class="mdi mdi-delete font-size-18"></i></a>';
+                $actionsHtml .= '</div>';
+
+                $data[] = [
+                    $notification->id,
+                    $isRead
+                        ? '<span class="badge bg-success">' . __('admin.read') . '</span>'
+                        : '<span class="badge bg-danger">' . __('admin.unread') . '</span>',
+                    $categoryText ?: __('admin.no-data-available'),
+                    $typeText ?: __('admin.no-data-available'),
+                    $titleHtml,
+                    e($notification->description),
+                    $notification->created_at,
+                    $actionsHtml,
+                ];
             }
 
-            // Build title with link if redirectUrl exists
-            $titleHtml = $redirectUrl
-                ? '<a href="' . $redirectUrl . '" class="text-primary text-decoration-none">' . e($notification->title) . '</a>'
-                : e($notification->title);
+            return response()->json([
+                'draw' => (int) $draw,
+                'recordsTotal' => $totalRecords,
+                'recordsFiltered' => $filteredRecords,
+                'data' => $data,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in getDataTablesData', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
-            // Build actions HTML
-            $actionsHtml = '<div class="d-flex gap-3">';
-            $actionsHtml .= '<a href="javascript:void(0);" onclick="showNotificationDetails(' . $notification->id . ')" title="' . __('admin.view_details') . '" class="text-info"><i class="mdi mdi-information font-size-18"></i></a>';
-
-            if ($redirectUrl) {
-                $actionsHtml .= '<a href="' . $redirectUrl . '" title="' . __('admin.view_related_item') . '" class="text-success"><i class="mdi mdi-open-in-new font-size-18"></i></a>';
-            }
-
-            // Only show eye button if notification is unread
-            // if (!$isRead) {
-            //     $actionsHtml .= '<a href="' . route('notifications.show', $notification->id) . '" title="' . __('admin.view_notification') . '" class="text-primary eye-btn-' . $notification->id . '"><i class="mdi mdi-eye font-size-18"></i></a>';
-            // }
-
-            $actionsHtml .= '<a onclick="openModalDelete(' . $notification->id . ')" title="' . __('admin.delete') . '" class="text-danger"><i class="mdi mdi-delete font-size-18"></i></a>';
-            $actionsHtml .= '</div>';
-
-            $data[] = [
-                $notification->id,
-                $isRead
-                    ? '<span class="badge bg-success">' . __('admin.read') . '</span>'
-                    : '<span class="badge bg-danger">' . __('admin.unread') . '</span>',
-                $categoryText ?: __('admin.no-data-available'),
-                $typeText ?: __('admin.no-data-available'),
-                $titleHtml,
-                e($notification->description),
-                $notification->created_at,
-                $actionsHtml,
-            ];
+            return response()->json([
+                'draw' => (int) $request->input('draw', 1),
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+                'error' => __('admin.error-loading-notifications'),
+            ], 500);
         }
-
-        return response()->json([
-            'draw' => (int) $draw,
-            'recordsTotal' => $totalRecords,
-            'recordsFiltered' => $filteredRecords,
-            'data' => $data,
-        ]);
     }
 
     public function create()
@@ -254,11 +271,22 @@ class NotificationsController extends Controller
     public function store(NotificationsRequest $request)
     {
 //        abort_if(Gate::denies('create_notifications'), 403);
-        // Notification::create($request->validated()+['type'=>Constant::NOTIFICATIONS_TYPE['Admin']]);
-        PushNotificationService::notifyFor('users',$request->ar['title'],$request->ar['description']);
+        $validated = $request->validated();
+
+        // Create notification with custom title and description
+        $notification = Notification::create([
+            'type' => Constant::NOTIFICATIONS_TYPE['Admin'],
+            'user_id' => null, // Admin notification
+        ]);
+
+        // Store translations for both languages
+        $notification->translateOrNew('ar')->title = $validated['ar']['title'];
+        $notification->translateOrNew('ar')->description = $validated['ar']['description'];
+        $notification->translateOrNew('en')->title = $validated['en']['title'];
+        $notification->translateOrNew('en')->description = $validated['en']['description'];
+        $notification->save();
+
         return redirect()->route('notifications.index')->with('success','Added');
-
-
     }
 
 
@@ -662,9 +690,22 @@ class NotificationsController extends Controller
     public function update(NotificationsRequest $request, Notification $notification)
     {
 //        abort_if(Gate::denies('edit_notifications'), 403);
-        $notification->update($request->validated());
-        return redirect()->route('notifications.index')->with('success','Updated');
+        $validated = $request->validated();
 
+        // Update translations for each language (ar and en)
+        $locales = ['ar', 'en'];
+        foreach ($locales as $locale) {
+            if (isset($validated['title'][$locale])) {
+                $notification->translateOrNew($locale)->title = $validated['title'][$locale];
+            }
+            if (isset($validated['description'][$locale])) {
+                $notification->translateOrNew($locale)->description = $validated['description'][$locale];
+            }
+        }
+
+        $notification->save();
+
+        return redirect()->route('notifications.index')->with('success','Updated');
     }
 
     /**

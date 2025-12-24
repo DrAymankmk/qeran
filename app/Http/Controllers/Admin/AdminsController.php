@@ -83,6 +83,7 @@ class AdminsController extends Controller
      */
     public function show($id)
     {
+        // Load admin with roles and permissions, same way as edit method
         $admin = Admin::with('roles', 'permissions')->findOrFail($id);
         return view('pages.admins.show', compact('admin'));
     }
@@ -212,4 +213,3 @@ class AdminsController extends Controller
         return $mpdf->Output($filename, 'D'); // D = Download
     }
 }
-

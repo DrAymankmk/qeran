@@ -50,28 +50,28 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    @if ($errors->any())
-                        @foreach ($errors->all() as $error)
-                            <div class="alert alert-danger inverse alert-dismissible fade show" role="alert"><i
-                                    class="icon-thumb-down"></i>
-
-                                <p>{{ $error }}</p>
-                                <button class="close" type="button" data-dismiss="alert" aria-label="Close"
-                                        data-original-title="" title=""><span aria-hidden="true">×</span></button>
-
-                            </div>
-
-                        @endforeach
-                    @endif
+                    @php
+                        $hasArabicErrors = $errors->has('ar.title') || $errors->has('ar.description');
+                        $hasEnglishErrors = $errors->has('en.title') || $errors->has('en.description');
+                        $activeTab = $hasEnglishErrors ? 'sell' : 'buy';
+                    @endphp
                     <ul class="nav nav-tabs nav-tabs-custom" role="tablist">
                         <li class="nav-item">
-                            <a class="nav-link active show" data-bs-toggle="tab" href="#buy" role="tab">
+                            <a class="nav-link @if($activeTab == 'buy') active show @endif" 
+                               data-bs-toggle="tab" href="#buy" role="tab">
                                 عربي
+                                @if($hasArabicErrors)
+                                    <span class="badge bg-danger ms-1">!</span>
+                                @endif
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="tab" href="#sell" role="tab">
+                            <a class="nav-link @if($activeTab == 'sell') active show @endif" 
+                               data-bs-toggle="tab" href="#sell" role="tab">
                                 English
+                                @if($hasEnglishErrors)
+                                    <span class="badge bg-danger ms-1">!</span>
+                                @endif
                             </a>
                         </li>
                     </ul>
@@ -81,73 +81,110 @@
                         @csrf
 
                         <div class="tab-content crypto-buy-sell-nav-content p-4">
-                            <div class="tab-pane active" id="buy" role="tabpanel">
+                            <div class="tab-pane fade @if($activeTab == 'buy') active show @endif" id="buy" role="tabpanel">
+                                
+                                @if($errors->has('ar.title') || $errors->has('ar.description'))
+                                    <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                                        <i class="icon-thumb-down"></i>
+                                        <strong>{{__('admin.arabic-validation-errors')}}</strong>
+                                        <ul class="mb-0 mt-2">
+                                            @if($errors->has('ar.title'))
+                                                <li>{{ $errors->first('ar.title') }}</li>
+                                            @endif
+                                            @if($errors->has('ar.description'))
+                                                <li>{{ $errors->first('ar.description') }}</li>
+                                            @endif
+                                        </ul>
+                                        <button class="close" type="button" data-dismiss="alert" aria-label="Close"
+                                                data-original-title="" title=""><span aria-hidden="true">×</span></button>
+                                    </div>
+                                @endif
 
                                 <div class="row">
-
-
                                     <div class="col-sm-12">
-
-
                                         <div class="mb-3">
                                             <label for="title-input"
                                                    class="form-label">   {{__('admin.title-text')}}  </label>
-                                            <input type="text" name="ar[title]" value="{{old('ar[title]')}}" required
-                                                   class="form-control" id="title-input"
+                                            <input type="text" name="ar[title]" value="{{old('ar.title')}}" required
+                                                   class="form-control @error('ar.title') is-invalid @enderror" id="title-input"
                                                    placeholder="{{__('admin.title-text')}}">
+                                            @error('ar.title')
+                                                <div class="invalid-feedback d-block">
+                                                    {{ $message }}
+                                                </div>
+                                            @enderror
                                         </div>
-
                                     </div>
-
                                 </div>
                                 <div class="row">
-
-
                                     <div class="col-sm-12">
-
                                         <div class="mb-3">
                                             <label for="description"
                                                    class="form-label">     {{__('admin.description')}}   </label>
-                                            <textarea class="form-control" id="description"
+                                            <textarea class="form-control @error('ar.description') is-invalid @enderror" id="description"
                                                       name="ar[description]" rows="10"
                                                       placeholder=" {{__('admin.description')}}">{{old('ar.description')}}</textarea>
+                                            @error('ar.description')
+                                                <div class="invalid-feedback d-block">
+                                                    {{ $message }}
+                                                </div>
+                                            @enderror
                                         </div>
                                     </div>
                                 </div>
 
                             </div>
-                            <div class="tab-pane" id="sell" role="tabpanel">
+                            <div class="tab-pane fade @if($activeTab == 'sell') active show @endif" id="sell" role="tabpanel">
+                                
+                                @if($errors->has('en.title') || $errors->has('en.description'))
+                                    <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                                        <i class="icon-thumb-down"></i>
+                                        <strong>{{__('admin.english-validation-errors')}}</strong>
+                                        <ul class="mb-0 mt-2">
+                                            @if($errors->has('en.title'))
+                                                <li>{{ $errors->first('en.title') }}</li>
+                                            @endif
+                                            @if($errors->has('en.description'))
+                                                <li>{{ $errors->first('en.description') }}</li>
+                                            @endif
+                                        </ul>
+                                        <button class="close" type="button" data-dismiss="alert" aria-label="Close"
+                                                data-original-title="" title=""><span aria-hidden="true">×</span></button>
+                                    </div>
+                                @endif
+
                                 <div class="row">
-
-
                                     <div class="col-sm-12">
-
-
                                         <div class="mb-3">
                                             <label for="english-title-input"
                                                    class="form-label">   {{__('admin.english-title')}}  </label>
                                             <input type="text" name="en[title]" value="{{old('en.title')}}" required
-                                                   class="form-control" id="english-title-input"
+                                                   class="form-control @error('en.title') is-invalid @enderror" id="english-title-input"
                                                    placeholder="{{__('admin.english-title')}}">
+                                            @error('en.title')
+                                                <div class="invalid-feedback d-block">
+                                                    {{ $message }}
+                                                </div>
+                                            @enderror
                                         </div>
-
                                     </div>
                                 </div>
                                 <div class="row">
-
-
                                     <div class="col-sm-12">
-
                                         <div class="mb-3">
                                             <label for="english-description"
                                                    class="form-label">     {{__('admin.english-description')}}   </label>
-                                            <textarea class="form-control" id="english-description"
+                                            <textarea class="form-control @error('en.description') is-invalid @enderror" id="english-description"
                                                       name="en[description]" rows="10"
                                                       placeholder=" {{__('admin.english-description')}}">{{old('en.description')}}</textarea>
+                                            @error('en.description')
+                                                <div class="invalid-feedback d-block">
+                                                    {{ $message }}
+                                                </div>
+                                            @enderror
                                         </div>
                                     </div>
                                 </div>
-
 
                             </div>
 
@@ -186,5 +223,26 @@
 
     <!-- init js -->
     <script src="{{asset('admin_assets/js/pages/crypto-orders.init.js')}}"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Ensure only one tab is active at a time
+            $('.nav-tabs a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                // Remove active class from all tab panes
+                $('.tab-pane').removeClass('active show');
+                // Add active class to the target tab pane
+                var target = $(e.target).attr('href');
+                $(target).addClass('active show');
+            });
+
+            // On page load, ensure only the active tab pane is shown
+            var activeTab = $('.nav-tabs .nav-link.active');
+            if (activeTab.length > 0) {
+                var targetPane = activeTab.attr('href');
+                $('.tab-pane').removeClass('active show');
+                $(targetPane).addClass('active show');
+            }
+        });
+    </script>
 
 @endsection

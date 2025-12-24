@@ -23,7 +23,7 @@ class UsersController extends Controller
 //        abort_if(Gate::denies('all_users'), 403);
 
 
-        $users = User::where('account_type',1)->whereNotNull('password')->orderBy('created_at', 'desc')->paginate();
+        $users = User::where('account_type',1)->orderBy('created_at', 'desc')->get();
         return view('pages.users.index', compact('users'));
 
     }
@@ -179,7 +179,10 @@ class UsersController extends Controller
     }
 
       public function usersExportPdf(){
-         $users = User::orderBy('created_at', 'desc')->get();
+         $users = User::whereNull('deleted_at')
+         ->where('account_type',1)
+         ->orderBy('created_at', 'desc')->get();
+
 
         // Configure mPDF with Arabic font support
         $mpdf = new Mpdf([

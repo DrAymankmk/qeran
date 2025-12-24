@@ -212,4 +212,9 @@ class Constant
     const INVITATION_AUDIO_FOLDER_NAME = 'invitations/audio';
 
     const INVITATION_RECEIPT_FOLDER_NAME = 'invitations/receipts';
+
+    const LANGUAGES = [
+        'arabic' => 'ar',
+        'english' => 'en',
+    ];
 }

@@ -150,12 +150,19 @@ function initAdminDataTable(options) {
         });
     }
 
+    // Build DOM string - conditionally include buttons container
+    let domString = '<"row mb-3 align-items-center justify-content-between"<"col-auto"l><"col-auto ms-3"f>';
+    if (buttons.length > 0) {
+        domString += '<"col-auto ms-3"B>>';
+    } else {
+        domString += '>';
+    }
+    domString += 'rt' + '<"row"<"col-md-5"i><"col-md-7"p>>';
+
     // Initialize DataTable
     const table = $(config.tableId).DataTable({
-        dom: '<"row mb-3 align-items-center justify-content-between"<"col-auto"l><"col-auto ms-3"f><"col-auto ms-3"B>>' +
-            'rt' +
-            '<"row"<"col-md-5"i><"col-md-7"p>>',
-        buttons: buttons,
+        dom: domString,
+        buttons: buttons.length > 0 ? buttons : undefined,
         responsive: config.responsive,
         pageLength: config.pageLength,
         lengthMenu: config.lengthMenu,

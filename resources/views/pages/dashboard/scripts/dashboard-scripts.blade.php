@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 				// Fill modal with data
 				const fields = [
-					'id', 'code',
+					'invitation_id', 'code',
 					'user_name',
 					'user_email',
 					'invitation_type',

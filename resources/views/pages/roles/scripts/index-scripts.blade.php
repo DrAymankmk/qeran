@@ -2,9 +2,7 @@
 @include('pages.global.scripts.datatable-scripts')
 @include('pages.global.scripts.datatable-admin-init')
 <script>
-	
-
-		$(document).ready(function() {
+$(document).ready(function() {
 	// Initialize DataTable using reusable function
 	var table = initAdminDataTable({
 		tableId: '#rolesTable',
@@ -16,45 +14,14 @@
 		lengthMenu: [
 			[10, 25, 50, 100],
 			[10, 25, 50, 100]
-		]
+		],
+		buttons: [] // Disable buttons for this table
 	});
 });
 
-	function openModalDelete(id) {
-		$('#deleteModal').modal('show');
-		$('#deleteModal form').attr('action', '{{route("roles.index")}}/' + id);
-	}
+function openModalDelete(id) {
+	$('#deleteModal').modal('show');
+	$('#deleteModal form').attr('action', '{{route("roles.index")}}/' + id);
+}
 </script>
 @endsection
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

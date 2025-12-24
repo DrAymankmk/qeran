@@ -119,6 +119,11 @@ class Notification
         $interest,
         $notification_key, $params = []): void
     {
+        // Ensure $params is always an array
+        if (!is_array($params)) {
+            $params = [];
+        }
+        
         // Use default language for general notifications
         $translatedContent = self::getTranslatedNotification($notification_key, 'ar', $params);
 
@@ -142,6 +147,11 @@ class Notification
      */
     private static function getTranslatedNotification($notification_key, $language, $params = [])
     {
+        // Ensure $params is always an array
+        if (!is_array($params)) {
+            $params = [];
+        }
+
         // Set the application locale temporarily
         $originalLocale = app()->getLocale();
         app()->setLocale($language);

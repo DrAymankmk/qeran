@@ -2,7 +2,7 @@
 	<div class="footer__main">
 		<div class="container">
 			@php
-			$logoSetting = \App\Models\HubFile::where('original_name', 'logo_img')->first();
+			$logoSetting = \App\Models\HubFile::where('original_name', 'footer_logo_img')->first();
 			$logoUrl = $logoSetting && $logoSetting->path ? $logoSetting->get_path() :
 			asset('frontend/assets/media/logo.png');
 			@endphp

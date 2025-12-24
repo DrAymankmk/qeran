@@ -3928,3 +3928,7 @@ input:-ms-input-placeholder {
   color: #fff;
   z-index: 100;
 }
+
+.sp-image {
+	width: 100% !important;
+	}

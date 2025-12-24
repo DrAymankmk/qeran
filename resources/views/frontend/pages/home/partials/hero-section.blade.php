@@ -8,7 +8,7 @@ $heroSection = $homePage->activeSections->where('name', 'hero')->first();
 		<!-- Slide 1-->
 		@foreach($heroSection->items as $item)
 		<div class="sp-slide"><img src="{{ $item->images->first()->getUrl() }}" alt="slider"
-				class="sp-image" />
+				class="sp-image hero-slider-image" />
 			<div class="container">
 				<div class="row">
 					<div class="col-md-8">
@@ -68,4 +68,5 @@ $heroSection = $homePage->activeSections->where('name', 'hero')->first();
 		</div>
 	</div>
 </div> -->
+
 @endif

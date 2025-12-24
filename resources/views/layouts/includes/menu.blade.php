@@ -62,8 +62,7 @@
 				@endcan
 				@can('view-invitation-requests')
 				<li @if(Route::is('invitation-request.index') &&
-					request('invitation_type')==\App\Helpers\Constant::INVITATION_TYPE['Contact
-					Design']) class="mm-active" @endif>
+					request('invitation_type')==\App\Helpers\Constant::INVITATION_TYPE['Contact Design']) class="mm-active" @endif>
 					<a href="{{route('invitation-request.index',['invitation_type'=>\App\Helpers\Constant::INVITATION_TYPE['Contact Design']])}}"
 						class="waves-effect">
 						<i class="bx bx-file-find"></i>

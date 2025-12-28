@@ -1,0 +1,28 @@
+<?php
+return [
+    'manage-translations' => 'Manage Translations',
+    'translations' => 'Translations',
+    'locale' => 'Locale',
+    'file' => 'File',
+    'all-files' => 'All Files',
+    'key' => 'Key',
+    'value' => 'Value',
+    'actions' => 'Actions',
+    'edit' => 'Edit',
+    'add-new-key' => 'Add New Key',
+    'edit-translation' => 'Edit Translation',
+    'update' => 'Update',
+    'save' => 'Save',
+    'cancel' => 'Cancel',
+    'keys' => 'keys',
+    'no-translations-found' => 'No translations found',
+    'key-path' => 'Key Path',
+    'key-hint' => 'Use dot (.) for nested categories, e.g., category.name or nested.key.path',
+    'saving' => 'Saving',
+    'updating' => 'Updating',
+    'translation-key-added-successfully' => 'Translation key added successfully',
+    'translation-updated-successfully' => 'Translation updated successfully',
+    'an-error-occurred' => 'An error occurred',
+    'failed-to-load-translation' => 'Failed to load translation',
+];
+

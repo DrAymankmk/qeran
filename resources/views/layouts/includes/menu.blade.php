@@ -241,6 +241,13 @@
 							{{__('admin.settings')}}
 						</a>
 					</li>
+					<li @if(Route::is('admin.translations.*')) class="mm-active" @endif>
+						<a href="{{route('admin.translations.index')}}"
+							key="t-translations">
+							<i class="bx bx-right-arrow-alt"></i>
+							{{__('translations.manage-translations')}}
+						</a>
+					</li>
 				</ul>
 			</li>
 			@endcan

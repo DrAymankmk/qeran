@@ -4,15 +4,16 @@
 <div class="row">
 	<div class="col-12">
 		<div class="page-title-box d-sm-flex align-items-center justify-content-between">
-			<h4 class="mb-sm-0 font-size-18">Create Link - {{ ucfirst($type) }}</h4>
+			<h4 class="mb-sm-0 font-size-18">{{ __('cms.create-link') }} - {{ ucfirst($type) }}</h4>
 			<div class="page-title-right">
 				<ol class="breadcrumb m-0">
 					<li class="breadcrumb-item"><a
-							href="{{route('admin.dashboard')}}">Dashboard</a>
+							href="{{route('admin.dashboard')}}">{{__('dashboard')}}</a>
 					</li>
-					<li class="breadcrumb-item"><a href="{{route('cms.pages.index')}}">CMS
-							Pages</a></li>
-					<li class="breadcrumb-item active">Create Link</li>
+					<li class="breadcrumb-item"><a
+							href="{{route('cms.pages.index')}}">{{ __('cms.pages') }}</a>
+					</li>
+					<li class="breadcrumb-item active">{{ __('cms.create-link') }}</li>
 				</ol>
 			</div>
 		</div>
@@ -29,7 +30,8 @@
 					<div class="row">
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Name <span
+								<label class="form-label">{{ __('cms.name') }}
+									<span
 										class="text-danger">*</span></label>
 								<input type="text" name="name"
 									class="form-control @error('name') is-invalid @enderror"
@@ -43,7 +45,7 @@
 						</div>
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Link Type
+								<label class="form-label">{{ __('cms.link-type') }}
 									<span
 										class="text-danger">*</span></label>
 								<select name="link_type" id="link_type"
@@ -51,10 +53,12 @@
 									required>
 									<option value="route"
 										{{old('link_type') == 'route' ? 'selected' : ''}}>
-										Route Name</option>
+										{{ __('cms.route-name') }}
+									</option>
 									<option value="custom"
 										{{old('link_type', 'custom') == 'custom' ? 'selected' : ''}}>
-										Custom URL</option>
+										{{ __('cms.custom-url') }}
+									</option>
 								</select>
 								@error('link_type')
 								<div class="invalid-feedback">
@@ -68,7 +72,7 @@
 						<div class="col-md-6" id="route_name_field"
 							style="display: {{old('link_type') == 'route' ? 'block' : 'none'}};">
 							<div class="mb-3">
-								<label class="form-label">Route Name
+								<label class="form-label">{{ __('cms.route-name') }}
 									<span
 										class="text-danger">*</span></label>
 								<select name="route_name"
@@ -96,7 +100,8 @@
 						<div class="col-md-6" id="link_field"
 							style="display: {{old('link_type', 'custom') == 'custom' ? 'block' : 'none'}};">
 							<div class="mb-3">
-								<label class="form-label">Link/URL <span
+								<label class="form-label">{{ __('cms.link-url') }}
+									<span
 										class="text-danger">*</span></label>
 								<input type="url" name="link" id="link"
 									class="form-control @error('link') is-invalid @enderror"
@@ -115,33 +120,33 @@
 					<div class="row">
 						<div class="col-md-4">
 							<div class="mb-3">
-								<label class="form-label">Icon</label>
+								<label
+									class="form-label">{{ __('cms.icon') }}</label>
 								<div class="input-group">
 									<input type="text" name="icon"
 										id="icon"
 										class="form-control icon-input"
 										value="{{old('icon')}}"
-										placeholder="Select an icon"
-										readonly>
+										placeholder="{{ __('cms.select-icon') }}">
 									<button type="button"
 										class="btn btn-outline-secondary icon-picker-btn"
 										data-target="icon">
 										<i
 											class="mdi mdi-palette"></i>
-										Choose Icon
+										{{ __('cms.choose-icon') }}
 									</button>
 								</div>
 								<div class="icon-preview mt-2"
 									id="icon-preview-icon"
 									data-name="icon"></div>
-								<small class="form-text text-muted">Click
-									the button to choose an
-									icon</small>
+								<small
+									class="form-text text-muted">{{ __('cms.click-to-choose-icon') }}</small>
 							</div>
 						</div>
 						<div class="col-md-4">
 							<div class="mb-3">
-								<label class="form-label">Type</label>
+								<label
+									class="form-label">{{ __('cms.type') }}</label>
 								<input type="text" name="type"
 									class="form-control"
 									value="{{old('type')}}"
@@ -153,15 +158,18 @@
 						</div>
 						<div class="col-md-4">
 							<div class="mb-3">
-								<label class="form-label">Target</label>
+								<label
+									class="form-label">{{ __('cms.target') }}</label>
 								<select name="target"
 									class="form-select">
 									<option value="_self"
 										{{old('target', '_self') == '_self' ? 'selected' : ''}}>
-										Same Window</option>
+										{{ __('cms.same-window') }}
+									</option>
 									<option value="_blank"
 										{{old('target') == '_blank' ? 'selected' : ''}}>
-										New Window</option>
+										{{ __('cms.new-window') }}
+									</option>
 								</select>
 							</div>
 						</div>
@@ -170,7 +178,8 @@
 					<div class="row">
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Order</label>
+								<label
+									class="form-label">{{ __('cms.order') }}</label>
 								<input type="number" name="order"
 									class="form-control"
 									value="{{old('order', 0)}}">
@@ -178,13 +187,16 @@
 						</div>
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Status</label>
+								<label
+									class="form-label">{{ __('cms.status') }}</label>
 								<select name="is_active"
 									class="form-select">
 									<option value="1"
 										{{old('is_active', true) ? 'selected' : ''}}>
-										Active</option>
-									<option value="0">Inactive
+										{{ __('cms.active') }}
+									</option>
+									<option value="0">
+										{{ __('cms.inactive') }}
 									</option>
 								</select>
 							</div>
@@ -192,10 +204,10 @@
 					</div>
 
 					<div class="mb-3">
-						<button type="submit" class="btn btn-primary">Create
-							Link</button>
+						<button type="submit"
+							class="btn btn-primary">{{ __('cms.create-link') }}</button>
 						<a href="{{route('cms.links.index', [$type, $id])}}"
-							class="btn btn-secondary">Cancel</a>
+							class="btn btn-secondary">{{ __('cms.cancel') }}</a>
 					</div>
 				</form>
 			</div>
@@ -263,7 +275,7 @@
 }
 
 [data-icon]:before {
-	display:none !important;
+	display: none !important;
 }
 </style>
 @endsection

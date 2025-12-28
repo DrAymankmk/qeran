@@ -1,0 +1,28 @@
+<?php
+return [
+    'manage-translations' => 'إدارة الترجمات',
+    'translations' => 'الترجمات',
+    'locale' => 'اللغة',
+    'file' => 'الملف',
+    'all-files' => 'جميع الملفات',
+    'key' => 'المفتاح',
+    'value' => 'القيمة',
+    'actions' => 'الإجراءات',
+    'edit' => 'تعديل',
+    'add-new-key' => 'إضافة مفتاح جديد',
+    'edit-translation' => 'تعديل الترجمة',
+    'update' => 'تحديث',
+    'save' => 'حفظ',
+    'cancel' => 'إلغاء',
+    'keys' => 'مفاتيح',
+    'no-translations-found' => 'لا توجد ترجمات موجودة',
+    'key-path' => 'مسار المفتاح',
+    'key-hint' => 'استخدم النقطة (.) للفئات المتداخلة، مثال: category.name أو nested.key.path',
+    'saving' => 'جاري الحفظ',
+    'updating' => 'جاري التحديث',
+    'translation-key-added-successfully' => 'تم إضافة مفتاح الترجمة بنجاح',
+    'translation-updated-successfully' => 'تم تحديث الترجمة بنجاح',
+    'an-error-occurred' => 'حدث خطأ',
+    'failed-to-load-translation' => 'فشل تحميل الترجمة',
+];
+

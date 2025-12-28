@@ -4,21 +4,22 @@
 <div class="row">
 	<div class="col-12">
 		<div class="page-title-box d-sm-flex align-items-center justify-content-between">
-			<h4 class="mb-sm-0 font-size-18">Create Item</h4>
+			<h4 class="mb-sm-0 font-size-18">{{ __('cms.create-item') }}</h4>
 			<div class="page-title-right">
 				<ol class="breadcrumb m-0">
 					<li class="breadcrumb-item"><a
-							href="{{route('admin.dashboard')}}">Dashboard</a>
-					</li>
-					<li class="breadcrumb-item"><a href="{{route('cms.pages.index')}}">CMS
-							Pages</a></li>
-					<li class="breadcrumb-item"><a
-							href="{{route('cms.sections.index', $page)}}">Sections</a>
+							href="{{route('admin.dashboard')}}">{{ __('admin.dashboard') }}</a>
 					</li>
 					<li class="breadcrumb-item"><a
-							href="{{route('cms.items.index', [$page, $section])}}">Items</a>
+							href="{{route('cms.pages.index')}}">{{ __('cms.cms-pages') }}</a>
 					</li>
-					<li class="breadcrumb-item active">Create</li>
+					<li class="breadcrumb-item"><a
+							href="{{route('cms.sections.index', $page)}}">{{ __('cms.sections') }}</a>
+					</li>
+					<li class="breadcrumb-item"><a
+							href="{{route('cms.items.index', [$page, $section])}}">{{ __('cms.items') }}</a>
+					</li>
+					<li class="breadcrumb-item active">{{ __('cms.create-item') }}</li>
 				</ol>
 			</div>
 		</div>
@@ -36,7 +37,8 @@
 					<div class="row">
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Type <span
+								<label class="form-label">{{ __('cms.type') }}
+									<span
 										class="text-danger">*</span></label>
 								<input type="text" name="type"
 									class="form-control @error('type') is-invalid @enderror"
@@ -50,7 +52,8 @@
 						</div>
 						<div class="col-md-3">
 							<div class="mb-3">
-								<label class="form-label">Order</label>
+								<label
+									class="form-label">{{ __('cms.order') }}</label>
 								<input type="number" name="order"
 									class="form-control"
 									value="{{old('order', 0)}}">
@@ -58,13 +61,16 @@
 						</div>
 						<div class="col-md-3">
 							<div class="mb-3">
-								<label class="form-label">Status</label>
+								<label
+									class="form-label">{{ __('cms.status') }}</label>
 								<select name="is_active"
 									class="form-select">
 									<option value="1"
 										{{old('is_active', true) ? 'selected' : ''}}>
-										Active</option>
-									<option value="0">Inactive
+										{{ __('cms.active') }}
+									</option>
+									<option value="0">
+										{{ __('cms.inactive') }}
 									</option>
 								</select>
 							</div>
@@ -72,7 +78,7 @@
 					</div>
 
 					<hr>
-					<h5 class="mb-3">Content</h5>
+					<h5 class="mb-3">{{ __('cms.content') }}</h5>
 
 					<!-- Language Tabs -->
 					<ul class="nav nav-tabs" role="tablist">
@@ -83,7 +89,7 @@
 								type="button" role="tab"
 								aria-controls="en-content"
 								aria-selected="true">
-								English
+								{{ __('cms.english') }}
 							</button>
 						</li>
 						<li class="nav-item" role="presentation">
@@ -93,7 +99,7 @@
 								type="button" role="tab"
 								aria-controls="ar-content"
 								aria-selected="false">
-								Arabic
+								{{ __('cms.arabic') }}
 							</button>
 						</li>
 					</ul>
@@ -103,7 +109,7 @@
 						<div class="tab-pane fade show active" id="en-content"
 							role="tabpanel" aria-labelledby="en-tab">
 							<div class="mb-3">
-								<label class="form-label">Title (EN)
+								<label class="form-label">{{ __('cms.title-en') }}
 									<span
 										class="text-danger">*</span></label>
 								<input type="text" name="en[title]"
@@ -116,21 +122,21 @@
 								@enderror
 							</div>
 							<div class="mb-3">
-								<label class="form-label">Sub Title
-									(EN)</label>
+								<label
+									class="form-label">{{ __('cms.subtitle-en') }}</label>
 								<input type="text" name="en[sub_title]"
 									class="form-control"
 									value="{{old('en.sub_title')}}">
 							</div>
 							<div class="mb-3">
-								<label class="form-label">Content
-									(EN)</label>
+								<label
+									class="form-label">{{ __('cms.content-en') }}</label>
 								<textarea name="en[content]"
 									class="form-control summernote"
 									rows="4">{{old('en.content')}}</textarea>
 							</div>
 							<div class="mb-3">
-								<label class="form-label">Icon
+								<label class="form-label">{{ __('cms.icon') }}
 									(EN)</label>
 								<input type="text" name="en[icon]"
 									class="form-control"
@@ -147,7 +153,7 @@
 						<div class="tab-pane fade" id="ar-content" role="tabpanel"
 							aria-labelledby="ar-tab">
 							<div class="mb-3">
-								<label class="form-label">Title (AR)
+								<label class="form-label">{{ __('cms.title-ar') }}
 									<span
 										class="text-danger">*</span></label>
 								<input type="text" name="ar[title]"
@@ -160,21 +166,21 @@
 								@enderror
 							</div>
 							<div class="mb-3">
-								<label class="form-label">Sub Title
-									(AR)</label>
+								<label class="form-label">{{ __('cms.subtitle-ar') }}
+								</label>
 								<input type="text" name="ar[sub_title]"
 									class="form-control"
 									value="{{old('ar.sub_title')}}">
 							</div>
 							<div class="mb-3">
-								<label class="form-label">Content
-									(AR)</label>
+								<label
+									class="form-label">{{ __('cms.content-ar') }}</label>
 								<textarea name="ar[content]"
 									class="form-control summernote"
 									rows="4">{{old('ar.content')}}</textarea>
 							</div>
 							<div class="mb-3">
-								<label class="form-label">Icon
+								<label class="form-label">{{ __('cms.icon') }}
 									(AR)</label>
 								<input type="text" name="ar[icon]"
 									class="form-control"
@@ -189,9 +195,10 @@
 					</div>
 
 					<hr>
-					<h5>Images</h5>
+					<h5>{{ __('cms.images') }}</h5>
 					<div class="mb-3">
-						<label class="form-label">Upload Images</label>
+						<label
+							class="form-label">{{ __('cms.upload-images') }}</label>
 						<input type="file" name="images[]" class="form-control"
 							multiple accept="image/*">
 						<small class="form-text text-muted">You can select multiple
@@ -200,10 +207,10 @@
 					</div>
 
 					<div class="mb-3 mt-3">
-						<button type="submit" class="btn btn-primary">Create
-							Item</button>
+						<button type="submit"
+							class="btn btn-primary">{{ __('cms.create-item') }}</button>
 						<a href="{{route('cms.items.index', [$page, $section])}}"
-							class="btn btn-secondary">Cancel</a>
+							class="btn btn-secondary">{{ __('admin.cancel') }}</a>
 					</div>
 				</form>
 			</div>

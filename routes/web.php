@@ -345,6 +345,15 @@ Route::group(['prefix' => 'admin', 'middleware' => 'set.admin.locale'], function
                     ->name('links.reorder')
                     ->where('type', 'page|section|item');
             });
+
+        // Translation Management Routes
+        Route::group(['prefix' => 'translations', 'as' => 'admin.translations.'], function () {
+            Route::get('/', [\App\Http\Controllers\Admin\TranslationController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Admin\TranslationController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\TranslationController::class, 'store'])->name('store');
+            Route::get('/{locale}/{file}/{key}/edit', [\App\Http\Controllers\Admin\TranslationController::class, 'edit'])->name('edit');
+            Route::put('/{locale}/{file}/{key}', [\App\Http\Controllers\Admin\TranslationController::class, 'update'])->name('update');
+        });
     });
 });
 

@@ -219,9 +219,9 @@ class InvitationsController extends Controller
     public function guards(Invitation $invitation): View
     {
         try {
-            // Eager load guards relationship to prevent N+1 queries
+            // Get guards relationship - pivot data is automatically available
+            // No need to eager load 'pivot' as it's not a relationship
             $guards = $invitation->guards()
-                ->with('pivot')
                 ->paginate(config('app.pagination.per_page', 15));
 
             return view('pages.invitation.guards', compact('guards', 'invitation'));

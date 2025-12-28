@@ -737,4 +737,8 @@ return[
     'expire-date'=>'Expire Date',
     'discount-percentage'=>'Discount Percentage',
     'usage-limit'=>'Usage Limit'
+    'error-loading-audio' => 'Error loading audio',
+    'download-audio' => 'Download Audio',
+    'error-loading-video' => 'Error loading video',
+    'download-video' => 'Download Video',
 ];

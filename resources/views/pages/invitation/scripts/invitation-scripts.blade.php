@@ -342,10 +342,50 @@ window.showInvitationDetails = function(invitationId) {
 					'modal_design_video'
 				);
 			if (designVideoEl) {
-				designVideoEl.innerHTML = data
-					.design_video ?
-					`<video width="100%" controls><source src="${data.design_video}" type="video/mp4">Your browser does not support the video tag.</video>` :
-					'{{ __("admin.no-data-available") }}';
+				if (data.design_video) {
+					// Fix URL - remove double slashes and ensure proper format
+					let videoUrl = data.design_video.replace(/([^:]\/)\/+/g, "$1");
+					// If URL doesn't start with http, make it absolute
+					if (!videoUrl.startsWith('http')) {
+						videoUrl = videoUrl.startsWith('/') ? videoUrl : '/' + videoUrl;
+					}
+					
+					// Get file extension to determine MIME type
+					const fileExt = videoUrl.split('.').pop().toLowerCase();
+					let mimeType = 'video/mp4'; // default
+					if (fileExt === 'webm') {
+						mimeType = 'video/webm';
+					} else if (fileExt === 'ogg' || fileExt === 'ogv') {
+						mimeType = 'video/ogg';
+					} else if (fileExt === 'mp4' || fileExt === 'mpeg4') {
+						mimeType = 'video/mp4';
+					}
+					
+					// Create video element with multiple source types for better compatibility
+					designVideoEl.innerHTML = `
+						<video width="100%" controls preload="metadata" onerror="this.parentElement.innerHTML='<span class=\\'text-danger\\'>{{ __("admin.error-loading-video") }}</span>'">
+							<source src="${videoUrl}" type="${mimeType}">
+							<source src="${videoUrl}" type="video/mp4">
+							<source src="${videoUrl}" type="video/webm">
+							Your browser does not support the video tag.
+						</video>
+						<div class="mt-2">
+							<a href="${videoUrl}" target="_blank" class="btn btn-sm btn-outline-primary">
+								<i class="mdi mdi-download"></i> {{__("admin.download-video")}}
+							</a>
+						</div>
+					`;
+					
+					// Force video element to reload after being inserted into DOM
+					setTimeout(function() {
+						const video = designVideoEl.querySelector('video');
+						if (video) {
+							video.load();
+						}
+					}, 100);
+				} else {
+					designVideoEl.innerHTML = '{{ __("admin.no-data-available") }}';
+				}
 			}
 
 			const designAudioEl = document
@@ -353,10 +393,54 @@ window.showInvitationDetails = function(invitationId) {
 					'modal_design_audio'
 				);
 			if (designAudioEl) {
-				designAudioEl.innerHTML = data
-					.design_audio ?
-					`<audio controls style="width: 100%;"><source src="${data.design_audio}" type="audio/mpeg">Your browser does not support the audio element.</audio>` :
-					'{{ __("admin.no-data-available") }}';
+				if (data.design_audio) {
+					// Fix URL - remove double slashes and ensure proper format
+					let audioUrl = data.design_audio.replace(/([^:]\/)\/+/g, "$1");
+					// If URL doesn't start with http, make it absolute
+					if (!audioUrl.startsWith('http')) {
+						audioUrl = audioUrl.startsWith('/') ? audioUrl : '/' + audioUrl;
+					}
+					
+					// Get file extension to determine MIME type
+					const fileExt = audioUrl.split('.').pop().toLowerCase();
+					let mimeType = 'audio/mpeg'; // default
+					if (fileExt === 'ogg' || fileExt === 'oga') {
+						mimeType = 'audio/ogg';
+					} else if (fileExt === 'wav') {
+						mimeType = 'audio/wav';
+					} else if (fileExt === 'mp3' || fileExt === 'mpeg') {
+						mimeType = 'audio/mpeg';
+					} else if (fileExt === 'aac') {
+						mimeType = 'audio/aac';
+					} else if (fileExt === 'webm') {
+						mimeType = 'audio/webm';
+					}
+					
+					// Create audio element with multiple source types for better compatibility
+					designAudioEl.innerHTML = `
+						<audio controls preload="metadata" style="width: 100%;" onerror="this.parentElement.innerHTML='<span class=\\'text-danger\\'>{{ __("admin.error-loading-audio") }}</span>'">
+							<source src="${audioUrl}" type="${mimeType}">
+							<source src="${audioUrl}" type="audio/mpeg">
+							<source src="${audioUrl}" type="audio/ogg">
+							Your browser does not support the audio element.
+						</audio>
+						<div class="mt-2">
+							<a href="${audioUrl}" target="_blank" class="btn btn-sm btn-outline-primary">
+								<i class="mdi mdi-download"></i> {{__("admin.download-audio")}}
+							</a>
+						</div>
+					`;
+					
+					// Force audio element to reload after being inserted into DOM
+					setTimeout(function() {
+						const audio = designAudioEl.querySelector('audio');
+						if (audio) {
+							audio.load();
+						}
+					}, 100);
+				} else {
+					designAudioEl.innerHTML = '{{ __("admin.no-data-available") }}';
+				}
 			}
 		})
 		.catch(error => {

@@ -870,5 +870,9 @@ return[
     'search'=>'البحث',
     'show'=>'عرض',
     'entries'=>'مدخلات',
+    'error-loading-audio' => 'خطأ في تحميل الصوت',
+    'download-audio' => 'تحميل الصوت',
+    'error-loading-video' => 'خطأ في تحميل الفيديو',
+    'download-video' => 'تحميل الفيديو',
 
 ];

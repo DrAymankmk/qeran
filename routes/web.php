@@ -219,6 +219,7 @@ Route::group(['prefix' => 'admin', 'middleware' => 'set.admin.locale'], function
         Route::resource('media', MediaController::class)->parameters([
             'media' => 'medium'
         ]);
+        Route::get('media/proxy', [MediaController::class, 'proxy'])->name('media.proxy');
         Route::resource('notifications', NotificationsController::class);
         Route::get('notifications/export/pdf', [NotificationsController::class, 'notificationsExportPdf'])->name('notifications.export.pdf');
         Route::get('notifications/{id}/details', [NotificationsController::class, 'getDetails'])->name('notifications.details');

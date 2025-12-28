@@ -425,29 +425,37 @@ window.showInvitationDetails = function(invitationId) {
 						mimeType = 'audio/webm';
 					}
 					
-					// Create audio element with error handling
+					// Check if URL is from different domain (CORS issue)
+					const currentDomain = window.location.hostname;
+					const audioDomain = new URL(audioUrl).hostname;
+					const isCrossOrigin = currentDomain !== audioDomain;
+					
+					// Use proxy endpoint if cross-origin to avoid CORS issues
+					let finalAudioUrl = audioUrl;
+					if (isCrossOrigin) {
+						// Encode the URL to pass as parameter
+						finalAudioUrl = '{{ route("media.proxy") }}?url=' + encodeURIComponent(audioUrl);
+					}
+					
+					// Create audio element without crossorigin to avoid CORS issues
 					const audioHtml = `
 						<audio 
 							controls 
 							preload="metadata" 
 							style="width: 100%;" 
-							crossorigin="anonymous"
-							onerror="handleAudioError(this, '${audioUrl}')"
+							onerror="handleAudioError(this, '${finalAudioUrl}')"
 							onloadstart="console.log('Audio loading started')"
 							oncanplay="console.log('Audio can play')"
 							oncanplaythrough="console.log('Audio can play through')">
-							<source src="${audioUrl}" type="${mimeType}">
-							<source src="${audioUrl}" type="audio/mpeg">
-							<source src="${audioUrl}" type="audio/ogg">
+							<source src="${finalAudioUrl}" type="${mimeType}">
+							<source src="${finalAudioUrl}" type="audio/mpeg">
+							<source src="${finalAudioUrl}" type="audio/ogg">
 							Your browser does not support the audio element.
 						</audio>
 						<div class="mt-2">
 							<a href="${audioUrl}" target="_blank" class="btn btn-sm btn-outline-primary" download>
 								<i class="mdi mdi-download"></i> {{__("admin.download-audio")}}
 							</a>
-							<button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="testAudioUrl('${audioUrl}')">
-								<i class="mdi mdi-information"></i> {{__("admin.test-audio")}}
-							</button>
 						</div>
 						<div id="audio-error-message" class="mt-2 text-danger" style="display: none;"></div>
 					`;

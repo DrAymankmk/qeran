@@ -324,4 +324,50 @@ class MediaController extends Controller
         
         return redirect()->route('media.index')->with('success', 'Media deleted successfully');
     }
+
+    /**
+     * Proxy media files to avoid CORS issues
+     * Fetches the file from external URL and serves it with proper CORS headers
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function proxy(Request $request)
+    {
+        $request->validate([
+            'url' => 'required|url',
+        ]);
+
+        $url = $request->get('url');
+        
+        try {
+            // Fetch the file content using Laravel HTTP client
+            $response = \Illuminate\Support\Facades\Http::timeout(30)
+                ->withoutVerifying() // Only if needed for self-signed certificates
+                ->get($url);
+
+            if (!$response->successful()) {
+                throw new \Exception('Failed to fetch file: ' . $response->status());
+            }
+
+            $content = $response->body();
+            $contentType = $response->header('Content-Type') ?? 'application/octet-stream';
+
+            // Return the file with proper CORS headers
+            return response($content, 200)
+                ->header('Content-Type', $contentType)
+                ->header('Access-Control-Allow-Origin', '*')
+                ->header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type')
+                ->header('Cache-Control', 'public, max-age=3600');
+        } catch (\Exception $e) {
+            \Log::error('Media proxy error', [
+                'url' => $url,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response('Error loading media file', 500)
+                ->header('Access-Control-Allow-Origin', '*');
+        }
+    }
 }

@@ -4,18 +4,19 @@
 <div class="row">
 	<div class="col-12">
 		<div class="page-title-box d-sm-flex align-items-center justify-content-between">
-			<h4 class="mb-sm-0 font-size-18">Edit Section - {{ $page->name }}</h4>
+			<h4 class="mb-sm-0 font-size-18">{{ __('cms.edit-section') }} - {{ $page->name }}</h4>
 			<div class="page-title-right">
 				<ol class="breadcrumb m-0">
 					<li class="breadcrumb-item"><a
-							href="{{route('admin.dashboard')}}">Dashboard</a>
+							href="{{route('admin.dashboard')}}">{{ __('admin.dashboard') }}</a>
 					</li>
-					<li class="breadcrumb-item"><a href="{{route('cms.pages.index')}}">CMS
-							Pages</a></li>
 					<li class="breadcrumb-item"><a
-							href="{{route('cms.sections.index', $page)}}">Sections</a>
+							href="{{route('cms.pages.index')}}">{{ __('cms.cms-pages') }}</a>
 					</li>
-					<li class="breadcrumb-item active">Edit</li>
+					<li class="breadcrumb-item"><a
+							href="{{route('cms.sections.index', $page)}}">{{ __('cms.sections') }}</a>
+					</li>
+					<li class="breadcrumb-item active">{{ __('cms.edit-section') }}</li>
 				</ol>
 			</div>
 		</div>
@@ -34,7 +35,8 @@
 					<div class="row">
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Internal Name
+								<label class="form-label">
+									{{ __('cms.internal-name') }}
 									<span
 										class="text-danger">*</span></label>
 								<input type="text" name="name"
@@ -45,13 +47,13 @@
 								<div class="invalid-feedback">
 									{{ $message }}</div>
 								@enderror
-								<small class="form-text text-muted">Visible
-									in admin only</small>
+
 							</div>
 						</div>
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Type <span
+								<label class="form-label">{{ __('cms.type') }}
+									<span
 										class="text-danger">*</span></label>
 								<input type="text" name="type"
 									class="form-control @error('type') is-invalid @enderror"
@@ -77,7 +79,8 @@
 					<div class="row">
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Order</label>
+								<label
+									class="form-label">{{ __('cms.order') }}</label>
 								<input type="number" name="order"
 									class="form-control"
 									value="{{old('order', $section->order)}}">
@@ -85,15 +88,18 @@
 						</div>
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Status</label>
+								<label
+									class="form-label">{{ __('cms.status') }}</label>
 								<select name="is_active"
 									class="form-select">
 									<option value="1"
 										{{old('is_active', $section->is_active) ? 'selected' : ''}}>
-										Active</option>
+										{{ __('cms.active') }}
+									</option>
 									<option value="0"
 										{{!old('is_active', $section->is_active) ? 'selected' : ''}}>
-										Inactive</option>
+										{{ __('cms.inactive') }}
+									</option>
 								</select>
 							</div>
 						</div>
@@ -102,8 +108,8 @@
 					<div class="row">
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Images
-									(optional)</label>
+								<label class="form-label">{{ __('cms.images') }}
+									({{__('cms.optional')}})</label>
 
 								@php
 								$existingImages =
@@ -151,8 +157,8 @@
 						</div>
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Video
-									(optional)</label>
+								<label class="form-label">{{ __('cms.video') }}
+									({{__('cms.optional')}})</label>
 								@if(!empty($section->settings['video']))
 								<div class="mb-2">
 									<video src="{{ $section->settings['video'] }}"
@@ -180,20 +186,10 @@
 					</div>
 
 					<hr>
-					<h5 class="mb-3">Content</h5>
+					<h5 class="mb-3">{{ __('cms.content') }}</h5>
 
 					<!-- Language Tabs -->
 					<ul class="nav nav-tabs" role="tablist">
-						<li class="nav-item" role="presentation">
-							<button class="nav-link active" id="en-tab"
-								data-bs-toggle="tab"
-								data-bs-target="#en-content"
-								type="button" role="tab"
-								aria-controls="en-content"
-								aria-selected="true">
-								English
-							</button>
-						</li>
 						<li class="nav-item" role="presentation">
 							<button class="nav-link" id="ar-tab"
 								data-bs-toggle="tab"
@@ -201,9 +197,20 @@
 								type="button" role="tab"
 								aria-controls="ar-content"
 								aria-selected="false">
-								Arabic
+								{{ __('cms.arabic') }}
 							</button>
 						</li>
+						<li class="nav-item" role="presentation">
+							<button class="nav-link active" id="en-tab"
+								data-bs-toggle="tab"
+								data-bs-target="#en-content"
+								type="button" role="tab"
+								aria-controls="en-content"
+								aria-selected="true">
+								{{ __('cms.english') }}
+							</button>
+						</li>
+
 					</ul>
 
 					<div class="tab-content mt-3" id="languageTabContent">
@@ -211,22 +218,22 @@
 						<div class="tab-pane fade show active" id="en-content"
 							role="tabpanel" aria-labelledby="en-tab">
 							<div class="mb-3">
-								<label class="form-label">Title
-									(EN)</label>
+								<label class="form-label">{{ __('cms.title-en') }}
+								</label>
 								<input type="text" name="en[title]"
 									class="form-control"
 									value="{{old('en.title', $section->translate('en')->title ?? '')}}">
 							</div>
 							<div class="mb-3">
-								<label class="form-label">Subtitle
-									(EN)</label>
+								<label class="form-label">{{ __('cms.subtitle-en') }}
+								</label>
 								<input type="text" name="en[subtitle]"
 									class="form-control"
 									value="{{old('en.subtitle', $section->translate('en')->subtitle ?? '')}}">
 							</div>
 							<div class="mb-3">
-								<label class="form-label">Description
-									(EN)</label>
+								<label class="form-label">{{ __('cms.description-en') }}
+								</label>
 								<textarea name="en[description]"
 									class="form-control summernote"
 									rows="4">{{old('en.description', $section->translate('en')->description ?? '')}}</textarea>
@@ -237,22 +244,22 @@
 						<div class="tab-pane fade" id="ar-content" role="tabpanel"
 							aria-labelledby="ar-tab">
 							<div class="mb-3">
-								<label class="form-label">Title
-									(AR)</label>
+								<label class="form-label">{{ __('cms.title-ar') }}
+								</label>
 								<input type="text" name="ar[title]"
 									class="form-control"
 									value="{{old('ar.title', $section->translate('ar')->title ?? '')}}">
 							</div>
 							<div class="mb-3">
-								<label class="form-label">Subtitle
-									(AR)</label>
+								<label class="form-label">{{ __('cms.subtitle-ar') }}
+								</label>
 								<input type="text" name="ar[subtitle]"
 									class="form-control"
 									value="{{old('ar.subtitle', $section->translate('ar')->subtitle ?? '')}}">
 							</div>
 							<div class="mb-3">
-								<label class="form-label">Description
-									(AR)</label>
+								<label class="form-label">{{ __('cms.description-ar') }}
+								</label>
 								<textarea name="ar[description]"
 									class="form-control summernote"
 									rows="4">{{old('ar.description', $section->translate('ar')->description ?? '')}}</textarea>
@@ -261,7 +268,7 @@
 					</div>
 
 					<hr>
-					<h5 class="mb-3">Items</h5>
+					<h5 class="mb-3">{{ __('cms.items') }}</h5>
 					<p class="text-muted">Manage items for this section. Each item can
 						have title, sub title, content, and icon.</p>
 
@@ -272,17 +279,17 @@
 								value="{{ $item->id }}">
 							<div
 								class="d-flex justify-content-between align-items-center mb-2">
-								<h6 class="mb-0">Item #{{ $index + 1 }}
+								<h6 class="mb-0">{{ __('cms.item') }}
+									#{{ $index + 1 }}
 								</h6>
 								<button type="button"
-									class="btn btn-sm btn-danger remove-item">Remove
-									Item</button>
+									class="btn btn-sm btn-danger remove-item">{{ __('cms.remove-item') }}</button>
 							</div>
 
 							<div class="row mb-2">
 								<div class="col-md-4">
 									<label
-										class="form-label">Type</label>
+										class="form-label">{{ __('cms.type') }}</label>
 									<input type="text"
 										name="items[{{ $index }}][type]"
 										class="form-control"
@@ -293,7 +300,7 @@
 								</div>
 								<div class="col-md-4">
 									<label
-										class="form-label">Order</label>
+										class="form-label">{{ __('cms.order') }}</label>
 									<input type="number"
 										name="items[{{ $index }}][order]"
 										class="form-control"
@@ -301,16 +308,16 @@
 								</div>
 								<div class="col-md-4">
 									<label
-										class="form-label">Status</label>
+										class="form-label">{{ __('cms.status') }}</label>
 									<select name="items[{{ $index }}][is_active]"
 										class="form-select">
 										<option value="1"
 											{{ $item->is_active ? 'selected' : '' }}>
-											Active
+											{{ __('cms.active') }}
 										</option>
 										<option value="0"
 											{{ !$item->is_active ? 'selected' : '' }}>
-											Inactive
+											{{ __('cms.inactive') }}
 										</option>
 									</select>
 								</div>
@@ -328,7 +335,7 @@
 										role="tab"
 										aria-controls="item-{{ $index }}-en-content"
 										aria-selected="true">
-										English
+										{{ __('cms.english') }}
 									</button>
 								</li>
 								<li class="nav-item"
@@ -341,7 +348,7 @@
 										role="tab"
 										aria-controls="item-{{ $index }}-ar-content"
 										aria-selected="false">
-										Arabic
+										{{ __('cms.arabic') }}
 									</button>
 								</li>
 							</ul>
@@ -374,7 +381,7 @@
 									</div>
 									<div class="mb-2">
 										<label
-											class="form-label">Icon
+											class="form-label">{{ __('cms.icon') }}
 											(EN)</label>
 										<div
 											class="input-group">
@@ -382,15 +389,13 @@
 												name="items[{{ $index }}][en][icon]"
 												class="form-control icon-input"
 												value="{{ $item->translate('en')->icon ?? '' }}"
-												placeholder="Select an icon"
-												readonly>
+												placeholder="Select an icon">
 											<button type="button"
 												class="btn btn-outline-secondary icon-picker-btn"
 												data-target="items[{{ $index }}][en][icon]">
 												<i
 													class="icon icon-settings"></i>
-												Choose
-												Icon
+												{{ __('cms.choose-icon') }}
 											</button>
 										</div>
 										<div class="icon-preview mt-2"
@@ -448,8 +453,7 @@
 												data-target="items[{{ $index }}][ar][icon]">
 												<i
 													class="icon icon-settings"></i>
-												Choose
-												Icon
+												{{ __('cms.choose-icon') }}
 											</button>
 										</div>
 										<div class="icon-preview mt-2"
@@ -468,8 +472,8 @@
 
 							<!-- Item Image Upload -->
 							<div class="mb-2 mt-3">
-								<label class="form-label">Item
-									Images</label>
+								<label
+									class="form-label">{{ __('cms.item-images') }}</label>
 
 								@php
 								$itemImages = $item->getMedia('images');
@@ -479,8 +483,7 @@
 								<div class="mb-2"
 									id="existing-item-images-{{ $index }}">
 									<small
-										class="text-muted d-block mb-2">Existing
-										Images:</small>
+										class="text-muted d-block mb-2">{{ __('cms.existing-images') }}:</small>
 									@foreach($itemImages as $media)
 									<div class="d-inline-block me-2 mb-2 existing-item-image-item"
 										data-media-id="{{ $media->id }}">
@@ -522,10 +525,10 @@
 						id="add-item">Add New Item</button>
 
 					<div class="mb-3 mt-3">
-						<button type="submit" class="btn btn-primary">Update
-							Section</button>
+						<button type="submit"
+							class="btn btn-primary">{{ __('cms.update-section') }}</button>
 						<a href="{{route('cms.sections.index', $page)}}"
-							class="btn btn-secondary">Cancel</a>
+							class="btn btn-secondary">{{ __('cms.cancel') }}</a>
 					</div>
 				</form>
 			</div>

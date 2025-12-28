@@ -8,10 +8,8 @@
 				<div class="col-sm-10 col-sm-offset-1">
 					<div class="b-taglines__inner">
 						<h2 class="b-taglines__title">{{ $infoSection->title }}</h2>
-						<!-- <div class="b-taglines__text">We make
-							your events smart & impactful
-							by personalised event
-							management services.</div> -->
+						<div class="b-taglines__text">{{ $infoSection->subtitle }}
+						</div>
 					</div>
 				</div>
 			</div>

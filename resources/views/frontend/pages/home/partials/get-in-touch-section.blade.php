@@ -1,4 +1,4 @@
-<div class="container-fluid">
+<div class="section-default">
 	<div class="row">
 		<div class="col-md-12">
 			<section data-stellar-background-ratio="0.4"

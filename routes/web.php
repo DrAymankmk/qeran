@@ -154,7 +154,7 @@ Route::get('/privacy-policy', function () {
     return view('privacy_policy');
 });
 
-Route::group(['prefix' => 'admin'], function () {
+Route::group(['prefix' => 'admin', 'middleware' => 'set.admin.locale'], function () {
     Route::controller(AuthController::class)->group(function () {
         Route::get('/', 'loginForm')->name('admin.login.form');
         Route::post('/', 'login')->name('admin.login');

@@ -2,6 +2,23 @@
 $contactSection = $homePage->activeSections->where('name', 'contact')->first();
 @endphp
 @if($contactSection)
+<style>
+	/* Make input text white when entering data */
+	.section-form-contact .form-control {
+		color: #ffffff !important;
+	}
+	.section-form-contact .form-control::placeholder {
+		color: rgba(255, 255, 255, 0.7) !important;
+	}
+	.section-form-contact .form-control:focus {
+		color: #ffffff !important;
+		background-color: rgba(255, 255, 255, 0.1);
+		border-color: rgba(255, 255, 255, 0.3);
+	}
+	.section-form-contact textarea.form-control {
+		color: #ffffff !important;
+	}
+</style>
 <div class="block-table block-table-md">
 	<div class="block-table__cell col-md-6">
 		<section class="section-form-contact section-form-contact_color_white bg-primary">
@@ -34,7 +51,7 @@ $contactSection = $homePage->activeSections->where('name', 'contact')->first();
 					<div class="col-md-6">
 						<input id="user-name" type="text" name="name"
 							placeholder="{{ __('frontend.name') }}"
-							required="required" class="form-control @error('name') is-invalid @enderror" 
+							required="required" class="form-control @error('name') is-invalid @enderror"
 							value="{{ old('name') }}" />
 						@error('name')
 							<div class="invalid-feedback">{{ $message }}</div>
@@ -90,5 +107,94 @@ $contactSection = $homePage->activeSections->where('name', 'contact')->first();
 	@endif
 
 </div>
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+	$(document).ready(function() {
+		// Handle form submission
+		$('#contactForm').on('submit', function(e) {
+			e.preventDefault();
+
+			var form = $(this);
+			var formData = form.serialize();
+			var submitButton = form.find('button[type="submit"]');
+			var originalButtonText = submitButton.html();
+
+			// Disable submit button
+			submitButton.prop('disabled', true).html('{{__("frontend.sending")}}...');
+
+			$.ajax({
+				url: form.attr('action'),
+				type: 'POST',
+				data: formData,
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest'
+				},
+				success: function(response) {
+					if (response.success) {
+						// Show success message
+						Swal.fire({
+							icon: 'success',
+							title: '{{__("frontend.success")}}',
+							text: response.message || '{{__("frontend.contact-stored-success")}}',
+							confirmButtonText: '{{__("frontend.ok")}}',
+							confirmButtonColor: '#556ee6'
+						});
+
+						// Reset form
+						form[0].reset();
+					} else {
+						Swal.fire({
+							icon: 'error',
+							title: '{{__("frontend.error")}}',
+							text: response.message || '{{__("frontend.error-occurred")}}',
+							confirmButtonText: '{{__("frontend.ok")}}',
+							confirmButtonColor: '#f46a6a'
+						});
+					}
+				},
+				error: function(xhr) {
+					var errorMessage = '{{__("frontend.error-occurred")}}';
+
+					if (xhr.responseJSON && xhr.responseJSON.message) {
+						errorMessage = xhr.responseJSON.message;
+					} else if (xhr.responseJSON && xhr.responseJSON.errors) {
+						var errors = [];
+						$.each(xhr.responseJSON.errors, function(key, value) {
+							errors.push(value[0]);
+						});
+						errorMessage = errors.join('<br>');
+					}
+
+					Swal.fire({
+						icon: 'error',
+						title: '{{__("frontend.error")}}',
+						html: errorMessage,
+						confirmButtonText: '{{__("frontend.ok")}}',
+						confirmButtonColor: '#f46a6a'
+					});
+				},
+				complete: function() {
+					// Re-enable submit button
+					submitButton.prop('disabled', false).html(originalButtonText);
+				}
+			});
+		});
+
+		// Handle success message from session (page reload after form submission)
+		@if(session('success'))
+			var successMessage = @json(session('success'));
+			Swal.fire({
+				icon: 'success',
+				title: '{{__("frontend.success")}}',
+				text: successMessage,
+				confirmButtonText: '{{__("frontend.ok")}}',
+				confirmButtonColor: '#556ee6'
+			});
+		@endif
+	});
+</script>
+@endpush
 
 @endif

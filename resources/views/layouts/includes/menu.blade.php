@@ -30,33 +30,33 @@
 				<li class="{{Route::is('admin.dashboard') ? 'mm-active' : ''}}">
 					<a href="{{route('admin.dashboard')}}" class="waves-effect">
 						<i class="bx bx-home-circle"></i>
-						<span key="t-chat">{{__('admin.Dashboard')}}</span>
+						<span key="t-chat">{{__('admin.menu-dashboard')}}</span>
 					</a>
 				</li>
 				@endcan
-				<li class="menu-title">{{__('admin.content-management')}}</li>
-				@can('view-cms-pages')
+				<li class="menu-title">{{__('admin.menu-content-management')}}</li>
+				<!-- @can('view-cms-pages')
 				<li @if(Route::is('cms.*')) class="mm-active" @endif>
 					<a href="javascript: void(0);" class="has-arrow waves-effect">
 						<i class="bx bx-file"></i>
-						<span key="t-cms">CMS</span>
+						<span key="t-cms">{{__('admin.menu-cms')}}</span>
 					</a>
 					<ul class="sub-menu" aria-expanded="false">
 						<li @if(Route::is('cms.pages.*')) class="mm-active" @endif>
 							<a href="{{route('cms.pages.index')}}">
 								<i class="bx bx-right-arrow-alt"></i>
-								{{__('admin.pages')}}
+								{{__('admin.menu-pages')}}
 							</a>
 						</li>
 					</ul>
 				</li>
-				@endcan
+				@endcan -->
 				@can('view-categories')
 				<li @if(Route::is('category.index') || Route::is('category.create') ||
 					Route::is('category.edit')) class="mm-active" @endif>
 					<a href="{{route('category.index')}}" class="waves-effect">
 						<i class="bx bx-list-ul"></i>
-						<span key="t-chat">{{__('admin.categories')}}</span>
+						<span key="t-chat">{{__('admin.menu-categories')}}</span>
 					</a>
 				</li>
 				@endcan
@@ -67,7 +67,7 @@
 						class="waves-effect">
 						<i class="bx bx-file-find"></i>
 						<span
-							key="t-chat">{{__('admin.invitation-requests')}}</span>
+							key="t-chat">{{__('admin.menu-invitation-requests')}}</span>
 					</a>
 				</li>
 				@endcan
@@ -77,18 +77,18 @@
 					class="mm-active" @endif>
 					<a href="{{route('invitation.index')}}" class="waves-effect">
 						<i class="bx bx-file"></i>
-						<span key="t-chat">{{__('admin.invitations')}}</span>
+						<span key="t-chat">{{__('admin.menu-invitations')}}</span>
 					</a>
 				</li>
 				@endcan
 				@can('view-users')
-				<li class="menu-title">{{__('admin.user-management')}}</li>
+				<li class="menu-title">{{__('admin.menu-user-management')}}</li>
 
 				<li @if(Route::is('users.index') || Route::is('users.show') ||
 					Route::is('users.edit')) class="mm-active" @endif>
 					<a href="{{route('users.index')}}" class="waves-effect">
 						<i class="bx bx-user"></i>
-						<span key="t-chat">{{__('admin.users')}}</span>
+						<span key="t-chat">{{__('admin.menu-users')}}</span>
 					</a>
 				</li>
 				@endcan
@@ -98,7 +98,7 @@
 					@endif>
 					<a href="{{route('roles.index')}}" class="waves-effect">
 						<i class="bx bx-shield-quarter"></i>
-						<span key="t-chat">{{__('admin.roles')}}</span>
+						<span key="t-chat">{{__('admin.menu-roles')}}</span>
 					</a>
 				</li>
 				@endcan
@@ -108,7 +108,7 @@
 					class="mm-active" @endif>
 					<a href="{{route('admins.index')}}" class="waves-effect">
 						<i class="bx bx-user-circle"></i>
-						<span key="t-chat">{{__('admin.admins')}}</span>
+						<span key="t-chat">{{__('admin.menu-admins')}}</span>
 					</a>
 				</li>
 				@endcan
@@ -122,13 +122,13 @@
 					</a>
 				</li> -->
 				@endcan
-				<li class="menu-title">{{__('admin.business-management')}}</li>
+				<li class="menu-title">{{__('admin.menu-business-management')}}</li>
 				@can('view-packages')
 				<li @if(Route::is('package.index') || Route::is('package.create') ||
 					Route::is('package.edit')) class="mm-active" @endif>
 					<a href="{{route('package.index')}}" class="waves-effect">
 						<i class="bx bx-package"></i>
-						<span key="t-chat">{{__('admin.packages')}}</span>
+						<span key="t-chat">{{__('admin.menu-packages')}}</span>
 					</a>
 				</li>
 				@endcan
@@ -158,7 +158,7 @@
 					Route::is('contact.reply')) class="mm-active" @endif>
 					<a href="{{route('contact.index')}}" class="waves-effect">
 						<i class="bx bx-message-square-dots"></i>
-						<span key="t-chat">{{__('admin.contact-us')}}</span>
+						<span key="t-chat">{{__('admin.menu-contact-us')}}</span>
 					</a>
 				</li>
 				@endcan
@@ -173,7 +173,7 @@
 					Route::is('notifications.edit')) class="mm-active" @endif>
 					<a href="{{route('notifications.index')}}" class="waves-effect">
 						<i class="bx bx-bell"></i>
-						<span key="t-chat">{{__('admin.notifications')}}</span>
+						<span key="t-chat">{{__('admin.menu-notifications')}}</span>
 						@if($unreadNotificationsCount > 0)
 						<span
 							class="badge bg-danger rounded-pill ms-2">{{$unreadNotificationsCount}}</span>
@@ -230,7 +230,7 @@
 			<li>
 				<a href="javascript: void(0);" class="has-arrow waves-effect">
 					<i class="bx bx-cog"></i>
-					<span key="t-dashboards">{{__('admin.settings')}}</span>
+					<span key="t-dashboards">{{__('admin.menu-settings')}}</span>
 				</a>
 				<ul class="sub-menu" aria-expanded="false">
 					<li @if(Route::is('app-settings.index') ||

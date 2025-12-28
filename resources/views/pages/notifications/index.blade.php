@@ -179,7 +179,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="notificationDetailsModalLabel">
-					{{__('admin.notification-details')}}</h5>
+					{{__('admin.menu-notification-details')}}</h5>
 				<button type="button" class="btn-close" data-bs-dismiss="modal"
 					aria-label="Close"></button>
 			</div>

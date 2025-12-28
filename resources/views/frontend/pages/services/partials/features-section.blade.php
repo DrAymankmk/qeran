@@ -22,6 +22,19 @@ $servicesSection = $servicesPage->activeSections->where('name', 'services')->fir
 <section class="section-advantages">
 	<div class="container">
 
+		<div class="row">
+			<div class="col-xs-12">
+				<div class="ui-decor-1"><img
+						src="{{ asset('frontend/assets/media/general/ui-decor-1.png') }}"
+						alt="decor" class="center-block"></div>
+				<div class="text-center">
+					<h2 class="ui-title-block">{{ $servicesSection->title ?? '' }}</h2>
+					<div class="ui-subtitle-block">{{ $servicesSection->subtitle ?? '' }}
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<div class="row {{ app()->getLocale() == 'ar' ? 'row-rtl' : '' }}">
 			@foreach($servicesSection->activeItems as $item)
 

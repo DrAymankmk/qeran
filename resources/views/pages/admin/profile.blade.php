@@ -55,10 +55,7 @@
 					<div class="row">
 						<div class="col-md-8">
 							<div class="mb-3">
-								<label for="name"
-									class="form-label">{{__('admin.name')}}
-									<span
-										class="text-danger">*</span></label>
+								<label for="name" class="form-label"> {{__('admin.admin-name')}}<span class="text-danger">*</span></label>
 								<input type="text"
 									class="form-control @error('name') is-invalid @enderror"
 									id="name" name="name"
@@ -72,7 +69,7 @@
 
 							<div class="mb-3">
 								<label for="email"
-									class="form-label">{{__('admin.email')}}
+									class="form-label">{{__('admin.admin-email')}}
 									<span
 										class="text-danger">*</span></label>
 								<input type="email"
@@ -88,7 +85,7 @@
 
 							<div class="mb-3">
 								<label for="password"
-									class="form-label">{{__('admin.password')}}</label>
+									class="form-label">{{__('admin.admin-password')}}</label>
 								<input type="password"
 									class="form-control @error('password') is-invalid @enderror"
 									id="password" name="password">
@@ -127,7 +124,7 @@
 						<div class="col-md-4">
 							<div class="text-center mb-3">
 								<label
-									class="form-label d-block">{{__('admin.current-image')}}</label>
+									class="form-label d-block">{{__('admin.admin-current-image')}}</label>
 								<img id="imagePreview"
 									src="{{$admin->image()}}"
 									alt="{{__('admin.profile-image')}}"

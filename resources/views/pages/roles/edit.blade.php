@@ -47,7 +47,17 @@
 					</div>
 
 					<div class="mb-3">
-						<label class="form-label">{{__('admin.permissions')}}</label>
+						<div class="d-flex justify-content-between align-items-center mb-2">
+							<label class="form-label mb-0">{{__('admin.permissions')}}</label>
+							<div class="btn-group" role="group">
+								<button type="button" class="btn btn-sm btn-success" id="selectAllPermissions">
+									<i class="mdi mdi-check-all"></i> {{__('admin.select-all')}}
+								</button>
+								<button type="button" class="btn btn-sm btn-danger" id="unselectAllPermissions">
+									<i class="mdi mdi-close-box-multiple"></i> {{__('admin.unselect-all')}}
+								</button>
+							</div>
+						</div>
 						<div class="row">
 							@foreach($permissionGroups as $module => $modulePermissions)
 							<div class="col-md-6 mb-3">
@@ -58,7 +68,7 @@
 									<div class="card-body">
 										@foreach($modulePermissions as $permission)
 										<div class="form-check">
-											<input class="form-check-input" type="checkbox" name="permissions[]" value="{{$permission->id}}" id="permission_{{$permission->id}}" {{in_array($permission->id, $rolePermissions) ? 'checked' : ''}}>
+											<input class="form-check-input permission-checkbox" type="checkbox" name="permissions[]" value="{{$permission->id}}" id="permission_{{$permission->id}}" {{in_array($permission->id, $rolePermissions) ? 'checked' : ''}}>
 											<label class="form-check-label" for="permission_{{$permission->id}}">
 												{{__('admin.permission-' . $permission->name, [], app()->getLocale()) ?: ucfirst(str_replace('-', ' ', $permission->name))}}
 											</label>
@@ -81,5 +91,21 @@
 	</div>
 </div>
 <!-- end row -->
+@endsection
+
+@section('extra-js')
+<script>
+	$(document).ready(function() {
+		// Select All Permissions
+		$('#selectAllPermissions').on('click', function() {
+			$('.permission-checkbox').prop('checked', true);
+		});
+
+		// Unselect All Permissions
+		$('#unselectAllPermissions').on('click', function() {
+			$('.permission-checkbox').prop('checked', false);
+		});
+	});
+</script>
 @endsection
 

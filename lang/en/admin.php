@@ -499,7 +499,6 @@ return[
     'contact_reply_closing' => 'If you have any other inquiries, please do not hesitate to contact us.',
     'your_message' => 'Your Message',
     'our_reply' => 'Our Reply',
-    'subject' => 'Subject',
     'filter-by-date' => 'Filter by Date',
     'quick-filter' => 'Quick Filter',
     'apply-filter' => 'Apply Filter',
@@ -662,6 +661,8 @@ return[
     'module-app-settings'=>'App Settings',
     'module-roles'=>'Roles',
     'module-permissions'=>'Permissions',
+    'select-all'=>'Select All',
+    'unselect-all'=>'Unselect All',
     // Contact Us Conversation Status
     'conversation_status'=>'Conversation Status',
     'new'=>'New',

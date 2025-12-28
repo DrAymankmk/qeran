@@ -25,6 +25,18 @@ $aboutSection = $aboutPage->activeSections->where('name', 'about')->first();
 </div>
 <section class="section-default" style="margin-bottom: 80px;">
 	<div class="container">
+		<div class="row">
+			<div class="col-xs-12">
+				<div class="ui-decor-1"><img
+						src="{{ asset('frontend/assets/media/general/ui-decor-1.png') }}"
+						alt="decor" class="center-block"></div>
+				<div class="text-center">
+					<h2 class="ui-title-block">{{ $aboutSection->title ?? '' }}</h2>
+					<div class="ui-subtitle-block">{{ $aboutSection->subtitle ?? '' }}
+					</div>
+				</div>
+			</div>
+		</div>
 
 		<div class="row" style="display:flex">
 			@foreach($aboutSection->items as $item)

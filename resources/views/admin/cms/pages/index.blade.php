@@ -10,13 +10,13 @@
 <div class="row">
 	<div class="col-12">
 		<div class="page-title-box d-sm-flex align-items-center justify-content-between">
-			<h4 class="mb-sm-0 font-size-18">CMS Pages</h4>
+			<h4 class="mb-sm-0 font-size-18">{{__('cms.cms-pages')}}</h4>
 			<div class="page-title-right">
 				<ol class="breadcrumb m-0">
 					<li class="breadcrumb-item"><a
-							href="{{route('admin.dashboard')}}">Dashboard</a>
+							href="{{route('admin.dashboard')}}">{{__('admin.dashboard')}}</a>
 					</li>
-					<li class="breadcrumb-item active">CMS Pages</li>
+					<li class="breadcrumb-item active">{{__('cms.cms-pages')}}</li>
 				</ol>
 			</div>
 		</div>
@@ -31,7 +31,8 @@
 					<div class="col-12">
 						<a href="{{route('cms.pages.create')}}"
 							class="btn btn-primary btn-rounded waves-effect waves-light mb-2">
-							<i class="mdi mdi-plus me-1"></i> Add New Page
+							<i class="mdi mdi-plus me-1"></i>
+							{{__('cms.add-new-page')}}
 						</a>
 					</div>
 				</div>
@@ -48,14 +49,14 @@
 					<table class="table table-bordered table-striped">
 						<thead>
 							<tr>
-								<th>ID</th>
-								<th>Name</th>
-								<th>Slug</th>
-								<th>Title (EN)</th>
-								<th>Title (AR)</th>
-								<th>Order</th>
-								<th>Status</th>
-								<th>Actions</th>
+								<th>{{__('admin.id')}}</th>
+								<th>{{__('cms.name')}}</th>
+								<th>{{__('cms.slug')}}</th>
+								<th>{{__('cms.title-en')}}</th>
+								<th>{{__('cms.title-ar')}}</th>
+								<th>{{__('cms.order')}}</th>
+								<th>{{__('cms.status')}}</th>
+								<th>{{__('cms.actions')}}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -105,8 +106,9 @@
 							</tr>
 							@empty
 							<tr>
-								<td colspan="8" class="text-center">No
-									pages found</td>
+								<td colspan="8" class="text-center">
+									{{__('cms.no-pages-found')}}
+								</td>
 							</tr>
 							@endforelse
 						</tbody>

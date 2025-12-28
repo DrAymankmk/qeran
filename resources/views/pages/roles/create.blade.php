@@ -9,8 +9,12 @@
 
 			<div class="page-title-right">
 				<ol class="breadcrumb m-0">
-					<li class="breadcrumb-item"><a href="{{route('admin.dashboard')}}">{{__('admin.Dashboard')}}</a></li>
-					<li class="breadcrumb-item"><a href="{{route('roles.index')}}">{{__('admin.roles')}}</a></li>
+					<li class="breadcrumb-item"><a
+							href="{{route('admin.dashboard')}}">{{__('admin.Dashboard')}}</a>
+					</li>
+					<li class="breadcrumb-item"><a
+							href="{{route('roles.index')}}">{{__('admin.roles')}}</a>
+					</li>
 					<li class="breadcrumb-item active">{{__('admin.add-role')}}</li>
 				</ol>
 			</div>
@@ -24,13 +28,16 @@
 		<div class="card">
 			<div class="card-body">
 				@if ($errors->any())
-					@foreach ($errors->all() as $error)
-						<div class="alert alert-danger inverse alert-dismissible fade show" role="alert">
-							<i class="icon-thumb-down"></i>
-							<p>{{ $error }}</p>
-							<button class="close" type="button" data-dismiss="alert" aria-label="Close" data-original-title="" title=""><span aria-hidden="true">×</span></button>
-						</div>
-					@endforeach
+				@foreach ($errors->all() as $error)
+				<div class="alert alert-danger inverse alert-dismissible fade show"
+					role="alert">
+					<i class="icon-thumb-down"></i>
+					<p>{{ $error }}</p>
+					<button class="close" type="button" data-dismiss="alert"
+						aria-label="Close" data-original-title="" title=""><span
+							aria-hidden="true">×</span></button>
+				</div>
+				@endforeach
 				@endif
 
 				<form action="{{route('roles.store')}}" method="post">
@@ -39,26 +46,60 @@
 					<div class="row">
 						<div class="col-sm-12">
 							<div class="mb-3">
-								<label for="name" class="form-label">{{__('admin.name')}} <span class="text-danger">*</span></label>
-								<input type="text" required name="name" value="{{old('name')}}" class="form-control" id="name" placeholder="{{__('admin.name')}}">
+								<label for="name"
+									class="form-label">{{__('admin.name')}}
+									<span
+										class="text-danger">*</span></label>
+								<input type="text" required name="name"
+									value="{{old('name')}}"
+									class="form-control" id="name"
+									placeholder="{{__('admin.name')}}">
 							</div>
 						</div>
 					</div>
 
 					<div class="mb-3">
-						<label class="form-label">{{__('admin.permissions')}}</label>
+						<div
+							class="d-flex justify-content-between align-items-center mb-2">
+							<label
+								class="form-label mb-0">{{__('admin.permissions')}}</label>
+							<div class="btn-group" role="group">
+								<button type="button"
+									class="btn btn-sm btn-success"
+									id="selectAllPermissions">
+									<i
+										class="mdi mdi-check-all"></i>
+									{{__('admin.select-all')}}
+								</button>
+								<button type="button"
+									class="btn btn-sm btn-danger"
+									id="unselectAllPermissions">
+									<i
+										class="mdi mdi-close-box-multiple"></i>
+									{{__('admin.unselect-all')}}
+								</button>
+							</div>
+						</div>
 						<div class="row">
 							@foreach($permissionGroups as $module => $modulePermissions)
 							<div class="col-md-6 mb-3">
 								<div class="card">
 									<div class="card-header">
-										<h5 class="mb-0">{{__('admin.module-' . $module, [], app()->getLocale()) ?: ucfirst(str_replace('-', ' ', $module))}}</h5>
+										<h5 class="mb-0">
+											{{__('admin.module-' . $module, [], app()->getLocale()) ?: ucfirst(str_replace('-', ' ', $module))}}
+										</h5>
 									</div>
 									<div class="card-body">
 										@foreach($modulePermissions as $permission)
-										<div class="form-check">
-											<input class="form-check-input" type="checkbox" name="permissions[]" value="{{$permission->id}}" id="permission_{{$permission->id}}">
-											<label class="form-check-label" for="permission_{{$permission->id}}">
+										<div
+											class="form-check">
+											<input class="form-check-input permission-checkbox"
+												type="checkbox"
+												name="permissions[]"
+												value="{{$permission->id}}"
+												id="permission_{{$permission->id}}">
+											<label class="form-check-label"
+												for="permission_{{$permission->id}}">
 												{{__('admin.permission-' . $permission->name, [], app()->getLocale()) ?: ucfirst(str_replace('-', ' ', $permission->name))}}
 											</label>
 										</div>
@@ -71,8 +112,10 @@
 					</div>
 
 					<div class="d-flex flex-wrap gap-2">
-						<button type="submit" class="btn btn-primary waves-effect waves-light">{{__('admin.create')}}</button>
-						<a href="{{route('roles.index')}}" class="btn btn-secondary waves-effect waves-light">{{__('admin.cancel')}}</a>
+						<button type="submit"
+							class="btn btn-primary waves-effect waves-light">{{__('admin.create')}}</button>
+						<a href="{{route('roles.index')}}"
+							class="btn btn-secondary waves-effect waves-light">{{__('admin.cancel')}}</a>
 					</div>
 				</form>
 			</div>
@@ -82,3 +125,18 @@
 <!-- end row -->
 @endsection
 
+@section('extra-js')
+<script>
+$(document).ready(function() {
+	// Select All Permissions
+	$('#selectAllPermissions').on('click', function() {
+		$('.permission-checkbox').prop('checked', true);
+	});
+
+	// Unselect All Permissions
+	$('#unselectAllPermissions').on('click', function() {
+		$('.permission-checkbox').prop('checked', false);
+	});
+});
+</script>
+@endsection

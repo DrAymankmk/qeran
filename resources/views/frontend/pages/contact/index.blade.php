@@ -24,6 +24,19 @@ $contactSection = $contactPage->activeSections->where('name', 'contact')->first(
 <section class="section-contact">
 	<div class="container">
 
+		<div class="row" style="margin-bottom: 40px;">
+			<div class="col-xs-12">
+				<div class="ui-decor-1"><img
+						src="{{ asset('frontend/assets/media/general/ui-decor-1.png') }}"
+						alt="decor" class="center-block"></div>
+				<div class="text-center">
+					<h2 class="ui-title-block">{{ $contactSection->title ?? '' }}</h2>
+					<div class="ui-subtitle-block">{{ $contactSection->subtitle ?? '' }}
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<div class="row">
 			@php
 			$phoneSetting = \App\Models\Setting::where('key', 'phone')->first();

@@ -109,10 +109,10 @@ class ContactController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => __('frontend.contact_success_message', [], app()->getLocale())
+                'message' => __('frontend.contact-stored-success', [], app()->getLocale())
             ]);
         }
 
-        return back()->with('success', __('frontend.contact_success_message', [], app()->getLocale()));
+        return back()->with('success', __('frontend.contact-stored-success', [], app()->getLocale()));
     }
 }

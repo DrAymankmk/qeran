@@ -4,15 +4,16 @@
 <div class="row">
 	<div class="col-12">
 		<div class="page-title-box d-sm-flex align-items-center justify-content-between">
-			<h4 class="mb-sm-0 font-size-18">Edit CMS Page</h4>
+			<h4 class="mb-sm-0 font-size-18">{{__('cms.edit-cms-page')}}</h4>
 			<div class="page-title-right">
 				<ol class="breadcrumb m-0">
 					<li class="breadcrumb-item"><a
-							href="{{route('admin.dashboard')}}">Dashboard</a>
+							href="{{route('admin.dashboard')}}">{{__('admin.dashboard')}}</a>
 					</li>
-					<li class="breadcrumb-item"><a href="{{route('cms.pages.index')}}">CMS
-							Pages</a></li>
-					<li class="breadcrumb-item active">Edit</li>
+					<li class="breadcrumb-item"><a
+							href="{{route('cms.pages.index')}}">{{__('cms.cms-pages')}}</a>
+					</li>
+					<li class="breadcrumb-item active">{{__('cms.edit-cms-page')}}</li>
 				</ol>
 			</div>
 		</div>
@@ -30,7 +31,8 @@
 					<div class="row">
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Slug <span
+								<label class="form-label">{{__('cms.slug')}}
+									<span
 										class="text-danger">*</span></label>
 								<input type="text" name="slug"
 									class="form-control @error('slug') is-invalid @enderror"
@@ -44,7 +46,7 @@
 						</div>
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Internal Name
+								<label class="form-label">{{__('cms.internal-name')}}
 									<span
 										class="text-danger">*</span></label>
 								<input type="text" name="name"
@@ -62,7 +64,8 @@
 					<div class="row">
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Order</label>
+								<label
+									class="form-label">{{__('cms.order')}}</label>
 								<input type="number" name="order"
 									class="form-control"
 									value="{{old('order', $page->order)}}">
@@ -70,22 +73,25 @@
 						</div>
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Status</label>
+								<label
+									class="form-label">{{__('cms.status')}}</label>
 								<select name="is_active"
 									class="form-select">
 									<option value="1"
 										{{old('is_active', $page->is_active) ? 'selected' : ''}}>
-										Active</option>
+										{{__('cms.active')}}
+									</option>
 									<option value="0"
 										{{!old('is_active', $page->is_active) ? 'selected' : ''}}>
-										Inactive</option>
+										{{__('cms.inactive')}}
+									</option>
 								</select>
 							</div>
 						</div>
 					</div>
 
 					<hr>
-					<h5 class="mb-3">Content</h5>
+					<h5 class="mb-3">{{__('cms.content')}}</h5>
 
 					<!-- Language Tabs -->
 					<ul class="nav nav-tabs" role="tablist">
@@ -96,7 +102,7 @@
 								type="button" role="tab"
 								aria-controls="en-content"
 								aria-selected="true">
-								English
+								{{__('cms.english')}}
 							</button>
 						</li>
 						<li class="nav-item" role="presentation">
@@ -106,7 +112,7 @@
 								type="button" role="tab"
 								aria-controls="ar-content"
 								aria-selected="false">
-								Arabic
+								{{__('cms.arabic')}}
 							</button>
 						</li>
 					</ul>
@@ -116,7 +122,7 @@
 						<div class="tab-pane fade show active" id="en-content"
 							role="tabpanel" aria-labelledby="en-tab">
 							<div class="mb-3">
-								<label class="form-label">Title (EN)
+								<label class="form-label">{{__('cms.title-en')}}
 									<span
 										class="text-danger">*</span></label>
 								<input type="text" name="en[title]"
@@ -129,8 +135,8 @@
 								@enderror
 							</div>
 							<div class="mb-3">
-								<label class="form-label">Meta
-									Description (EN)</label>
+								<label class="form-label">{{__('cms.meta-description')}}
+									(EN)</label>
 								<textarea name="en[meta_description]"
 									class="form-control"
 									rows="2">{{old('en.meta_description', $page->translate('en')->meta_description ?? '')}}</textarea>
@@ -141,7 +147,7 @@
 						<div class="tab-pane fade" id="ar-content" role="tabpanel"
 							aria-labelledby="ar-tab">
 							<div class="mb-3">
-								<label class="form-label">Title (AR)
+								<label class="form-label">{{__('cms.title-ar')}}
 									<span
 										class="text-danger">*</span></label>
 								<input type="text" name="ar[title]"
@@ -154,8 +160,8 @@
 								@enderror
 							</div>
 							<div class="mb-3">
-								<label class="form-label">Meta
-									Description (AR)</label>
+								<label class="form-label">{{__('cms.meta-description')}}
+									(AR)</label>
 								<textarea name="ar[meta_description]"
 									class="form-control"
 									rows="2">{{old('ar.meta_description', $page->translate('ar')->meta_description ?? '')}}</textarea>
@@ -164,10 +170,11 @@
 					</div>
 
 					<div class="mb-3">
-						<button type="submit" class="btn btn-primary">Update
-							Page</button>
+						<button type="submit"
+							class="btn btn-primary">{{__('admin.update')}}
+						</button>
 						<a href="{{route('cms.pages.index')}}"
-							class="btn btn-secondary">Cancel</a>
+							class="btn btn-secondary">{{__('admin.cancel')}}</a>
 					</div>
 				</form>
 			</div>

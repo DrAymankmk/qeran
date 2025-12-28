@@ -47,8 +47,7 @@
 								data-bs-toggle="modal"
 								data-bs-target="#createSettingModal">
 								<i class="mdi mdi-plus-circle me-1"></i>
-								{{__('admin.add')}}
-								{{__('admin.setting')}}
+								{{__('admin.add-setting')}}
 							</button>
 						@endcan	
 						</div>
@@ -161,14 +160,31 @@ let editEditorInstance = null;
 
 // Global function to show appropriate input based on type in edit modal
 function showEditInputByType(type, value) {
-	// Hide and disable all inputs
-	$('.edit-value-input').hide().prop('disabled', true);
-	
-	// Remove TinyMCE if exists
+	// Remove TinyMCE if exists first, before hiding inputs
 	if (editEditorInstance) {
+		editEditorInstance.save(); // Save content before removing
 		tinymce.remove('#edit_value_editor');
 		editEditorInstance = null;
 	}
+	
+	// Also try to remove any TinyMCE instance that might exist
+	if (typeof tinymce !== 'undefined') {
+		const editor = tinymce.get('edit_value_editor');
+		if (editor) {
+			editor.save(); // Save content before removing
+			tinymce.remove('#edit_value_editor');
+		}
+	}
+	
+	// Hide and disable all inputs, and clear their values
+	$('.edit-value-input').each(function() {
+		$(this).hide().prop('disabled', true).val('');
+	});
+	
+	// Explicitly hide and clear the editor textarea
+	// Force hide with both hide() and css display none to ensure it's hidden
+	const $editorTextarea = $('#edit_value_editor');
+	$editorTextarea.hide().prop('disabled', true).val('').css('display', 'none');
 
 	// Show and enable appropriate input and set value
 	if (type === 'text') {
@@ -180,7 +196,8 @@ function showEditInputByType(type, value) {
 	} else if (type === 'textarea') {
 		$('#edit_value_textarea').show().prop('disabled', false).val(value || '');
 	} else if (type === 'editor') {
-		$('#edit_value_editor').show().prop('disabled', false);
+		// Clear the textarea first, then show it
+		$editorTextarea.val(value || '').show().prop('disabled', false).css('display', 'block');
 		// Initialize TinyMCE for editor
 		if (typeof tinymce !== 'undefined') {
 			tinymce.init({

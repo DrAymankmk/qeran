@@ -4,7 +4,7 @@
 			<div class="card-body">
 				<form method="GET" action="{{route('admin.dashboard')}}" id="filterForm">
 					<div class="row g-3 align-items-end">
-                        <div class="col-md-3">
+						<div class="col-md-3">
 							<label
 								class="form-label mb-0 fw-medium d-block">{{__('admin.quick-filter')}}:</label>
 							<div class="btn-group w-100" role="group">
@@ -46,8 +46,8 @@
 							<button type="submit"
 								class="btn btn-primary w-100 mt-4">{{__('admin.apply-filter')}}</button>
 						</div>
-						
-						
+
+
 					</div>
 				</form>
 			</div>

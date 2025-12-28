@@ -21,6 +21,12 @@ return [
     'all_designs' => 'All designs',
     'all_services' => 'All services',
     'contact_success_message' => 'Thank you for contacting us! We have received your message and will get back to you soon.',
+    'contact-stored-success' => 'Your contact message has been stored successfully. Our admin team will contact you within 24 hours.',
+    'success' => 'Success',
+    'error' => 'Error',
+    'ok' => 'OK',
+    'sending' => 'Sending',
+    'error-occurred' => 'An error occurred. Please try again.',
     'gallery'=>'Gallery',
     'gallery_subtitle'=>'Gallery containing all the designs we have designed',
     'our_services'=>'Our services',
@@ -34,4 +40,5 @@ return [
     'quick_links'=>'Quick links',
     'keep_in_touch'=>'Keep in touch',
     'visit_full_gallery'=>'Visit full gallery',
+    'video-not-supported'=>'Your browser does not support the video tag.',
 ];

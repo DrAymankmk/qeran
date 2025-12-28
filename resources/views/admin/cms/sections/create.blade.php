@@ -4,18 +4,19 @@
 <div class="row">
 	<div class="col-12">
 		<div class="page-title-box d-sm-flex align-items-center justify-content-between">
-			<h4 class="mb-sm-0 font-size-18">Create Section - {{ $page->name }}</h4>
+			<h4 class="mb-sm-0 font-size-18">{{ __('cms.create-section') }} - {{ $page->name }}</h4>
 			<div class="page-title-right">
 				<ol class="breadcrumb m-0">
 					<li class="breadcrumb-item"><a
-							href="{{route('admin.dashboard')}}">Dashboard</a>
+							href="{{route('admin.dashboard')}}">{{ __('admin.dashboard') }}</a>
 					</li>
-					<li class="breadcrumb-item"><a href="{{route('cms.pages.index')}}">CMS
-							Pages</a></li>
+					<li class="breadcrumb-item"><a href="{{route('cms.pages.index')}}">
+							{{ __('cms.cms-pages') }}
+						</a></li>
 					<li class="breadcrumb-item"><a
-							href="{{route('cms.sections.index', $page)}}">Sections</a>
+							href="{{route('cms.sections.index', $page)}}">{{ __('cms.sections') }}</a>
 					</li>
-					<li class="breadcrumb-item active">Create</li>
+					<li class="breadcrumb-item active">{{ __('cms.create-section') }}</li>
 				</ol>
 			</div>
 		</div>
@@ -33,7 +34,7 @@
 					<div class="row">
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Internal Name
+								<label class="form-label">{{ __('cms.internal-name') }}
 									<span
 										class="text-danger">*</span></label>
 								<input type="text" name="name"
@@ -44,13 +45,13 @@
 								<div class="invalid-feedback">
 									{{ $message }}</div>
 								@enderror
-								<small class="form-text text-muted">Visible
-									in admin only</small>
+
 							</div>
 						</div>
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Type <span
+								<label class="form-label">{{ __('cms.type') }}
+									<span
 										class="text-danger">*</span></label>
 								<input type="text" name="type"
 									class="form-control @error('type') is-invalid @enderror"
@@ -81,7 +82,8 @@
 					<div class="row">
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Order</label>
+								<label
+									class="form-label">{{ __('cms.order') }}</label>
 								<input type="number" name="order"
 									class="form-control"
 									value="{{old('order', 0)}}">
@@ -89,15 +91,18 @@
 						</div>
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Status</label>
+								<label
+									class="form-label">{{ __('cms.status') }}</label>
 								<select name="is_active"
 									class="form-select">
 									<option value="1"
 										{{old('is_active', true) ? 'selected' : ''}}>
-										Active</option>
+										{{ __('cms.active') }}
+									</option>
 									<option value="0"
 										{{!old('is_active', true) ? 'selected' : ''}}>
-										Inactive</option>
+										{{ __('cms.inactive') }}
+									</option>
 								</select>
 							</div>
 						</div>
@@ -106,8 +111,8 @@
 					<div class="row">
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Images
-									(optional)</label>
+								<label class="form-label">{{ __('cms.images') }}
+									({{__('cms.optional')}})</label>
 								<input type="file" name="image_files[]"
 									class="form-control"
 									accept="image/*" multiple>
@@ -122,8 +127,8 @@
 						</div>
 						<div class="col-md-6">
 							<div class="mb-3">
-								<label class="form-label">Video
-									(optional)</label>
+								<label class="form-label">{{ __('cms.video') }}
+									({{__('cms.optional')}})</label>
 								<input type="file" name="video_file"
 									class="form-control"
 									accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska">
@@ -134,7 +139,8 @@
 								<input type="text" name="video"
 									class="form-control mt-2"
 									value="{{old('video')}}"
-									placeholder="Or paste video URL (YouTube/Vimeo)">
+									placeholder="Or paste video
+									URL (YouTube/Vimeo)">
 								<div class="mt-2"
 									id="video-preview-wrapper"
 									style="display:none;">
@@ -149,20 +155,11 @@
 					</div>
 
 					<hr>
-					<h5 class="mb-3">Content</h5>
+					<h5 class="mb-3">{{ __('cms.content') }}</h5>
 
 					<!-- Language Tabs -->
 					<ul class="nav nav-tabs" role="tablist">
-						<li class="nav-item" role="presentation">
-							<button class="nav-link active" id="en-tab"
-								data-bs-toggle="tab"
-								data-bs-target="#en-content"
-								type="button" role="tab"
-								aria-controls="en-content"
-								aria-selected="true">
-								English
-							</button>
-						</li>
+
 						<li class="nav-item" role="presentation">
 							<button class="nav-link" id="ar-tab"
 								data-bs-toggle="tab"
@@ -170,9 +167,21 @@
 								type="button" role="tab"
 								aria-controls="ar-content"
 								aria-selected="false">
-								Arabic
+								{{ __('cms.arabic') }}
 							</button>
 						</li>
+
+						<li class="nav-item" role="presentation">
+							<button class="nav-link active" id="en-tab"
+								data-bs-toggle="tab"
+								data-bs-target="#en-content"
+								type="button" role="tab"
+								aria-controls="en-content"
+								aria-selected="true">
+								{{ __('cms.english') }}
+							</button>
+						</li>
+
 					</ul>
 
 					<div class="tab-content mt-3" id="languageTabContent">
@@ -180,22 +189,22 @@
 						<div class="tab-pane fade show active" id="en-content"
 							role="tabpanel" aria-labelledby="en-tab">
 							<div class="mb-3">
-								<label class="form-label">Title
-									(EN)</label>
+								<label
+									class="form-label">{{ __('cms.title-en') }}</label>
 								<input type="text" name="en[title]"
 									class="form-control"
 									value="{{old('en.title')}}">
 							</div>
 							<div class="mb-3">
-								<label class="form-label">Subtitle
-									(EN)</label>
+								<label
+									class="form-label">{{ __('cms.subtitle-en') }}</label>
 								<input type="text" name="en[subtitle]"
 									class="form-control"
 									value="{{old('en.subtitle')}}">
 							</div>
 							<div class="mb-3">
-								<label class="form-label">Description
-									(EN)</label>
+								<label class="form-label">{{ __('cms.description-en') }}
+								</label>
 								<textarea name="en[description]"
 									class="form-control summernote"
 									rows="4">{{old('en.description')}}</textarea>
@@ -206,22 +215,22 @@
 						<div class="tab-pane fade" id="ar-content" role="tabpanel"
 							aria-labelledby="ar-tab">
 							<div class="mb-3">
-								<label class="form-label">Title
-									(AR)</label>
+								<label class="form-label">{{ __('cms.title-ar') }}
+								</label>
 								<input type="text" name="ar[title]"
 									class="form-control"
 									value="{{old('ar.title')}}">
 							</div>
 							<div class="mb-3">
-								<label class="form-label">Subtitle
-									(AR)</label>
+								<label class="form-label">{{ __('cms.subtitle-ar') }}
+								</label>
 								<input type="text" name="ar[subtitle]"
 									class="form-control"
 									value="{{old('ar.subtitle')}}">
 							</div>
 							<div class="mb-3">
-								<label class="form-label">Description
-									(AR)</label>
+								<label class="form-label">{{ __('cms.description-ar') }}
+								</label>
 								<textarea name="ar[description]"
 									class="form-control summernote"
 									rows="4">{{old('ar.description')}}</textarea>
@@ -230,7 +239,7 @@
 					</div>
 
 					<hr>
-					<h5 class="mb-3">Items (Optional)</h5>
+					<h5 class="mb-3">{{ __('cms.items') }} ({{__('cms.optional')}})</h5>
 					<p class="text-muted">Add items to this section. Each item can have
 						title, subtitle, and description.</p>
 
@@ -238,16 +247,16 @@
 						<div class="item-row mb-3 p-3 border rounded">
 							<div
 								class="d-flex justify-content-between align-items-center mb-2">
-								<h6 class="mb-0">Item #1</h6>
+								<h6 class="mb-0">{{ __('cms.item') }} #1
+								</h6>
 								<button type="button"
-									class="btn btn-sm btn-danger remove-item">Remove
-									Item</button>
+									class="btn btn-sm btn-danger remove-item">{{ __('cms.remove-item') }}</button>
 							</div>
 
 							<div class="row mb-2">
 								<div class="col-md-4">
 									<label
-										class="form-label">Type</label>
+										class="form-label">{{ __('cms.type') }}</label>
 									<input type="text"
 										name="items[0][type]"
 										class="form-control"
@@ -256,7 +265,7 @@
 								</div>
 								<div class="col-md-4">
 									<label
-										class="form-label">Order</label>
+										class="form-label">{{ __('cms.order') }}</label>
 									<input type="number"
 										name="items[0][order]"
 										class="form-control"
@@ -264,15 +273,15 @@
 								</div>
 								<div class="col-md-4">
 									<label
-										class="form-label">Status</label>
+										class="form-label">{{ __('cms.status') }}</label>
 									<select name="items[0][is_active]"
 										class="form-select">
 										<option value="1"
 											selected>
-											Active
+											{{ __('cms.active') }}
 										</option>
 										<option value="0">
-											Inactive
+											{{ __('cms.inactive') }}
 										</option>
 									</select>
 								</div>
@@ -280,19 +289,6 @@
 
 							<!-- Item Language Tabs -->
 							<ul class="nav nav-tabs mt-2" role="tablist">
-								<li class="nav-item"
-									role="presentation">
-									<button class="nav-link active"
-										id="item-0-en-tab"
-										data-bs-toggle="tab"
-										data-bs-target="#item-0-en-content"
-										type="button"
-										role="tab"
-										aria-controls="item-0-en-content"
-										aria-selected="true">
-										English
-									</button>
-								</li>
 								<li class="nav-item"
 									role="presentation">
 									<button class="nav-link"
@@ -303,9 +299,23 @@
 										role="tab"
 										aria-controls="item-0-ar-content"
 										aria-selected="false">
-										Arabic
+										{{ __('cms.arabic') }}
 									</button>
 								</li>
+								<li class="nav-item"
+									role="presentation">
+									<button class="nav-link active"
+										id="item-0-en-tab"
+										data-bs-toggle="tab"
+										data-bs-target="#item-0-en-content"
+										type="button"
+										role="tab"
+										aria-controls="item-0-en-content"
+										aria-selected="true">
+										{{ __('cms.english') }}
+									</button>
+								</li>
+
 							</ul>
 
 							<div class="tab-content mt-2">
@@ -318,23 +328,23 @@
 										<input type="text"
 											name="items[0][en][title]"
 											class="form-control mb-2"
-											placeholder="Title (EN)">
+											placeholder="{{ __('cms.title-en') }}">
 									</div>
 									<div class="mb-2">
 										<input type="text"
 											name="items[0][en][sub_title]"
 											class="form-control mb-2"
-											placeholder="Sub Title (EN)">
+											placeholder="{{ __('cms.subtitle-en') }}">
 									</div>
 									<div class="mb-2">
 										<textarea name="items[0][en][content]"
 											class="form-control summernote"
 											rows="2"
-											placeholder="Content (EN)"></textarea>
+											placeholder="{{ __('cms.description-en') }}"></textarea>
 									</div>
 									<div class="mb-2">
 										<label
-											class="form-label">Icon
+											class="form-label">{{ __('cms.icon') }}
 											(EN)</label>
 										<div
 											class="input-group">
@@ -348,8 +358,7 @@
 												data-target="items[0][en][icon]">
 												<i
 													class="icon icon-settings"></i>
-												Choose
-												Icon
+												{{ __('cms.choose-icon') }}
 											</button>
 										</div>
 										<div class="icon-preview mt-2"
@@ -368,24 +377,24 @@
 										<input type="text"
 											name="items[0][ar][title]"
 											class="form-control mb-2"
-											placeholder="Title (AR)">
+											placeholder="{{ __('cms.title-ar') }}">
 									</div>
 									<div class="mb-2">
 										<input type="text"
 											name="items[0][ar][sub_title]"
 											class="form-control mb-2"
-											placeholder="Sub Title (AR)">
+											placeholder="{{ __('cms.subtitle-ar') }}">
 									</div>
 									<div class="mb-2">
 										<textarea name="items[0][ar][content]"
 											class="form-control summernote"
 											rows="2"
-											placeholder="Content (AR)"></textarea>
+											placeholder="{{ __('cms.description-ar') }}"></textarea>
 									</div>
 									<div class="mb-2">
 										<label
-											class="form-label">Icon
-											(AR)</label>
+											class="form-label">{{ __('cms.icon') }}
+										</label>
 										<div
 											class="input-group">
 											<input type="text"
@@ -398,8 +407,7 @@
 												data-target="items[0][ar][icon]">
 												<i
 													class="icon icon-settings"></i>
-												Choose
-												Icon
+												{{ __('cms.choose-icon') }}
 											</button>
 										</div>
 										<div class="icon-preview mt-2"
@@ -412,8 +420,9 @@
 
 							<!-- Item Image Upload -->
 							<div class="mb-2 mt-3">
-								<label class="form-label">Item Images
-									(optional)</label>
+								<label class="form-label">
+									{{ __('cms.item-images') }}
+									({{__('cms.optional')}})</label>
 								<input type="file"
 									name="items[0][images][]"
 									class="form-control"
@@ -430,13 +439,13 @@
 					</div>
 
 					<button type="button" class="btn btn-sm btn-secondary"
-						id="add-item">Add Item</button>
+						id="add-item">{{ __('cms.add-item') }}</button>
 
 					<div class="mb-3 mt-3">
-						<button type="submit" class="btn btn-primary">Create
-							Section</button>
+						<button type="submit"
+							class="btn btn-primary">{{ __('cms.create-section') }}</button>
 						<a href="{{route('cms.sections.index', $page)}}"
-							class="btn btn-secondary">Cancel</a>
+							class="btn btn-secondary">{{ __('admin.cancel') }}</a>
 					</div>
 				</form>
 			</div>

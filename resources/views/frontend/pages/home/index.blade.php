@@ -75,7 +75,7 @@
 }
 
 .testimonials-modern {
-	padding: 60px 20px 100px 20px;
+	/* padding: 60px 20px 100px 20px; */
 	position: relative;
 }
 
@@ -735,10 +735,11 @@ document.addEventListener("DOMContentLoaded", function() {
 			} else {
 				row.style.opacity = "0";
 				row.style.transform =
-				"translateX(30px)";
+					"translateX(30px)";
 				setTimeout(() => {
 					if (i !==
-						index) {
+						index
+						) {
 						row.style.display =
 							"none";
 					}
@@ -819,7 +820,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		const container = document.querySelector(
 			".testimonials-modern__container");
 		if (container && container.contains(document
-			.activeElement) ||
+				.activeElement) ||
 			document.activeElement === document.body) {
 			if (e.key === "ArrowLeft") {
 				prevTestimonial();

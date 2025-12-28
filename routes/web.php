@@ -62,6 +62,41 @@ use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 // }
 // });
 
+// Root route - redirect to localized home page
+Route::get('/', function () {
+    // Check session for locale preference (set by LaravelLocalization middleware)
+    $locale = session('locale');
+    
+    // If not in session, check cookie
+    if (!$locale) {
+        $locale = request()->cookie('locale');
+    }
+    
+    // If still not found, try LaravelLocalization detection (browser preference)
+    if (!$locale) {
+        try {
+            // This will detect from Accept-Language header if available
+            $locale = LaravelLocalization::getLocaleFromRequest();
+        } catch (\Exception $e) {
+            // Fallback to config default
+            $locale = null;
+        }
+    }
+    
+    // If still no locale found, use default from config
+    if (!$locale) {
+        $locale = config('app.locale', 'ar');
+    }
+    
+    // Validate locale is supported
+    $supportedLocales = array_keys(LaravelLocalization::getSupportedLocales());
+    if (!in_array($locale, $supportedLocales)) {
+        $locale = config('app.locale', 'ar');
+    }
+    
+    return redirect()->to("/{$locale}/home");
+})->name('root');
+
 // Handle direct locale access (e.g., /en or /ar) - must be BEFORE localized group
 // Route::get('/en', function () {
 //     app()->setLocale('en');

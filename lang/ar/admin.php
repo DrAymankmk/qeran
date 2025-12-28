@@ -874,5 +874,11 @@ return[
     'download-audio' => 'تحميل الصوت',
     'error-loading-video' => 'خطأ في تحميل الفيديو',
     'download-video' => 'تحميل الفيديو',
+    'test-audio' => 'اختبار الصوت',
+    'audio-format-not-supported' => 'تنسيق الصوت غير مدعوم',
+    'audio-decoding-error' => 'خطأ في فك تشفير الصوت',
+    'audio-network-error' => 'خطأ في الشبكة',
+    'audio-file-exists' => 'ملف الصوت موجود',
+    'audio-file-error' => 'خطأ في ملف الصوت',
 
 ];

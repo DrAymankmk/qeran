@@ -396,13 +396,22 @@ window.showInvitationDetails = function(invitationId) {
 				if (data.design_audio) {
 					// Fix URL - remove double slashes and ensure proper format
 					let audioUrl = data.design_audio.replace(/([^:]\/)\/+/g, "$1");
-					// If URL doesn't start with http, make it absolute
-					if (!audioUrl.startsWith('http')) {
-						audioUrl = audioUrl.startsWith('/') ? audioUrl : '/' + audioUrl;
+					
+					// Make URL absolute if it's relative
+					if (!audioUrl.startsWith('http://') && !audioUrl.startsWith('https://')) {
+						// If it starts with /, use current origin
+						if (audioUrl.startsWith('/')) {
+							audioUrl = window.location.origin + audioUrl;
+						} else {
+							// Otherwise, prepend with current origin and /
+							audioUrl = window.location.origin + '/' + audioUrl;
+						}
 					}
 					
+					console.log('Audio URL:', audioUrl); // Debug log
+					
 					// Get file extension to determine MIME type
-					const fileExt = audioUrl.split('.').pop().toLowerCase();
+					const fileExt = audioUrl.split('.').pop().toLowerCase().split('?')[0]; // Remove query params
 					let mimeType = 'audio/mpeg'; // default
 					if (fileExt === 'ogg' || fileExt === 'oga') {
 						mimeType = 'audio/ogg';
@@ -416,32 +425,88 @@ window.showInvitationDetails = function(invitationId) {
 						mimeType = 'audio/webm';
 					}
 					
-					// Create audio element with multiple source types for better compatibility
-					designAudioEl.innerHTML = `
-						<audio controls preload="metadata" style="width: 100%;" onerror="this.parentElement.innerHTML='<span class=\\'text-danger\\'>{{ __("admin.error-loading-audio") }}</span>'">
+					// Create audio element with error handling
+					const audioHtml = `
+						<audio 
+							controls 
+							preload="metadata" 
+							style="width: 100%;" 
+							crossorigin="anonymous"
+							onerror="handleAudioError(this, '${audioUrl}')"
+							onloadstart="console.log('Audio loading started')"
+							oncanplay="console.log('Audio can play')"
+							oncanplaythrough="console.log('Audio can play through')">
 							<source src="${audioUrl}" type="${mimeType}">
 							<source src="${audioUrl}" type="audio/mpeg">
 							<source src="${audioUrl}" type="audio/ogg">
 							Your browser does not support the audio element.
 						</audio>
 						<div class="mt-2">
-							<a href="${audioUrl}" target="_blank" class="btn btn-sm btn-outline-primary">
+							<a href="${audioUrl}" target="_blank" class="btn btn-sm btn-outline-primary" download>
 								<i class="mdi mdi-download"></i> {{__("admin.download-audio")}}
 							</a>
+							<button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="testAudioUrl('${audioUrl}')">
+								<i class="mdi mdi-information"></i> {{__("admin.test-audio")}}
+							</button>
 						</div>
+						<div id="audio-error-message" class="mt-2 text-danger" style="display: none;"></div>
 					`;
+					
+					designAudioEl.innerHTML = audioHtml;
 					
 					// Force audio element to reload after being inserted into DOM
 					setTimeout(function() {
 						const audio = designAudioEl.querySelector('audio');
 						if (audio) {
 							audio.load();
+							// Add event listeners for debugging
+							audio.addEventListener('error', function(e) {
+								console.error('Audio error:', e);
+								console.error('Audio error code:', audio.error ? audio.error.code : 'unknown');
+								console.error('Audio error message:', audio.error ? audio.error.message : 'unknown');
+								console.error('Audio networkState:', audio.networkState);
+								console.error('Audio readyState:', audio.readyState);
+							});
 						}
 					}, 100);
 				} else {
 					designAudioEl.innerHTML = '{{ __("admin.no-data-available") }}';
 				}
 			}
+			
+			// Error handler function
+			window.handleAudioError = function(audioElement, url) {
+				console.error('Audio failed to load:', url);
+				const errorDiv = document.getElementById('audio-error-message');
+				if (errorDiv) {
+					const errorCode = audioElement.error ? audioElement.error.code : 'unknown';
+					let errorMsg = '{{ __("admin.error-loading-audio") }}';
+					if (errorCode === 4) {
+						errorMsg += ' ({{ __("admin.audio-format-not-supported") }})';
+					} else if (errorCode === 3) {
+						errorMsg += ' ({{ __("admin.audio-decoding-error") }})';
+					} else if (errorCode === 2) {
+						errorMsg += ' ({{ __("admin.audio-network-error") }})';
+					}
+					errorDiv.textContent = errorMsg;
+					errorDiv.style.display = 'block';
+				}
+			};
+			
+			// Test audio URL function
+			window.testAudioUrl = function(url) {
+				fetch(url, { method: 'HEAD' })
+					.then(response => {
+						if (response.ok) {
+							alert('{{ __("admin.audio-file-exists") }}: ' + response.status);
+						} else {
+							alert('{{ __("admin.audio-file-error") }}: ' + response.status);
+						}
+					})
+					.catch(error => {
+						alert('{{ __("admin.audio-file-error") }}: ' + error.message);
+					});
+			};
 		})
 		.catch(error => {
 			console.error('Error:', error);

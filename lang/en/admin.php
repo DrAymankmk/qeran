@@ -741,4 +741,10 @@ return[
     'download-audio' => 'Download Audio',
     'error-loading-video' => 'Error loading video',
     'download-video' => 'Download Video',
+    'test-audio' => 'Test Audio',
+    'audio-format-not-supported' => 'Audio format not supported',
+    'audio-decoding-error' => 'Audio decoding error',
+    'audio-network-error' => 'Network error',
+    'audio-file-exists' => 'Audio file exists',
+    'audio-file-error' => 'Audio file error',
 ];

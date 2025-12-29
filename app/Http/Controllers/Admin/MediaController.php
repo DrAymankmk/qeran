@@ -340,18 +340,52 @@ class MediaController extends Controller
 
         $url = $request->get('url');
         
+        \Log::info('Media proxy request', ['url' => $url]);
+        
         try {
             // Fetch the file content using Laravel HTTP client
             $response = \Illuminate\Support\Facades\Http::timeout(30)
                 ->withoutVerifying() // Only if needed for self-signed certificates
+                ->withOptions([
+                    'allow_redirects' => true,
+                    'stream' => false,
+                ])
                 ->get($url);
 
             if (!$response->successful()) {
-                throw new \Exception('Failed to fetch file: ' . $response->status());
+                \Log::error('Media proxy HTTP error', [
+                    'url' => $url,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+                throw new \Exception('Failed to fetch file: HTTP ' . $response->status());
             }
 
             $content = $response->body();
-            $contentType = $response->header('Content-Type') ?? 'application/octet-stream';
+            $contentType = $response->header('Content-Type');
+            
+            // If Content-Type is not set, try to detect from URL
+            if (!$contentType) {
+                $extension = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION);
+                $mimeTypes = [
+                    'mp3' => 'audio/mpeg',
+                    'wav' => 'audio/wav',
+                    'ogg' => 'audio/ogg',
+                    'mp4' => 'video/mp4',
+                    'webm' => 'video/webm',
+                    'jpg' => 'image/jpeg',
+                    'jpeg' => 'image/jpeg',
+                    'png' => 'image/png',
+                    'gif' => 'image/gif',
+                ];
+                $contentType = $mimeTypes[strtolower($extension)] ?? 'application/octet-stream';
+            }
+
+            \Log::info('Media proxy success', [
+                'url' => $url,
+                'content_type' => $contentType,
+                'content_length' => strlen($content),
+            ]);
 
             // Return the file with proper CORS headers
             return response($content, 200)
@@ -359,14 +393,24 @@ class MediaController extends Controller
                 ->header('Access-Control-Allow-Origin', '*')
                 ->header('Access-Control-Allow-Methods', 'GET, OPTIONS')
                 ->header('Access-Control-Allow-Headers', 'Content-Type')
-                ->header('Cache-Control', 'public, max-age=3600');
-        } catch (\Exception $e) {
-            \Log::error('Media proxy error', [
+                ->header('Cache-Control', 'public, max-age=3600')
+                ->header('Content-Length', strlen($content));
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            \Log::error('Media proxy connection error', [
                 'url' => $url,
                 'error' => $e->getMessage(),
             ]);
 
-            return response('Error loading media file', 500)
+            return response()->json(['error' => 'Connection failed: ' . $e->getMessage()], 500)
+                ->header('Access-Control-Allow-Origin', '*');
+        } catch (\Exception $e) {
+            \Log::error('Media proxy error', [
+                'url' => $url,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json(['error' => 'Error loading media file: ' . $e->getMessage()], 500)
                 ->header('Access-Control-Allow-Origin', '*');
         }
     }

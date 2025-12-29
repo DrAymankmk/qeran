@@ -216,10 +216,11 @@ Route::group(['prefix' => 'admin', 'middleware' => 'set.admin.locale'], function
         Route::get('category/export/pdf', [CategoryController::class, 'exportPdf'])->name('category.export.pdf');
         Route::resource('designs', DesignsController::class);
         Route::resource('testimonials', TestimonialsController::class);
+        // Media proxy route must be defined before resource route with more specific path
+        Route::get('media/proxy/file', [MediaController::class, 'proxy'])->name('media.proxy');
         Route::resource('media', MediaController::class)->parameters([
             'media' => 'medium'
         ]);
-        Route::get('media/proxy', [MediaController::class, 'proxy'])->name('media.proxy');
         Route::resource('notifications', NotificationsController::class);
         Route::get('notifications/export/pdf', [NotificationsController::class, 'notificationsExportPdf'])->name('notifications.export.pdf');
         Route::get('notifications/{id}/details', [NotificationsController::class, 'getDetails'])->name('notifications.details');

@@ -435,6 +435,7 @@ window.showInvitationDetails = function(invitationId) {
 					if (isCrossOrigin) {
 						// Encode the URL to pass as parameter
 						finalAudioUrl = '{{ route("media.proxy") }}?url=' + encodeURIComponent(audioUrl);
+						console.log('Using proxy for cross-origin audio:', finalAudioUrl);
 					}
 					
 					// Create audio element without crossorigin to avoid CORS issues

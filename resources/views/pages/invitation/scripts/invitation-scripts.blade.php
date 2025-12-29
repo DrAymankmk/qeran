@@ -1,25 +1,24 @@
 @section('extra-js')
-    <script src="{{asset('admin_assets/libs/select2/js/select2.min.js')}}"></script>
-    <!-- bootstrap-datepicker js -->
-    <script src="{{asset('admin_assets/libs/bootstrap-datepicker/js/bootstrap-datepicker.min.js')}}"></script>
+<script src="{{asset('admin_assets/libs/select2/js/select2.min.js')}}"></script>
+<!-- bootstrap-datepicker js -->
+<script src="{{asset('admin_assets/libs/bootstrap-datepicker/js/bootstrap-datepicker.min.js')}}"></script>
 
 @include('pages.global.scripts.datatable-scripts')
 @include('pages.global.scripts.datatable-admin-init')
 
-    <!-- init js -->
-    <script src="{{asset('admin_assets/js/pages/crypto-orders.init.js')}}"></script>
+<!-- init js -->
+<script src="{{asset('admin_assets/js/pages/crypto-orders.init.js')}}"></script>
 
-    <script src="{{asset('admin_assets/js/jquery.printPage.js') }}"></script>
+<script src="{{asset('admin_assets/js/jquery.printPage.js') }}"></script>
 
-    <script src="{{asset('admin_assets/js/print.js') }}"></script>
+<script src="{{asset('admin_assets/js/print.js') }}"></script>
 
-    <script>
-        $('.btnprn').printPage();
-    </script>
+<script>
+$('.btnprn').printPage();
+</script>
 
-    <script>
-
-		$(document).ready(function() {
+<script>
+$(document).ready(function() {
 	// Initialize DataTable with server-side processing
 	var table = $('#invitationsTable').DataTable({
 		processing: true,
@@ -29,9 +28,14 @@
 			type: 'GET',
 			data: function(d) {
 				// Add filter parameters
-				d.status = $('#statusFilter').val();
-				d.date_from = $('#dateFromFilter').val();
-				d.date_to = $('#dateToFilter').val();
+				d.status = $('#statusFilter')
+					.val();
+				d.date_from = $(
+						'#dateFromFilter'
+						)
+					.val();
+				d.date_to = $('#dateToFilter')
+					.val();
 			},
 			headers: {
 				'X-Requested-With': 'XMLHttpRequest'
@@ -53,8 +57,12 @@
 			{
 				text: '<i class="mdi mdi-file-pdf"></i> {{__("admin.pdf")}}',
 				className: 'btn btn-sm btn-outline-danger',
-				action: function(e, dt, button, config) {
-					window.location.href = '{{route("invitations.export.pdf")}}';
+				action: function(e, dt,
+					button,
+					config) {
+					window.location
+						.href =
+						'{{route("invitations.export.pdf")}}';
 				}
 			},
 			{
@@ -69,7 +77,9 @@
 			[10, 25, 50, 100],
 			[10, 25, 50, 100]
 		],
-		order: [[0, 'desc']],
+		order: [
+			[0, 'desc']
+		],
 		language: {
 			@if(app()->getLocale() == 'ar')
 			url: "{{asset('admin_assets/ar.json')}}"
@@ -96,7 +106,9 @@
 			searchable: false
 		}],
 		drawCallback: function() {
-			$('.dataTables_length select').addClass('form-select form-select-sm');
+			$('.dataTables_length select').addClass(
+				'form-select form-select-sm'
+			);
 		}
 	});
 
@@ -108,7 +120,8 @@
 	// Style the length menu (per page selector)
 	$('.dataTables_length').addClass('mb-0');
 	$('.dataTables_length label').addClass('form-label mb-0 me-2');
-	$('.dataTables_length select').addClass('form-select form-select-sm d-inline-block w-auto');
+	$('.dataTables_length select').addClass(
+		'form-select form-select-sm d-inline-block w-auto');
 
 	// Style the buttons container
 	$('.dt-buttons').addClass('mb-0');
@@ -132,40 +145,59 @@
 	if (highlightId) {
 		let highlightAttempts = 0;
 		const maxAttempts = 10;
-		
+
 		// Function to highlight the row
 		const highlightRow = function() {
 			$('#invitationsTable tbody tr').each(function() {
-				const firstCell = $(this).find('td:first');
-				const cellText = firstCell.text().trim();
+				const firstCell = $(this)
+					.find('td:first');
+				const cellText = firstCell
+					.text().trim();
 				if (cellText == highlightId) {
-					$(this).addClass('table-warning highlight-row');
+					$(this).addClass(
+						'table-warning highlight-row'
+						);
 					$(this).css({
 						'background-color': '#fff3cd',
 						'border-left': '4px solid #ffc107',
 						'animation': 'pulse-highlight 2s ease-in-out'
 					});
-					
+
 					// Scroll to the row
-					$('html, body').animate({
-						scrollTop: $(this).offset().top - 100
-					}, 500);
-					
+					$('html, body')
+						.animate({
+								scrollTop: $(
+										this
+										)
+									.offset()
+									.top -
+									100
+							},
+							500
+						);
+
 					// Remove highlight after 5 seconds
 					setTimeout(function() {
-						$(this).removeClass('table-warning highlight-row');
-						$(this).css({
-							'background-color': '',
-							'border-left': '',
-							'animation': ''
-						});
-					}.bind(this), 5000);
-					
+							$(this).removeClass(
+								'table-warning highlight-row'
+								);
+							$(this).css({
+								'background-color': '',
+								'border-left': '',
+								'animation': ''
+							});
+						}
+						.bind(
+							this
+							),
+						5000
+					);
+
 					return false;
 				}
 			});
 		};
-		
+
 		// Try to highlight after each draw
 		table.on('draw', function() {
 			highlightAttempts++;
@@ -173,7 +205,7 @@
 				setTimeout(highlightRow, 300);
 			}
 		});
-		
+
 		// Also try immediately after initialization
 		setTimeout(highlightRow, 1000);
 	}
@@ -199,38 +231,37 @@ if (document.getElementById('highlight-style') === null) {
 	document.head.appendChild(style);
 }
 
-    
-        
-        function change_status(id) {
 
-            axios.get('category/status/' + id)
-                .then(function (response) {
-                    console.log(response.data);
-                })
-                .catch(function (error) {
-                    console.log(error);
-                });
-        }
 
-        function featured(id) {
+function change_status(id) {
 
-            axios.get('category/featured/' + id)
-                .then(function (response) {
-                    console.log(response.data);
-                })
-                .catch(function (error) {
-                    console.log(error);
-                });
-        }
+	axios.get('category/status/' + id)
+		.then(function(response) {
+			console.log(response.data);
+		})
+		.catch(function(error) {
+			console.log(error);
+		});
+}
 
-    </script>
-    <script>
-        function openModalDelete(invitation_id) {
-            $('.action_form').attr('action', '{{route('invitation.destroy', '')}}' + '/' + invitation_id);
-            $('#deleteModal').modal('show');
-        }
+function featured(id) {
 
-        // Show invitation details via AJAX
+	axios.get('category/featured/' + id)
+		.then(function(response) {
+			console.log(response.data);
+		})
+		.catch(function(error) {
+			console.log(error);
+		});
+}
+</script>
+<script>
+function openModalDelete(invitation_id) {
+	$('.action_form').attr('action', '{{route('invitation.destroy', '')}}' + '/' + invitation_id);
+	$('#deleteModal').modal('show');
+}
+
+// Show invitation details via AJAX
 window.showInvitationDetails = function(invitationId) {
 	// Show loading state
 	const modalElement = document.getElementById(
@@ -344,23 +375,28 @@ window.showInvitationDetails = function(invitationId) {
 			if (designVideoEl) {
 				if (data.design_video) {
 					// Fix URL - remove double slashes and ensure proper format
-					let videoUrl = data.design_video.replace(/([^:]\/)\/+/g, "$1");
+					let videoUrl = data.design_video.replace(
+						/([^:]\/)\/+/g, "$1");
 					// If URL doesn't start with http, make it absolute
 					if (!videoUrl.startsWith('http')) {
-						videoUrl = videoUrl.startsWith('/') ? videoUrl : '/' + videoUrl;
+						videoUrl = videoUrl.startsWith('/') ?
+							videoUrl : '/' + videoUrl;
 					}
-					
+
 					// Get file extension to determine MIME type
-					const fileExt = videoUrl.split('.').pop().toLowerCase();
+					const fileExt = videoUrl.split('.').pop()
+						.toLowerCase();
 					let mimeType = 'video/mp4'; // default
 					if (fileExt === 'webm') {
 						mimeType = 'video/webm';
-					} else if (fileExt === 'ogg' || fileExt === 'ogv') {
+					} else if (fileExt === 'ogg' || fileExt ===
+						'ogv') {
 						mimeType = 'video/ogg';
-					} else if (fileExt === 'mp4' || fileExt === 'mpeg4') {
+					} else if (fileExt === 'mp4' || fileExt ===
+						'mpeg4') {
 						mimeType = 'video/mp4';
 					}
-					
+
 					// Create video element with multiple source types for better compatibility
 					designVideoEl.innerHTML = `
 						<video width="100%" controls preload="metadata" onerror="this.parentElement.innerHTML='<span class=\\'text-danger\\'>{{ __("admin.error-loading-video") }}</span>'">
@@ -375,230 +411,98 @@ window.showInvitationDetails = function(invitationId) {
 							</a>
 						</div>
 					`;
-					
+
 					// Force video element to reload after being inserted into DOM
 					setTimeout(function() {
-						const video = designVideoEl.querySelector('video');
+						const video =
+							designVideoEl
+							.querySelector(
+								'video'
+							);
 						if (video) {
-							video.load();
+							video
+								.load();
 						}
 					}, 100);
 				} else {
-					designVideoEl.innerHTML = '{{ __("admin.no-data-available") }}';
+					designVideoEl.innerHTML =
+						'{{ __("admin.no-data-available") }}';
 				}
 			}
 
-			const designAudioEl = document
-				.getElementById(
-					'modal_design_audio'
-				);
-			if (designAudioEl) {
-				if (data.design_audio) {
-					// Fix URL - remove double slashes and ensure proper format
-					let audioUrl = data.design_audio.replace(/([^:]\/)\/+/g, "$1");
-					
-					// Make URL absolute if it's relative
-					if (!audioUrl.startsWith('http://') && !audioUrl.startsWith('https://')) {
-						// If it starts with /, use current origin
-						if (audioUrl.startsWith('/')) {
-							audioUrl = window.location.origin + audioUrl;
-						} else {
-							// Otherwise, prepend with current origin and /
-							audioUrl = window.location.origin + '/' + audioUrl;
-						}
-					}
-					
-					console.log('Audio URL:', audioUrl); // Debug log
-					
-					// Get file extension to determine MIME type
-					const fileExt = audioUrl.split('.').pop().toLowerCase().split('?')[0]; // Remove query params
-					let mimeType = 'audio/mpeg'; // default
-					if (fileExt === 'ogg' || fileExt === 'oga') {
-						mimeType = 'audio/ogg';
-					} else if (fileExt === 'wav') {
-						mimeType = 'audio/wav';
-					} else if (fileExt === 'mp3' || fileExt === 'mpeg') {
-						mimeType = 'audio/mpeg';
-					} else if (fileExt === 'aac') {
-						mimeType = 'audio/aac';
-					} else if (fileExt === 'webm') {
-						mimeType = 'audio/webm';
-					}
-					
-					// Check if URL is from different domain (CORS issue)
-					const currentDomain = window.location.hostname;
-					const audioDomain = new URL(audioUrl).hostname;
-					const isCrossOrigin = currentDomain !== audioDomain;
-					
-					if (isCrossOrigin) {
-						// Use proxy for cross-origin files
-						const proxyUrl = '{{ route("media.proxy") }}?url=' + encodeURIComponent(audioUrl);
-						
-						console.log('Loading audio via proxy:', proxyUrl);
-						
-						// Create audio element with proxy URL
-						const audioHtml = `
-							<audio 
-								controls 
-								preload="auto" 
-								style="width: 100%;">
-								<source src="${proxyUrl}" type="${mimeType}">
-								Your browser does not support the audio element.
-							</audio>
-							<div class="mt-2">
-								<a href="${audioUrl}" target="_blank" class="btn btn-sm btn-outline-primary" download>
-									<i class="mdi mdi-download"></i> {{__("admin.download-audio")}}
-								</a>
-							</div>
-							<div id="audio-status" class="mt-2 small text-muted"></div>
-						`;
-						
-						designAudioEl.innerHTML = audioHtml;
-						
-						// Add event listeners to track audio loading
-						setTimeout(function() {
-							const audio = designAudioEl.querySelector('audio');
-							if (audio) {
-								const statusDiv = document.getElementById('audio-status');
-								
-								audio.addEventListener('loadstart', function() {
-									if (statusDiv) statusDiv.textContent = '{{__("admin.loading")}}...';
-								});
-								
-								audio.addEventListener('loadedmetadata', function() {
-									if (statusDiv) statusDiv.textContent = '{{__("admin.ready-to-play")}}';
-									console.log('Audio metadata loaded:', {
-										duration: audio.duration,
-										readyState: audio.readyState
-									});
-								});
-								
-								audio.addEventListener('canplay', function() {
-									if (statusDiv) statusDiv.textContent = '{{__("admin.can-play")}}';
-									console.log('Audio can play');
-								});
-								
-								audio.addEventListener('error', function(e) {
-									console.error('Audio error:', audio.error);
-									if (statusDiv) {
-										statusDiv.className = 'mt-2 small text-danger';
-										statusDiv.textContent = '{{__("admin.error-loading-audio")}} (Code: ' + (audio.error ? audio.error.code : 'unknown') + ')';
-									}
-								});
-								
-								audio.load();
-							}
-						}, 100);
-					} else {
-						// Same origin - use direct URL
-						console.log('Loading audio directly:', audioUrl);
-						
-						const audioHtml = `
-							<audio 
-								controls 
-								preload="auto" 
-								style="width: 100%;">
-								<source src="${audioUrl}" type="${mimeType}">
-								Your browser does not support the audio element.
-							</audio>
-							<div class="mt-2">
-								<a href="${audioUrl}" target="_blank" class="btn btn-sm btn-outline-primary" download>
-									<i class="mdi mdi-download"></i> {{__("admin.download-audio")}}
-								</a>
-							</div>
-							<div id="audio-status" class="mt-2 small text-muted"></div>
-						`;
-						
-						designAudioEl.innerHTML = audioHtml;
-						
-						// Add event listeners to track audio loading
-						setTimeout(function() {
-							const audio = designAudioEl.querySelector('audio');
-							if (audio) {
-								const statusDiv = document.getElementById('audio-status');
-								
-								audio.addEventListener('loadstart', function() {
-									if (statusDiv) statusDiv.textContent = '{{__("admin.loading")}}...';
-									console.log('Audio loading started');
-								});
-								
-								audio.addEventListener('loadedmetadata', function() {
-									if (statusDiv) statusDiv.textContent = '{{__("admin.ready-to-play")}}';
-									console.log('Audio metadata loaded:', {
-										duration: audio.duration,
-										readyState: audio.readyState,
-										networkState: audio.networkState
-									});
-								});
-								
-								audio.addEventListener('canplay', function() {
-									if (statusDiv) statusDiv.textContent = '{{__("admin.can-play")}}';
-									console.log('Audio can play');
-								});
-								
-								audio.addEventListener('canplaythrough', function() {
-									if (statusDiv) statusDiv.textContent = '{{__("admin.ready-to-play")}}';
-									console.log('Audio can play through');
-								});
-								
-								audio.addEventListener('error', function(e) {
-									console.error('Audio error:', audio.error);
-									console.error('Audio error code:', audio.error ? audio.error.code : 'unknown');
-									console.error('Audio error message:', audio.error ? audio.error.message : 'unknown');
-									console.error('Audio networkState:', audio.networkState);
-									console.error('Audio readyState:', audio.readyState);
-									if (statusDiv) {
-										statusDiv.className = 'mt-2 small text-danger';
-										statusDiv.textContent = '{{__("admin.error-loading-audio")}} (Code: ' + (audio.error ? audio.error.code : 'unknown') + ')';
-									}
-								});
-								
-								audio.addEventListener('stalled', function() {
-									console.warn('Audio stalled');
-									if (statusDiv) statusDiv.textContent = '{{__("admin.loading")}}... (stalled)';
-								});
-								
-								// Force load
-								audio.load();
-							}
-						}, 100);
-					}
-				} else {
-					designAudioEl.innerHTML = '{{ __("admin.no-data-available") }}';
+			const designAudioEl = document.getElementById('modal_design_audio');
+
+			if (data.design_audio) {
+				let audioUrl = data.design_audio;
+
+				// خلي الرابط كامل لو كان نسبي
+				if (!audioUrl.startsWith('http')) {
+					audioUrl = window.location.origin + (audioUrl
+						.startsWith('/') ? audioUrl :
+						'/' + audioUrl);
 				}
+
+				designAudioEl.innerHTML = `
+        <audio controls style="width:100%;" src="${audioUrl}">
+            متصفحك لا يدعم هذا الصوت
+        </audio>
+        <a href="${audioUrl}" target="_blank" class="btn btn-sm btn-outline-primary mt-2" download>
+            تحميل الصوت
+        </a>
+    `;
+			} else {
+				designAudioEl.innerHTML =
+					'{{ __("admin.no-data-available") }}';
 			}
-			
 			// Error handler function
 			window.handleAudioError = function(audioElement, url) {
 				console.error('Audio failed to load:', url);
-				const errorDiv = document.getElementById('audio-error-message');
+				const errorDiv = document.getElementById(
+					'audio-error-message');
 				if (errorDiv) {
-					const errorCode = audioElement.error ? audioElement.error.code : 'unknown';
-					let errorMsg = '{{ __("admin.error-loading-audio") }}';
+					const errorCode = audioElement.error ?
+						audioElement.error.code :
+						'unknown';
+					let errorMsg =
+						'{{ __("admin.error-loading-audio") }}';
 					if (errorCode === 4) {
-						errorMsg += ' ({{ __("admin.audio-format-not-supported") }})';
+						errorMsg +=
+							' ({{ __("admin.audio-format-not-supported") }})';
 					} else if (errorCode === 3) {
-						errorMsg += ' ({{ __("admin.audio-decoding-error") }})';
+						errorMsg +=
+							' ({{ __("admin.audio-decoding-error") }})';
 					} else if (errorCode === 2) {
-						errorMsg += ' ({{ __("admin.audio-network-error") }})';
+						errorMsg +=
+							' ({{ __("admin.audio-network-error") }})';
 					}
 					errorDiv.textContent = errorMsg;
 					errorDiv.style.display = 'block';
 				}
 			};
-			
+
 			// Test audio URL function
 			window.testAudioUrl = function(url) {
-				fetch(url, { method: 'HEAD' })
+				fetch(url, {
+						method: 'HEAD'
+					})
 					.then(response => {
 						if (response.ok) {
-							alert('{{ __("admin.audio-file-exists") }}: ' + response.status);
+							alert('{{ __("admin.audio-file-exists") }}: ' +
+								response
+								.status
+							);
 						} else {
-							alert('{{ __("admin.audio-file-error") }}: ' + response.status);
+							alert('{{ __("admin.audio-file-error") }}: ' +
+								response
+								.status
+							);
 						}
 					})
 					.catch(error => {
-						alert('{{ __("admin.audio-file-error") }}: ' + error.message);
+						alert('{{ __("admin.audio-file-error") }}: ' +
+							error
+							.message
+						);
 					});
 			};
 		})
@@ -611,6 +515,6 @@ window.showInvitationDetails = function(invitationId) {
 			</div>`;
 		});
 };
-    </script>
+</script>
 
 @endsection

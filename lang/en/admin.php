@@ -747,4 +747,6 @@ return[
     'audio-network-error' => 'Network error',
     'audio-file-exists' => 'Audio file exists',
     'audio-file-error' => 'Audio file error',
+    'ready-to-play' => 'Ready to play',
+    'can-play' => 'Can play',
 ];

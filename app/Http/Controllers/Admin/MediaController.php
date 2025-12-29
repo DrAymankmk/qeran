@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\HubFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Spatie\MediaLibrary\MediaCollections\Models\Media as SpatieMedia;
 
 class MediaController extends Controller
@@ -366,37 +368,17 @@ class MediaController extends Controller
                 ],
             ];
 
-            // Add Range header if present
+            // Build headers array for the request
+            $headers = [];
             if ($request->hasHeader('Range')) {
-                $contextOptions['http']['header'] = 'Range: ' . $request->header('Range');
+                $headers[] = 'Range: ' . $request->header('Range');
             }
-
-            // Stream the file directly without loading into memory
-            // This is the simplest and most reliable approach
-            $context = stream_context_create($contextOptions);
-            $handle = @fopen($url, 'rb', false, $context);
-
-            if ($handle === false) {
-                $error = error_get_last();
-                throw new \Exception('Failed to open file: ' . ($error['message'] ?? 'Unknown error'));
-            }
-
-            // Get response headers
-            $responseHeaders = [];
-            $httpCode = 200;
             
-            if (isset($http_response_header) && is_array($http_response_header)) {
-                foreach ($http_response_header as $header) {
-                    if (strpos($header, ':') !== false) {
-                        list($key, $value) = explode(':', $header, 2);
-                        $responseHeaders[strtolower(trim($key))] = trim($value);
-                    } elseif (preg_match('/HTTP\/[\d.]+ (\d+)/', $header, $matches)) {
-                        $httpCode = (int)$matches[1];
-                    }
-                }
+            if (!empty($headers)) {
+                $contextOptions['http']['header'] = implode("\r\n", $headers);
             }
 
-            // Detect Content-Type from URL
+            // Detect Content-Type from URL first
             $extension = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
             $mimeTypes = [
                 'mp3' => 'audio/mpeg',
@@ -410,34 +392,49 @@ class MediaController extends Controller
                 'png' => 'image/png',
                 'gif' => 'image/gif',
             ];
-            $contentType = $responseHeaders['content-type'] ?? $mimeTypes[$extension] ?? 'application/octet-stream';
-            $contentLength = $responseHeaders['content-length'] ?? null;
-            $acceptRanges = $responseHeaders['accept-ranges'] ?? 'bytes';
-            $contentRange = $responseHeaders['content-range'] ?? null;
+            $contentType = $mimeTypes[$extension] ?? 'application/octet-stream';
 
-            // Set headers
-            header('Content-Type: ' . $contentType);
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: GET, OPTIONS, HEAD');
-            header('Access-Control-Allow-Headers: Range, Content-Type');
-            header('Accept-Ranges: ' . $acceptRanges);
-            header('Cache-Control: public, max-age=3600');
-            
-            if ($contentLength) {
-                header('Content-Length: ' . $contentLength);
-            }
-            
-            if ($contentRange) {
-                header('Content-Range: ' . $contentRange);
-            }
-            
-            http_response_code($httpCode);
+            // Use StreamedResponse for proper binary streaming
+            $response = new StreamedResponse(function() use ($url, $contextOptions) {
+                // Disable output buffering for streaming
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+                
+                $context = stream_context_create($contextOptions);
+                $handle = @fopen($url, 'rb', false, $context);
+                
+                if ($handle === false) {
+                    $error = error_get_last();
+                    Log::error('Failed to open stream', ['url' => $url, 'error' => $error]);
+                    http_response_code(500);
+                    echo json_encode(['error' => 'Failed to load media file']);
+                    return;
+                }
+                
+                // Stream in chunks to avoid memory issues
+                while (!feof($handle)) {
+                    $chunk = fread($handle, 8192); // 8KB chunks
+                    if ($chunk === false) {
+                        break;
+                    }
+                    echo $chunk;
+                    flush();
+                }
+                
+                fclose($handle);
+            }, 200, [
+                'Content-Type' => $contentType,
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'GET, OPTIONS, HEAD',
+                'Access-Control-Allow-Headers' => 'Range, Content-Type',
+                'Accept-Ranges' => 'bytes',
+                'Cache-Control' => 'public, max-age=3600',
+            ]);
 
-            // Stream the file directly to output
-            fpassthru($handle);
-            fclose($handle);
-            
-            exit; // Important: exit after streaming
+            Log::info('Media proxy streaming', ['url' => $url, 'content_type' => $contentType]);
+
+            return $response;
         } catch (\Exception $e) {
             \Log::error('Media proxy error', [
                 'url' => $url,

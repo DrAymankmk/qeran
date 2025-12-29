@@ -880,5 +880,7 @@ return[
     'audio-network-error' => 'خطأ في الشبكة',
     'audio-file-exists' => 'ملف الصوت موجود',
     'audio-file-error' => 'خطأ في ملف الصوت',
+    'ready-to-play' => 'جاهز للتشغيل',
+    'can-play' => 'يمكن التشغيل',
 
 ];

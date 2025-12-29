@@ -434,12 +434,15 @@ window.showInvitationDetails = function(invitationId) {
 						// Use proxy for cross-origin files
 						const proxyUrl = '{{ route("media.proxy") }}?url=' + encodeURIComponent(audioUrl);
 						
+						console.log('Loading audio via proxy:', proxyUrl);
+						
 						// Create audio element with proxy URL
 						const audioHtml = `
 							<audio 
 								controls 
-								preload="metadata" 
-								style="width: 100%;">
+								preload="auto" 
+								style="width: 100%;"
+								crossorigin="anonymous">
 								<source src="${proxyUrl}" type="${mimeType}">
 								Your browser does not support the audio element.
 							</audio>
@@ -448,9 +451,45 @@ window.showInvitationDetails = function(invitationId) {
 									<i class="mdi mdi-download"></i> {{__("admin.download-audio")}}
 								</a>
 							</div>
+							<div id="audio-status" class="mt-2 small text-muted"></div>
 						`;
 						
 						designAudioEl.innerHTML = audioHtml;
+						
+						// Add event listeners to track audio loading
+						setTimeout(function() {
+							const audio = designAudioEl.querySelector('audio');
+							if (audio) {
+								const statusDiv = document.getElementById('audio-status');
+								
+								audio.addEventListener('loadstart', function() {
+									if (statusDiv) statusDiv.textContent = '{{__("admin.loading")}}...';
+								});
+								
+								audio.addEventListener('loadedmetadata', function() {
+									if (statusDiv) statusDiv.textContent = '{{__("admin.ready-to-play")}}';
+									console.log('Audio metadata loaded:', {
+										duration: audio.duration,
+										readyState: audio.readyState
+									});
+								});
+								
+								audio.addEventListener('canplay', function() {
+									if (statusDiv) statusDiv.textContent = '{{__("admin.can-play")}}';
+									console.log('Audio can play');
+								});
+								
+								audio.addEventListener('error', function(e) {
+									console.error('Audio error:', audio.error);
+									if (statusDiv) {
+										statusDiv.className = 'mt-2 small text-danger';
+										statusDiv.textContent = '{{__("admin.error-loading-audio")}} (Code: ' + (audio.error ? audio.error.code : 'unknown') + ')';
+									}
+								});
+								
+								audio.load();
+							}
+						}, 100);
 					} else {
 						// Same origin - use direct URL
 						const audioHtml = `

@@ -19,3 +19,31 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Enable HTTP Range Requests for Audio and Video Files (required for streaming)
+<IfModule mod_headers.c>
+    # Enable range requests for audio files
+    <FilesMatch "\.(mp3|m4a|ogg|wav|webm|oga)$">
+        Header set Accept-Ranges bytes
+    </FilesMatch>
+    
+    # Enable range requests for video files
+    <FilesMatch "\.(mp4|webm|ogg|ogv)$">
+        Header set Accept-Ranges bytes
+    </FilesMatch>
+</IfModule>
+
+# Set proper MIME types for audio and video files
+<IfModule mod_mime.c>
+    # Audio MIME types
+    AddType audio/mpeg mp3
+    AddType audio/mp4 m4a
+    AddType audio/ogg ogg oga
+    AddType audio/wav wav
+    AddType audio/webm webm
+    
+    # Video MIME types
+    AddType video/mp4 mp4
+    AddType video/webm webm
+    AddType video/ogg ogv
+</IfModule>

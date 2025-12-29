@@ -75,10 +75,13 @@ class InvitationsController extends Controller
             'user:id,country_code,phone',
             'category',
             'hubFiles' => function ($query) {
-                $query->where('file_type', \App\Helpers\Constant::FILE_TYPE['Image'])
+                $query->whereIn('file_type', [
+                    \App\Helpers\Constant::FILE_TYPE['Image'],
+                    \App\Helpers\Constant::FILE_TYPE['Audio']
+                ])
                     ->select('id', 'morphable_id', 'morphable_type', 'file_type', 'file_key', 'path', 'bucket_name')
                     ->orderBy('id', 'desc')
-                    ->limit(5);
+                    ->limit(10);
             },
         ])
             ->whereNotNull('user_id')
@@ -170,6 +173,28 @@ class InvitationsController extends Controller
                 ? '<a target="_blank" href="'.e($imagePath).'"><img class="header-profile-user" src="'.e($imagePath).'" alt="Invitation" loading="lazy" style="width: 50px; height: 50px; object-fit: cover;"></a>'
                 : __('admin.no-data-available');
 
+            // Get audio path
+            $audioPath = null;
+            if ($invitation->relationLoaded('hubFiles') && $invitation->hubFiles->isNotEmpty()) {
+                $audioFile = $invitation->hubFiles
+                    ->where('file_type', \App\Helpers\Constant::FILE_TYPE['Audio'])
+                    ->where('file_key', \App\Helpers\Constant::FILE_KEY['Not Main'])
+                    ->first();
+
+                $audioPath = $audioFile ? $audioFile->get_path() : null;
+            } else {
+                $audioPath = $invitation->designAudio();
+            }
+
+            // Format audio HTML
+            $audioHtml = $audioPath
+                ? '<audio controls style="width: 150px; height: 40px;">
+                    <source src="'.e($audioPath).'" type="audio/ogg">
+                    <source src="'.e($audioPath).'" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>'
+                : __('admin.no-data-available');
+
             // Format actions HTML
             $whatsappUrl = 'https://api.whatsapp.com/send?phone='.str_replace('+', '', $invitation->user?->country_code ?? '').($invitation->user?->phone ?? '');
 
@@ -200,6 +225,7 @@ class InvitationsController extends Controller
                 $invitation->name,
                 __('admin.media-type-'.$invitation->invitation_media_type),
                 $imageHtml,
+                $audioHtml,
                 \Carbon\Carbon::parse($invitation->created_at)->locale(app()->getLocale())->translatedFormat('l dS F G:i - Y'),
                 $actionsHtml,
             ];

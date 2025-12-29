@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use Symfony\Component\HttpFoundation\Response;
 use Spatie\MediaLibrary\MediaCollections\Models\Media as SpatieMedia;
 
 class MediaController extends Controller
@@ -343,7 +342,7 @@ class MediaController extends Controller
 
         $url = $request->get('url');
         
-        \Log::info('Media proxy request', ['url' => $url]);
+        Log::info('Media proxy request', ['url' => $url]);
         
         try {
             // Handle OPTIONS request for CORS preflight
@@ -434,7 +433,7 @@ class MediaController extends Controller
             curl_close($ch);
             
             if ($response === false || !empty($error) || $curlErrno !== 0) {
-                \Log::error('cURL failed', [
+                Log::error('cURL failed', [
                     'url' => $url,
                     'error' => $error,
                     'errno' => $curlErrno,
@@ -449,7 +448,7 @@ class MediaController extends Controller
             
             // Verify we got actual content
             if (strlen($body) < 10) {
-                \Log::error('Response body too small', [
+                Log::error('Response body too small', [
                     'url' => $url,
                     'body_size' => strlen($body),
                     'body_hex' => bin2hex($body),
@@ -477,7 +476,7 @@ class MediaController extends Controller
                 }
             }
             
-            \Log::info('Media proxy success', [
+            Log::info('Media proxy success', [
                 'url' => $url,
                 'content_type' => $contentType,
                 'http_code' => $httpCode,
@@ -486,27 +485,20 @@ class MediaController extends Controller
                 'first_bytes' => bin2hex(substr($body, 0, 20))
             ]);
 
-            // Create response with binary data
-            // Use Response::make() with explicit binary handling
-            $responseObj = Response::create($body, $httpCode, [
-                'Content-Type' => $contentType,
-                'Access-Control-Allow-Origin' => '*',
-                'Access-Control-Allow-Methods' => 'GET, OPTIONS, HEAD',
-                'Access-Control-Allow-Headers' => 'Range, Content-Type',
-                'Accept-Ranges' => 'bytes',
-                'Cache-Control' => 'public, max-age=3600',
-            ]);
-            
-            // Set Content-Length
-            $responseObj->headers->set('Content-Length', strlen($body));
-            
-            // Ensure no encoding/chunking
-            $responseObj->headers->remove('Transfer-Encoding');
+            // Create response with binary data using response() helper
+            $responseObj = response($body, $httpCode);
+            $responseObj->header('Content-Type', $contentType);
+            $responseObj->header('Access-Control-Allow-Origin', '*');
+            $responseObj->header('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
+            $responseObj->header('Access-Control-Allow-Headers', 'Range, Content-Type');
+            $responseObj->header('Accept-Ranges', 'bytes');
+            $responseObj->header('Cache-Control', 'public, max-age=3600');
+            $responseObj->header('Content-Length', strlen($body));
             
             return $responseObj;
                 
         } catch (\Exception $e) {
-            \Log::error('Media proxy error', [
+            Log::error('Media proxy error', [
                 'url' => $url,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),

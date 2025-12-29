@@ -397,9 +397,17 @@ class MediaController extends Controller
                 }
             }
 
+            if ($response === false) {
+                throw new \Exception('cURL returned false - no response received');
+            }
+
             // Parse headers
             $headers = substr($response, 0, $headerSize);
             $content = substr($response, $headerSize);
+            
+            if (empty($content) && $httpCode === 200) {
+                \Log::warning('Media proxy empty content', ['url' => $url, 'http_code' => $httpCode]);
+            }
             
             // Extract headers
             $headerLines = explode("\r\n", $headers);
@@ -439,7 +447,7 @@ class MediaController extends Controller
             }
 
             // Build response
-            $responseBuilder = response($content, $response->status())
+            $responseBuilder = response($content, $httpCode)
                 ->header('Content-Type', $contentType)
                 ->header('Access-Control-Allow-Origin', '*')
                 ->header('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD')
@@ -463,7 +471,8 @@ class MediaController extends Controller
             \Log::info('Media proxy success', [
                 'url' => $url,
                 'content_type' => $contentType,
-                'status' => $response->status(),
+                'status' => $httpCode,
+                'content_length' => strlen($content),
             ]);
 
             return $responseBuilder;

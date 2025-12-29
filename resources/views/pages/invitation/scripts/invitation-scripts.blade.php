@@ -491,10 +491,12 @@ window.showInvitationDetails = function(invitationId) {
 						}, 100);
 					} else {
 						// Same origin - use direct URL
+						console.log('Loading audio directly:', audioUrl);
+						
 						const audioHtml = `
 							<audio 
 								controls 
-								preload="metadata" 
+								preload="auto" 
 								style="width: 100%;">
 								<source src="${audioUrl}" type="${mimeType}">
 								Your browser does not support the audio element.
@@ -504,8 +506,62 @@ window.showInvitationDetails = function(invitationId) {
 									<i class="mdi mdi-download"></i> {{__("admin.download-audio")}}
 								</a>
 							</div>
+							<div id="audio-status" class="mt-2 small text-muted"></div>
 						`;
+						
 						designAudioEl.innerHTML = audioHtml;
+						
+						// Add event listeners to track audio loading
+						setTimeout(function() {
+							const audio = designAudioEl.querySelector('audio');
+							if (audio) {
+								const statusDiv = document.getElementById('audio-status');
+								
+								audio.addEventListener('loadstart', function() {
+									if (statusDiv) statusDiv.textContent = '{{__("admin.loading")}}...';
+									console.log('Audio loading started');
+								});
+								
+								audio.addEventListener('loadedmetadata', function() {
+									if (statusDiv) statusDiv.textContent = '{{__("admin.ready-to-play")}}';
+									console.log('Audio metadata loaded:', {
+										duration: audio.duration,
+										readyState: audio.readyState,
+										networkState: audio.networkState
+									});
+								});
+								
+								audio.addEventListener('canplay', function() {
+									if (statusDiv) statusDiv.textContent = '{{__("admin.can-play")}}';
+									console.log('Audio can play');
+								});
+								
+								audio.addEventListener('canplaythrough', function() {
+									if (statusDiv) statusDiv.textContent = '{{__("admin.ready-to-play")}}';
+									console.log('Audio can play through');
+								});
+								
+								audio.addEventListener('error', function(e) {
+									console.error('Audio error:', audio.error);
+									console.error('Audio error code:', audio.error ? audio.error.code : 'unknown');
+									console.error('Audio error message:', audio.error ? audio.error.message : 'unknown');
+									console.error('Audio networkState:', audio.networkState);
+									console.error('Audio readyState:', audio.readyState);
+									if (statusDiv) {
+										statusDiv.className = 'mt-2 small text-danger';
+										statusDiv.textContent = '{{__("admin.error-loading-audio")}} (Code: ' + (audio.error ? audio.error.code : 'unknown') + ')';
+									}
+								});
+								
+								audio.addEventListener('stalled', function() {
+									console.warn('Audio stalled');
+									if (statusDiv) statusDiv.textContent = '{{__("admin.loading")}}... (stalled)';
+								});
+								
+								// Force load
+								audio.load();
+							}
+						}, 100);
 					}
 				} else {
 					designAudioEl.innerHTML = '{{ __("admin.no-data-available") }}';

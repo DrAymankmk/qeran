@@ -425,59 +425,62 @@ window.showInvitationDetails = function(invitationId) {
 						mimeType = 'audio/webm';
 					}
 					
-					// Check if URL is from different domain (CORS issue)
-					const currentDomain = window.location.hostname;
-					const audioDomain = new URL(audioUrl).hostname;
-					const isCrossOrigin = currentDomain !== audioDomain;
+					// SIMPLEST APPROACH: Fetch as blob and create blob URL
+					// This avoids CORS and proxy issues completely
+					designAudioEl.innerHTML = '<div class="text-center p-3"><div class="spinner-border spinner-border-sm text-primary"></div><p class="mt-2 small">{{__("admin.loading")}}...</p></div>';
 					
-					// Use proxy endpoint if cross-origin to avoid CORS issues
-					let finalAudioUrl = audioUrl;
-					if (isCrossOrigin) {
-						// Encode the URL to pass as parameter
-						finalAudioUrl = '{{ route("media.proxy") }}?url=' + encodeURIComponent(audioUrl);
-						console.log('Using proxy for cross-origin audio:', finalAudioUrl);
-					}
-					
-					// Create audio element without crossorigin to avoid CORS issues
-					const audioHtml = `
-						<audio 
-							controls 
-							preload="metadata" 
-							style="width: 100%;" 
-							onerror="handleAudioError(this, '${finalAudioUrl}')"
-							onloadstart="console.log('Audio loading started')"
-							oncanplay="console.log('Audio can play')"
-							oncanplaythrough="console.log('Audio can play through')">
-							<source src="${finalAudioUrl}" type="${mimeType}">
-							<source src="${finalAudioUrl}" type="audio/mpeg">
-							<source src="${finalAudioUrl}" type="audio/ogg">
-							Your browser does not support the audio element.
-						</audio>
-						<div class="mt-2">
-							<a href="${audioUrl}" target="_blank" class="btn btn-sm btn-outline-primary" download>
-								<i class="mdi mdi-download"></i> {{__("admin.download-audio")}}
-							</a>
-						</div>
-						<div id="audio-error-message" class="mt-2 text-danger" style="display: none;"></div>
-					`;
-					
-					designAudioEl.innerHTML = audioHtml;
-					
-					// Force audio element to reload after being inserted into DOM
-					setTimeout(function() {
-						const audio = designAudioEl.querySelector('audio');
-						if (audio) {
-							audio.load();
-							// Add event listeners for debugging
-							audio.addEventListener('error', function(e) {
-								console.error('Audio error:', e);
-								console.error('Audio error code:', audio.error ? audio.error.code : 'unknown');
-								console.error('Audio error message:', audio.error ? audio.error.message : 'unknown');
-								console.error('Audio networkState:', audio.networkState);
-								console.error('Audio readyState:', audio.readyState);
-							});
-						}
-					}, 100);
+					// Fetch the audio file
+					fetch(audioUrl)
+						.then(response => {
+							if (!response.ok) {
+								throw new Error('HTTP ' + response.status);
+							}
+							return response.blob();
+						})
+						.then(blob => {
+							// Create blob URL (this works locally, no CORS issues)
+							const blobUrl = URL.createObjectURL(blob);
+							
+							// Create audio element with blob URL
+							const audioHtml = `
+								<audio 
+									controls 
+									preload="auto" 
+									style="width: 100%;">
+									<source src="${blobUrl}" type="${mimeType}">
+									Your browser does not support the audio element.
+								</audio>
+								<div class="mt-2">
+									<a href="${audioUrl}" target="_blank" class="btn btn-sm btn-outline-primary" download>
+										<i class="mdi mdi-download"></i> {{__("admin.download-audio")}}
+									</a>
+								</div>
+							`;
+							
+							designAudioEl.innerHTML = audioHtml;
+							
+							// Clean up blob URL when modal is closed to free memory
+							const modal = document.getElementById('invitationDetailsModal');
+							if (modal) {
+								const cleanup = function() {
+									URL.revokeObjectURL(blobUrl);
+									modal.removeEventListener('hidden.bs.modal', cleanup);
+								};
+								modal.addEventListener('hidden.bs.modal', cleanup, { once: true });
+							}
+						})
+						.catch(error => {
+							console.error('Error loading audio:', error);
+							designAudioEl.innerHTML = `
+								<div class="alert alert-warning">
+									<p class="mb-2"><i class="mdi mdi-alert-circle"></i> {{__("admin.error-loading-audio")}}</p>
+									<p class="small text-muted mb-2">${error.message}</p>
+									<a href="${audioUrl}" target="_blank" class="btn btn-sm btn-outline-primary" download>
+										<i class="mdi mdi-download"></i> {{__("admin.download-audio")}}
+									</a>
+								</div>
+							`;
+						});
 				} else {
 					designAudioEl.innerHTML = '{{ __("admin.no-data-available") }}';
 				}

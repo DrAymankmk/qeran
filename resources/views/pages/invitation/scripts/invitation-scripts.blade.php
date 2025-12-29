@@ -431,30 +431,61 @@ window.showInvitationDetails = function(invitationId) {
 			}
 
 			const designAudioEl = document.getElementById('modal_design_audio');
+			if (designAudioEl) {
+				if (data.design_audio) {
+					// Fix URL - remove double slashes and ensure proper format
+					let audioUrl = data.design_audio.replace(
+						/([^:]\/)\/+/g, "$1");
+					// If URL doesn't start with http, make it absolute
+					if (!audioUrl.startsWith('http')) {
+						audioUrl = audioUrl.startsWith('/') ?
+							audioUrl : '/' + audioUrl;
+						// Make it fully absolute
+						audioUrl = window.location.origin + audioUrl;
+					}
 
-			if (data.design_audio) {
-				let audioUrl = data.design_audio;
+					// Get file extension to determine MIME type
+					const fileExt = audioUrl.split('.').pop()
+						.toLowerCase();
+					let mimeType = 'audio/mpeg'; // default
+					if (fileExt === 'mp3') {
+						mimeType = 'audio/mpeg';
+					} else if (fileExt === 'wav') {
+						mimeType = 'audio/wav';
+					} else if (fileExt === 'ogg' || fileExt === 'oga') {
+						mimeType = 'audio/ogg';
+					} else if (fileExt === 'm4a') {
+						mimeType = 'audio/mp4';
+					} else if (fileExt === 'webm') {
+						mimeType = 'audio/webm';
+					}
 
-				// Make URL absolute if it's relative
-				if (!audioUrl.startsWith('http')) {
-					audioUrl = window.location.origin + (audioUrl
-						.startsWith('/') ? audioUrl :
-						'/' + audioUrl);
+					// Create audio element with multiple source types for better compatibility
+					designAudioEl.innerHTML = `
+						<audio controls style="width:100%;" preload="metadata" onerror="this.parentElement.innerHTML='<span class=\\'text-danger\\'>{{ __("admin.error-loading-audio") }}</span>'">
+							<source src="${audioUrl}" type="${mimeType}">
+							<source src="${audioUrl}" type="audio/mpeg">
+							<source src="${audioUrl}" type="audio/wav">
+							{{ __("admin.audio-format-not-supported") }}
+						</audio>
+						<div class="mt-2">
+							<a href="${audioUrl}" target="_blank" class="btn btn-sm btn-outline-primary" download>
+								<i class="mdi mdi-download"></i> {{__("admin.download-audio")}}
+							</a>
+						</div>
+					`;
+
+					// Force audio element to reload after being inserted into DOM
+					setTimeout(function() {
+						const audio = designAudioEl.querySelector('audio');
+						if (audio) {
+							audio.load();
+						}
+					}, 100);
+				} else {
+					designAudioEl.innerHTML =
+						'{{ __("admin.no-data-available") }}';
 				}
-
-				designAudioEl.innerHTML = `
-					<audio controls style="width:100%;" src="${audioUrl}" onerror="this.parentElement.innerHTML='<span class=\\'text-danger\\'>{{ __("admin.error-loading-audio") }}</span>'">
-						{{ __("admin.audio-format-not-supported") }}
-					</audio>
-					<div class="mt-2">
-						<a href="${audioUrl}" target="_blank" class="btn btn-sm btn-outline-primary" download>
-							<i class="mdi mdi-download"></i> {{__("admin.download-audio")}}
-						</a>
-					</div>
-				`;
-			} else {
-				designAudioEl.innerHTML =
-					'{{ __("admin.no-data-available") }}';
 			}
 			// Error handler function
 			window.handleAudioError = function(audioElement, url) {

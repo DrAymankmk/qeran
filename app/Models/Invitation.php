@@ -6,6 +6,8 @@ use App\Helpers\Constant;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Invitation extends Model
@@ -48,16 +50,16 @@ class Invitation extends Model
         parent::boot();
         
         static::creating(function ($invitation) {
-            \Log::info('Invitation creating event triggered', [
+            Log::info('Invitation creating event triggered', [
                 'current_code' => $invitation->code,
                 'is_empty' => empty($invitation->code)
             ]);
             
             if (empty($invitation->code)) {
                 $invitation->code = static::generateUniqueCode();
-                \Log::info('Generated new code', ['code' => $invitation->code]);
+                Log::info('Generated new code', ['code' => $invitation->code]);
             } else {
-                \Log::info('Code already exists, not generating', ['existing_code' => $invitation->code]);
+                Log::info('Code already exists, not generating', ['existing_code' => $invitation->code]);
             }
         });
     }
@@ -131,8 +133,98 @@ class Invitation extends Model
             'file_type' => Constant::FILE_TYPE['Audio'],
             'file_key' => Constant::FILE_KEY['Not Main']
         ])->first()?->get_path();
+    }
 
+    /**
+     * Get audio URLs (MP3 and OGG)
+     * Converts MP3 to OGG if OGG doesn't exist
+     * 
+     * @return array ['mp3' => string|null, 'ogg' => string|null]
+     */
+    public function getAudioUrls()
+    {
+        $this->load('hubFiles');
+        
+        $audioFile = $this->hubFiles()->where([
+            'file_type' => Constant::FILE_TYPE['Audio'],
+            'file_key' => Constant::FILE_KEY['Not Main']
+        ])->first();
 
+        if (!$audioFile) {
+            return ['mp3' => null, 'ogg' => null];
+        }
+
+        $mp3Path = $audioFile->get_path();
+        $mp3Extension = strtolower($audioFile->extension ?? pathinfo($audioFile->path, PATHINFO_EXTENSION));
+        
+        // If it's already OGG, return both as the same
+        if ($mp3Extension === 'ogg' || $mp3Extension === 'oga') {
+            return ['mp3' => $mp3Path, 'ogg' => $mp3Path];
+        }
+
+        // Get the file path on disk
+        $storagePath = storage_path('app/public/' . $audioFile->bucket_name . '/' . $audioFile->path);
+        
+        // Check if OGG version exists
+        $oggFileName = pathinfo($audioFile->path, PATHINFO_FILENAME) . '.ogg';
+        $oggStoragePath = storage_path('app/public/' . $audioFile->bucket_name . '/' . $oggFileName);
+        $oggUrl = null;
+
+        // Check if OGG file already exists in database
+        $oggFile = $this->hubFiles()->where([
+            'bucket_name' => $audioFile->bucket_name,
+            'path' => $oggFileName,
+            'file_type' => Constant::FILE_TYPE['Audio'],
+        ])->first();
+
+        if ($oggFile) {
+            // OGG file exists in database
+            $oggUrl = $oggFile->get_path();
+        } elseif (file_exists($oggStoragePath)) {
+            // OGG file exists on disk but not in database
+            $oggUrl = Storage::disk('public')->url($audioFile->bucket_name . '/' . $oggFileName);
+        } elseif (file_exists($storagePath) && $mp3Extension === 'mp3') {
+            // Try to convert MP3 to OGG using FFmpeg
+            try {
+                // Check if FFmpeg is available
+                $ffmpegPath = shell_exec('which ffmpeg') ?: 'ffmpeg';
+                $ffmpegCheck = shell_exec($ffmpegPath . ' -version 2>&1');
+                
+                if ($ffmpegCheck && strpos($ffmpegCheck, 'ffmpeg version') !== false) {
+                    // Convert MP3 to OGG using FFmpeg command
+                    $command = escapeshellarg($ffmpegPath) . ' -i ' . escapeshellarg($storagePath) . 
+                               ' -acodec libvorbis -q:a 5 ' . escapeshellarg($oggStoragePath) . ' 2>&1';
+                    
+                    exec($command, $output, $returnCode);
+                    
+                    if ($returnCode === 0 && file_exists($oggStoragePath)) {
+                        // Create HubFile entry for OGG
+                        $this->hubFiles()->create([
+                            'bucket_name' => $audioFile->bucket_name,
+                            'path' => $oggFileName,
+                            'extension' => 'ogg',
+                            'file_type' => Constant::FILE_TYPE['Audio'],
+                            'file_key' => Constant::FILE_KEY['Not Main'],
+                            'original_name' => pathinfo($audioFile->original_name ?? 'audio', PATHINFO_FILENAME) . '.ogg',
+                            'getMimeType' => 'audio/ogg',
+                            'size' => filesize($oggStoragePath),
+                        ]);
+                        
+                        $oggUrl = Storage::disk('public')->url($audioFile->bucket_name . '/' . $oggFileName);
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::warning('Failed to convert MP3 to OGG', [
+                    'invitation_id' => $this->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        return [
+            'mp3' => $mp3Path,
+            'ogg' => $oggUrl ?: $mp3Path // Fallback to MP3 if OGG conversion failed or doesn't exist
+        ];
     }
 
     public function receiptImage()

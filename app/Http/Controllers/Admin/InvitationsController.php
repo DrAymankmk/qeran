@@ -173,24 +173,16 @@ class InvitationsController extends Controller
                 ? '<a target="_blank" href="'.e($imagePath).'"><img class="header-profile-user" src="'.e($imagePath).'" alt="Invitation" loading="lazy" style="width: 50px; height: 50px; object-fit: cover;"></a>'
                 : __('admin.no-data-available');
 
-            // Get audio path
-            $audioPath = null;
-            if ($invitation->relationLoaded('hubFiles') && $invitation->hubFiles->isNotEmpty()) {
-                $audioFile = $invitation->hubFiles
-                    ->where('file_type', \App\Helpers\Constant::FILE_TYPE['Audio'])
-                    ->where('file_key', \App\Helpers\Constant::FILE_KEY['Not Main'])
-                    ->first();
+            // Get audio URLs (MP3 and OGG)
+            $audioUrls = $invitation->getAudioUrls();
+            $mp3Url = $audioUrls['mp3'];
+            $oggUrl = $audioUrls['ogg'];
 
-                $audioPath = $audioFile ? $audioFile->get_path() : null;
-            } else {
-                $audioPath = $invitation->designAudio();
-            }
-
-            // Format audio HTML
-            $audioHtml = $audioPath
+            // Format audio HTML with both MP3 and OGG sources
+            $audioHtml = ($mp3Url || $oggUrl)
                 ? '<audio controls style="width: 150px; height: 40px;">
-                    <source src="'.e($audioPath).'" type="audio/ogg">
-                    <source src="'.e($audioPath).'" type="audio/mpeg">
+                    '.($oggUrl ? '<source src="'.e($oggUrl).'" type="audio/ogg">' : '').'
+                    '.($mp3Url ? '<source src="'.e($mp3Url).'" type="audio/mpeg">' : '').'
                     Your browser does not support the audio element.
                 </audio>'
                 : __('admin.no-data-available');
@@ -295,6 +287,9 @@ class InvitationsController extends Controller
             $invitation = Invitation::with(['user', 'category', 'hubFiles'])
                 ->findOrFail($id);
 
+            // Get audio URLs (MP3 and OGG)
+            $audioUrls = $invitation->getAudioUrls();
+
             $data = [
                 'invitation_id' => $invitation->id,
                 'code' => $invitation->code ?? '',
@@ -318,7 +313,8 @@ class InvitationsController extends Controller
                     ->translatedFormat('l dS F G:i - Y'),
                 'design_image' => $invitation->designImage() ?? '',
                 'design_video' => $invitation->designVideo() ?? '',
-                'design_audio' => $invitation->designAudio() ?? '',
+                'design_audio' => $audioUrls['mp3'] ?? '',
+                'design_audio_ogg' => $audioUrls['ogg'] ?? '',
                 'receipt_image' => $invitation->receiptImage() ?? '',
                 'category_name' => $invitation->category?->name ?? '',
             ];

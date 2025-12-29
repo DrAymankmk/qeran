@@ -32,7 +32,7 @@ $(document).ready(function() {
 					.val();
 				d.date_from = $(
 						'#dateFromFilter'
-						)
+					)
 					.val();
 				d.date_to = $('#dateToFilter')
 					.val();
@@ -156,7 +156,7 @@ $(document).ready(function() {
 				if (cellText == highlightId) {
 					$(this).addClass(
 						'table-warning highlight-row'
-						);
+					);
 					$(this).css({
 						'background-color': '#fff3cd',
 						'border-left': '4px solid #ffc107',
@@ -168,7 +168,7 @@ $(document).ready(function() {
 						.animate({
 								scrollTop: $(
 										this
-										)
+									)
 									.offset()
 									.top -
 									100
@@ -180,7 +180,7 @@ $(document).ready(function() {
 					setTimeout(function() {
 							$(this).removeClass(
 								'table-warning highlight-row'
-								);
+							);
 							$(this).css({
 								'background-color': '',
 								'border-left': '',
@@ -189,7 +189,7 @@ $(document).ready(function() {
 						}
 						.bind(
 							this
-							),
+						),
 						5000
 					);
 
@@ -432,23 +432,53 @@ window.showInvitationDetails = function(invitationId) {
 
 			const designAudioEl = document.getElementById('modal_design_audio');
 			if (designAudioEl) {
-				if (data.design_audio) {
-					// Fix URL - remove double slashes and ensure proper format
-					let audioUrl = data.design_audio.replace(
-						/([^:]\/)\/+/g, "$1");
-					// If URL doesn't start with http, make it absolute
-					if (!audioUrl.startsWith('http')) {
-						audioUrl = audioUrl.startsWith('/') ?
-							audioUrl : '/' + audioUrl;
-						// Make it fully absolute
-						audioUrl = window.location.origin + audioUrl;
+				// Get both MP3 and OGG URLs
+				let mp3Url = data.design_audio || null;
+				let oggUrl = data.design_audio_ogg || null;
+
+				if (mp3Url || oggUrl) {
+					// Fix URLs - remove double slashes and ensure proper format
+					const fixUrl = (url) => {
+						if (!url) return null;
+						let fixedUrl = url.replace(
+							/([^:]\/)\/+/g,
+							"$1");
+						// If URL doesn't start with http, make it absolute
+						if (!fixedUrl.startsWith(
+								'http')) {
+							fixedUrl = fixedUrl
+								.startsWith(
+									'/'
+									) ?
+								fixedUrl :
+								'/' +
+								fixedUrl;
+							// Make it fully absolute
+							fixedUrl = window
+								.location
+								.origin +
+								fixedUrl;
+						}
+						return fixedUrl;
+					};
+
+					mp3Url = fixUrl(mp3Url);
+					oggUrl = fixUrl(oggUrl);
+
+					// Create audio element with both OGG and MP3 sources
+					let audioSources = '';
+					if (oggUrl) {
+						audioSources +=
+							`<source src="${oggUrl}" type="audio/ogg">`;
+					}
+					if (mp3Url) {
+						audioSources +=
+							`<source src="${mp3Url}" type="audio/mpeg">`;
 					}
 
-					// Create audio element with the specified format
 					designAudioEl.innerHTML = `
 						<audio controls>
-							<source src="${audioUrl}" type="audio/ogg">
-							<source src="${audioUrl}" type="audio/mpeg">
+							${audioSources}
 							Your browser does not support the audio element.
 						</audio>
 					`;

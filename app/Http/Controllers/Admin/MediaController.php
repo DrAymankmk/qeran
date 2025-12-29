@@ -354,31 +354,7 @@ class MediaController extends Controller
                     ->header('Access-Control-Max-Age', '86400');
             }
 
-            // Use file_get_contents with stream context for simpler binary handling
-            $contextOptions = [
-                'http' => [
-                    'method' => 'GET',
-                    'timeout' => 60,
-                    'follow_location' => true,
-                    'ignore_errors' => false,
-                ],
-                'ssl' => [
-                    'verify_peer' => false,
-                    'verify_peer_name' => false,
-                ],
-            ];
-
-            // Build headers array for the request
-            $headers = [];
-            if ($request->hasHeader('Range')) {
-                $headers[] = 'Range: ' . $request->header('Range');
-            }
-            
-            if (!empty($headers)) {
-                $contextOptions['http']['header'] = implode("\r\n", $headers);
-            }
-
-            // Detect Content-Type from URL first
+            // Detect Content-Type from URL
             $extension = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
             $mimeTypes = [
                 'mp3' => 'audio/mpeg',
@@ -394,47 +370,72 @@ class MediaController extends Controller
             ];
             $contentType = $mimeTypes[$extension] ?? 'application/octet-stream';
 
-            // Use StreamedResponse for proper binary streaming
-            $response = new StreamedResponse(function() use ($url, $contextOptions) {
-                // Disable output buffering for streaming
-                while (ob_get_level()) {
-                    ob_end_clean();
+            // Use cURL for reliable binary transfer
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+            curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, true);
+            
+            // Forward Range header if present
+            if ($request->hasHeader('Range')) {
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Range: ' . $request->header('Range')
+                ]);
+            }
+            
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $error = curl_error($ch);
+            curl_close($ch);
+            
+            if ($response === false || !empty($error)) {
+                throw new \Exception('cURL error: ' . $error);
+            }
+            
+            // Split headers and body
+            $headers = substr($response, 0, $headerSize);
+            $body = substr($response, $headerSize);
+            
+            // Parse response headers to get Content-Type if available
+            $responseHeaders = [];
+            foreach (explode("\r\n", $headers) as $header) {
+                if (strpos($header, ':') !== false) {
+                    list($key, $value) = explode(':', $header, 2);
+                    $responseHeaders[strtolower(trim($key))] = trim($value);
                 }
-                
-                $context = stream_context_create($contextOptions);
-                $handle = @fopen($url, 'rb', false, $context);
-                
-                if ($handle === false) {
-                    $error = error_get_last();
-                    Log::error('Failed to open stream', ['url' => $url, 'error' => $error]);
-                    http_response_code(500);
-                    echo json_encode(['error' => 'Failed to load media file']);
-                    return;
+            }
+            
+            // Use Content-Type from response if available, otherwise use detected type
+            if (isset($responseHeaders['content-type'])) {
+                $contentType = $responseHeaders['content-type'];
+                // Remove charset if present
+                if (strpos($contentType, ';') !== false) {
+                    $contentType = trim(explode(';', $contentType)[0]);
                 }
-                
-                // Stream in chunks to avoid memory issues
-                while (!feof($handle)) {
-                    $chunk = fread($handle, 8192); // 8KB chunks
-                    if ($chunk === false) {
-                        break;
-                    }
-                    echo $chunk;
-                    flush();
-                }
-                
-                fclose($handle);
-            }, 200, [
-                'Content-Type' => $contentType,
-                'Access-Control-Allow-Origin' => '*',
-                'Access-Control-Allow-Methods' => 'GET, OPTIONS, HEAD',
-                'Access-Control-Allow-Headers' => 'Range, Content-Type',
-                'Accept-Ranges' => 'bytes',
-                'Cache-Control' => 'public, max-age=3600',
+            }
+            
+            \Log::info('Media proxy success', [
+                'url' => $url,
+                'content_type' => $contentType,
+                'http_code' => $httpCode,
+                'body_size' => strlen($body),
+                'first_bytes' => bin2hex(substr($body, 0, 10))
             ]);
 
-            Log::info('Media proxy streaming', ['url' => $url, 'content_type' => $contentType]);
-
-            return $response;
+            // Return response with proper headers
+            return response($body, $httpCode)
+                ->header('Content-Type', $contentType)
+                ->header('Access-Control-Allow-Origin', '*')
+                ->header('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD')
+                ->header('Access-Control-Allow-Headers', 'Range, Content-Type')
+                ->header('Accept-Ranges', 'bytes')
+                ->header('Cache-Control', 'public, max-age=3600');
+                
         } catch (\Exception $e) {
             \Log::error('Media proxy error', [
                 'url' => $url,

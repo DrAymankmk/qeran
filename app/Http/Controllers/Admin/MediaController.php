@@ -371,17 +371,19 @@ class MediaController extends Controller
                 $contextOptions['http']['header'] = 'Range: ' . $request->header('Range');
             }
 
+            // Stream the file directly without loading into memory
+            // This is the simplest and most reliable approach
             $context = stream_context_create($contextOptions);
-            $content = @file_get_contents($url, false, $context);
+            $handle = @fopen($url, 'rb', false, $context);
 
-            if ($content === false) {
+            if ($handle === false) {
                 $error = error_get_last();
-                throw new \Exception('Failed to fetch file: ' . ($error['message'] ?? 'Unknown error'));
+                throw new \Exception('Failed to open file: ' . ($error['message'] ?? 'Unknown error'));
             }
 
-            // Get response headers from $http_response_header
+            // Get response headers
             $responseHeaders = [];
-            $httpCode = 200; // Default
+            $httpCode = 200;
             
             if (isset($http_response_header) && is_array($http_response_header)) {
                 foreach ($http_response_header as $header) {
@@ -393,59 +395,49 @@ class MediaController extends Controller
                     }
                 }
             }
-            $contentType = $responseHeaders['content-type'] ?? null;
+
+            // Detect Content-Type from URL
+            $extension = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
+            $mimeTypes = [
+                'mp3' => 'audio/mpeg',
+                'wav' => 'audio/wav',
+                'ogg' => 'audio/ogg',
+                'oga' => 'audio/ogg',
+                'mp4' => 'video/mp4',
+                'webm' => 'video/webm',
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'gif' => 'image/gif',
+            ];
+            $contentType = $responseHeaders['content-type'] ?? $mimeTypes[$extension] ?? 'application/octet-stream';
             $contentLength = $responseHeaders['content-length'] ?? null;
             $acceptRanges = $responseHeaders['accept-ranges'] ?? 'bytes';
             $contentRange = $responseHeaders['content-range'] ?? null;
 
-            // Detect Content-Type from URL if not provided
-            if (!$contentType) {
-                $extension = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
-                $mimeTypes = [
-                    'mp3' => 'audio/mpeg',
-                    'wav' => 'audio/wav',
-                    'ogg' => 'audio/ogg',
-                    'oga' => 'audio/ogg',
-                    'mp4' => 'video/mp4',
-                    'webm' => 'video/webm',
-                    'jpg' => 'image/jpeg',
-                    'jpeg' => 'image/jpeg',
-                    'png' => 'image/png',
-                    'gif' => 'image/gif',
-                ];
-                $contentType = $mimeTypes[$extension] ?? 'application/octet-stream';
-            }
-
-            \Log::info('Media proxy success', [
-                'url' => $url,
-                'content_type' => $contentType,
-                'status' => $httpCode,
-                'content_length' => strlen($content),
-                'first_bytes' => bin2hex(substr($content, 0, 4)),
-            ]);
-
-            // Build headers
-            $headers = [
-                'Content-Type' => $contentType,
-                'Access-Control-Allow-Origin' => '*',
-                'Access-Control-Allow-Methods' => 'GET, OPTIONS, HEAD',
-                'Access-Control-Allow-Headers' => 'Range, Content-Type',
-                'Accept-Ranges' => $acceptRanges,
-                'Cache-Control' => 'public, max-age=3600',
-            ];
-
+            // Set headers
+            header('Content-Type: ' . $contentType);
+            header('Access-Control-Allow-Origin: *');
+            header('Access-Control-Allow-Methods: GET, OPTIONS, HEAD');
+            header('Access-Control-Allow-Headers: Range, Content-Type');
+            header('Accept-Ranges: ' . $acceptRanges);
+            header('Cache-Control: public, max-age=3600');
+            
             if ($contentLength) {
-                $headers['Content-Length'] = $contentLength;
-            } else {
-                $headers['Content-Length'] = strlen($content);
+                header('Content-Length: ' . $contentLength);
             }
-
+            
             if ($contentRange) {
-                $headers['Content-Range'] = $contentRange;
+                header('Content-Range: ' . $contentRange);
             }
+            
+            http_response_code($httpCode);
 
-            // Return binary response
-            return response($content, $httpCode, $headers);
+            // Stream the file directly to output
+            fpassthru($handle);
+            fclose($handle);
+            
+            exit; // Important: exit after streaming
         } catch (\Exception $e) {
             \Log::error('Media proxy error', [
                 'url' => $url,

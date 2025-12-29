@@ -441,8 +441,7 @@ window.showInvitationDetails = function(invitationId) {
 							<audio 
 								controls 
 								preload="auto" 
-								style="width: 100%;"
-								crossorigin="anonymous">
+								style="width: 100%;">
 								<source src="${proxyUrl}" type="${mimeType}">
 								Your browser does not support the audio element.
 							</audio>

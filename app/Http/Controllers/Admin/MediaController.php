@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Spatie\MediaLibrary\MediaCollections\Models\Media as SpatieMedia;
 
 class MediaController extends Controller
@@ -353,6 +354,40 @@ class MediaController extends Controller
                     ->header('Access-Control-Allow-Headers', 'Range, Content-Type')
                     ->header('Access-Control-Max-Age', '86400');
             }
+            
+            // Handle HEAD request (browsers use this to check file availability)
+            if ($request->isMethod('HEAD')) {
+                $ch = curl_init($url);
+                curl_setopt($ch, CURLOPT_NOBODY, true);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+                curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $contentLength = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
+                curl_close($ch);
+                
+                $extension = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
+                $mimeTypes = [
+                    'mp3' => 'audio/mpeg',
+                    'wav' => 'audio/wav',
+                    'ogg' => 'audio/ogg',
+                    'oga' => 'audio/ogg',
+                    'mp4' => 'video/mp4',
+                    'webm' => 'video/webm',
+                ];
+                $contentType = $mimeTypes[$extension] ?? 'application/octet-stream';
+                
+                $response = response('', $httpCode);
+                $response->header('Content-Type', $contentType);
+                $response->header('Access-Control-Allow-Origin', '*');
+                $response->header('Accept-Ranges', 'bytes');
+                if ($contentLength > 0) {
+                    $response->header('Content-Length', $contentLength);
+                }
+                return $response;
+            }
 
             // Detect Content-Type from URL
             $extension = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
@@ -379,27 +414,50 @@ class MediaController extends Controller
             curl_setopt($ch, CURLOPT_TIMEOUT, 60);
             curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
             curl_setopt($ch, CURLOPT_HEADER, true);
+            curl_setopt($ch, CURLOPT_VERBOSE, false);
             
             // Forward Range header if present
+            $curlHeaders = [];
             if ($request->hasHeader('Range')) {
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Range: ' . $request->header('Range')
-                ]);
+                $curlHeaders[] = 'Range: ' . $request->header('Range');
+            }
+            if (!empty($curlHeaders)) {
+                curl_setopt($ch, CURLOPT_HTTPHEADER, $curlHeaders);
             }
             
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $contentLength = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
             $error = curl_error($ch);
+            $curlErrno = curl_errno($ch);
             curl_close($ch);
             
-            if ($response === false || !empty($error)) {
-                throw new \Exception('cURL error: ' . $error);
+            if ($response === false || !empty($error) || $curlErrno !== 0) {
+                \Log::error('cURL failed', [
+                    'url' => $url,
+                    'error' => $error,
+                    'errno' => $curlErrno,
+                    'response' => $response === false ? 'false' : 'not false'
+                ]);
+                throw new \Exception('cURL error: ' . ($error ?: 'Unknown error (code: ' . $curlErrno . ')'));
             }
             
             // Split headers and body
             $headers = substr($response, 0, $headerSize);
             $body = substr($response, $headerSize);
+            
+            // Verify we got actual content
+            if (strlen($body) < 10) {
+                \Log::error('Response body too small', [
+                    'url' => $url,
+                    'body_size' => strlen($body),
+                    'body_hex' => bin2hex($body),
+                    'headers' => $headers,
+                    'http_code' => $httpCode
+                ]);
+                throw new \Exception('Response body too small: ' . strlen($body) . ' bytes');
+            }
             
             // Parse response headers to get Content-Type if available
             $responseHeaders = [];
@@ -424,17 +482,28 @@ class MediaController extends Controller
                 'content_type' => $contentType,
                 'http_code' => $httpCode,
                 'body_size' => strlen($body),
-                'first_bytes' => bin2hex(substr($body, 0, 10))
+                'content_length_header' => $contentLength,
+                'first_bytes' => bin2hex(substr($body, 0, 20))
             ]);
 
-            // Return response with proper headers
-            return response($body, $httpCode)
-                ->header('Content-Type', $contentType)
-                ->header('Access-Control-Allow-Origin', '*')
-                ->header('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD')
-                ->header('Access-Control-Allow-Headers', 'Range, Content-Type')
-                ->header('Accept-Ranges', 'bytes')
-                ->header('Cache-Control', 'public, max-age=3600');
+            // Create response with binary data
+            // Use Response::make() with explicit binary handling
+            $responseObj = Response::create($body, $httpCode, [
+                'Content-Type' => $contentType,
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'GET, OPTIONS, HEAD',
+                'Access-Control-Allow-Headers' => 'Range, Content-Type',
+                'Accept-Ranges' => 'bytes',
+                'Cache-Control' => 'public, max-age=3600',
+            ]);
+            
+            // Set Content-Length
+            $responseObj->headers->set('Content-Length', strlen($body));
+            
+            // Ensure no encoding/chunking
+            $responseObj->headers->remove('Transfer-Encoding');
+            
+            return $responseObj;
                 
         } catch (\Exception $e) {
             \Log::error('Media proxy error', [

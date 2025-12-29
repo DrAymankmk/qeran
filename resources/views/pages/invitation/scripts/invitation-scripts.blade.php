@@ -435,7 +435,7 @@ window.showInvitationDetails = function(invitationId) {
 			if (data.design_audio) {
 				let audioUrl = data.design_audio;
 
-				// خلي الرابط كامل لو كان نسبي
+				// Make URL absolute if it's relative
 				if (!audioUrl.startsWith('http')) {
 					audioUrl = window.location.origin + (audioUrl
 						.startsWith('/') ? audioUrl :
@@ -443,13 +443,15 @@ window.showInvitationDetails = function(invitationId) {
 				}
 
 				designAudioEl.innerHTML = `
-        <audio controls style="width:100%;" src="${audioUrl}">
-            متصفحك لا يدعم هذا الصوت
-        </audio>
-        <a href="${audioUrl}" target="_blank" class="btn btn-sm btn-outline-primary mt-2" download>
-            تحميل الصوت
-        </a>
-    `;
+					<audio controls style="width:100%;" src="${audioUrl}" onerror="this.parentElement.innerHTML='<span class=\\'text-danger\\'>{{ __("admin.error-loading-audio") }}</span>'">
+						{{ __("admin.audio-format-not-supported") }}
+					</audio>
+					<div class="mt-2">
+						<a href="${audioUrl}" target="_blank" class="btn btn-sm btn-outline-primary" download>
+							<i class="mdi mdi-download"></i> {{__("admin.download-audio")}}
+						</a>
+					</div>
+				`;
 			} else {
 				designAudioEl.innerHTML =
 					'{{ __("admin.no-data-available") }}';

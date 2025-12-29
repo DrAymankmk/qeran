@@ -352,90 +352,104 @@ class MediaController extends Controller
                     ->header('Access-Control-Max-Age', '86400');
             }
 
-            // Prepare headers for the external request
-            $headers = [];
-            
-            // Handle Range requests for audio/video streaming
-            if ($request->hasHeader('Range')) {
-                $headers['Range'] = $request->header('Range');
-            }
-
-            // Use cURL directly for better binary data handling
+            // Prepare cURL options
             $ch = curl_init($url);
-            curl_setopt_array($ch, [
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_FOLLOWLOCATION => true,
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_SSL_VERIFYHOST => false,
-                CURLOPT_TIMEOUT => 60,
-                CURLOPT_CONNECTTIMEOUT => 30,
-                CURLOPT_BINARYTRANSFER => true, // Important for binary data
-                CURLOPT_HEADER => true, // Include headers in output
-            ]);
+            
+            // Set basic options
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_HEADER, true);
+            curl_setopt($ch, CURLOPT_NOBODY, false);
+            curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
 
-            // Add Range header if present
+            // Handle Range requests for audio/video streaming
+            $httpHeaders = [];
             if ($request->hasHeader('Range')) {
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Range: ' . $request->header('Range')
-                ]);
+                $httpHeaders[] = 'Range: ' . $request->header('Range');
+            }
+            
+            if (!empty($httpHeaders)) {
+                curl_setopt($ch, CURLOPT_HTTPHEADER, $httpHeaders);
             }
 
+            // Execute request
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
             $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
             $error = curl_error($ch);
+            $errorNo = curl_errno($ch);
             curl_close($ch);
 
-            if ($error) {
-                throw new \Exception('cURL error: ' . $error);
-            }
-
-            if ($httpCode < 200 || $httpCode >= 300) {
-                if ($httpCode !== 206) { // 206 is OK for partial content
-                    throw new \Exception('Failed to fetch file: HTTP ' . $httpCode);
-                }
+            if ($errorNo !== 0) {
+                throw new \Exception('cURL error (' . $errorNo . '): ' . $error);
             }
 
             if ($response === false) {
                 throw new \Exception('cURL returned false - no response received');
             }
 
-            // Parse headers
-            $headers = substr($response, 0, $headerSize);
-            $content = substr($response, $headerSize);
-            
-            if (empty($content) && $httpCode === 200) {
-                \Log::warning('Media proxy empty content', ['url' => $url, 'http_code' => $httpCode]);
+            if ($httpCode < 200 || ($httpCode >= 300 && $httpCode !== 206)) {
+                throw new \Exception('Failed to fetch file: HTTP ' . $httpCode);
+            }
+
+            // Separate headers and body - be very careful with binary data
+            if ($headerSize > 0 && $headerSize < strlen($response)) {
+                $headers = substr($response, 0, $headerSize);
+                $content = substr($response, $headerSize);
+            } else {
+                // Fallback if header size is wrong
+                $headerEnd = strpos($response, "\r\n\r\n");
+                if ($headerEnd !== false) {
+                    $headers = substr($response, 0, $headerEnd);
+                    $content = substr($response, $headerEnd + 4); // +4 for \r\n\r\n
+                } else {
+                    throw new \Exception('Could not parse response headers');
+                }
             }
             
-            // Extract headers
-            $headerLines = explode("\r\n", $headers);
+            \Log::debug('Media proxy response info', [
+                'response_length' => strlen($response),
+                'header_size' => $headerSize,
+                'content_length' => strlen($content),
+                'first_bytes' => bin2hex(substr($content, 0, 10)),
+            ]);
+            
+            // Parse response headers
             $responseHeaders = [];
+            $headerLines = explode("\r\n", trim($headers));
             foreach ($headerLines as $line) {
+                if (empty($line) || strpos($line, 'HTTP/') === 0) {
+                    continue; // Skip status line and empty lines
+                }
                 if (strpos($line, ':') !== false) {
                     list($key, $value) = explode(':', $line, 2);
-                    $responseHeaders[trim($key)] = trim($value);
+                    $responseHeaders[strtolower(trim($key))] = trim($value);
                 }
             }
 
-            // Get important headers
-            $contentLength = $responseHeaders['Content-Length'] ?? null;
-            $acceptRanges = $responseHeaders['Accept-Ranges'] ?? 'bytes';
-            $contentRange = $responseHeaders['Content-Range'] ?? null;
+            // Get important headers (case-insensitive)
+            $contentLength = $responseHeaders['content-length'] ?? null;
+            $acceptRanges = $responseHeaders['accept-ranges'] ?? 'bytes';
+            $contentRange = $responseHeaders['content-range'] ?? null;
             
-            // Override Content-Type from headers if available
-            if (isset($responseHeaders['Content-Type'])) {
-                $contentType = $responseHeaders['Content-Type'];
+            // Use Content-Type from response headers if available
+            if (isset($responseHeaders['content-type'])) {
+                $contentType = $responseHeaders['content-type'];
             }
             
-            // If Content-Type is not set, try to detect from URL
+            // If Content-Type is not set, detect from URL extension
             if (!$contentType) {
-                $extension = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION);
+                $extension = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
                 $mimeTypes = [
                     'mp3' => 'audio/mpeg',
                     'wav' => 'audio/wav',
                     'ogg' => 'audio/ogg',
+                    'oga' => 'audio/ogg',
                     'mp4' => 'video/mp4',
                     'webm' => 'video/webm',
                     'jpg' => 'image/jpeg',
@@ -443,29 +457,29 @@ class MediaController extends Controller
                     'png' => 'image/png',
                     'gif' => 'image/gif',
                 ];
-                $contentType = $mimeTypes[strtolower($extension)] ?? 'application/octet-stream';
+                $contentType = $mimeTypes[$extension] ?? 'application/octet-stream';
             }
 
-            // Build response
-            $responseBuilder = response($content, $httpCode)
-                ->header('Content-Type', $contentType)
-                ->header('Access-Control-Allow-Origin', '*')
-                ->header('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD')
-                ->header('Access-Control-Allow-Headers', 'Range, Content-Type')
-                ->header('Accept-Ranges', $acceptRanges)
-                ->header('Cache-Control', 'public, max-age=3600');
+            // Use StreamedResponse to handle binary data properly
+            $headers = [
+                'Content-Type' => $contentType,
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Methods' => 'GET, OPTIONS, HEAD',
+                'Access-Control-Allow-Headers' => 'Range, Content-Type',
+                'Accept-Ranges' => $acceptRanges,
+                'Cache-Control' => 'public, max-age=3600',
+            ];
 
-            // Add Content-Length if available
+            // Add Content-Length
             if ($contentLength) {
-                $responseBuilder->header('Content-Length', $contentLength);
-            } elseif (!$contentRange) {
-                // Only set Content-Length if not a partial response
-                $responseBuilder->header('Content-Length', strlen($content));
+                $headers['Content-Length'] = $contentLength;
+            } elseif (!$contentRange && !empty($content)) {
+                $headers['Content-Length'] = strlen($content);
             }
 
-            // Add Content-Range if it's a partial response (206)
+            // Add Content-Range for partial content (206)
             if ($contentRange) {
-                $responseBuilder->header('Content-Range', $contentRange);
+                $headers['Content-Range'] = $contentRange;
             }
 
             \Log::info('Media proxy success', [
@@ -473,17 +487,11 @@ class MediaController extends Controller
                 'content_type' => $contentType,
                 'status' => $httpCode,
                 'content_length' => strlen($content),
+                'has_content' => !empty($content),
             ]);
 
-            return $responseBuilder;
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            \Log::error('Media proxy connection error', [
-                'url' => $url,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json(['error' => 'Connection failed: ' . $e->getMessage()], 500)
-                ->header('Access-Control-Allow-Origin', '*');
+            // Return response with binary content - use make() to ensure proper binary handling
+            return \Response::make($content, $httpCode, $headers);
         } catch (\Exception $e) {
             \Log::error('Media proxy error', [
                 'url' => $url,

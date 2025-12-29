@@ -444,44 +444,14 @@ window.showInvitationDetails = function(invitationId) {
 						audioUrl = window.location.origin + audioUrl;
 					}
 
-					// Get file extension to determine MIME type
-					const fileExt = audioUrl.split('.').pop()
-						.toLowerCase();
-					let mimeType = 'audio/mpeg'; // default
-					if (fileExt === 'mp3') {
-						mimeType = 'audio/mpeg';
-					} else if (fileExt === 'wav') {
-						mimeType = 'audio/wav';
-					} else if (fileExt === 'ogg' || fileExt === 'oga') {
-						mimeType = 'audio/ogg';
-					} else if (fileExt === 'm4a') {
-						mimeType = 'audio/mp4';
-					} else if (fileExt === 'webm') {
-						mimeType = 'audio/webm';
-					}
-
-					// Create audio element with multiple source types for better compatibility
+					// Create audio element with the specified format
 					designAudioEl.innerHTML = `
-						<audio controls style="width:100%;" preload="metadata" onerror="this.parentElement.innerHTML='<span class=\\'text-danger\\'>{{ __("admin.error-loading-audio") }}</span>'">
-							<source src="${audioUrl}" type="${mimeType}">
+						<audio controls>
+							<source src="${audioUrl}" type="audio/ogg">
 							<source src="${audioUrl}" type="audio/mpeg">
-							<source src="${audioUrl}" type="audio/wav">
-							{{ __("admin.audio-format-not-supported") }}
+							Your browser does not support the audio element.
 						</audio>
-						<div class="mt-2">
-							<a href="${audioUrl}" target="_blank" class="btn btn-sm btn-outline-primary" download>
-								<i class="mdi mdi-download"></i> {{__("admin.download-audio")}}
-							</a>
-						</div>
 					`;
-
-					// Force audio element to reload after being inserted into DOM
-					setTimeout(function() {
-						const audio = designAudioEl.querySelector('audio');
-						if (audio) {
-							audio.load();
-						}
-					}, 100);
 				} else {
 					designAudioEl.innerHTML =
 						'{{ __("admin.no-data-available") }}';

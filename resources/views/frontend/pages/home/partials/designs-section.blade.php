@@ -75,7 +75,9 @@ $designsSection = $homePage->activeSections->where('name', 'designs')->first();
 			@endforeach
 		</ul>
 
-		<div class="text-center"><a href="{{ route('gallery') }}"
+		<div class="text-center"><span class="b-isotope__info">
+			{{__('frontend.see_our_full_gallery_of_designs')}}
+		</span><a href="{{ route('gallery') }}"
 				class="b-isotope__btn btn btn-primary">{{ __('frontend.visit_full_gallery') }}
 			</a>
 		</div>

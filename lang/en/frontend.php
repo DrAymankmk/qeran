@@ -41,4 +41,5 @@ return [
     'keep_in_touch'=>'Keep in touch',
     'visit_full_gallery'=>'Visit full gallery',
     'video-not-supported'=>'Your browser does not support the video tag.',
+    'see_our_full_gallery_of_designs'=>'See Our Full Gallery of Designs',
 ];

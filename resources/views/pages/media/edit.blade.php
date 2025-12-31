@@ -7,7 +7,7 @@
 <div class="row">
 	<div class="col-12">
 		<div class="page-title-box d-sm-flex align-items-center justify-content-between">
-			<h4 class="mb-sm-0 font-size-18">Edit Media</h4>
+			<h4 class="mb-sm-0 font-size-18">{{__('admin.edit-media')}}</h4>
 
 			<div class="page-title-right">
 				<ol class="breadcrumb m-0">
@@ -15,8 +15,9 @@
 							href="{{route('admin.dashboard')}}">{{__('admin.Dashboard')}}</a>
 					</li>
 					<li class="breadcrumb-item"><a
-							href="{{route('media.index')}}">Media</a></li>
-					<li class="breadcrumb-item active">Edit</li>
+							href="{{route('media.index')}}">{{__('admin.media')}}</a>
+					</li>
+					<li class="breadcrumb-item active">{{__('admin.edit-media')}}</li>
 				</ol>
 			</div>
 
@@ -54,9 +55,7 @@
 								<div class="row">
 									<div class="col-sm-12 mb-3">
 										<label
-											class="form-label">Current
-											File
-											Preview</label>
+											class="form-label">{{__('admin.current-file-preview')}}</label>
 										<div>
 											@if($medium->file_type
 											== 1)
@@ -72,11 +71,9 @@
 												id="currentPreview">
 												<i
 													class="mdi mdi-video font-size-24"></i>
-												Video
-												File
+												{{__('admin.video')}}
 												<br><a href="{{$medium->get_path()}}"
-													target="_blank">View
-													Video</a>
+													target="_blank">{{__('admin.view-video')}}</a>
 											</div>
 											@elseif($medium->file_type
 											== 3)
@@ -85,22 +82,19 @@
 												id="currentPreview">
 												<i
 													class="mdi mdi-music font-size-24"></i>
-												Audio
-												File
+												{{__('admin.audio')}}
 												<br><a href="{{$medium->get_path()}}"
-													target="_blank">Listen
-													to
-													Audio</a>
+													target="_blank">{{__('admin.listen-to-audio')}}</a>
 											</div>
 											@else
 											<div class="alert alert-secondary"
 												id="currentPreview">
 												<i
 													class="mdi mdi-file font-size-24"></i>
-												File
+												{{ __('admin.file') }}
 												<br><a href="{{$medium->get_path()}}"
-													target="_blank">View
-													File</a>
+													target="_blank">{{__('admin.view-file')}}</a>
+												</a>
 											</div>
 											@endif
 										</div>
@@ -108,32 +102,15 @@
 									<div class="col-sm-12">
 										<div class="mb-3">
 											<label for="file"
-												class="form-label">Replace
-												File
-												(Optional)</label>
+												class="form-label">
+												{{__('admin.replace-file')}}
+												({{__('admin.optional')}})</label>
 											<input type="file"
 												name="file"
 												accept="image/*,video/*,audio/*"
 												class="form-control"
 												id="file">
-											<small
-												class="form-text text-muted">Upload
-												a
-												new
-												file
-												to
-												replace
-												the
-												current
-												one.
-												Leave
-												empty
-												to
-												keep
-												current
-												file.
-												Max
-												10MB</small>
+
 											<div id="filePreview"
 												class="mt-3">
 											</div>
@@ -142,8 +119,7 @@
 									<div class="col-sm-6">
 										<div class="mb-3">
 											<label for="bucket_name"
-												class="form-label">Folder
-												Name
+												class="form-label">{{__('admin.folder-name')}}
 												<span
 													class="text-danger">*</span></label>
 											<input type="text"
@@ -158,23 +134,21 @@
 									<div class="col-sm-6">
 										<div class="mb-3">
 											<label for="file_key"
-												class="form-label">File
-												Key</label>
+												class="form-label">{{__('admin.file-key')}}</label>
 											<select id="file_key"
 												class="form-select"
 												name="file_key">
 												<option value="2"
 													{{old('file_key', $medium->file_key) == 2 ? 'selected' : ''}}>
-													Not
-													Main
+													{{ __('admin.not-main') }}
 												</option>
 												<option value="1"
 													{{old('file_key', $medium->file_key) == 1 ? 'selected' : ''}}>
-													Main
+													{{ __('admin.main') }}
 												</option>
 												<option value="3"
 													{{old('file_key', $medium->file_key) == 3 ? 'selected' : ''}}>
-													Receipt
+													{{ __('admin.receipt') }}
 												</option>
 											</select>
 										</div>
@@ -182,73 +156,57 @@
 									<div class="col-sm-12">
 										<div class="mb-3">
 											<label for="file_name"
-												class="form-label">File
-												Name</label>
+												class="form-label">{{ __('admin.file-name') }}</label>
 											<input type="text"
 												name="file_name"
 												value="{{old('file_name', $medium->original_name)}}"
 												class="form-control"
 												id="file_name"
-												placeholder="File name">
-											<small
-												class="form-text text-muted">Custom
-												name
-												for
-												the
-												file.</small>
+												placeholder="{{ __('admin.file-name-placeholder') }}">
+
 										</div>
 									</div>
 									<div class="col-sm-12">
 										<div class="mb-3">
 											<label for="original_name"
-												class="form-label">Original
-												Name
-												(Legacy)</label>
+												class="form-label">
+												{{ __('admin.original-name') }}
+											</label>
 											<input type="text"
 												name="original_name"
 												value="{{old('original_name', $medium->original_name)}}"
 												class="form-control"
 												id="original_name"
-												placeholder="Original file name (for backward compatibility)">
-											<small
-												class="form-text text-muted">This
-												field
-												is
-												kept
-												for
-												backward
-												compatibility.
-												Use
-												"File
-												Name"
-												above
-												instead.</small>
+												placeholder="{{ __('admin.original-name-placeholder') }}">
+
 										</div>
 									</div>
 									<div class="col-sm-12">
 										<div class="mb-3">
 											<label
-												class="form-label">File
-												Information</label>
+												class="form-label">{{ __('admin.file-information') }}</label>
 											<div
 												class="alert alert-light">
-												<strong>Type:</strong>
+												<strong>{{ __('admin.type') }}:</strong>
 												@if($medium->file_type
 												==
 												1)
-												Image
+												{{ __('admin.image') }}
 												@elseif($medium->file_type
 												==
 												2)
-												Video
+												{{ __('admin.video') }}
 												@elseif($medium->file_type
 												==
 												3)
-												Audio
+												{{
+												__('admin.audio')
+												}}
+
 												@elseif($medium->file_type
 												==
 												4)
-												GIF
+												{{ __('other') }}
 												@else
 												Unknown
 												@endif

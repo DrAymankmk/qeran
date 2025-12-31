@@ -7,7 +7,7 @@ $servicesSection = $servicesPage->activeSections->where('name', 'services')->fir
 			<div class="row">
 				<div class="col-xs-12">
 					<div class="ui-decor-2 ui-decor-2_vert bg-primary"></div>
-					<h1 class="b-title-page__title">{{ $servicesSection->title }}</h1>
+					<h1 class="b-title-page__title">{{ __('frontend.services') }}</h1>
 					<ol class="breadcrumb">
 						<li><a href="{{ route('home') }}">{{ __('frontend.home') }}</a>
 						</li>
@@ -35,7 +35,8 @@ $servicesSection = $servicesPage->activeSections->where('name', 'services')->fir
 			</div>
 		</div>
 
-		<div class="row {{ app()->getLocale() == 'ar' ? 'row-rtl' : '' }}">
+		<div class="row {{ app()->getLocale() == 'ar' ? 'row-rtl' : '' }}"
+		style="display: flex; flex-wrap: wrap;">
 			@foreach($servicesSection->activeItems as $item)
 
 			<div class="col-md-4 col-sm-6">

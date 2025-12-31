@@ -39,4 +39,5 @@ return[
     'keep_in_touch'=>'اتصل بنا',
     'visit_full_gallery'=>'زيارة المعرض الكامل',
     'video-not-supported'=>'متصفحك لا يدعم علامة الفيديو.',
+    'see_our_full_gallery_of_designs' => 'شاهد كل التصاميم الخاصه بنا',
 ];

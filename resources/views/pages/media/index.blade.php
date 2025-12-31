@@ -14,14 +14,15 @@
 <div class="row">
 	<div class="col-12">
 		<div class="page-title-box d-sm-flex align-items-center justify-content-between">
-			<h4 class="mb-sm-0 font-size-18">Media Library</h4>
+			<h4 class="mb-sm-0 font-size-18">{{ __('admin.media-library') }}</h4>
 
 			<div class="page-title-right">
 				<ol class="breadcrumb m-0">
 					<li class="breadcrumb-item"><a
 							href="{{route('admin.dashboard')}}">{{__('admin.Dashboard')}}</a>
 					</li>
-					<li class="breadcrumb-item active">Media</li>
+					<li class="breadcrumb-item active">{{ __('admin.media') }}
+					</li>
 				</ol>
 			</div>
 
@@ -40,7 +41,7 @@
 							<a href="{{route('media.create')}}"
 								class="btn btn-primary btn-rounded waves-effect waves-light mb-2 me-2"><i
 									class="mdi mdi-plus me-1"></i>
-								Upload New Media </a>
+								{{ __('admin.upload-new-media') }} </a>
 						</div>
 					</div>
 				</div>
@@ -51,24 +52,30 @@
 						<div class="col-md-3">
 							<input type="text" name="search"
 								class="form-control"
-								placeholder="Search by name..."
+								placeholder="{{ __('admin.search-by-name') }}..."
 								value="{{request('search')}}">
 						</div>
 						<div class="col-md-3">
 							<select name="file_type" class="form-select">
-								<option value="">All Types</option>
+								<option value="">
+									{{ __('admin.all-types') }}
+								</option>
 								<option value="1"
 									{{request('file_type') == '1' ? 'selected' : ''}}>
-									Image</option>
+									{{ __('admin.image') }}
+								</option>
 								<option value="2"
 									{{request('file_type') == '2' ? 'selected' : ''}}>
-									Video</option>
+									{{ __('admin.video') }}
+								</option>
 								<option value="3"
 									{{request('file_type') == '3' ? 'selected' : ''}}>
-									Audio</option>
+									{{ __('admin.audio') }}
+								</option>
 								<option value="4"
 									{{request('file_type') == '4' ? 'selected' : ''}}>
-									GIF</option>
+									{{ __('admin.gif') }}
+								</option>
 							</select>
 						</div>
 						<div class="col-md-3">
@@ -84,9 +91,9 @@
 						</div>
 						<div class="col-md-3">
 							<button type="submit"
-								class="btn btn-primary">Filter</button>
+								class="btn btn-primary">{{ __('admin.filter') }}</button>
 							<a href="{{route('media.index')}}"
-								class="btn btn-secondary">Reset</a>
+								class="btn btn-secondary">{{ __('admin.reset') }}</a>
 						</div>
 					</div>
 				</form>
@@ -97,12 +104,20 @@
 						<thead>
 							<tr class="tr-colored">
 								<th scope="col">{{__('admin.id')}}</th>
-								<th scope="col">Preview</th>
-								<th scope="col">Original Name</th>
-								<th scope="col">Type</th>
-								<th scope="col">Folder</th>
-								<th scope="col">Size</th>
-								<th scope="col">Related To</th>
+								<th scope="col">{{__('admin.preview')}}
+								</th>
+								<th scope="col">
+									{{__('admin.original-name')}}
+								</th>
+								<th scope="col">{{__('admin.type')}}
+								</th>
+								<th scope="col">{{__('admin.folder')}}
+								</th>
+								<th scope="col">{{__('admin.size')}}
+								</th>
+								<th scope="col">
+									{{__('admin.related-to')}}
+								</th>
 								<th scope="col">
 									{{__('admin.created_at')}}
 								</th>
@@ -187,33 +202,33 @@
 									@if($isHubFile)
 									@if($item->file_type == 1)
 									<span
-										class="badge bg-info">Image</span>
+										class="badge bg-info">{{__('admin.image')}}</span>
 									@elseif($item->file_type == 2)
 									<span
-										class="badge bg-danger">Video</span>
+										class="badge bg-danger">{{__('admin.video')}}</span>
 									@elseif($item->file_type == 3)
 									<span
-										class="badge bg-primary">Audio</span>
+										class="badge bg-primary">{{__('admin.audio')}}</span>
 									@elseif($item->file_type == 4)
 									<span
-										class="badge bg-success">GIF</span>
+										class="badge bg-success">{{__('admin.gif')}}</span>
 									@else
 									<span
-										class="badge bg-secondary">Unknown</span>
+										class="badge bg-secondary">{{__('admin.unknown')}}</span>
 									@endif
 									@elseif($isSpatie)
 									@if(str_starts_with($item->mime_type,
 									'image/'))
 									<span
-										class="badge bg-info">Image</span>
+										class="badge bg-info">{{__('admin.image')}}</span>
 									@elseif(str_starts_with($item->mime_type,
 									'video/'))
 									<span
-										class="badge bg-danger">Video</span>
+										class="badge bg-danger">{{__('admin.video')}}</span>
 									@elseif(str_starts_with($item->mime_type,
 									'audio/'))
 									<span
-										class="badge bg-primary">Audio</span>
+										class="badge bg-primary">{{__('admin.audio')}}</span>
 									@else
 									<span
 										class="badge bg-secondary">{{$item->mime_type ?? 'Unknown'}}</span>

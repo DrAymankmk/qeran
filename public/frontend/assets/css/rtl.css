@@ -969,7 +969,7 @@ input:-ms-input-placeholder {
 }
 
 .section-texture {
-    background-image: url(../media/general/texture-1.png);
+    background-image: url(../media/contact.jpg);
 }
 
 .section-texture_green {
@@ -3121,7 +3121,7 @@ input:-ms-input-placeholder {
     padding-top: 100px;
     padding-bottom: 140px;
     color: #fff;
-    background-image: url("../media/general/bg/4.jpg");
+    background-image: url("../media/services.jpg");
 }
 
 .b-services .ui-title-block {
@@ -3156,7 +3156,11 @@ input:-ms-input-placeholder {
 
 .b-taglines {
     padding: 63px 0 75px;
-    background-image: url(../media/general/bg/3.jpg);
+    background-image: url(../media/info.jpg);
+}
+
+.b-get-in-touch{
+	background-image: url(../media/contact.jpg);
 }
 
 .b-taglines__inner {

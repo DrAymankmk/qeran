@@ -14,7 +14,7 @@ class InvitationsController extends Controller
 {
 
 
-    public function show($invitation_code,$user_id , $inserted_by)
+    public function show($invitation_code,$user_id , $inserted_by = null, $template = 1)
     {
         $invitation=Invitation::where('code',$invitation_code)->first();
 
@@ -50,6 +50,12 @@ class InvitationsController extends Controller
             $user = $invitation->users()->where('user_id', $user_id)->first();
         }
         
+        // Validate template number (default to 1 if invalid)
+        $template = (int) $template;
+        if ($template < 1 || $template > 7) {
+            $template = 1;
+        }
+        
         // Pass routes for the accept/decline actions
         $routes = [
             'accept' => route('user.invitation.accept', ['invitation_code' => $invitation->code, 'user_id' => $user_id]),
@@ -64,7 +70,7 @@ class InvitationsController extends Controller
             $initialView = 'decline';
         }
         
-        return view('invitation', compact('invitation', 'user', 'routes', 'category', 'host_name', 'initialView'));
+        return view('invitation', compact('invitation', 'user', 'routes', 'category', 'host_name', 'initialView', 'template'));
     }
 
     public function accept($invitation_code, $user_id)

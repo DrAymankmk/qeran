@@ -66,12 +66,12 @@ use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 Route::get('/', function () {
     // Check session for locale preference (set by LaravelLocalization middleware)
     $locale = session('locale');
-    
+
     // If not in session, check cookie
     if (!$locale) {
         $locale = request()->cookie('locale');
     }
-    
+
     // If still not found, try LaravelLocalization detection (browser preference)
     if (!$locale) {
         try {
@@ -82,18 +82,18 @@ Route::get('/', function () {
             $locale = null;
         }
     }
-    
+
     // If still no locale found, use default from config
     if (!$locale) {
         $locale = config('app.locale', 'ar');
     }
-    
+
     // Validate locale is supported
     $supportedLocales = array_keys(LaravelLocalization::getSupportedLocales());
     if (!in_array($locale, $supportedLocales)) {
         $locale = config('app.locale', 'ar');
     }
-    
+
     return redirect()->to("/{$locale}/home");
 })->name('root');
 
@@ -179,7 +179,7 @@ Route::get('/email', function () {
 });
 // Route::resource('category', CategoryController::class);
 
-Route::get('/invitation/{invitation_code}/{user_id}/{inserted_by?}', [WebsiteInvitationController::class, 'show'])->name('user.invitation.show');
+Route::get('/invitation/{invitation_code}/{user_id}/{inserted_by?}/{template?}', [WebsiteInvitationController::class, 'show'])->name('user.invitation.show');
 Route::post('/invitation/{invitation_code}/{user_id}/accept', [WebsiteInvitationController::class, 'accept'])->name('user.invitation.accept');
 Route::post('/invitation/{invitation_code}/{user_id}/decline', [WebsiteInvitationController::class, 'decline'])->name('user.invitation.decline');
 Route::get('/delete-account-instruction', function () {

@@ -88,7 +88,7 @@
 		0 15px 40px rgba(0, 0, 0, 0.4),
 		inset 0 0 100px rgba(139, 90, 43, 0.1);
 	clip-path: inset(0);
-	/* overflow-y: auto; */
+	overflow-y: auto;
 	transition: clip-path 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -374,7 +374,7 @@
 				</div>
 			</div>
 		</div>
-		<div class="instruction">اضغط   لفتح المخطوطة</div>
+		<div class="instruction">اضغط  لفتح المخطوطة</div>
 	</div>
 </div>
 

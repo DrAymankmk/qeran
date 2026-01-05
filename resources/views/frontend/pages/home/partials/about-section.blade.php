@@ -1,3 +1,76 @@
+@push('styles')
+<style>
+/* About Section Responsive */
+@media (max-width: 991px) {
+	.section-type-1 .col-md-4,
+	.section-type-1 .col-md-8 {
+		margin-bottom: 30px;
+	}
+	
+	.section-type-1__inner {
+		padding: 20px 0;
+	}
+}
+
+@media (max-width: 767px) {
+	.section-type-1 {
+		padding: 30px 0;
+	}
+	
+	.section-type-1 .col-md-4 {
+		margin-bottom: 25px;
+	}
+	
+	.section-type-1 .col-md-8 {
+		margin-bottom: 0;
+	}
+	
+	.section-type-1__inner {
+		padding: 15px 0;
+		text-align: center;
+	}
+	
+	.section-type-1 img,
+	.section-type-1 video {
+		width: 100%;
+		height: auto;
+		margin-bottom: 20px;
+	}
+	
+	.ui-title-block {
+		font-size: 1.75rem !important;
+		margin-bottom: 15px;
+	}
+	
+	.ui-subtitle-block {
+		font-size: 1rem !important;
+		margin-bottom: 20px;
+	}
+	
+	.btn {
+		margin: 5px;
+		display: inline-block;
+		width: auto;
+		min-width: 150px;
+	}
+}
+
+@media (max-width: 480px) {
+	.section-type-1 {
+		padding: 25px 0;
+	}
+	
+	.ui-title-block {
+		font-size: 1.5rem !important;
+	}
+	
+	.btn {
+		width: 100%;
+		margin: 5px 0;
+	}
+}
+</style>
+@endpush
 <section class="section-type-1">
 	<div class="label-vertical">
 		<div class="container">

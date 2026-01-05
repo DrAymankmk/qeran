@@ -1,5 +1,91 @@
 @extends('frontend.layouts.app')
 
+@push('styles')
+@include('frontend.partials.responsive-title-page')
+<style>
+/* FAQ Page Responsive Styles */
+@media (max-width: 767px) {
+	.b-title-page {
+		padding: 40px 0 !important;
+		min-height: auto !important;
+	}
+	
+	.b-title-page__title {
+		font-size: 1.75rem !important;
+	}
+	
+	.section-default {
+		padding: 30px 0 !important;
+	}
+	
+	.b-post-1 {
+		margin-bottom: 30px;
+		padding-bottom: 25px;
+		border-bottom: 1px solid #e9ecef;
+	}
+	
+	.b-post-1:last-child {
+		border-bottom: none;
+	}
+	
+	.entry-media {
+		margin-bottom: 20px;
+	}
+	
+	.entry-media img,
+	.entry-media video {
+		width: 100%;
+		height: auto;
+		border-radius: 8px;
+	}
+	
+	.entry-title {
+		font-size: 1.25rem !important;
+		margin-bottom: 15px;
+	}
+	
+	.entry-content {
+		font-size: 0.95rem;
+		line-height: 1.7;
+	}
+	
+	.entry-content p {
+		margin-bottom: 15px;
+	}
+	
+	.l-main-content {
+		padding: 0 10px;
+	}
+}
+
+@media (max-width: 480px) {
+	.b-title-page__title {
+		font-size: 1.5rem !important;
+	}
+	
+	.ui-title-block {
+		font-size: 1.5rem !important;
+	}
+	
+	.entry-title {
+		font-size: 1.1rem !important;
+	}
+	
+	.entry-content {
+		font-size: 0.9rem;
+	}
+	
+	.b-post-1 {
+		margin-bottom: 25px;
+		padding-bottom: 20px;
+	}
+	
+	.entry-media {
+		margin-bottom: 15px;
+	}
+}
+</style>
+@endpush
 
 @section('content')
 @php

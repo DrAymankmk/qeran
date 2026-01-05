@@ -1,7 +1,64 @@
 @php
 $packagesSection = $servicesPage->activeSections->where('name', 'packages')->first();
 @endphp
+@push('styles')
+<style>
+/* Packages Section Responsive */
+@media (max-width: 991px) {
+	.b-pricing {
+		margin-bottom: 30px;
+	}
+}
 
+@media (max-width: 767px) {
+	.b-pricing {
+		margin-bottom: 30px;
+		padding: 25px 20px !important;
+	}
+	
+	.b-pricing__title {
+		font-size: 1.5rem;
+		margin-bottom: 10px;
+	}
+	
+	.b-pricing__subtitle {
+		font-size: 0.95rem;
+		margin-bottom: 15px;
+	}
+	
+	.b-pricing-price {
+		margin: 20px 0;
+	}
+	
+	.b-pricing-price__title {
+		font-size: 0.9rem;
+	}
+	
+	.b-pricing-price__number {
+		font-size: 2.5rem;
+	}
+	
+	.b-pricing__btn {
+		width: 100%;
+		margin-top: 20px;
+	}
+}
+
+@media (max-width: 480px) {
+	.b-pricing {
+		padding: 20px 15px !important;
+	}
+	
+	.b-pricing__title {
+		font-size: 1.25rem;
+	}
+	
+	.b-pricing-price__number {
+		font-size: 2rem;
+	}
+}
+</style>
+@endpush
 <section class="section-default">
 	<div class="container">
 		<div class="row">

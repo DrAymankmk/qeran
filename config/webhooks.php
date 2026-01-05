@@ -28,11 +28,22 @@ return [
         
         // Allowed IP addresses for webhook requests
         'allowed_ips' => [
-            '185.37.37.37', // UltraMessage - update with actual IPs
+            // Twilio IP ranges (update from Twilio documentation)
+            '54.172.60.0',
+            '54.244.51.0',
+            '54.171.127.192',
+            '185.37.37.37', // Legacy UltraMessage IP
             '127.0.0.1',    // Local development
         ],
         
-        // UltraMessage specific settings
+        // Twilio specific settings
+        'twilio' => [
+            'account_sid' => env('TWILIO_ACCOUNT_SID'),
+            'auth_token' => env('TWILIO_AUTH_TOKEN'),
+            'whatsapp_from' => env('TWILIO_WHATSAPP_FROM'),
+        ],
+        
+        // Legacy UltraMessage specific settings (for backward compatibility)
         'ultramsg' => [
             'instance_id' => env('ULTRAMSG_INSTANCE_ID', 'instance78179'),
             'token' => env('ULTRAMSG_TOKEN', 'mrmm9ckrsa8ojdef'),

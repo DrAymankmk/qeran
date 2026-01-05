@@ -81,9 +81,67 @@ $servicesSection = $servicesPage->activeSections->where('name', 'services')->fir
 	</div>
 </section>
 
-@if(app()->getLocale() == 'ar')
 @push('styles')
 <style>
+/* Features Section Responsive */
+@media (max-width: 991px) {
+	.section-advantages .col-md-4,
+	.section-advantages .col-sm-6 {
+		margin-bottom: 30px;
+	}
+}
+
+@media (max-width: 767px) {
+	.section-advantages {
+		padding: 30px 0;
+	}
+	
+	.section-advantages .col-md-4,
+	.section-advantages .col-sm-6 {
+		width: 100%;
+		margin-bottom: 25px;
+	}
+	
+	.b-advantages {
+		padding: 20px 15px;
+		text-align: center;
+	}
+	
+	.b-advantages__icon {
+		font-size: 2.5rem;
+		margin-bottom: 15px;
+	}
+	
+	.b-advantages__title {
+		font-size: 1.25rem;
+		margin-bottom: 10px;
+	}
+	
+	.b-advantages__info {
+		font-size: 0.95rem;
+		line-height: 1.7;
+	}
+}
+
+@media (max-width: 480px) {
+	.b-advantages {
+		padding: 15px 10px;
+	}
+	
+	.b-advantages__icon {
+		font-size: 2rem;
+	}
+	
+	.b-advantages__title {
+		font-size: 1.1rem;
+	}
+	
+	.b-advantages__info {
+		font-size: 0.9rem;
+	}
+}
+
+@if(app()->getLocale() == 'ar')
 .section-advantages .row-rtl {
 	display: flex;
 	flex-direction: row;
@@ -93,6 +151,6 @@ $servicesSection = $servicesPage->activeSections->where('name', 'services')->fir
 .section-advantages .row-rtl>[class*="col-"] {
 	float: none;
 }
+@endif
 </style>
 @endpush
-@endif

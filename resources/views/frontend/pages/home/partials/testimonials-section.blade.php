@@ -1,3 +1,89 @@
+@push('styles')
+<style>
+/* Testimonials Section Responsive */
+@media (max-width: 767px) {
+	.section-default {
+		padding: 30px 0 !important;
+	}
+	
+	.b-blockquote-3 {
+		padding: 25px 20px;
+		margin: 0 15px;
+	}
+	
+	.b-blockquote-3 p {
+		font-size: 1rem;
+		line-height: 1.7;
+		margin-bottom: 20px;
+	}
+	
+	.b-blockquote__footer {
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+	}
+	
+	.b-blockquote__face {
+		margin-bottom: 15px;
+		margin-right: 0;
+	}
+	
+	.b-blockquote__face img {
+		width: 80px;
+		height: 80px;
+	}
+	
+	.b-blockquote__cite {
+		text-align: center;
+	}
+	
+	.b-blockquote__author {
+		font-size: 1.1rem;
+		display: block;
+		margin-bottom: 5px;
+	}
+	
+	.b-blockquote__category {
+		font-size: 0.9rem;
+		display: block;
+	}
+	
+	.testimonial-rating {
+		justify-content: center;
+		margin-top: 10px !important;
+	}
+	
+	.col-sm-11 {
+		width: 100%;
+		margin-left: 0;
+	}
+}
+
+@media (max-width: 480px) {
+	.b-blockquote-3 {
+		padding: 20px 15px;
+		margin: 0 10px;
+	}
+	
+	.b-blockquote-3 p {
+		font-size: 0.95rem;
+	}
+	
+	.b-blockquote__face img {
+		width: 60px;
+		height: 60px;
+	}
+	
+	.b-blockquote__author {
+		font-size: 1rem;
+	}
+	
+	.b-blockquote__category {
+		font-size: 0.85rem;
+	}
+}
+</style>
+@endpush
 @if($testimonials && $testimonials->count() > 0)
 <div class="section-default">
 	<div class="container">

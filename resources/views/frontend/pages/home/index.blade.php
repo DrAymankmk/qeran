@@ -1,6 +1,7 @@
 @extends('frontend.layouts.app')
 
 @push('styles')
+@include('frontend.partials.responsive-styles')
 <style>
 :root {
 	--font-body: system-ui, sans-serif;
@@ -392,6 +393,17 @@
 .testimonial-dot:hover {
 	background: #e0e0e0;
 	transform: translateY(-2px);
+}
+
+/* Additional Home Page Responsive Styles */
+@media (max-width: 991px) {
+	.review {
+		width: 80%;
+	}
+	
+	.review__text {
+		font-size: 1.1rem;
+	}
 }
 
 /* Responsive Design */

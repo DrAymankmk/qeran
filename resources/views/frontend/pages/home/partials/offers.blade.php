@@ -2,7 +2,75 @@
 $offersSection = $homePage->activeSections->where('name', 'offers')->first();
 $hasPromoCodes = isset($promoCodes) && $promoCodes->count() > 0;
 @endphp
+@push('styles')
+<style>
+/* Offers Section Responsive */
+@media (max-width: 767px) {
+	.section-default {
+		padding: 30px 0 !important;
+	}
+	
+	.b-post-sm-2 {
+		margin-bottom: 25px;
+	}
+	
+	.b-post-sm-2 .entry-media img {
+		width: 100%;
+		height: auto;
+	}
+	
+	.b-post-sm-2 .entry-body {
+		padding: 15px !important;
+	}
+	
+	.promo-code-badge {
+		padding: 8px !important;
+		margin-bottom: 8px !important;
+	}
+	
+	.promo-code-badge strong {
+		font-size: 16px !important;
+	}
+	
+	.entry-meta {
+		font-size: 0.85rem;
+		flex-wrap: wrap;
+	}
+	
+	.entry-meta__item {
+		margin-bottom: 5px;
+		display: block;
+		width: 100%;
+	}
+	
+	.enable-owl-carousel {
+		padding: 0 15px;
+	}
+}
 
+@media (max-width: 480px) {
+	.b-post-sm-2 .entry-body {
+		padding: 12px !important;
+	}
+	
+	.promo-code-badge {
+		padding: 6px !important;
+	}
+	
+	.promo-code-badge strong {
+		font-size: 14px !important;
+	}
+	
+	.entry-title {
+		font-size: 1.1rem !important;
+	}
+	
+	.entry-meta__item {
+		font-size: 0.8rem;
+	}
+}
+</style>
+@endpush
 @if($hasPromoCodes && $offersSection)
 <section class="section-default">
 	<div class="container">

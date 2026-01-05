@@ -8,7 +8,7 @@ use App\Models\CmsPage;
 use App\Models\ContactUs;
 use App\Helpers\Constant;
 use App\Traits\SendsNotificationAndEmail;
-use App\Services\External\UltraMessage;
+use App\Services\External\TwilioWhatsApp;
 use Illuminate\Support\Facades\Log;
 
 class ContactController extends Controller
@@ -97,7 +97,7 @@ class ContactController extends Controller
                 $message .= "رقم الطلب: #{$contact->id}\n";
                 $message .= "الموضوع: {$validated['subject']}";
 
-                UltraMessage::send($fullPhone, '', $message);
+                TwilioWhatsApp::send($fullPhone, $message);
             } catch (\Exception $e) {
                 Log::error('Failed to send WhatsApp reply for contact us', [
                     'contact_id' => $contact->id,

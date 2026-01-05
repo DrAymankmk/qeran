@@ -81,6 +81,96 @@
 	<!-- Swiper CSS -->
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
+	<style>
+	/* Mobile Sidebar Contact and Social Links Styles */
+	.mobile-sidebar-contact,
+	.mobile-sidebar-social {
+		display: none;
+	}
+
+	@media (max-width: 767px) {
+		.mobile-sidebar-contact,
+		.mobile-sidebar-social {
+			display: block;
+		}
+
+		.mobile-social-link:hover {
+			background: rgba(255,255,255,0.2) !important;
+			transform: scale(1.1);
+		}
+
+		.mobile-contact-list li,
+		.mobile-social-list {
+			animation: fadeInUp 0.3s ease-out;
+		}
+
+		@keyframes fadeInUp {
+			from {
+				opacity: 0;
+				transform: translateY(10px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+	}
+	</style>
+
+	<style>
+	/* Hide top bar on small devices */
+	@media (max-width: 767px) {
+		/* .top-bar {
+			display: none !important;
+		} */
+
+		.top-bar-contact {
+			flex-direction: column !important;
+			align-items: flex-start !important;
+			gap: 10px !important;
+		}
+	}
+	
+
+	/* Make contact list column on small devices */
+	@media (max-width: 991px) {
+		.top-bar-contact {
+			flex-direction: column !important;
+			align-items: flex-start !important;
+			gap: 10px !important;
+		}
+
+		.top-bar-contact li {
+			width: 100%;
+			margin-bottom: 5px;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.top-bar-contact {
+			gap: 8px !important;
+		}
+		.top-bar-contact {
+			flex-direction: column !important;
+			align-items: flex-start !important;
+			gap: 10px !important;
+		}
+
+
+		.top-bar-contact li {
+			font-size: 13px;
+			justify-content: center;
+
+			
+		}
+		.footer__bottom-content {
+			text-align: center;
+		}
+		.navbar-brand {
+			margin-right:30px;
+		}
+	}
+	</style>
 	@stack('styles')
 </head>
 
@@ -153,6 +243,26 @@
 		<!-- ==========================-->
 		<!-- MOBILE MENU-->
 		<!-- ==========================-->
+		@php
+		$headerSection = \App\Models\CmsPage::where('slug', 'general')
+		->where('is_active', true)
+		->with(['activeSections' => function($query) {
+		$query->where('name', 'header')
+		->where('is_active', true)
+		->with([
+		'activeItems' => function($q) {
+		$q->where('is_active', true)->orderBy('order');
+		},
+		'links' => function($q) {
+		$q->where('is_active', true)->orderBy('order');
+		}
+		]);
+		}])
+		->first()
+		?->activeSections
+		->where('name', 'header')
+		->first();
+		@endphp
 		<div data-off-canvas="mobile-slidebar left overlay">
 			<ul class="nav navbar-nav">
 				<li><a href="{{ route('home') }}">{{ __('frontend.home') }}</a></li>
@@ -161,6 +271,8 @@
 				<li><a href="{{ route('faq') }}">{{ __('frontend.faq') }}</a></li>
 				<li><a href="{{ route('contact') }}">{{ __('frontend.contact') }}</a></li>
 			</ul>
+
+		
 		</div>
 		<!-- ==========================-->
 		<!-- FULL SCREEN MENU-->

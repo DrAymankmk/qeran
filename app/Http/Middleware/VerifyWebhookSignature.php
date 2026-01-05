@@ -53,19 +53,31 @@ class VerifyWebhookSignature
      */
     private function verifyWhatsAppSignature(Request $request): bool
     {
-        // For UltraMessage and similar services
-        $allowedIPs = [
-            '185.37.37.37', // UltraMessage IP - update with actual IPs
-            '127.0.0.1', // Local testing
-        ];
+        // Twilio webhook signature verification
+        $twilioSignature = $request->header('X-Twilio-Signature');
+        if ($twilioSignature) {
+            $url = $request->fullUrl();
+            $params = $request->all();
+            $authToken = config('services.twilio.auth_token');
+            
+            if ($authToken && $this->validateTwilioSignature($url, $params, $twilioSignature, $authToken)) {
+                return true;
+            }
+        }
 
-        // Check IP whitelist
-        if (in_array($request->ip(), $allowedIPs)) {
-            return true;
+        // Legacy UltraMessage IP whitelist
+        $allowedIPs = config('webhooks.whatsapp.allowed_ips', []);
+        $clientIP = $request->ip();
+        
+        // Check if IP matches any allowed IP or IP range
+        foreach ($allowedIPs as $allowedIP) {
+            if ($clientIP === $allowedIP || str_starts_with($clientIP, $allowedIP)) {
+                return true;
+            }
         }
 
         // If you have a webhook token/secret from your provider
-        $webhookToken = config('services.whatsapp.webhook_token');
+        $webhookToken = config('webhooks.whatsapp.webhook_token');
         $providedToken = $request->header('X-Webhook-Token') ?? $request->input('token');
 
         if ($webhookToken && $providedToken === $webhookToken) {
@@ -74,6 +86,29 @@ class VerifyWebhookSignature
 
         // Allow in local environment for testing
         return app()->environment('local');
+    }
+
+    /**
+     * Validate Twilio webhook signature
+     */
+    private function validateTwilioSignature($url, $params, $signature, $authToken): bool
+    {
+        // Remove signature from params
+        unset($params['signature']);
+        
+        // Sort parameters
+        ksort($params);
+        
+        // Build query string
+        $data = $url;
+        foreach ($params as $key => $value) {
+            $data .= $key . $value;
+        }
+        
+        // Compute signature
+        $computed = base64_encode(hash_hmac('sha1', $data, $authToken, true));
+        
+        return hash_equals($signature, $computed);
     }
 
     /**

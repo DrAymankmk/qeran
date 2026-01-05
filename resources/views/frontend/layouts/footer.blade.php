@@ -1,3 +1,224 @@
+@push('styles')
+<style>
+/* Footer Responsive Styles */
+@media (max-width: 991px) {
+	.footer-section {
+		margin-top: 40px !important;
+	}
+
+	.footer__main {
+		padding-bottom: 50px;
+	}
+
+	.footer__bottom-content {
+		flex-direction: column;
+		text-align: center;
+	}
+
+	.footer .copyright {
+		float: none !important;
+		width: 100%;
+		margin-bottom: 15px;
+		text-align: center;
+	}
+
+	.social-net {
+		float: none !important;
+		width: 100%;
+		justify-content: center;
+	}
+}
+
+@media (max-width: 767px) {
+	.footer {
+		padding-top: 40px;
+	}
+
+	.footer__main {
+		padding-bottom: 40px;
+	}
+
+	.footer__logo {
+		margin-bottom: 30px;
+	}
+
+	.footer__logo img {
+		max-width: 140px;
+		height: auto;
+	}
+
+	.footer-section {
+		margin-top: 30px !important;
+		margin-bottom: 20px;
+	}
+
+	.footer-section__title {
+		font-size: 18px !important;
+		margin-bottom: 20px !important;
+	}
+
+	.footer__contact {
+		margin-bottom: 15px;
+		font-size: 13px;
+		flex-wrap: wrap;
+	}
+
+	.footer__contact i {
+		font-size: 16px;
+		margin-right: 8px;
+	}
+
+	.footer__info {
+		margin-right: 0;
+		font-size: 13px;
+		line-height: 1.6;
+	}
+
+	.footer-gallery {
+		margin-top: 15px;
+	}
+
+	.footer-gallery__item {
+		width: 33.333% !important;
+		padding: 2px;
+	}
+
+	.footer-gallery__item img {
+		width: 100%;
+		height: auto;
+	}
+
+	.footer-list {
+		margin-top: 10px;
+	}
+
+	.footer-list__item {
+		margin-bottom: 8px;
+	}
+
+	.footer-list__link {
+		font-size: 13px;
+	}
+
+	.footer__bottom {
+		padding-top: 20px;
+		padding-bottom: 20px;
+	}
+
+	.footer__bottom-content {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-wrap: wrap;
+	}
+
+	.footer .copyright {
+		padding-right: 0;
+		margin-bottom: 15px;
+		text-align: center;
+		float: none !important;
+		width: 100%;
+	}
+
+	.footer .copyright__link {
+		display: inline-block;
+		padding: 0 5px;
+	}
+
+	.social-net {
+		text-align: center;
+		float: none !important;
+		margin: 0 auto;
+		display: flex;
+		justify-content: center;
+		flex-wrap: wrap;
+		width: 100%;
+	}
+
+	.social-net__item {
+		margin: 5px;
+	}
+
+	.social-net__link {
+		font-size: 18px;
+		width: 35px;
+		height: 35px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+}
+
+@media (max-width: 480px) {
+	.footer {
+		padding-top: 30px;
+	}
+
+	.footer__main {
+		padding-bottom: 30px;
+	}
+
+	.footer__logo {
+		margin-bottom: 25px;
+	}
+
+	.footer__logo img {
+		max-width: 120px;
+	}
+
+	.footer-section {
+		margin-top: 25px !important;
+	}
+
+	.footer-section__title {
+		font-size: 16px !important;
+		margin-bottom: 15px !important;
+	}
+
+	.footer__contact {
+		font-size: 12px;
+		gap: 8px;
+	}
+
+	.footer__info {
+		font-size: 12px;
+	}
+
+	.footer-gallery__item {
+		width: 50% !important;
+	}
+
+	.footer__bottom-content {
+		flex-direction: column;
+		text-align: center;
+	}
+
+	.footer .copyright {
+		font-size: 11px;
+		line-height: 1.6;
+		width: 100%;
+		margin-bottom: 10px;
+	}
+
+	.footer .copyright__link {
+		font-size: 11px;
+		display: inline-block;
+		padding: 0 3px;
+	}
+
+	.social-net {
+		width: 100%;
+		margin-top: 10px;
+	}
+
+	.social-net__link {
+		font-size: 16px;
+		width: 32px;
+		height: 32px;
+	}
+}
+</style>
+@endpush
 <footer class="footer">
 	<div class="footer__main">
 		<div class="container">
@@ -72,11 +293,11 @@
 			->where('name', 'header')
 			->first();
 			@endphp
-			<div class="row" style="display:flex">
+			<div class="row">
 				@if($footerSection && $footerSection->activeItems &&
 				$footerSection->activeItems->count() > 0)
 				@foreach($footerSection->activeItems as $item)
-				<div class="{{ $colClass }}">
+				<div class="{{ $colClass }} col-sm-6 col-xs-12">
 					<section class="footer-section">
 						<h3 class="footer-section__title ui-title-inner">
 							<i class="ui-decor-2 bg-primary"></i>
@@ -107,7 +328,7 @@
 					</section>
 				</div>
 
-				<div class="col-md-3">
+				<div class="col-md-3 col-sm-6 col-xs-12">
 					<section class="footer-section">
 						<h3 class="footer-section__title ui-title-inner">
 							<i class="ui-decor-2 bg-primary"></i>
@@ -142,7 +363,7 @@
 				</div>
 
 				<!-- gallery -->
-				<div class="col-md-3">
+				<div class="col-md-3 col-sm-6 col-xs-12">
 					<section class="footer-section">
 						<h3 class="footer-section__title ui-title-inner">
 							<i class="ui-decor-2 bg-primary"></i>
@@ -226,7 +447,7 @@
 						@endif
 					</section>
 				</div>
-				<div class="col-md-2">
+				<div class="col-md-2 col-sm-6 col-xs-12">
 					<section class="footer-section">
 						<h3 class="footer-section__title ui-title-inner">
 							<i class="ui-decor-2 bg-primary"></i>
@@ -254,7 +475,7 @@
 				</div>
 				@endforeach
 				@else
-				<div class="col-md-3">
+				<div class="col-md-3 col-sm-6 col-xs-12">
 					<div class="footer-section">
 						<h3 class="footer-section__title ui-title-inner">
 							<i class="ui-decor-2 bg-primary"></i>
@@ -272,7 +493,7 @@
 								class="icon"></i> Read More</a>
 					</div>
 				</div>
-				<div class="col-md-3">
+				<div class="col-md-3 col-sm-6 col-xs-12">
 					<section class="footer-section">
 						<h3 class="footer-section__title ui-title-inner">
 							<i class="ui-decor-2 bg-primary"></i>
@@ -290,7 +511,7 @@
 							Mon - Fri 9.00 am - 6.00 pm</div>
 					</section>
 				</div>
-				<div class="col-md-3">
+				<div class="col-md-3 col-sm-6 col-xs-12">
 					<section class="footer-section">
 						<h3 class="footer-section__title ui-title-inner">
 							<i class="ui-decor-2 bg-primary"></i>
@@ -375,7 +596,7 @@
 						@endif
 					</section>
 				</div>
-				<div class="col-md-3">
+				<div class="col-md-3 col-sm-6 col-xs-12">
 					<section class="footer-section">
 						<h3 class="footer-section__title ui-title-inner">
 							<i class="ui-decor-2 bg-primary"></i>
@@ -409,53 +630,61 @@
 		<div class="container">
 			<div class="row">
 				<div class="col-xs-12">
-					<div class="copyright pull-left">© 2026<strong> Qeran</strong> - The
-						Events Specialists All Rights Reserved.<a href=""
-							class="copyright__link"> Terms of Use</a><a
-							href="" class="copyright__link">Privacy Policy</a>
+					<div class="footer__bottom-content">
+						<div class="copyright pull-left">© 2026<strong>
+								Qeran</strong> - The
+							Events Specialists All Rights Reserved.<a href=""
+								class="copyright__link"> Terms of
+								Use</a><a href=""
+								class="copyright__link">Privacy
+								Policy</a>
+						</div>
+						@if($headerSection && $headerSection->links &&
+						$headerSection->links->count() > 0)
+						<ul class="social-net list-inline pull-right">
+							@foreach($headerSection->links as $link)
+							<li class="social-net__item">
+								<a href="{{ $link->url }}"
+									target="{{ $link->target }}"
+									class="social-net__link text-primary_h"
+									rel="{{ $link->target === '_blank' ? 'noopener noreferrer' : '' }}">
+									@if($link->icon)
+									{!! $link->icon_html !!}
+									@else
+									<i class="fa fa-link"></i>
+									@endif
+								</a>
+							</li>
+							@endforeach
+						</ul>
+						@else
+						<ul class="social-net list-inline pull-right">
+							<li class="social-net__item"><a href="youtube.com"
+									class="social-net__link text-primary_h"><i
+										class="fa-brands fa-youtube"></i></a>
+							</li>
+							<li class="social-net__item"><a href="twitter.com"
+									class="social-net__link text-primary_h"><i
+										class="fa-brands fa-twitter"></i></a>
+							</li>
+							<li class="social-net__item"><a
+									href="facebook.com"
+									class="social-net__link text-primary_h"><i
+										class="fa-brands fa-facebook"></i></a>
+							</li>
+							<li class="social-net__item"><a
+									href="plus.google.com"
+									class="social-net__link text-primary_h"><i
+										class="fa-brands fa-google"></i></a>
+							</li>
+							<li class="social-net__item"><a
+									href="instagram.com"
+									class="social-net__link text-primary_h"><i
+										class="fa-brands fa-instagram"></i></a>
+							</li>
+						</ul>
+						@endif
 					</div>
-					@if($headerSection && $headerSection->links &&
-					$headerSection->links->count() > 0)
-					<ul class="social-net list-inline">
-						@foreach($headerSection->links as $link)
-						<li class="social-net__item">
-							<a href="{{ $link->url }}"
-								target="{{ $link->target }}"
-								class="social-net__link text-primary_h"
-								rel="{{ $link->target === '_blank' ? 'noopener noreferrer' : '' }}">
-								@if($link->icon)
-								{!! $link->icon_html !!}
-								@else
-								<i class="fa fa-link"></i>
-								@endif
-							</a>
-						</li>
-						@endforeach
-					</ul>
-					@else
-					<ul class="social-net list-inline pull-right">
-						<li class="social-net__item"><a href="youtube.com"
-								class="social-net__link text-primary_h"><i
-									class="fa-brands fa-youtube"></i></a>
-						</li>
-						<li class="social-net__item"><a href="twitter.com"
-								class="social-net__link text-primary_h"><i
-									class="fa-brands fa-twitter"></i></a>
-						</li>
-						<li class="social-net__item"><a href="facebook.com"
-								class="social-net__link text-primary_h"><i
-									class="fa-brands fa-facebook"></i></a>
-						</li>
-						<li class="social-net__item"><a href="plus.google.com"
-								class="social-net__link text-primary_h"><i
-									class="fa-brands fa-google"></i></a>
-						</li>
-						<li class="social-net__item"><a href="instagram.com"
-								class="social-net__link text-primary_h"><i
-									class="fa-brands fa-instagram"></i></a>
-						</li>
-					</ul>
-					@endif
 				</div>
 			</div>
 		</div>

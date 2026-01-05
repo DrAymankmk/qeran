@@ -32,7 +32,7 @@ use App\Models\Package;
 use App\Models\User;
 use App\Services\External\Notification;
 use App\Services\External\TwilioSMS;
-use App\Services\External\UltraMessage;
+use App\Services\External\TwilioWhatsApp;
 use App\Services\RespondActive;
 use App\Traits\SendsNotificationAndEmail;
 use Illuminate\Http\Request;
@@ -1021,10 +1021,9 @@ class InvitationsController extends Controller
             foreach ($invitation->users()->where('invited_by', auth()->id())->get() as $user) {
                 $message = $this->buildStyledInvitationMessage($invitation, $request->message);
 
-                UltraMessage::send(
+                TwilioWhatsApp::send(
                     $user->country_code.$user->phone,
-                    $message,
-                    '',
+                    $message
                 );
             }
 
@@ -1045,7 +1044,7 @@ class InvitationsController extends Controller
             // Replace {user_id} placeholder with actual user ID for the invitation link
             $personalizedMessage = str_replace('{user_id}', $user->id, $message);
 
-            UltraMessage::send($user->country_code.$user->phone, $personalizedMessage);
+            TwilioWhatsApp::send($user->country_code.$user->phone, $personalizedMessage);
 
         //    TwilioSMS::send([
         //        'phone' => $user->phone,
@@ -1078,7 +1077,7 @@ class InvitationsController extends Controller
             // Send SMS to all users
             foreach ($invitation->users as $user) {
                 $personalizedMessage = str_replace('{user_id}', $user->id, $smsMessage);
-                UltraMessage::send($user->country_code.$user->phone, $personalizedMessage);
+                TwilioWhatsApp::send($user->country_code.$user->phone, $personalizedMessage);
             }
 
             // Send in-app notification using translation key
@@ -1187,10 +1186,9 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
             // Build dynamic message template for this user
             $message = $this->buildInvitationMessage($invitation, $user->id, 'invitation_sms_template');
 
-            $response = UltraMessage::send(
+            $response = TwilioWhatsApp::send(
                 $user->country_code.$user->phone,
                 $message,
-                '',
                 $invitation->id.'-'.$user->id
             );
 

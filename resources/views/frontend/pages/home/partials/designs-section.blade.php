@@ -1,6 +1,114 @@
 @php
 $designsSection = $homePage->activeSections->where('name', 'designs')->first();
 @endphp
+@push('styles')
+<style>
+/* Designs Section Responsive */
+@media (max-width: 767px) {
+	.section-default {
+		padding: 30px 0 !important;
+	}
+	
+	.b-isotope-filter {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 8px;
+		margin-bottom: 25px;
+		padding: 0 15px;
+	}
+	
+	.b-isotope-filter li {
+		margin: 5px 0;
+	}
+	
+	.b-isotope-filter a {
+		padding: 8px 15px;
+		font-size: 0.9rem;
+		white-space: nowrap;
+	}
+	
+	.b-isotope-grid {
+		padding: 0 10px;
+	}
+	
+	.b-isotope-grid__item {
+		width: 100% !important;
+		margin-bottom: 15px;
+	}
+	
+	.b-isotope__info {
+		font-size: 1rem;
+		margin-bottom: 15px;
+		display: block;
+	}
+	
+	.b-isotope__btn {
+		width: 100%;
+		max-width: 300px;
+		margin: 0 auto;
+	}
+	
+	.modal-dialog.modal-lg {
+		margin: 10px;
+		width: calc(100% - 20px);
+		max-width: 100%;
+	}
+}
+
+@media (max-width: 480px) {
+	.b-isotope-filter {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 10px;
+	}
+	
+	.b-isotope-filter li {
+		width: 100%;
+	}
+	
+	.b-isotope-filter a {
+		display: block;
+		text-align: center;
+		padding: 10px;
+		width: 100%;
+	}
+	
+	.b-isotope-grid {
+		padding: 0 5px;
+	}
+	
+	.b-isotope-grid__item {
+		margin-bottom: 10px;
+	}
+	
+	.modal-dialog {
+		margin: 5px;
+		width: calc(100% - 10px);
+	}
+	
+	.modal-header {
+		padding: 10px 15px;
+	}
+	
+	.modal-title {
+		font-size: 1.1rem;
+	}
+	
+	.modal-body {
+		padding: 15px;
+	}
+	
+	.modal-footer {
+		padding: 10px 15px;
+	}
+	
+	.b-isotope__btn {
+		width: 100%;
+	}
+}
+</style>
+@endpush
 <section class="section-default">
 	<div class="container">
 		<div class="row">

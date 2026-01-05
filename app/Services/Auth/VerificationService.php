@@ -9,7 +9,7 @@ use App\Models\User;
 use App\Models\VerificationCode;
 use App\Services\External\InfobipSMS;
 use App\Services\External\TwilioSMS;
-use App\Services\External\UltraMessage;
+use App\Services\External\TwilioWhatsApp;
 use Illuminate\Support\Facades\Mail;
 
 class VerificationService
@@ -54,7 +54,7 @@ class VerificationService
 //            throw new \Exception();
 //        }
         if($information_type==Constant::VERIFICATION_INFORMATION_TYPE['Phone']) {
-            UltraMessage::send($country_code . $information, $activation_code);
+            TwilioWhatsApp::sendLegacy($country_code . $information, $activation_code);
         }
 
 

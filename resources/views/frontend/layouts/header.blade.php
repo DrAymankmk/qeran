@@ -1,5 +1,7 @@
+
 <header
 	class="header header-boxed-width header-background-trans header-logo-black header-topbarbox-1-left header-topbarbox-2-right header-navibox-1-left header-navibox-2-right header-navibox-3-right header-navibox-4-right">
+
 	<div class="top-bar">
 		<div class="container container-boxed-width">
 			<div class="container">
@@ -26,9 +28,11 @@
 				<div class="header-topbarbox-1">
 					@if($headerSection && $headerSection->activeItems &&
 					$headerSection->activeItems->count() > 0)
-					<ul class="top-bar-contact" style="display:flex; align-items:center; gap:10px">
+					<ul class="top-bar-contact"
+						style="display:flex; align-items:center; gap:10px">
 						@foreach($headerSection->activeItems as $item)
-						<li class="" style="display:flex; align-items:center; gap:5px">
+						<li class=""
+							style="display:flex; align-items:center; gap:5px">
 							@if($item->icon)
 							@php
 							$iconClass = trim($item->icon);

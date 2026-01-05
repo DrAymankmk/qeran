@@ -4,7 +4,47 @@ $settings = $guardAppSection->settings ?? [];
 $images = $settings['images'] ?? [];
 $hasImages = !empty($images) && is_array($images) && count($images) > 0;
 @endphp
+@push('styles')
+<style>
+/* Guard App Section Responsive */
+@media (max-width: 767px) {
+	.section-events {
+		padding: 30px 0;
+	}
+	
+	.section-events .ui-title-block {
+		font-size: 1.75rem !important;
+	}
+	
+	.b-events-2 {
+		margin-bottom: 20px;
+	}
+	
+	.b-events-2__media img {
+		width: 100%;
+		height: auto;
+	}
+	
+	.enable-owl-carousel {
+		padding: 0 15px;
+	}
+}
 
+@media (max-width: 480px) {
+	.section-events {
+		padding: 25px 0;
+	}
+	
+	.section-events .ui-title-block {
+		font-size: 1.5rem !important;
+	}
+	
+	.enable-owl-carousel {
+		padding: 0 10px;
+	}
+}
+</style>
+@endpush
 @if($hasImages && $guardAppSection)
 <div class="section-events">
 	<div class="container">

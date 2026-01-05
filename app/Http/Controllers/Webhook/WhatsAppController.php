@@ -26,18 +26,30 @@ class WhatsAppController extends Controller
                 'body' => $request->all()
             ]);
 
-            // Get webhook event type
-            $eventType = $request->input('event_type');
-            
-            // Only handle message_ack events for now
-            if ($eventType !== 'message_ack') {
-                Log::info('WhatsApp Webhook: Ignoring event type', ['event_type' => $eventType]);
-                return response()->json(['status' => 'ignored'], 200);
+            // Check if it's a Twilio webhook (has MessageSid or MessageStatus)
+            $messageSid = $request->input('MessageSid');
+            $messageStatus = $request->input('MessageStatus');
+            $messageBody = $request->input('Body');
+            $from = $request->input('From');
+
+            // Handle Twilio status callbacks
+            if ($messageSid && $messageStatus) {
+                return $this->handleTwilioStatusCallback($request);
             }
 
-            // Handle message acknowledgment
-            return $this->handleMessageAcknowledgment($request);
-            // return response()->json(['status' => 'done'], 200);
+            // Handle Twilio incoming messages
+            if ($messageBody && $from) {
+                return $this->handleTwilioIncomingMessage($request);
+            }
+
+            // Legacy UltraMessage format support
+            $eventType = $request->input('event_type');
+            if ($eventType === 'message_ack') {
+                return $this->handleMessageAcknowledgment($request);
+            }
+
+            Log::info('WhatsApp Webhook: Unknown format', ['request' => $request->all()]);
+            return response()->json(['status' => 'ignored'], 200);
 
         } catch (\Exception $e) {
             Log::error('WhatsApp Webhook Error', [
@@ -48,6 +60,68 @@ class WhatsAppController extends Controller
             
             return response()->json(['error' => 'Internal server error'], 500);
         }
+    }
+
+    /**
+     * Handle Twilio status callback
+     */
+    private function handleTwilioStatusCallback(Request $request)
+    {
+        $messageSid = $request->input('MessageSid');
+        $status = $request->input('MessageStatus');
+        $to = $request->input('To');
+        
+        // Map Twilio statuses to your constants
+        $statusMap = [
+            'queued' => Constant::SEEN_STATUS['Sent'],
+            'sent' => Constant::SEEN_STATUS['Sent'],
+            'delivered' => Constant::SEEN_STATUS['delivered'],
+            'read' => Constant::SEEN_STATUS['seen'],
+            'failed' => Constant::SEEN_STATUS['Cancelled'],
+            'undelivered' => Constant::SEEN_STATUS['Cancelled'],
+        ];
+        
+        // Extract invitation and user ID from message SID or custom data
+        // You may need to store message SID with invitation/user mapping in database
+        // For now, we'll try to extract from the 'To' phone number
+        
+        Log::info('Twilio WhatsApp Status Callback', [
+            'message_sid' => $messageSid,
+            'status' => $status,
+            'to' => $to
+        ]);
+        
+        // TODO: Update invitation status based on message SID mapping
+        // This requires storing message SID when sending messages
+        
+        return response()->json(['status' => 'acknowledged'], 200);
+    }
+
+    /**
+     * Handle Twilio incoming message
+     */
+    private function handleTwilioIncomingMessage(Request $request)
+    {
+        $from = str_replace('whatsapp:', '', $request->input('From'));
+        $messageBody = $request->input('Body');
+        
+        // Use existing processMessage logic
+        $user = $this->findUserByPhone($from);
+        
+        if (!$user) {
+            Log::info('WhatsApp: Message from unknown user', ['phone' => $from]);
+            return response()->json(['status' => 'user_not_found'], 200);
+        }
+        
+        $messageData = [
+            'from' => $from,
+            'body' => $messageBody,
+            'timestamp' => now(),
+        ];
+        
+        $response = $this->processMessage($user, $messageData);
+        
+        return response()->json(['status' => 'processed', 'response' => $response], 200);
     }
 
     /**
@@ -380,11 +454,11 @@ class WhatsAppController extends Controller
     }
 
     /**
-     * Send WhatsApp message using existing UltraMessage service
+     * Send WhatsApp message using Twilio WhatsApp service
      */
     private function sendWhatsAppMessage($phone, $message)
     {
-        return \App\Services\External\UltraMessage::send($phone, '', $message);
+        return \App\Services\External\TwilioWhatsApp::send($phone, $message);
     }
 
     /**

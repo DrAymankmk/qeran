@@ -1,5 +1,70 @@
 @extends('frontend.layouts.app')
 
+@push('styles')
+@include('frontend.partials.responsive-title-page')
+<style>
+/* About Page Responsive Styles */
+@media (max-width: 767px) {
+	.b-title-page {
+		padding: 40px 0 !important;
+		min-height: auto !important;
+	}
+	
+	.b-title-page__title {
+		font-size: 1.75rem !important;
+		margin-bottom: 15px;
+	}
+	
+	.section-default {
+		padding: 30px 0 !important;
+	}
+	
+	.b-post-sm {
+		margin-bottom: 30px;
+	}
+	
+	.b-post-sm .col-sm-4 {
+		width: 100%;
+		margin-bottom: 20px;
+	}
+	
+	.entry-media img {
+		width: 100%;
+		height: auto;
+		margin-bottom: 15px;
+	}
+	
+	.entry-title {
+		font-size: 1.25rem !important;
+	}
+	
+	.row[style*="display:flex"] {
+		flex-direction: column;
+	}
+	
+	.row[style*="display:flex"] > .col-sm-4 {
+		width: 100%;
+		flex: 1 1 100%;
+	}
+}
+
+@media (max-width: 480px) {
+	.b-title-page__title {
+		font-size: 1.5rem !important;
+	}
+	
+	.entry-title {
+		font-size: 1.1rem !important;
+	}
+	
+	.entry-content p {
+		font-size: 0.9rem;
+		line-height: 1.6;
+	}
+}
+</style>
+@endpush
+
 @section('content')
 
 @php

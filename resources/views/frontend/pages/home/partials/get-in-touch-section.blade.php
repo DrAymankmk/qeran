@@ -1,6 +1,7 @@
-<div class="section-default">
-	<style>
-	.get-in-touch-section {
+@push('styles')
+<style>
+/* Get In Touch Section Responsive */
+.get-in-touch-section {
 		background-size: cover !important;
 		background-position: center !important;
 		background-repeat: no-repeat !important;
@@ -25,7 +26,57 @@
 		position: relative;
 		z-index: 1;
 	}
-	</style>
+
+@media (max-width: 767px) {
+	.get-in-touch-section {
+		min-height: 250px;
+		padding: 30px 15px;
+	}
+	
+	.b-info {
+		padding: 25px 20px !important;
+		text-align: center;
+	}
+	
+	.b-info__title {
+		font-size: 1.75rem !important;
+		margin-bottom: 15px;
+	}
+	
+	.b-info__text {
+		font-size: 1rem !important;
+		margin-bottom: 20px;
+		line-height: 1.6;
+	}
+	
+	.b-info__btn {
+		width: 100%;
+		max-width: 300px;
+		margin: 0 auto;
+	}
+}
+
+@media (max-width: 480px) {
+	.get-in-touch-section {
+		min-height: 200px;
+		padding: 25px 10px;
+	}
+	
+	.b-info {
+		padding: 20px 15px !important;
+	}
+	
+	.b-info__title {
+		font-size: 1.5rem !important;
+	}
+	
+	.b-info__text {
+		font-size: 0.9rem !important;
+	}
+}
+</style>
+@endpush
+<div class="section-default">
 	<div class="row">
 		<div class="col-md-12">
 			<section data-stellar-background-ratio="0.4"

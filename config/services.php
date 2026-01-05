@@ -35,4 +35,12 @@ return [
         'Beams_Secret_key' => env('Beams_Secret_key'),
     ],
 
+    'twilio' => [
+        'account_sid' => env('TWILIO_ACCOUNT_SID'),
+        'auth_token' => env('TWILIO_AUTH_TOKEN'),
+        'whatsapp_from' => env('TWILIO_WHATSAPP_FROM', 'whatsapp:+14155238886'),
+        'whatsapp_sandbox_enabled' => env('TWILIO_WHATSAPP_SANDBOX_ENABLED', true),
+        'whatsapp_messaging_service_sid' => env('TWILIO_WHATSAPP_MESSAGING_SERVICE_SID'),
+    ],
+
 ];

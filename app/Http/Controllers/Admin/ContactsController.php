@@ -9,7 +9,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Mail;
 use App\Helpers\Constant;
 use App\Services\External\Notification as PushNotificationService;
-use App\Services\External\UltraMessage;
+use App\Services\External\TwilioWhatsApp;
 use Carbon\Carbon;
 use Mpdf\Mpdf;
 use Illuminate\Support\Facades\Log;
@@ -84,14 +84,39 @@ class ContactsController extends Controller
                 $message .= "{$request->message}\n\n";
                 $message .= "شكراً لتواصلك معنا!";
 
-                UltraMessage::send($phone, '', $message);
+                $response = TwilioWhatsApp::send($phone, $message);
+                
+                // Check if message was sent successfully
+                if (isset($response->sent) && $response->sent === 'false') {
+                    $errorMessage = isset($response->error->message) 
+                        ? $response->error->message 
+                        : 'فشل إرسال رسالة الواتساب';
+                    
+                    Log::error('Failed to send WhatsApp reply', [
+                        'contact_id' => $contact->id,
+                        'phone' => $phone,
+                        'error' => $errorMessage,
+                        'response' => $response
+                    ]);
+                    
+                    return redirect()->route('contact.index')
+                        ->with('error', 'تم حفظ الرد ولكن فشل إرسال رسالة الواتساب: ' . $errorMessage);
+                }
             } catch (\Exception $e) {
                 Log::error('Failed to send WhatsApp reply', [
                     'contact_id' => $contact->id,
-                    'error' => $e->getMessage()
+                    'phone' => $phone ?? 'unknown',
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
                 ]);
+                
+                $userMessage = 'تم حفظ الرد ولكن فشل إرسال رسالة الواتساب';
+                if (str_contains($e->getMessage(), 'not configured')) {
+                    $userMessage .= '. يرجى التحقق من إعدادات Twilio في ملف .env';
+                }
+                
                 return redirect()->route('contact.index')
-                    ->with('error', 'تم حفظ الرد ولكن فشل إرسال رسالة الواتساب');
+                    ->with('error', $userMessage);
             }
         }
 

@@ -2,6 +2,7 @@
 $contactSection = $homePage->activeSections->where('name', 'contact')->first();
 @endphp
 @if($contactSection)
+@push('styles')
 <style>
 /* Make input text white when entering data */
 .section-form-contact .form-control {
@@ -21,7 +22,86 @@ $contactSection = $homePage->activeSections->where('name', 'contact')->first();
 .section-form-contact textarea.form-control {
 	color: #ffffff !important;
 }
+
+/* Contact Section Responsive */
+@media (max-width: 991px) {
+	.block-table {
+		display: block !important;
+	}
+	
+	.block-table__cell {
+		display: block !important;
+		width: 100% !important;
+	}
+	
+	.section-form-contact {
+		padding: 40px 20px !important;
+	}
+}
+
+@media (max-width: 767px) {
+	.block-table {
+		display: block !important;
+	}
+	
+	.block-table__cell {
+		display: block !important;
+		width: 100% !important;
+	}
+	
+	.section-form-contact {
+		padding: 30px 15px !important;
+	}
+	
+	.section-form-contact .ui-title-block {
+		font-size: 1.75rem !important;
+		margin-bottom: 15px;
+	}
+	
+	.section-form-contact .ui-subtitle-block {
+		font-size: 1rem !important;
+		margin-bottom: 20px;
+	}
+	
+	.section-form-contact .form-control {
+		font-size: 16px !important;
+		padding: 12px 15px;
+		margin-bottom: 15px;
+	}
+	
+	.section-form-contact .col-md-6 {
+		margin-bottom: 0;
+	}
+	
+	.section-form-contact textarea.form-control {
+		min-height: 120px;
+		resize: vertical;
+	}
+	
+	.section-form-contact .btn {
+		width: 100%;
+		padding: 12px 20px;
+		font-size: 1rem;
+		margin-top: 10px;
+	}
+}
+
+@media (max-width: 480px) {
+	.section-form-contact {
+		padding: 25px 10px !important;
+	}
+	
+	.section-form-contact .ui-title-block {
+		font-size: 1.5rem !important;
+	}
+	
+	.section-form-contact .form-control {
+		padding: 10px 12px;
+		font-size: 16px;
+	}
+}
 </style>
+@endpush
 <div class="block-table block-table-md">
 	<div class="block-table__cell col-md-6">
 		<section class="section-form-contact section-form-contact_color_white bg-primary">

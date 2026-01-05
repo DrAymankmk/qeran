@@ -3992,3 +3992,9 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
 .sp-image {
 width: 100% !important;
 }
+
+@media (max-width: 480px) {
+    .b-info-section .list li h3 {
+        text-align: right;
+    }
+}

@@ -30,8 +30,7 @@
 		text-align: center;
 	}
 	
-	.section-type-1 img,
-	.section-type-1 video {
+	.section-media {
 		width: 100%;
 		height: auto;
 		margin-bottom: 20px;
@@ -90,7 +89,7 @@
 
 					@if($videoUrl)
 					{{-- Show video if available --}}
-					<video class="img-w-radius img-responsive" controls
+					<video class="img-w-radius img-responsive section-media" controls
 						style="width: 100%; height: auto; border-radius: 8px;">
 						<source src="{{ $videoUrl }}" type="video/mp4">
 						Your browser does not support the video tag.
@@ -99,11 +98,11 @@
 					{{-- Show image if available --}}
 					<img src="{{ $firstImage }}"
 						alt="{{ $aboutSection->title ?? 'About' }}"
-						class="img-w-radius img-responsive">
+						class="img-w-radius img-responsive section-media">
 					@else
 					{{-- Show default image --}}
 					<img src="{{ $defaultImage }}" alt="foto"
-						class="img-w-radius img-responsive">
+						class="img-w-radius img-responsive section-media">
 					@endif
 				</div>
 				<div class="col-md-8">

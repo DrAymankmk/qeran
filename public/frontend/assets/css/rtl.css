@@ -3998,3 +3998,11 @@ width: 100% !important;
         text-align: right;
     }
 }
+
+[data-off-canvas] ul {
+padding: 0px;
+}
+
+[data-off-canvas] li {
+	text-align: right;
+}

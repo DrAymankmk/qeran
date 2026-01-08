@@ -4006,3 +4006,7 @@ padding: 0px;
 [data-off-canvas] li {
 	text-align: right;
 }
+
+.form-control {
+    font-style: normal;
+ }

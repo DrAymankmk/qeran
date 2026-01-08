@@ -400,7 +400,7 @@
 	.review {
 		width: 80%;
 	}
-	
+
 	.review__text {
 		font-size: 1.1rem;
 	}
@@ -409,12 +409,12 @@
 /* Responsive Design */
 @media (max-width: 768px) {
 	.testimonials-modern__container {
-		flex-direction: column;
+		flex-direction: row;
 		gap: 15px;
 	}
 
 	.testimonials-row {
-		flex-direction: column;
+		flex-direction: row;
 		gap: 20px;
 	}
 
@@ -500,6 +500,32 @@
 		width: 40px;
 		height: 40px;
 		font-size: 14px;
+	}
+}
+
+/* Slider image base */
+#main-slider .sp-image,
+#main-slider .hero-slider-image {
+	width: 100%;
+	height: 950px;
+	object-fit: cover;
+	/* desktop default */
+	object-position: center;
+}
+
+/* Mobile & small devices */
+@media (max-width: 768px) {
+	#main-slider {
+		height: 100vh;
+	}
+
+	#main-slider .sp-image,
+	#main-slider .hero-slider-image {
+		height: 100vh;
+		object-fit: contain;
+		/* show full image */
+		/* background-color: #000; */
+		/* optional */
 	}
 }
 </style>
@@ -751,7 +777,7 @@ document.addEventListener("DOMContentLoaded", function() {
 				setTimeout(() => {
 					if (i !==
 						index
-						) {
+					) {
 						row.style.display =
 							"none";
 					}

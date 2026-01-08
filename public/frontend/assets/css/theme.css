@@ -3933,3 +3933,15 @@ height: 300px;
 .sp-image {
 	width: 100% !important;
 	}
+
+    [data-off-canvas] ul {
+        padding: 0px;
+        }
+
+        [data-off-canvas] li {
+            text-align: left;
+        }
+
+        .form-control {
+            font-style: normal;
+         }

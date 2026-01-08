@@ -1,85 +1,13 @@
 @php
 $heroSection = $homePage->activeSections->where('name', 'hero')->first();
 @endphp
-@push('styles')
-<style>
-/* Hero Section Responsive */
-@media (max-width: 991px) {
-	#main-slider {
-		height: 600px !important;
-	}
-	
-	.main-slider__title {
-		font-size: 2rem !important;
-	}
-	
-	.main-slider__info {
-		font-size: 1.2rem !important;
-	}
-	
-	.main-slider .col-md-8 {
-		padding: 0 20px;
-	}
-}
-
-@media (max-width: 767px) {
-	#main-slider {
-		height: 400px !important;
-	}
-	
-	.main-slider__title {
-		font-size: 1.5rem !important;
-		line-height: 1.3;
-		padding: 0 15px;
-	}
-	
-	.main-slider__info {
-		font-size: 1rem !important;
-		padding: 0 15px;
-		line-height: 1.4;
-	}
-	
-	.main-slider .col-md-8 {
-		width: 100%;
-		padding: 0 15px;
-	}
-	
-	.hero-slider-image {
-		object-fit: cover;
-		object-position: center;
-	}
-	
-	.main-slider__decor {
-		margin: 15px 0;
-	}
-}
-
-@media (max-width: 480px) {
-	#main-slider {
-		height: 300px !important;
-	}
-	
-	.main-slider__title {
-		font-size: 1.25rem !important;
-	}
-	
-	.main-slider__info {
-		font-size: 0.9rem !important;
-	}
-	
-	.main-slider .sp-layer {
-		width: 100% !important;
-	}
-}
-</style>
-@endpush
 @if($heroSection->items->count() > 0)
 <div id="main-slider" data-slider-width="100%" data-slider-height="950px" data-slider-arrows="true"
 	data-slider-buttons="false" class="main-slider main-slider_mod-a slider-pro">
 	<div class="sp-slides">
-		<!-- Slide 1-->
+
 		@foreach($heroSection->items as $item)
-		<div class="sp-slide"><img src="{{ $item->images->first()->getUrl() }}" alt="slider"
+		<div class="sp-slide her-slider"><img src="{{ $item->images->first()->getUrl() }}" alt="slider"
 				class="sp-image hero-slider-image" />
 			<div class="container">
 				<div class="row">

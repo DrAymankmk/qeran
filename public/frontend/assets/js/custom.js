@@ -280,7 +280,6 @@ if ($('.selectpicker').length > 0) {
 // Main slider
 ///////////////////////////////////////////
 
-
     if ($('#main-slider').length > 0) {
 
         var sliderWidth = $("#main-slider").data("slider-width");
@@ -288,15 +287,138 @@ if ($('.selectpicker').length > 0) {
         var sliderArrows = $("#main-slider").data("slider-arrows");
         var sliderButtons = $("#main-slider").data("slider-buttons");
 
-        $( '#main-slider' ).sliderPro({
-            width:  sliderWidth,
-            height: sliderHeigth,
-            arrows: sliderArrows,
+        // Detect mobile device
+        var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 767;
+        
+        // Calculate responsive height
+        function getResponsiveHeight() {
+            var width = $(window).width();
+            if (width <= 480) {
+                return '300px';
+            } else if (width <= 767) {
+                return '400px';
+            } else if (width <= 991) {
+                return '600px';
+            } else {
+                return sliderHeigth || '950px';
+            }
+        }
+
+        // Initialize slider with responsive settings
+        var sliderOptions = {
+            width: sliderWidth || '100%',
+            height: getResponsiveHeight(),
+            arrows: isMobile ? false : sliderArrows,
             buttons: sliderButtons,
             fade: true,
-            fullScreen: true,
-            touchSwipe: false,
-            autoplay: true
+            fullScreen: !isMobile, // Disable fullScreen on mobile
+            touchSwipe: isMobile, // Enable touch swipe on mobile
+            autoplay: true,
+            autoplayDelay: 5000,
+            loop: true,
+            orientation: 'horizontal', // Explicitly set orientation
+            breakpoints: {
+                480: {
+                    height: '300px',
+                    arrows: false,
+                    fullScreen: false,
+                    touchSwipe: true
+                },
+                767: {
+                    height: '400px',
+                    arrows: false,
+                    fullScreen: false,
+                    touchSwipe: true
+                },
+                991: {
+                    height: '600px',
+                    arrows: sliderArrows,
+                    fullScreen: false,
+                    touchSwipe: true
+                }
+            }
+        };
+
+        // Initialize slider
+        var sliderInstance = $( '#main-slider' ).sliderPro(sliderOptions);
+        
+        // Fix touch event handling to prevent console errors on mobile
+        if (isMobile && sliderInstance.length > 0) {
+            try {
+                var slider = sliderInstance.data('sliderPro');
+                if (slider && slider.$slidesMask && slider.$slidesMask.length > 0) {
+                    // Store original _onTouchMove method
+                    var originalOnTouchMove = slider._onTouchMove;
+                    
+                    // Override _onTouchMove to check if event is cancelable
+                    slider._onTouchMove = function(event) {
+                        // Check if event is cancelable before calling preventDefault
+                        var eventObject = typeof event.originalEvent.touches !== 'undefined' ? event.originalEvent.touches[0] : event.originalEvent;
+                        
+                        // Indicate that the move event is being fired
+                        this.isTouchMoving = true;
+                        
+                        // Get the current position of the mouse pointer
+                        this.touchEndPoint.x = eventObject.pageX || eventObject.clientX;
+                        this.touchEndPoint.y = eventObject.pageY || eventObject.clientY;
+                        
+                        // Calculate the distance of the movement on both axis
+                        this.touchDistance.x = this.touchEndPoint.x - this.touchStartPoint.x;
+                        this.touchDistance.y = this.touchEndPoint.y - this.touchStartPoint.y;
+                        
+                        // Calculate the distance of the swipe
+                        var distance = this.settings.orientation === 'horizontal' ? this.touchDistance.x : this.touchDistance.y,
+                            oppositeDistance = this.settings.orientation === 'horizontal' ? this.touchDistance.y : this.touchDistance.x;
+                        
+                        // If the movement is in the same direction as the orientation of the slides, the swipe is valid
+                        if (Math.abs(distance) > Math.abs(oppositeDistance)) {
+                            // Only prevent default if the event is cancelable
+                            if (event.cancelable !== false && event.originalEvent && event.originalEvent.cancelable !== false) {
+                                try {
+                                    event.preventDefault();
+                                } catch(e) {
+                                    // Silently ignore if preventDefault fails
+                                }
+                            }
+                            
+                            // Continue with the original logic
+                            if (this.settings.loop === false) {
+                                // Make the slides move slower if they're dragged outside its bounds
+                                if ((this.slidesPosition > this.touchStartPosition && this.selectedSlideIndex === 0) ||
+                                    (this.slidesPosition < this.touchStartPosition && this.selectedSlideIndex === this.getTotalSlides() - 1)) {
+                                    distance = distance * 0.2;
+                                }
+                            }
+                            
+                            this._moveTo(this.touchStartPosition + distance, true);
+                        }
+                    };
+                }
+            } catch(e) {
+                // If patching fails, suppress the console warning instead
+                var originalWarn = console.warn;
+                console.warn = function() {
+                    var message = arguments[0] ? arguments[0].toString() : '';
+                    if (message.indexOf('Ignored attempt to cancel a touchmove event') === -1 &&
+                        message.indexOf('cancelable=false') === -1) {
+                        originalWarn.apply(console, arguments);
+                    }
+                };
+            }
+        }
+
+        // Update slider height on window resize
+        var resizeTimer;
+        $(window).on('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function() {
+                if ($('#main-slider').length > 0 && typeof $('#main-slider').data('sliderPro') !== 'undefined') {
+                    var newHeight = getResponsiveHeight();
+                    $('#main-slider').data('sliderPro').update({
+                        height: newHeight
+                    });
+                }
+            }, 250);
         });
     }
 

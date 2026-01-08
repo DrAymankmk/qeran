@@ -10,6 +10,8 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<meta content="telephone=no" name="format-detection" />
 	<meta name="HandheldFriendly" content="true" />
+	<meta name="facebook-domain-verification" content="ab3tiraa0d4zs5bwgay4i2hmzobxec" />
+
 	@if(app()->getLocale() == 'ar')
 	<link rel="stylesheet" href="{{ asset('frontend/assets/css/ar/master.css') }}" />
 	@else

@@ -30,18 +30,18 @@ class InvitationsController extends Controller
                 $host_name = $admin->pivot->host_name;
             }
         }
-        
+
         if (!$invitation) {
             return view('invitation-error', ['message' => 'الدعوة غير موجودة أو قد تم حذفها.']);
         }
-        
+
         $user= $invitation->users()->where('user_id', $user_id)->where("invited_by", $inserted_by)->first();
         $category=Category::where('id',$invitation->category_id)->first();
-        
+
         if (!$user) {
             return view('invitation-error', ['message' => 'هذه الدعوة ليست موجهة لك أو قد تم حذف دعوتك.']);
         }
-        
+
         // Update seen status if not already accepted/declined
         if ($user->pivot->seen != Constant::SEEN_STATUS['accepted'] && $user->pivot->seen != Constant::SEEN_STATUS['declined']) {
             $invitation->users()->updateExistingPivot($user_id, ['seen' => Constant::SEEN_STATUS['seen']]);
@@ -49,19 +49,19 @@ class InvitationsController extends Controller
             $invitation->load('users');
             $user = $invitation->users()->where('user_id', $user_id)->first();
         }
-        
+
         // Validate template number (default to 1 if invalid)
         $template = (int) $template;
-        if ($template < 1 || $template > 7) {
+        if ($template < 1 || $template > 20) {
             $template = 1;
         }
-        
+
         // Pass routes for the accept/decline actions
         $routes = [
             'accept' => route('user.invitation.accept', ['invitation_code' => $invitation->code, 'user_id' => $user_id]),
             'decline' => route('user.invitation.decline', ['invitation_code' => $invitation->code, 'user_id' => $user_id])
         ];
-        
+
         // Determine initial view based on user status
         $initialView = 'envelope';
         if ($user->pivot->seen == Constant::SEEN_STATUS['accepted']) {
@@ -69,7 +69,7 @@ class InvitationsController extends Controller
         } elseif ($user->pivot->seen == Constant::SEEN_STATUS['declined']) {
             $initialView = 'decline';
         }
-        
+
         return view('invitation', compact('invitation', 'user', 'routes', 'category', 'host_name', 'initialView', 'template'));
     }
 
@@ -77,14 +77,14 @@ class InvitationsController extends Controller
     {
         try {
             $invitation = Invitation::where('code', $invitation_code)->first();
-            
+
             if (!$invitation) {
                 return response()->json(['success' => false, 'message' => 'الدعوة غير موجودة'], 404);
             }
-            
+
             // Check if user exists in the pivot table
             $user = $invitation->users()->where('user_id', $user_id)->first();
-            
+
             if (!$user) {
                 return response()->json(['success' => false, 'message' => 'المستخدم غير موجود'], 404);
             }
@@ -92,23 +92,23 @@ class InvitationsController extends Controller
             if($user->pivot->seen == Constant::SEEN_STATUS['declined']){
                 return response()->json(['success' => false, 'message' => 'تم رفض الدعوة بالفعل'], 404);
             }
-            
+
             // Update the pivot table
             $invitation->users()->updateExistingPivot($user_id, ['seen' => Constant::SEEN_STATUS['accepted']]);
-            
+
             // Refresh the relationship to get updated pivot data
             $invitation->load('users');
             $updatedUser = $invitation->users()->where('user_id', $user_id)->first();
 
-            
+
             return response()->json([
-                'success' => true, 
+                'success' => true,
                 'message' => 'تم قبول الدعوة بنجاح',
                 'status' => 'accepted',
                 'user_id' => $user_id,
                 'user_seen' => $updatedUser->pivot->seen
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'حدث خطأ أثناء قبول الدعوة: ' . $e->getMessage()], 500);
         }
@@ -118,14 +118,14 @@ class InvitationsController extends Controller
     {
         try {
             $invitation = Invitation::where('code', $invitation_code)->first();
-            
+
             if (!$invitation) {
                 return response()->json(['success' => false, 'message' => 'الدعوة غير موجودة'], 404);
             }
-            
+
             // Check if user exists in the pivot table
             $user = $invitation->users()->where('user_id', $user_id)->first();
-            
+
             if (!$user) {
                 return response()->json(['success' => false, 'message' => 'المستخدم غير موجود'], 404);
             }
@@ -133,21 +133,21 @@ class InvitationsController extends Controller
             if($user->pivot->seen == Constant::SEEN_STATUS['accepted']){
                 return response()->json(['success' => false, 'message' => 'تم قبول الدعوة بالفعل'], 404);
             }
-            
+
             // Update the pivot table
             $invitation->users()->updateExistingPivot($user_id, ['seen' => Constant::SEEN_STATUS['declined']]);
-            
+
             // Refresh the relationship to get updated pivot data
             $invitation->load('users');
             $updatedUser = $invitation->users()->where('user_id', $user_id)->first();
-            
+
             return response()->json([
-                'success' => true, 
+                'success' => true,
                 'message' => 'تم رفض الدعوة',
                 'status' => 'declined',
                 'user_seen' => $updatedUser->pivot->seen
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'حدث خطأ أثناء رفض الدعوة: ' . $e->getMessage()], 500);
         }

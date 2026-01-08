@@ -1946,7 +1946,7 @@
 		@php
 		$template = $template ?? 1; // Default to template 1
 		// Validate template number
-		if ($template < 1 || $template> 7) {
+		if ($template < 1 || $template> 20) {
 			$template = 1;
 			}
 			@endphp
@@ -2143,7 +2143,7 @@
 			</div>
 	</div>
 
-@include('pages.scripts.invitations-scripts')
+	@include('pages.scripts.invitations-scripts')
 </body>
 
 </html>

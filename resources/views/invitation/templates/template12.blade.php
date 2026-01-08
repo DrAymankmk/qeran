@@ -178,7 +178,7 @@ body {
 
 .response-buttons {
 	position: absolute;
-	bottom: -80px;
+	/* bottom: -80px; */
 	left: 50%;
 	transform: translateX(-50%);
 	display: flex;
@@ -264,15 +264,17 @@ body {
 			<p>{{__('admin.bride')}}: {{$invitation->bride}}</p>
 			@endif
 			@endif
+
+			<div class="response-buttons">
+				<button class="btn btn-accept" onclick="acceptInvitation()">✓
+					{{__('admin.accept-invitation')}}</button>
+				<button class="btn btn-decline" onclick="declineInvitation()">✗
+					{{__('admin.refuse-invitation')}}</button>
+			</div>
 		</div>
 	</div>
 
-	<div class="response-buttons">
-		<button class="btn btn-accept" onclick="acceptInvitation()">✓
-			{{__('admin.accept-invitation')}}</button>
-		<button class="btn btn-decline" onclick="declineInvitation()">✗
-			{{__('admin.refuse-invitation')}}</button>
-	</div>
+
 </div>
 
 <script>

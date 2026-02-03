@@ -62,7 +62,7 @@ Route::prefix('/v1')->group(function () {
     Route::post('verify', [AuthController::class, 'verifyCode']);
     Route::post('send_code', [AuthController::class, 'sendCode']);
 
-    Route::get('home', HomeController::class);
+    Route::get('home', [HomeController::class, '__invoke']);
     Route::get('settings', GetSettings::class);
     Route::post('contact-us', SetContactUs::class);
     Route::get('app-settings', AppSettings::class);

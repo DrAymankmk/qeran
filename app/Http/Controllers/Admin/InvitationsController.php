@@ -593,6 +593,7 @@ class InvitationsController extends Controller
         try {
             $validated = $request->validate([
                 'invitation_package_id' => 'required|integer|exists:invitation_package,id',
+                'status' => 'required|integer|in:' . implode(',', array_values(Constant::PAID_STATUS)),
             ]);
 
             $invitationPackage = InvitationPackage::with('invitation.user')
@@ -600,14 +601,10 @@ class InvitationsController extends Controller
 
             DB::beginTransaction();
 
-            // Toggle package status
-            $newPackageStatus = $invitationPackage->status == Constant::PAID_STATUS['Paid']
-                ? Constant::PAID_STATUS['Not Paid']
-                : Constant::PAID_STATUS['Paid'];
-
+            $newPackageStatus = (int) $validated['status'];
             $invitationPackage->update(['status' => $newPackageStatus]);
 
-            // Update invitation paid status based on package status
+            // Update invitation paid status: only "Paid" counts as paid
             $newInvitationPaidStatus = $newPackageStatus == Constant::PAID_STATUS['Paid']
                 ? Constant::PAID_STATUS['Paid']
                 : Constant::PAID_STATUS['Not Paid'];

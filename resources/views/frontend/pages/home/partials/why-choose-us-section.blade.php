@@ -2,12 +2,13 @@
 <style>
 /* Why Choose Us Section Responsive */
 @media (max-width: 991px) {
+
 	.b-info-section .col-lg-7,
 	.b-info-section .col-lg-5,
 	.b-info-section .col-md-6 {
 		margin-bottom: 30px;
 	}
-	
+
 	.b-info-section__inner {
 		padding: 20px 0;
 	}
@@ -17,52 +18,52 @@
 	.b-info-section {
 		padding: 30px 0;
 	}
-	
+
 	.b-info-section .col-lg-7 {
 		order: 2;
 		margin-bottom: 25px;
 	}
-	
+
 	.b-info-section .col-lg-5 {
 		order: 1;
 		margin-bottom: 25px;
 	}
-	
+
 	.b-info-section .col-sm-6 {
 		margin-bottom: 15px;
 	}
-	
+
 	.b-info-section__img-1,
 	.b-info-section__img-2 {
 		width: 100%;
 		height: auto;
 		margin-bottom: 15px;
 	}
-	
+
 	.b-info-section__inner {
 		text-align: center;
 		padding: 15px 0;
 	}
-	
+
 	.b-info-section .ui-title-block {
 		font-size: 1.75rem !important;
 	}
-	
+
 	.b-info-section .list {
 		text-align: left;
 		margin-top: 20px;
 	}
-	
+
 	.b-info-section .list li {
 		margin-bottom: 15px;
 		padding-left: 25px;
 	}
-	
+
 	.b-info-section .list li h3 {
 		font-size: 1.1rem;
 		margin-bottom: 8px;
 	}
-	
+
 	.b-info-section .list li p {
 		font-size: 0.95rem;
 		line-height: 1.6;
@@ -73,25 +74,25 @@
 	.b-info-section {
 		padding: 25px 0;
 	}
-	
+
 	.b-info-section .ui-title-block {
 		font-size: 1.5rem !important;
 	}
-	
+
 	.b-info-section__img-1,
 	.b-info-section__img-2 {
 		margin-bottom: 10px;
 	}
-	
+
 	.b-info-section .list li {
 		margin-bottom: 12px;
 		padding-left: 20px;
 	}
-	
+
 	.b-info-section .list li h3 {
 		font-size: 1rem;
 	}
-	
+
 	.b-info-section .list li p {
 		font-size: 0.9rem;
 	}

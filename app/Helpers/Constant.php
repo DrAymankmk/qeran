@@ -119,6 +119,7 @@ class Constant
         'Paid' => 1,
         'Not Paid' => 2,
         'Pending Admin Payment' => 3,
+        'Rejected' => 4,
     ];
 
     const SEEN_STATUS = [

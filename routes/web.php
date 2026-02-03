@@ -20,6 +20,7 @@ use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\AboutController;
 use App\Http\Controllers\Frontend\ServiceController;
 use App\Http\Controllers\Frontend\FaqController;
+use App\Http\Controllers\DocsAuthController;
 use App\Http\Controllers\Frontend\ContactController;
 use App\Http\Controllers\Frontend\GalleryController;
 use App\Http\Controllers\Website\V1\Invitation\InvitationsController as WebsiteInvitationController;
@@ -188,6 +189,11 @@ Route::get('/delete-account-instruction', function () {
 Route::get('/privacy-policy', function () {
     return view('privacy_policy');
 });
+
+// API docs login (session-based; DOCS_PASSWORD in .env enables protection)
+Route::get('/docs/login', [DocsAuthController::class, 'showLoginForm'])->name('docs.login');
+Route::post('/docs/login', [DocsAuthController::class, 'login'])->name('docs.login.submit');
+Route::get('/docs/logout', [DocsAuthController::class, 'logout'])->name('docs.logout');
 
 Route::group(['prefix' => 'admin', 'middleware' => 'set.admin.locale'], function () {
     Route::controller(AuthController::class)->group(function () {

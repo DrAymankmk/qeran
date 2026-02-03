@@ -132,16 +132,14 @@
                                             @endif
                                         </td>
                                         <td>
-
-                                            <div class="d-flex gap-3">
-                                                <div class="form-check form-switch form-switch-lg mb-3" dir="ltr">
-                                                    <input class="form-check-input" type="checkbox"
-                                                           onchange="return window.location.href = '{{route('invitations.packages.change-status',
-                                                                ['invitation_package_id'=> $invitationPackage->id])}}'"
-                                                           @if($invitationPackage->status == 1) checked @endif
-                                                </div>
-
-                                            </div>
+                                            <select class="form-select form-select-sm"
+                                                    onchange="window.location.href = '{{ route('invitations.packages.change-status') }}?' + 'invitation_package_id={{ $invitationPackage->id }}&status=' + this.value">
+                                                @foreach(\App\Helpers\Constant::PAID_STATUS as $label => $value)
+                                                    <option value="{{ $value }}" @selected($invitationPackage->status == $value)>
+                                                        {{ __('admin.paid-status-' . $value) }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
                                         </td>
                                     </tr>
                                 @endforeach

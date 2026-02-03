@@ -132,7 +132,7 @@ endpoints:
                       "file": "E:\\My_Work\\Laravel\\qeran\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Migrations\\Migrator.php",
                       "line": 496,
                       "function": "up",
-                      "class": "Illuminate\\Database\\Migrations\\Migration@anonymous\u0000E:\\My_Work\\Laravel\\qeran\\database\\migrations\\2024_01_15_000002_make_invitation_code_not_nullable.php:7$12b",
+                      "class": "Illuminate\\Database\\Migrations\\Migration@anonymous\u0000E:\\My_Work\\Laravel\\qeran\\database\\migrations\\2024_01_15_000002_make_invitation_code_not_nullable.php:7$136",
                       "type": "->"
                   },
                   {

@@ -487,7 +487,7 @@ access-control-allow-origin: *
             &quot;file&quot;: &quot;E:\\My_Work\\Laravel\\qeran\\vendor\\laravel\\framework\\src\\Illuminate\\Database\\Migrations\\Migrator.php&quot;,
             &quot;line&quot;: 496,
             &quot;function&quot;: &quot;up&quot;,
-            &quot;class&quot;: &quot;Illuminate\\Database\\Migrations\\Migration@anonymous\u0000E:\\My_Work\\Laravel\\qeran\\database\\migrations\\2024_01_15_000002_make_invitation_code_not_nullable.php:7$12b&quot;,
+            &quot;class&quot;: &quot;Illuminate\\Database\\Migrations\\Migration@anonymous\u0000E:\\My_Work\\Laravel\\qeran\\database\\migrations\\2024_01_15_000002_make_invitation_code_not_nullable.php:7$136&quot;,
             &quot;type&quot;: &quot;-&gt;&quot;
         },
         {

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Notifications\NotificationResource;
 use App\Models\Notification;
 use App\Services\RespondActive;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Pusher\Pusher;
 
@@ -14,37 +13,77 @@ class NotificationController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:sanctum')->only('destroy');
+        $this->middleware('auth:sanctum')->only(['destroy', 'read', 'readAll', 'pusherAuth']);
     }
 
+    /**
+     * List notifications. Authenticated: own + broadcast, unread first. Guest: broadcast only.
+     */
     public function index(Request $request)
     {
-        switch (auth('sanctum')->check()) {
-            case true:
-                $notifications =
-                    Notification::query()
-                        ->where('created_at', '>=', auth('sanctum')->user()->created_at)
-                        ->where(function ($query) {
-                            $query->where('user_id', auth('sanctum')->id())->orwhere('user_id', null);
-                        })
-                        ->orderBy('created_at', 'desc');
-                auth('sanctum')->user()->update(['notification_count' => 0]);
+        if (auth('sanctum')->check()) {
+            $query = Notification::query()
+                ->where('created_at', '>=', auth('sanctum')->user()->created_at)
+                ->where(function ($query) {
+                    $query->where('user_id', auth('sanctum')->id())
+                        ->orWhere('user_id', null);
+                })
+                ->orderByReadStatus();
 
-                break;
-            case false:
-                $notifications = Notification::where('user_id', null)->where('created_at', '>=', Carbon::now());
+            auth('sanctum')->user()->update(['notification_count' => 0]);
+
+            $notifications = $query->paginate($request->input('per_page', 15));
+        } else {
+            $notifications = Notification::query()
+                ->where('user_id', null)
+                ->orderBy('created_at', 'desc')
+                ->paginate($request->input('per_page', 15));
         }
 
-        $notifications = NotificationResource::collection((clone $notifications)->latest('id')->paginate())->response()->getData();
+        $data = NotificationResource::collection($notifications)->response()->getData();
 
-        return RespondActive::success('The action ran successfully!', $notifications);
+        return RespondActive::success('Notifications fetched successfully!', $data);
+    }
+
+    /**
+     * Mark a single notification as read. User must own the notification or it must be broadcast (user_id null).
+     */
+    public function read(Notification $notification)
+    {
+        if ($notification->user_id !== null && $notification->user_id !== auth('sanctum')->id()) {
+            return RespondActive::clientError('Unauthorized', [], 403);
+        }
+
+        $notification->markAsRead();
+
+        return RespondActive::success('Notification marked as read.');
+    }
+
+    /**
+     * Mark all notifications for the current user as read.
+     */
+    public function readAll()
+    {
+        $updated = Notification::query()
+            ->where(function ($query) {
+                $query->where('user_id', auth('sanctum')->id())
+                    ->orWhere('user_id', null);
+            })
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        return RespondActive::success('All notifications marked as read.', ['count' => $updated]);
     }
 
     public function destroy(Notification $notification)
     {
+        if ($notification->user_id !== null && $notification->user_id !== auth('sanctum')->id()) {
+            return RespondActive::clientError('Unauthorized', [], 403);
+        }
+
         $notification->delete();
 
-        return RespondActive::success('The action ran successfully!');
+        return RespondActive::success('Notification deleted successfully!');
     }
 
     /**

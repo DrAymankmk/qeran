@@ -1,0 +1,2167 @@
+{
+    "variable": [
+        {
+            "id": "baseUrl",
+            "key": "baseUrl",
+            "type": "string",
+            "name": "string",
+            "value": "http:\/\/127.0.0.1:8000"
+        }
+    ],
+    "info": {
+        "name": "Laravel API Documentation",
+        "_postman_id": "946215f9-84de-43ad-adf1-3c4bc312f1f1",
+        "description": "",
+        "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
+    },
+    "item": [
+        {
+            "name": "Endpoints",
+            "description": "",
+            "item": [
+                {
+                    "name": "GET api\/command",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/command",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/command"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "content-type",
+                                    "value": "text\/html; charset=UTF-8"
+                                },
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "x-ratelimit-limit",
+                                    "value": "60"
+                                },
+                                {
+                                    "key": "x-ratelimit-remaining",
+                                    "value": "59"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 200,
+                            "body": "Optimization completed",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "GET api\/run-optimize",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/run-optimize",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/run-optimize"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "x-ratelimit-limit",
+                                    "value": "60"
+                                },
+                                {
+                                    "key": "x-ratelimit-remaining",
+                                    "value": "60"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 500,
+                            "body": "{\n    \"message\": \"Changing columns for table \\\"invitations\\\" requires Doctrine DBAL. Please install the doctrine\/dbal package.\",\n    \"exception\": \"RuntimeException\",\n    \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Database\\\\Schema\\\\Grammars\\\\ChangeColumn.php\",\n    \"line\": 30,\n    \"trace\": [\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Database\\\\Schema\\\\Grammars\\\\Grammar.php\",\n            \"line\": 86,\n            \"function\": \"compile\",\n            \"class\": \"Illuminate\\\\Database\\\\Schema\\\\Grammars\\\\ChangeColumn\",\n            \"type\": \"::\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Database\\\\Schema\\\\Blueprint.php\",\n            \"line\": 135,\n            \"function\": \"compileChange\",\n            \"class\": \"Illuminate\\\\Database\\\\Schema\\\\Grammars\\\\Grammar\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Database\\\\Schema\\\\Blueprint.php\",\n            \"line\": 108,\n            \"function\": \"toSql\",\n            \"class\": \"Illuminate\\\\Database\\\\Schema\\\\Blueprint\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Database\\\\Schema\\\\Builder.php\",\n            \"line\": 439,\n            \"function\": \"build\",\n            \"class\": \"Illuminate\\\\Database\\\\Schema\\\\Blueprint\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Database\\\\Schema\\\\Builder.php\",\n            \"line\": 269,\n            \"function\": \"build\",\n            \"class\": \"Illuminate\\\\Database\\\\Schema\\\\Builder\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Support\\\\Facades\\\\Facade.php\",\n            \"line\": 338,\n            \"function\": \"table\",\n            \"class\": \"Illuminate\\\\Database\\\\Schema\\\\Builder\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\database\\\\migrations\\\\2024_01_15_000002_make_invitation_code_not_nullable.php\",\n            \"line\": 14,\n            \"function\": \"__callStatic\",\n            \"class\": \"Illuminate\\\\Support\\\\Facades\\\\Facade\",\n            \"type\": \"::\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Database\\\\Migrations\\\\Migrator.php\",\n            \"line\": 496,\n            \"function\": \"up\",\n            \"class\": \"Illuminate\\\\Database\\\\Migrations\\\\Migration@anonymous\\u0000E:\\\\My_Work\\\\Laravel\\\\qeran\\\\database\\\\migrations\\\\2024_01_15_000002_make_invitation_code_not_nullable.php:7$136\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Database\\\\Migrations\\\\Migrator.php\",\n            \"line\": 414,\n            \"function\": \"runMethod\",\n            \"class\": \"Illuminate\\\\Database\\\\Migrations\\\\Migrator\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Database\\\\Migrations\\\\Migrator.php\",\n            \"line\": 423,\n            \"function\": \"Illuminate\\\\Database\\\\Migrations\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Database\\\\Migrations\\\\Migrator\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Database\\\\Migrations\\\\Migrator.php\",\n            \"line\": 224,\n            \"function\": \"runMigration\",\n            \"class\": \"Illuminate\\\\Database\\\\Migrations\\\\Migrator\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Console\\\\View\\\\Components\\\\Task.php\",\n            \"line\": 37,\n            \"function\": \"Illuminate\\\\Database\\\\Migrations\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Database\\\\Migrations\\\\Migrator\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Database\\\\Migrations\\\\Migrator.php\",\n            \"line\": 778,\n            \"function\": \"render\",\n            \"class\": \"Illuminate\\\\Console\\\\View\\\\Components\\\\Task\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Database\\\\Migrations\\\\Migrator.php\",\n            \"line\": 224,\n            \"function\": \"write\",\n            \"class\": \"Illuminate\\\\Database\\\\Migrations\\\\Migrator\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Database\\\\Migrations\\\\Migrator.php\",\n            \"line\": 189,\n            \"function\": \"runUp\",\n            \"class\": \"Illuminate\\\\Database\\\\Migrations\\\\Migrator\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Database\\\\Migrations\\\\Migrator.php\",\n            \"line\": 132,\n            \"function\": \"runPending\",\n            \"class\": \"Illuminate\\\\Database\\\\Migrations\\\\Migrator\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Database\\\\Console\\\\Migrations\\\\MigrateCommand.php\",\n            \"line\": 88,\n            \"function\": \"run\",\n            \"class\": \"Illuminate\\\\Database\\\\Migrations\\\\Migrator\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Database\\\\Migrations\\\\Migrator.php\",\n            \"line\": 636,\n            \"function\": \"Illuminate\\\\Database\\\\Console\\\\Migrations\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Database\\\\Console\\\\Migrations\\\\MigrateCommand\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Database\\\\Console\\\\Migrations\\\\MigrateCommand.php\",\n            \"line\": 81,\n            \"function\": \"usingConnection\",\n            \"class\": \"Illuminate\\\\Database\\\\Migrations\\\\Migrator\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Container\\\\BoundMethod.php\",\n            \"line\": 36,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Database\\\\Console\\\\Migrations\\\\MigrateCommand\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Container\\\\Util.php\",\n            \"line\": 41,\n            \"function\": \"Illuminate\\\\Container\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Container\\\\BoundMethod\",\n            \"type\": \"::\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Container\\\\BoundMethod.php\",\n            \"line\": 93,\n            \"function\": \"unwrapIfClosure\",\n            \"class\": \"Illuminate\\\\Container\\\\Util\",\n            \"type\": \"::\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Container\\\\BoundMethod.php\",\n            \"line\": 35,\n            \"function\": \"callBoundMethod\",\n            \"class\": \"Illuminate\\\\Container\\\\BoundMethod\",\n            \"type\": \"::\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Container\\\\Container.php\",\n            \"line\": 661,\n            \"function\": \"call\",\n            \"class\": \"Illuminate\\\\Container\\\\BoundMethod\",\n            \"type\": \"::\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Console\\\\Command.php\",\n            \"line\": 183,\n            \"function\": \"call\",\n            \"class\": \"Illuminate\\\\Container\\\\Container\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\symfony\\\\console\\\\Command\\\\Command.php\",\n            \"line\": 326,\n            \"function\": \"execute\",\n            \"class\": \"Illuminate\\\\Console\\\\Command\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Console\\\\Command.php\",\n            \"line\": 152,\n            \"function\": \"run\",\n            \"class\": \"Symfony\\\\Component\\\\Console\\\\Command\\\\Command\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\symfony\\\\console\\\\Application.php\",\n            \"line\": 1083,\n            \"function\": \"run\",\n            \"class\": \"Illuminate\\\\Console\\\\Command\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\symfony\\\\console\\\\Application.php\",\n            \"line\": 324,\n            \"function\": \"doRunCommand\",\n            \"class\": \"Symfony\\\\Component\\\\Console\\\\Application\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\symfony\\\\console\\\\Application.php\",\n            \"line\": 175,\n            \"function\": \"doRun\",\n            \"class\": \"Symfony\\\\Component\\\\Console\\\\Application\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Console\\\\Application.php\",\n            \"line\": 102,\n            \"function\": \"run\",\n            \"class\": \"Symfony\\\\Component\\\\Console\\\\Application\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Console\\\\Application.php\",\n            \"line\": 193,\n            \"function\": \"run\",\n            \"class\": \"Illuminate\\\\Console\\\\Application\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Foundation\\\\Console\\\\Kernel.php\",\n            \"line\": 336,\n            \"function\": \"call\",\n            \"class\": \"Illuminate\\\\Console\\\\Application\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Support\\\\Facades\\\\Facade.php\",\n            \"line\": 338,\n            \"function\": \"call\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Console\\\\Kernel\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\routes\\\\api.php\",\n            \"line\": 38,\n            \"function\": \"__callStatic\",\n            \"class\": \"Illuminate\\\\Support\\\\Facades\\\\Facade\",\n            \"type\": \"::\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Routing\\\\CallableDispatcher.php\",\n            \"line\": 40,\n            \"function\": \"{closure}\",\n            \"class\": \"Illuminate\\\\Routing\\\\RouteFileRegistrar\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Routing\\\\Route.php\",\n            \"line\": 237,\n            \"function\": \"dispatch\",\n            \"class\": \"Illuminate\\\\Routing\\\\CallableDispatcher\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Routing\\\\Route.php\",\n            \"line\": 208,\n            \"function\": \"runCallable\",\n            \"class\": \"Illuminate\\\\Routing\\\\Route\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Routing\\\\Router.php\",\n            \"line\": 798,\n            \"function\": \"run\",\n            \"class\": \"Illuminate\\\\Routing\\\\Route\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Pipeline\\\\Pipeline.php\",\n            \"line\": 141,\n            \"function\": \"Illuminate\\\\Routing\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Routing\\\\Router\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\app\\\\Http\\\\Middleware\\\\HandleLanguage.php\",\n            \"line\": 22,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Pipeline\\\\Pipeline.php\",\n            \"line\": 180,\n            \"function\": \"handle\",\n            \"class\": \"App\\\\Http\\\\Middleware\\\\HandleLanguage\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Routing\\\\Middleware\\\\SubstituteBindings.php\",\n            \"line\": 50,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Pipeline\\\\Pipeline.php\",\n            \"line\": 180,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Routing\\\\Middleware\\\\SubstituteBindings\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Routing\\\\Middleware\\\\ThrottleRequests.php\",\n            \"line\": 126,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Routing\\\\Middleware\\\\ThrottleRequests.php\",\n            \"line\": 92,\n            \"function\": \"handleRequest\",\n            \"class\": \"Illuminate\\\\Routing\\\\Middleware\\\\ThrottleRequests\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Routing\\\\Middleware\\\\ThrottleRequests.php\",\n            \"line\": 54,\n            \"function\": \"handleRequestUsingNamedLimiter\",\n            \"class\": \"Illuminate\\\\Routing\\\\Middleware\\\\ThrottleRequests\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Pipeline\\\\Pipeline.php\",\n            \"line\": 180,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Routing\\\\Middleware\\\\ThrottleRequests\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Pipeline\\\\Pipeline.php\",\n            \"line\": 116,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Routing\\\\Router.php\",\n            \"line\": 797,\n            \"function\": \"then\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Routing\\\\Router.php\",\n            \"line\": 776,\n            \"function\": \"runRouteWithinStack\",\n            \"class\": \"Illuminate\\\\Routing\\\\Router\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Routing\\\\Router.php\",\n            \"line\": 740,\n            \"function\": \"runRoute\",\n            \"class\": \"Illuminate\\\\Routing\\\\Router\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Routing\\\\Router.php\",\n            \"line\": 729,\n            \"function\": \"dispatchToRoute\",\n            \"class\": \"Illuminate\\\\Routing\\\\Router\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Foundation\\\\Http\\\\Kernel.php\",\n            \"line\": 190,\n            \"function\": \"dispatch\",\n            \"class\": \"Illuminate\\\\Routing\\\\Router\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Pipeline\\\\Pipeline.php\",\n            \"line\": 141,\n            \"function\": \"Illuminate\\\\Foundation\\\\Http\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Kernel\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\TransformsRequest.php\",\n            \"line\": 21,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\ConvertEmptyStringsToNull.php\",\n            \"line\": 31,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\TransformsRequest\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Pipeline\\\\Pipeline.php\",\n            \"line\": 180,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\ConvertEmptyStringsToNull\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\TransformsRequest.php\",\n            \"line\": 21,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\TrimStrings.php\",\n            \"line\": 40,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\TransformsRequest\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Pipeline\\\\Pipeline.php\",\n            \"line\": 180,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\TrimStrings\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\ValidatePostSize.php\",\n            \"line\": 27,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Pipeline\\\\Pipeline.php\",\n            \"line\": 180,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\ValidatePostSize\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\PreventRequestsDuringMaintenance.php\",\n            \"line\": 86,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Pipeline\\\\Pipeline.php\",\n            \"line\": 180,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Middleware\\\\PreventRequestsDuringMaintenance\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Http\\\\Middleware\\\\HandleCors.php\",\n            \"line\": 62,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Pipeline\\\\Pipeline.php\",\n            \"line\": 180,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Http\\\\Middleware\\\\HandleCors\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Http\\\\Middleware\\\\TrustProxies.php\",\n            \"line\": 39,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Pipeline\\\\Pipeline.php\",\n            \"line\": 180,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Http\\\\Middleware\\\\TrustProxies\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Pipeline\\\\Pipeline.php\",\n            \"line\": 116,\n            \"function\": \"Illuminate\\\\Pipeline\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Foundation\\\\Http\\\\Kernel.php\",\n            \"line\": 165,\n            \"function\": \"then\",\n            \"class\": \"Illuminate\\\\Pipeline\\\\Pipeline\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Foundation\\\\Http\\\\Kernel.php\",\n            \"line\": 134,\n            \"function\": \"sendRequestThroughRouter\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Kernel\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\knuckleswtf\\\\scribe\\\\src\\\\Extracting\\\\Strategies\\\\Responses\\\\ResponseCalls.php\",\n            \"line\": 256,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Http\\\\Kernel\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\knuckleswtf\\\\scribe\\\\src\\\\Extracting\\\\Strategies\\\\Responses\\\\ResponseCalls.php\",\n            \"line\": 249,\n            \"function\": \"callLaravelRoute\",\n            \"class\": \"Knuckles\\\\Scribe\\\\Extracting\\\\Strategies\\\\Responses\\\\ResponseCalls\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\knuckleswtf\\\\scribe\\\\src\\\\Extracting\\\\Strategies\\\\Responses\\\\ResponseCalls.php\",\n            \"line\": 86,\n            \"function\": \"makeApiCall\",\n            \"class\": \"Knuckles\\\\Scribe\\\\Extracting\\\\Strategies\\\\Responses\\\\ResponseCalls\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\knuckleswtf\\\\scribe\\\\src\\\\Extracting\\\\Strategies\\\\Responses\\\\ResponseCalls.php\",\n            \"line\": 39,\n            \"function\": \"makeResponseCall\",\n            \"class\": \"Knuckles\\\\Scribe\\\\Extracting\\\\Strategies\\\\Responses\\\\ResponseCalls\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\knuckleswtf\\\\scribe\\\\src\\\\Extracting\\\\Extractor.php\",\n            \"line\": 240,\n            \"function\": \"__invoke\",\n            \"class\": \"Knuckles\\\\Scribe\\\\Extracting\\\\Strategies\\\\Responses\\\\ResponseCalls\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\knuckleswtf\\\\scribe\\\\src\\\\Extracting\\\\Extractor.php\",\n            \"line\": 165,\n            \"function\": \"iterateThroughStrategies\",\n            \"class\": \"Knuckles\\\\Scribe\\\\Extracting\\\\Extractor\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\knuckleswtf\\\\scribe\\\\src\\\\Extracting\\\\Extractor.php\",\n            \"line\": 97,\n            \"function\": \"fetchResponses\",\n            \"class\": \"Knuckles\\\\Scribe\\\\Extracting\\\\Extractor\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\knuckleswtf\\\\scribe\\\\src\\\\GroupedEndpoints\\\\GroupedEndpointsFromApp.php\",\n            \"line\": 125,\n            \"function\": \"processRoute\",\n            \"class\": \"Knuckles\\\\Scribe\\\\Extracting\\\\Extractor\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\knuckleswtf\\\\scribe\\\\src\\\\GroupedEndpoints\\\\GroupedEndpointsFromApp.php\",\n            \"line\": 72,\n            \"function\": \"extractEndpointsInfoFromLaravelApp\",\n            \"class\": \"Knuckles\\\\Scribe\\\\GroupedEndpoints\\\\GroupedEndpointsFromApp\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\knuckleswtf\\\\scribe\\\\src\\\\GroupedEndpoints\\\\GroupedEndpointsFromApp.php\",\n            \"line\": 50,\n            \"function\": \"extractEndpointsInfoAndWriteToDisk\",\n            \"class\": \"Knuckles\\\\Scribe\\\\GroupedEndpoints\\\\GroupedEndpointsFromApp\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\knuckleswtf\\\\scribe\\\\src\\\\Commands\\\\GenerateDocumentation.php\",\n            \"line\": 55,\n            \"function\": \"get\",\n            \"class\": \"Knuckles\\\\Scribe\\\\GroupedEndpoints\\\\GroupedEndpointsFromApp\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Container\\\\BoundMethod.php\",\n            \"line\": 36,\n            \"function\": \"handle\",\n            \"class\": \"Knuckles\\\\Scribe\\\\Commands\\\\GenerateDocumentation\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Container\\\\Util.php\",\n            \"line\": 41,\n            \"function\": \"Illuminate\\\\Container\\\\{closure}\",\n            \"class\": \"Illuminate\\\\Container\\\\BoundMethod\",\n            \"type\": \"::\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Container\\\\BoundMethod.php\",\n            \"line\": 93,\n            \"function\": \"unwrapIfClosure\",\n            \"class\": \"Illuminate\\\\Container\\\\Util\",\n            \"type\": \"::\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Container\\\\BoundMethod.php\",\n            \"line\": 35,\n            \"function\": \"callBoundMethod\",\n            \"class\": \"Illuminate\\\\Container\\\\BoundMethod\",\n            \"type\": \"::\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Container\\\\Container.php\",\n            \"line\": 661,\n            \"function\": \"call\",\n            \"class\": \"Illuminate\\\\Container\\\\BoundMethod\",\n            \"type\": \"::\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Console\\\\Command.php\",\n            \"line\": 183,\n            \"function\": \"call\",\n            \"class\": \"Illuminate\\\\Container\\\\Container\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\symfony\\\\console\\\\Command\\\\Command.php\",\n            \"line\": 326,\n            \"function\": \"execute\",\n            \"class\": \"Illuminate\\\\Console\\\\Command\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Console\\\\Command.php\",\n            \"line\": 152,\n            \"function\": \"run\",\n            \"class\": \"Symfony\\\\Component\\\\Console\\\\Command\\\\Command\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\symfony\\\\console\\\\Application.php\",\n            \"line\": 1083,\n            \"function\": \"run\",\n            \"class\": \"Illuminate\\\\Console\\\\Command\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\symfony\\\\console\\\\Application.php\",\n            \"line\": 324,\n            \"function\": \"doRunCommand\",\n            \"class\": \"Symfony\\\\Component\\\\Console\\\\Application\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\symfony\\\\console\\\\Application.php\",\n            \"line\": 175,\n            \"function\": \"doRun\",\n            \"class\": \"Symfony\\\\Component\\\\Console\\\\Application\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Console\\\\Application.php\",\n            \"line\": 102,\n            \"function\": \"run\",\n            \"class\": \"Symfony\\\\Component\\\\Console\\\\Application\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\vendor\\\\laravel\\\\framework\\\\src\\\\Illuminate\\\\Foundation\\\\Console\\\\Kernel.php\",\n            \"line\": 155,\n            \"function\": \"run\",\n            \"class\": \"Illuminate\\\\Console\\\\Application\",\n            \"type\": \"->\"\n        },\n        {\n            \"file\": \"E:\\\\My_Work\\\\Laravel\\\\qeran\\\\artisan\",\n            \"line\": 35,\n            \"function\": \"handle\",\n            \"class\": \"Illuminate\\\\Foundation\\\\Console\\\\Kernel\",\n            \"type\": \"->\"\n        }\n    ]\n}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Login for regular users",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/login",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/login"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone\":\"vmqeopfuudtdsufvyvddq\",\"country_code\":\"amnii\",\"password\":\"consequatur\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Login for invitation guards",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/login-guard",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/login-guard"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone\":\"vmqeopfuudtdsufvyvddq\",\"country_code\":\"amnii\",\"code\":\"consequatur\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST api\/v1\/register",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/register",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/register"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"name\":\"vmqeopfuudtdsufvyvddq\",\"phone\":\"amniihfqcoynlazghdtqt\",\"country_code\":\"consequatur\",\"email\":\"carolyne.luettgen@example.org\",\"image\":\"fuudtdsufvyvddqamniih\",\"password\":\"consequatur\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST api\/v1\/change_password",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/change_password",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/change_password"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"old_password\":\"vmqeopfuudtdsufvyvddq\",\"phone\":\"amniihfqcoynlazghdtqt\",\"password\":\"t(!Cs'YAKYLk4>S\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST api\/v1\/verify",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/verify",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/verify"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone\":\"vmqeopfuudtdsufvyvddq\",\"code\":\"amni\",\"country_code\":\"consequatur\",\"type\":\"4\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST api\/v1\/send_code",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/send_code",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/send_code"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone\":\"consequatur\",\"country_code\":\"consequatur\",\"type\":\"4\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET api\/v1\/home",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/home",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/home"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "x-ratelimit-limit",
+                                    "value": "60"
+                                },
+                                {
+                                    "key": "x-ratelimit-remaining",
+                                    "value": "59"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 200,
+                            "body": "{\"code\":200,\"message\":\"The action ran successfully!\",\"data\":{\"data\":[{\"id\":6,\"title\":\"\\u062f\\u0639\\u0648\\u0629 \\u0632\\u0641\\u0627\\u0641\",\"name\":\"\\u062f\\u0639\\u0648\\u0629  \\u0632\\u0641\\u0627\\u0641\",\"image\":\"http:\\\/\\\/127.0.0.1:8000\\\/storage\\\/categories\\\/1716051323vpywq.webp\",\"is_wedding\":2,\"is_party\":2},{\"id\":7,\"title\":null,\"name\":\"\\u062f\\u0639\\u0648\\u0629 \\u0639\\u064a\\u062f \\u0645\\u064a\\u0644\\u0627\\u062f\",\"image\":\"http:\\\/\\\/127.0.0.1:8000\\\/storage\\\/categories\\\/1751221363hYXD5.webp\",\"is_wedding\":2,\"is_party\":2},{\"id\":8,\"title\":null,\"name\":\"\\u062f\\u0639\\u0648\\u0629 \\u062d\\u0641\\u0644  \\u0645\\u0648\\u0644\\u0648\\u062f\",\"image\":\"http:\\\/\\\/127.0.0.1:8000\\\/storage\\\/categories\\\/1716051717cRmKy.webp\",\"is_wedding\":2,\"is_party\":2},{\"id\":9,\"title\":null,\"name\":\"\\u062f\\u0639\\u0648\\u0629 \\u062d\\u0641\\u0644 \\u062a\\u062e\\u0631\\u062c\",\"image\":\"http:\\\/\\\/127.0.0.1:8000\\\/storage\\\/categories\\\/1716052002lnd3P.webp\",\"is_wedding\":2,\"is_party\":2},{\"id\":11,\"title\":\"\\u062d\\u0641\\u0644\\u0629 \\u0639\\u0634\\u0627\\u0621\",\"name\":\"\\u062d\\u0641\\u0644\\u0629 \\u0639\\u0634\\u0627\\u0621\",\"image\":\"http:\\\/\\\/127.0.0.1:8000\\\/storage\\\/categories\\\/1754700318H13N4.webp\",\"is_wedding\":2,\"is_party\":2},{\"id\":12,\"title\":\"\\u0645\\u0644\\u0643\\u0629\",\"name\":\"\\u0645\\u0644\\u0643\\u0629\",\"image\":\"http:\\\/\\\/127.0.0.1:8000\\\/storage\\\/categories\\\/1754700518Erze4.webp\",\"is_wedding\":2,\"is_party\":2}],\"links\":{\"first\":\"http:\\\/\\\/127.0.0.1:8000\\\/api\\\/v1\\\/home?page=1\",\"last\":\"http:\\\/\\\/127.0.0.1:8000\\\/api\\\/v1\\\/home?page=1\",\"prev\":null,\"next\":null},\"meta\":{\"current_page\":1,\"from\":1,\"last_page\":1,\"links\":[{\"url\":null,\"label\":\"&laquo; \\u0627\\u0644\\u0633\\u0627\\u0628\\u0642\",\"active\":false},{\"url\":\"http:\\\/\\\/127.0.0.1:8000\\\/api\\\/v1\\\/home?page=1\",\"label\":\"1\",\"active\":true},{\"url\":null,\"label\":\"\\u0627\\u0644\\u062a\\u0627\\u0644\\u064a &raquo;\",\"active\":false}],\"path\":\"http:\\\/\\\/127.0.0.1:8000\\\/api\\\/v1\\\/home\",\"per_page\":15,\"to\":6,\"total\":6}}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "GET api\/v1\/settings",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/settings",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/settings"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"type\":\"1\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "x-ratelimit-limit",
+                                    "value": "60"
+                                },
+                                {
+                                    "key": "x-ratelimit-remaining",
+                                    "value": "58"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 200,
+                            "body": "{\"code\":200,\"message\":\"The action ran successfully!\",\"data\":[{\"id\":1,\"title\":\"\\u062a\\u064e\\u0637\\u0652\\u0628\\u0650\\u064a\\u0642\\u064f  \\u0642\\u0650\\u0631\\u064e\\u0627\\u0646\\u0650\",\"content\":\"\\\"\\u0642\\u064d\\u0631\\u0627\\u0646\\\" \\u0647\\u0648 \\u062a\\u0637\\u0628\\u064a\\u0642 \\u0630\\u0643\\u064a \\u064a\\u0633\\u0627\\u0639\\u062f\\u0643 \\u0639\\u0644\\u0649 \\u0625\\u0631\\u0633\\u0627\\u0644 \\u062f\\u0639\\u0648\\u0627\\u062a \\u0625\\u0644\\u0643\\u062a\\u0631\\u0648\\u0646\\u064a\\u0629 \\u0623\\u0646\\u064a\\u0642\\u0629 \\u0644\\u0645\\u0646\\u0627\\u0633\\u0628\\u0627\\u062a\\u0643 \\u0627\\u0644\\u062e\\u0627\\u0635\\u0629 \\u0645\\u062b\\u0644 \\u0627\\u0644\\u0632\\u0641\\u0627\\u0641\\u060c \\u062d\\u0641\\u0644\\u0627\\u062a \\u0627\\u0644\\u0645\\u0648\\u0627\\u0644\\u064a\\u062f\\u060c \\u0623\\u0639\\u064a\\u0627\\u062f \\u0627\\u0644\\u0645\\u064a\\u0644\\u0627\\u062f\\u060c \\u0623\\u0648 \\u062d\\u0641\\u0644\\u0627\\u062a \\u0627\\u0644\\u0639\\u0634\\u0627\\u0621\\u060c \\u0628\\u0637\\u0631\\u064a\\u0642\\u0629 \\u0639\\u0635\\u0631\\u064a\\u0629 \\u0648\\u0633\\u0647\\u0644\\u0629.\\n\\n\\u0648\\u062f\\u0651\\u0639 \\u0627\\u0644\\u062f\\u0639\\u0648\\u0627\\u062a \\u0627\\u0644\\u0648\\u0631\\u0642\\u064a\\u0629 \\u0627\\u0644\\u062a\\u0642\\u0644\\u064a\\u062f\\u064a\\u0629\\u060c \\u0648\\u0627\\u0635\\u0646\\u0639 \\u062a\\u062c\\u0631\\u0628\\u062a\\u0643 \\u0627\\u0644\\u062e\\u0627\\u0635\\u0629 \\u0645\\u0639 \\u062f\\u0639\\u0648\\u0627\\u062a \\u0631\\u0642\\u0645\\u064a\\u0629 \\u0645\\u062e\\u0635\\u0635\\u0629 \\u062a\\u062d\\u062a\\u0648\\u064a \\u0639\\u0644\\u0649 QR Code \\u062e\\u0627\\u0635 \\u0644\\u0643\\u0644 \\u0645\\u062f\\u0639\\u0648\\u060c \\u0645\\u0645\\u0627 \\u064a\\u062c\\u0639\\u0644 \\u062a\\u0646\\u0638\\u064a\\u0645 \\u0627\\u0644\\u062d\\u0636\\u0648\\u0631 \\u0623\\u0643\\u062b\\u0631 \\u062f\\u0642\\u0629 \\u0648\\u0623\\u0646\\u0627\\u0642\\u0629.\\n\\n\\u0645\\u0645\\u064a\\u0632\\u0627\\u062a \\u0627\\u0644\\u062a\\u0637\\u0628\\u064a\\u0642:\\n\\n\\u062a\\u0635\\u0645\\u064a\\u0645 \\u062f\\u0639\\u0648\\u0627\\u062a \\u0625\\u0644\\u0643\\u062a\\u0631\\u0648\\u0646\\u064a\\u0629 \\u0641\\u062e\\u0645\\u0629 \\u062e\\u0644\\u0627\\u0644 \\u062f\\u0642\\u0627\\u0626\\u0642\\n\\n\\u062a\\u062e\\u0635\\u064a\\u0635 \\u0627\\u0644\\u062f\\u0639\\u0648\\u0629 \\u062d\\u0633\\u0628 \\u0627\\u0644\\u0645\\u0646\\u0627\\u0633\\u0628\\u0629\\n\\nQR Code \\u0644\\u0643\\u0644 \\u0636\\u064a\\u0641 \\u0644\\u064a\\u0633\\u0647\\u0651\\u0644 \\u062a\\u0633\\u062c\\u064a\\u0644 \\u0627\\u0644\\u062d\\u0636\\u0648\\u0631\\n\\n\\u0625\\u0631\\u0633\\u0627\\u0644 \\u0627\\u0644\\u062f\\u0639\\u0648\\u0627\\u062a \\u0639\\u0628\\u0631 \\u0648\\u0627\\u062a\\u0633\\u0627\\u0628 \\u0623\\u0648 \\u0623\\u064a \\u0645\\u0646\\u0635\\u0629 \\u062a\\u0648\\u0627\\u0635\\u0644\\n\\n\\u062a\\u062c\\u0631\\u0628\\u0629 \\u0627\\u0633\\u062a\\u062e\\u062f\\u0627\\u0645 \\u0633\\u0647\\u0644\\u0629 \\u0648\\u0633\\u0644\\u0633\\u0629\\n\\n\\n\\\"\\u0642\\u064d\\u0631\\u0627\\u0646\\\" \\u0647\\u0648 \\u0631\\u0641\\u064a\\u0642\\u0643 \\u0644\\u062a\\u0646\\u0638\\u064a\\u0645 \\u0627\\u0644\\u0645\\u0646\\u0627\\u0633\\u0628\\u0627\\u062a \\u0628\\u0637\\u0631\\u064a\\u0642\\u0629 \\u0639\\u0635\\u0631\\u064a\\u0629 \\u0648\\u0623\\u0646\\u064a\\u0642\\u0629.\",\"image\":\"http:\\\/\\\/127.0.0.1:8000\\\/storage\\\/settings\\\/about_new.jpeg\"}]}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "POST api\/v1\/contact-us",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/contact-us",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/contact-us"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"name\":\"vmqeopfuudtdsufvyvddq\",\"email\":\"kunde.eloisa@example.com\",\"country_code\":11613.31890586,\"phone\":11613.31890586,\"subject\":\"opfuudtdsufvyvddqamni\",\"message\":\"ihfqcoynlazghdtqtqxba\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET api\/v1\/app-settings",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/app-settings",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/app-settings"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "x-ratelimit-limit",
+                                    "value": "60"
+                                },
+                                {
+                                    "key": "x-ratelimit-remaining",
+                                    "value": "57"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 200,
+                            "body": "{\"code\":200,\"message\":\"The action ran successfully!\",\"data\":[{\"key\":\"extra_guard_fees\",\"value\":\"<p>500<\\\/p>\"},{\"key\":\"extra_invitation_fees\",\"value\":\"5\"},{\"key\":\"facebook\",\"value\":\"#\\u0642\\u0650\\u0631\\u0627\\u0646 \\u0644\\u0644\\u062f\\u0639\\u0648\\u0627\\u062a \\u0627\\u0644\\u0631\\u0642\\u0645\\u064a\\u0629\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#qeran_invitation\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"www.test.com\"},{\"key\":\"tiktok\",\"value\":\"#qeran.invitation\"},{\"key\":\"account_number\",\"value\":\"29911102405899\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"extra_guard_fees\",\"value\":\"30\"},{\"key\":\"extra_invitation_fees\",\"value\":\"30\"},{\"key\":\"facebook\",\"value\":\"#\"},{\"key\":\"twitter\",\"value\":\"#\"},{\"key\":\"instagram\",\"value\":\"#\"},{\"key\":\"snapchat\",\"value\":\"#\"},{\"key\":\"youtube\",\"value\":\"#\"},{\"key\":\"tiktok\",\"value\":\"#\"},{\"key\":\"test\",\"value\":\"test\"},{\"key\":\"test 2\",\"value\":\"<h1>test 2<\\\/h1>\"},{\"key\":\"privacy_policy\",\"value\":\"<h1><strong>test<\\\/strong><\\\/h1>\"}]}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Handle incoming WhatsApp webhook",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/whatsapp-webhook",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/whatsapp-webhook"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET api\/v1\/notifications",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/notifications",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/notifications"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "x-ratelimit-limit",
+                                    "value": "60"
+                                },
+                                {
+                                    "key": "x-ratelimit-remaining",
+                                    "value": "56"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 200,
+                            "body": "{\"code\":200,\"message\":\"The action ran successfully!\",\"data\":{\"data\":[],\"links\":{\"first\":\"http:\\\/\\\/127.0.0.1:8000\\\/api\\\/v1\\\/notifications?page=1\",\"last\":\"http:\\\/\\\/127.0.0.1:8000\\\/api\\\/v1\\\/notifications?page=1\",\"prev\":null,\"next\":null},\"meta\":{\"current_page\":1,\"from\":null,\"last_page\":1,\"links\":[{\"url\":null,\"label\":\"&laquo; \\u0627\\u0644\\u0633\\u0627\\u0628\\u0642\",\"active\":false},{\"url\":\"http:\\\/\\\/127.0.0.1:8000\\\/api\\\/v1\\\/notifications?page=1\",\"label\":\"1\",\"active\":true},{\"url\":null,\"label\":\"\\u0627\\u0644\\u062a\\u0627\\u0644\\u064a &raquo;\",\"active\":false}],\"path\":\"http:\\\/\\\/127.0.0.1:8000\\\/api\\\/v1\\\/notifications\",\"per_page\":15,\"to\":null,\"total\":0}}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "GET api\/v1\/notifications\/delete\/{notification_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/notifications\/delete\/:notification_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/notifications\/delete\/:notification_id",
+                            "variable": [
+                                {
+                                    "id": "notification_id",
+                                    "key": "notification_id",
+                                    "value": "1",
+                                    "description": "The ID of the notification."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Pusher authentication for private channels",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/notifications\/pusher\/auth",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/notifications\/pusher\/auth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET api\/v1\/send-notify",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/send-notify",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/send-notify"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "POST api\/v1\/auth\/logout",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/auth\/logout",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/auth\/logout"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET api\/v1\/auth\/delete",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/auth\/delete",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/auth\/delete"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "GET api\/v1\/generate-beams-token",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/generate-beams-token",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/generate-beams-token"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "POST api\/v1\/auth\/change-language",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/auth\/change-language",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/auth\/change-language"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET api\/v1\/profile",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/profile",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/profile"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "POST api\/v1\/profile\/update",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/profile\/update",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/profile\/update"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"name\":\"vmqeopfuudtdsufvyvddq\",\"country_code\":\"amnii\",\"image\":\"hfqcoynlazghdtqtqxbaj\",\"description\":\"Et id nisi qui id totam temporibus quia.\",\"gender\":\"1\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET api\/v1\/invitations",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"type\":\"2\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "POST api\/v1\/invitations\/store",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/store",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/store"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"invitation_type\":\"1\",\"invitation_step\":\"consequatur\",\"invitation_media_type\":\"1\",\"count\":56,\"invitation_count\":\"eopfuudtdsufvyvddqamniihfqcoynlazghdtqtqxbajwbpilpmufinllwloauydlsmsjuryv\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET api\/v1\/invitations\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "POST api\/v1\/invitations\/update\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/update\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/update\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"invitation_type\":\"1\",\"invitation_step\":\"consequatur\",\"invitation_media_type\":\"1\",\"count\":56,\"invitation_count\":\"eopfuudtdsufvyvddqamniihfqcoynlazghdtqtqxbajwbpilpmufinllwloauydlsmsjuryv\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST api\/v1\/invitations\/add-admin\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/add-admin\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/add-admin\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone\":\"vmqeopfuudtdsufvyvddq\",\"country_code\":\"amnii\",\"invitation_count\":\"hfqcoynlazghdtqtqxbajwbpilpmufinllwloauydlsmsjuryvojcybzvrbyickznkygloigm\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST api\/v1\/invitations\/add-guard\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/add-guard\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/add-guard\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone\":\"vmqeopfuudtdsufvyvddq\",\"country_code\":\"amnii\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST api\/v1\/invitations\/add-user\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/add-user\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/add-user\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"users\":[{\"phone\":[\"vmqeopfuudtdsufvyvddq\"],\"country_code\":[\"amnii\"],\"invitation_count\":[\"hfqcoynlazghdtqtqxbajwbpilpmufinllwloauydlsmsjuryvojcybzvrbyickznkygloigm\"]}]}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST api\/v1\/invitations\/edit-user\/{user_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/edit-user\/:user_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/edit-user\/:user_id",
+                            "variable": [
+                                {
+                                    "id": "user_id",
+                                    "key": "user_id",
+                                    "value": "2",
+                                    "description": "The ID of the user."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone\":\"vmqeopfuudtdsufvyvddq\",\"country_code\":\"amnii\",\"invitation_count\":\"hfqcoynlazghdtqtqxbajwbpilpmufinllwloauydlsmsjuryvojcybzvrbyickznkygloigm\",\"invitation_id\":\"consequatur\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update the invitation count for a specific admin in an invitation.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/:invitation_id\/update-admin-invitation-count\/:admin_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/:invitation_id\/update-admin-invitation-count\/:admin_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                },
+                                {
+                                    "id": "admin_id",
+                                    "key": "admin_id",
+                                    "value": "2",
+                                    "description": "The ID of the admin."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"invitation_count\":21}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST api\/v1\/invitations\/send-notification\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/send-notification\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/send-notification\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"message\":\"vmqeopfuudtdsufvyvddq\",\"use_template\":true}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST api\/v1\/invitations\/update-admin-host-name\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/update-admin-host-name\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/update-admin-host-name\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"host_name\":\"vmqeopfuudtdsufvyvddq\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST api\/v1\/invitations\/send-sms\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/send-sms\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/send-sms\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"message\":\"vmqeopfuudtdsufvyvddq\",\"use_template\":true}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Send template message to all users in the invitation",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/send-template-message\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/send-template-message\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET api\/v1\/invitations\/share-sms-invitation-app\/{invitation_id}\/{user_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/share-sms-invitation-app\/:invitation_id\/:user_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/share-sms-invitation-app\/:invitation_id\/:user_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                },
+                                {
+                                    "id": "user_id",
+                                    "key": "user_id",
+                                    "value": "2",
+                                    "description": "The ID of the user."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "GET api\/v1\/invitations\/invited\/users\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/invited\/users\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/invited\/users\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "2",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"seen\":\"2\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "GET api\/v1\/invitations\/invited\/admins\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/invited\/admins\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/invited\/admins\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "GET api\/v1\/invitations\/invited\/guards\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/invited\/guards\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/invited\/guards\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "POST api\/v1\/invitations\/status\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/status\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/status\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"status\":\"-1\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST api\/v1\/invitations\/user\/delete\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/user\/delete\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/user\/delete\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"user_id\":\"consequatur\",\"role\":\"4\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET api\/v1\/invitations\/check\/invitation",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/check\/invitation",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/check\/invitation"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"user_id\":\"consequatur\",\"invitation_id\":\"consequatur\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "GET api\/v1\/invitations\/share\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/share\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/share\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "GET api\/v1\/invitations\/share-sms\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/share-sms\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/share-sms\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "GET api\/v1\/invitations\/packages\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/packages\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/packages\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "POST api\/v1\/invitations\/payment\/receipt\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/payment\/receipt\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/payment\/receipt\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"image\":\"consequatur\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST api\/v1\/invitations\/add-extra-package\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/add-extra-package\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/add-extra-package\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET api\/v1\/invitations\/complete-request-invitation\/{invitation_id}",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/invitations\/complete-request-invitation\/:invitation_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/invitations\/complete-request-invitation\/:invitation_id",
+                            "variable": [
+                                {
+                                    "id": "invitation_id",
+                                    "key": "invitation_id",
+                                    "value": "120",
+                                    "description": "The ID of the invitation."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [
+                                {
+                                    "key": "cache-control",
+                                    "value": "no-cache, private"
+                                },
+                                {
+                                    "key": "content-type",
+                                    "value": "application\/json"
+                                },
+                                {
+                                    "key": "access-control-allow-origin",
+                                    "value": "*"
+                                }
+                            ],
+                            "code": 401,
+                            "body": "{\"message\":\"Unauthenticated.\"}",
+                            "name": ""
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "auth": {
+        "type": "noauth"
+    }
+}

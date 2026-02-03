@@ -3,7 +3,7 @@
 use App\Helpers\Constant;
 use App\Http\Controllers\Api\V1\AppSettings\AppSettings;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
-use App\Http\Controllers\Api\V1\Home\GetHome;
+use App\Http\Controllers\Api\V1\Home\HomeController;
 use App\Http\Controllers\Api\V1\Invitation\InvitationsController;
 use App\Http\Controllers\Api\V1\Notification\NotificationController;
 use App\Http\Controllers\Api\V1\Profile\ProfileController;
@@ -62,7 +62,7 @@ Route::prefix('/v1')->group(function () {
     Route::post('verify', [AuthController::class, 'verifyCode']);
     Route::post('send_code', [AuthController::class, 'sendCode']);
 
-    Route::get('home', GetHome::class);
+    Route::get('home', HomeController::class);
     Route::get('settings', GetSettings::class);
     Route::post('contact-us', SetContactUs::class);
     Route::get('app-settings', AppSettings::class);
@@ -75,6 +75,8 @@ Route::prefix('/v1')->group(function () {
     });
     Route::prefix('notifications')->controller(NotificationController::class)->group(function () {
         Route::get('', 'index');
+        Route::put('read/{notification}', 'read');
+        Route::put('read-all', 'readAll');
         Route::get('delete/{notification}', 'destroy');
         Route::post('pusher/auth', 'pusherAuth');
     });

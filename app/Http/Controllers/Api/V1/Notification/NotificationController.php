@@ -7,6 +7,7 @@ use App\Http\Resources\Notifications\NotificationResource;
 use App\Models\Notification;
 use App\Services\RespondActive;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Pusher\Pusher;
 
 class NotificationController extends Controller
@@ -57,9 +58,21 @@ class NotificationController extends Controller
         $notification = Notification::findOrFail($id);
 
         $authId = auth('sanctum')->id();
+        $ownerId = $notification->user_id;
+
+        // Debug log to trace authorization issues
+        Log::info('API notifications.read attempt', [
+            'notification_id' => $notification->id,
+            'notification_user_id' => $ownerId,
+            'notification_user_id_type' => gettype($ownerId),
+            'auth_id' => $authId,
+            'auth_id_type' => gettype($authId),
+            'auth_guard' => 'sanctum',
+        ]);
+
         if (!is_null($authId)
-            && !is_null($notification->user_id)
-            && $notification->user_id !== $authId) {
+            && !is_null($ownerId)
+            && (int)$ownerId !== (int)$authId) {
             return RespondActive::clientError('Unauthorized', [], 403);
         }
 

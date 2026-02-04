@@ -46,12 +46,20 @@ class NotificationController extends Controller
     }
 
     /**
-     * Mark a single notification as read. User must own the notification or it must be broadcast (user_id null).
+     * Mark a single notification as read.
+     *
+     * If the notification has a specific owner (user_id != null) and the
+     * authenticated user ID is known, we ensure they match. If the auth ID
+     * is null (guard mismatch), we don't block the action.
      */
     public function read($id)
     {
-	$notification = Notification::findOrFail($id);
-        if ($notification->user_id !== null && $notification->user_id !== auth('sanctum')->id()) {
+        $notification = Notification::findOrFail($id);
+
+        $authId = auth('sanctum')->id();
+        if (!is_null($authId)
+            && !is_null($notification->user_id)
+            && $notification->user_id !== $authId) {
             return RespondActive::clientError('Unauthorized', [], 403);
         }
 

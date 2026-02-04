@@ -48,8 +48,9 @@ class NotificationController extends Controller
     /**
      * Mark a single notification as read. User must own the notification or it must be broadcast (user_id null).
      */
-    public function read(Notification $notification)
+    public function read($id)
     {
+	$notification = Notification::findOrFail($id);
         if ($notification->user_id !== null && $notification->user_id !== auth('sanctum')->id()) {
             return RespondActive::clientError('Unauthorized', [], 403);
         }

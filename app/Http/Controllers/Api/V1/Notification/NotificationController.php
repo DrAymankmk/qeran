@@ -76,9 +76,17 @@ class NotificationController extends Controller
             return RespondActive::clientError('Unauthorized', [], 403);
         }
 
-        $notification->markAsRead();
+        // Explicitly mark as read and persist, then refresh the model
+        if (is_null($notification->read_at)) {
+            $notification->read_at = now();
+            $notification->save();
+        }
 
-        return RespondActive::success('Notification marked as read.');
+        $notification->refresh();
+
+        $data = (new NotificationResource($notification))->resolve();
+
+        return RespondActive::success('Notification marked as read.', $data);
     }
 
     /**

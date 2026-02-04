@@ -36,7 +36,7 @@ class HomeController extends Controller
 
         return RespondActive::success('The action ran successfully!', [
             'categories' => $categories,
-            'unread_notifications' => $unreadNotifications,
+            // 'unread_notifications' => $unreadNotifications,
             'unread_notifications_count' => is_array($unreadNotifications)
                 ? count($unreadNotifications)
                 : 0,

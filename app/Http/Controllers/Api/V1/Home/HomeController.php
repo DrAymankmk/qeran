@@ -27,7 +27,7 @@ class HomeController extends Controller
                         $query->where('user_id', auth('sanctum')->id())
                             ->orWhere('user_id', null);
                     })
-                    ->unread()
+                    // ->unread()
                     ->orderBy('created_at', 'desc')
                     ->limit($request->input('notifications_limit', 10))
                     ->get()

@@ -19,15 +19,23 @@ class HomeController extends Controller
         )->response()->getData();
 
         $unreadNotifications = [];
+        $notificationsCount = 0;
+        $unreadNotificationsCount = 0;
+
         if (auth('sanctum')->check()) {
+            $user = auth('sanctum')->user();
+            $baseQuery = Notification::query()
+                ->where('created_at', '>=', $user->created_at)
+                ->where(function ($query) use ($user) {
+                    $query->where('user_id', $user->id)->orWhere('user_id', null);
+                });
+
+            $notificationsCount = (clone $baseQuery)->count();
+            $unreadNotificationsCount = (clone $baseQuery)->unread()->count();
+
             $unreadNotifications = NotificationResource::collection(
-                Notification::query()
-                    ->where('created_at', '>=', auth('sanctum')->user()->created_at)
-                    ->where(function ($query) {
-                        $query->where('user_id', auth('sanctum')->id())
-                            ->orWhere('user_id', null);
-                    })
-                    // ->unread()
+                (clone $baseQuery)
+                    ->unread()
                     ->orderBy('created_at', 'desc')
                     ->limit($request->input('notifications_limit', 10))
                     ->get()
@@ -37,9 +45,8 @@ class HomeController extends Controller
         return RespondActive::success('The action ran successfully!', [
             'categories' => $categories,
             // 'unread_notifications' => $unreadNotifications,
-            'unread_notifications_count' => is_array($unreadNotifications)
-                ? count($unreadNotifications)
-                : 0,
+            'notifications_count' => $notificationsCount,
+            'unread_notifications_count' => $unreadNotificationsCount,
         ]);
     }
 }

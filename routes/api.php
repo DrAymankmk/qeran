@@ -65,7 +65,8 @@ Route::prefix('/v1')->group(function () {
     Route::get('home', [HomeController::class, '__invoke']);
     Route::get('settings', GetSettings::class);
     Route::post('contact-us', SetContactUs::class);
-    Route::get('app-settings', AppSettings::class);
+    Route::get('app-settings', [AppSettings::class, 'index']);
+    Route::get('app-settings/show', [AppSettings::class, 'show']);
 
     Route::post('whatsapp-webhook', [WhatsAppController::class, 'handle']);
 

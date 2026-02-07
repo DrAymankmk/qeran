@@ -27,6 +27,22 @@ class RespondActive
     }
 
     /**
+     * Error response (4xx/5xx)
+     * @param string $message
+     * @param int $status
+     * @param mixed $data
+     * @return JsonResponse
+     */
+    public static function error(string $message, int $status = 404, $data = null): JsonResponse
+    {
+        return response()->json([
+            'code' => $status,
+            'message' => __($message),
+            'data' => $data
+        ], $status);
+    }
+
+    /**
      * Success message
      * @param string $message
      * @param           $data

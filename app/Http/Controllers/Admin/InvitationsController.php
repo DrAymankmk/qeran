@@ -604,15 +604,16 @@ class InvitationsController extends Controller
             $newPackageStatus = (int) $validated['status'];
             $invitationPackage->update(['status' => $newPackageStatus]);
 
-            // Update invitation paid status: only "Paid" counts as paid
-            $newInvitationPaidStatus = $newPackageStatus == Constant::PAID_STATUS['Paid']
-                ? Constant::PAID_STATUS['Paid']
-                : Constant::PAID_STATUS['Not Paid'];
+            // Recompute invitation.paid from ALL packages using Constant::PAID_STATUS (1=Paid, 2=Not Paid, 3=Pending, 4=Rejected)
+            $invitation = $invitationPackage->invitation;
+            $packageStatuses = InvitationPackage::where('invitation_id', $invitation->id)
+                ->pluck('status');
 
-            $invitationPackage->invitation->update(['paid' => $newInvitationPaidStatus]);
+            $newInvitationPaidStatus = $this->resolveInvitationPaidFromPackageStatuses($packageStatuses);
+            Invitation::where('id', $invitation->id)->update(['paid' => $newInvitationPaidStatus]);
 
             // Send notification when payment is approved - Payment category: New Payment Received
-            if ($newPackageStatus == Constant::PAID_STATUS['Paid']) {
+            if ($newPackageStatus === Constant::PAID_STATUS['Paid']) {
                 Notification::notify(
                     'users',
                     Constant::NOTIFICATIONS_TYPE['Invitations'],
@@ -648,6 +649,30 @@ class InvitationsController extends Controller
 
             return redirect()->back()->with('error', __('admin.error-updating-package-status'));
         }
+    }
+
+    /**
+     * Resolve invitation.paid from package statuses (Constant::PAID_STATUS).
+     * Priority: Paid (1) > Pending Admin Payment (3) > Rejected (4) > Not Paid (2).
+     *
+     * @param  \Illuminate\Support\Collection<int, int>  $packageStatuses
+     * @return int
+     */
+    protected function resolveInvitationPaidFromPackageStatuses($packageStatuses): int
+    {
+        $statuses = $packageStatuses->unique()->values();
+
+        if ($statuses->contains(Constant::PAID_STATUS['Paid'])) {
+            return Constant::PAID_STATUS['Paid'];
+        }
+        if ($statuses->contains(Constant::PAID_STATUS['Pending Admin Payment'])) {
+            return Constant::PAID_STATUS['Pending Admin Payment'];
+        }
+        if ($statuses->contains(Constant::PAID_STATUS['Rejected'])) {
+            return Constant::PAID_STATUS['Rejected'];
+        }
+
+        return Constant::PAID_STATUS['Not Paid'];
     }
 
     /**

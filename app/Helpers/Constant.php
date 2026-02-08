@@ -138,6 +138,7 @@ class Constant
     const PACKAGE_TYPE = [
         'Static Package' => 1,
         'Dynamic Package' => 2,
+        'Free Package' => 3,
     ];
 
     const PACKAGE_STATUS = [

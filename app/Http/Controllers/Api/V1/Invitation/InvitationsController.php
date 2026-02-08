@@ -541,35 +541,8 @@ class InvitationsController extends Controller
             ], 200);
         }
 
-    //Get Packages Api
-    public function packages(Invitation $invitation)
-    {
-        if ($invitation->user_id !== auth()->id()) {
-            return RespondActive::clientError(__('This invitation does not belong to you'), [], 403);
-        }
 
-        $appSetting = AppSetting::query()
-        ->where('key', '=', 'account_number')
-        ->first();
-
-        $data = [
-            'single_invitation_price' => Package::active()
-                ->invitationPackageType($invitation->invitation_type)
-                ->PackageType(Constant::PACKAGE_TYPE['Dynamic Package'])
-                ->latest()
-                ->first()->price ?? 0,
-            'account_number' => $appSetting->value,
-            'packages' => PackageResource::collection(
-                Package::active()
-                    ->invitationPackageType($invitation->invitation_type)
-                    ->PackageType(Constant::PACKAGE_TYPE['Static Package'])
-                    ->get(),
-            ),
-            'invitation_type' => $invitation->invitation_type,
-        ];
-
-        return RespondActive::success(__('action ran successfully'), $data);
-    }
+   
 
     public function show(Invitation $invitation)
     {

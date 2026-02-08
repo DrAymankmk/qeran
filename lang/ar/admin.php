@@ -483,6 +483,7 @@ return[
     'choose-package-type' => ' أختر نوع الباقة ',
     'package-type-1' => ' باقة دعوات',
     'package-type-2' => 'سعر الباقة الفردية',
+    'package-type-3' => 'الباقة المجانية (استخدام واحد)',
     'package-invitation-type' => 'نوع باقة الدعوات',
     'choose-package-invitation-type' => 'أختر نوع باقة الدعوات ',
     'count' => 'العدد',

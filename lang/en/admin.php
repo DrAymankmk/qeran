@@ -468,6 +468,7 @@ return[
     'choose-package-type'=>'Choose Package Type',
     'package-type-1'=>'Invitation Package',
     'package-type-2'=>'Individual Package Price',
+    'package-type-3'=>'Free Package (One-time use)',
     'package-invitation-type'=>'Invitation Package Type',
     'choose-package-invitation-type'=>'Choose Invitation Package Type',
     'count'=>'Count',

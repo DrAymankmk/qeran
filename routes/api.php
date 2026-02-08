@@ -102,6 +102,10 @@ Route::prefix('/v1')->group(function () {
             Route::get('', 'show');
             Route::post('update', 'update');
         });
+
+//             Route::get('/packages/{invitation}', 'packages');
+	Route::get('/packages/{invitation}',[PackageController::class ,'invitationPackages'])->name('packages');
+
         Route::prefix('invitations')->controller(InvitationsController::class)->group(function () {
             Route::get('', 'index');
             Route::post('store', 'store');
@@ -125,7 +129,6 @@ Route::prefix('/v1')->group(function () {
             Route::get('/check/invitation', 'checkInvitation');
             Route::get('/share/{invitation}', 'shareInvitation');
             Route::get('/share-sms/{invitation}', 'shareInvitationSms');
-            Route::get('/packages/{invitation}', 'packages');
             Route::post('payment/receipt/{invitation}', 'PaymentReceipt');
 
             Route::post('/add-extra-package/{invitation}', 'addExtraPackages');

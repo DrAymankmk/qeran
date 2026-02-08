@@ -37,6 +37,23 @@ class Package extends Model
     {
         $query->where('package_invitation_type', $type);
     }
+
+    public function scopeFreePackage($query)
+    {
+        $query->where('package_type', Constant::PACKAGE_TYPE['Free Package']);
+    }
+
+    public function scopeExcludeUsedFreePackagesForUser($query, int $userId)
+    {
+        $usedFreePackageIds = InvitationPackage::query()
+            ->whereHas('invitation', fn ($q) => $q->where('user_id', $userId))
+            ->whereHas('package', fn ($q) => $q->freePackage())
+            ->pluck('package_id');
+
+        if ($usedFreePackageIds->isNotEmpty()) {
+            $query->whereNotIn('id', $usedFreePackageIds);
+        }
+    }
     public function invitations()
     {
         return $this->hasMany(InvitationPackage::class);

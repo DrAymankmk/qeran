@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\V1\Home\HomeController;
 use App\Http\Controllers\Api\V1\Invitation\InvitationsController;
 use App\Http\Controllers\Api\V1\Notification\NotificationController;
 use App\Http\Controllers\Api\V1\Profile\ProfileController;
-use App\Http\Controllers\Api\V1\Package\PackageController;
+use App\Http\Controllers\Api\V1\Packages\PackageController;
 use App\Http\Controllers\Api\V1\Settings\GetSettings;
 use App\Http\Controllers\Api\V1\Settings\SetContactUs;
 use App\Http\Controllers\Webhook\WhatsAppController;

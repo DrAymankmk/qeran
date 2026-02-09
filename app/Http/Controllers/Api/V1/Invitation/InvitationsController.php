@@ -198,13 +198,22 @@ class InvitationsController extends Controller
                     ]);
                 }
                 $invitation->update(['status' => Constant::INVITATION_STATUS['Approved']]);
-                $data['packages']
-                    = PackageResource::collection(
-                        Package::active()->PackageType(Constant::PACKAGE_TYPE['Static Package'])->get()
-                    );
-                $data['single_invitation_price']
-                    = new PackageResource(
-                        Package::active()->invitationPackageType(Constant::INVITATION_TYPE['User Design'])->first());
+                $data['packages'] = PackageResource::collection(
+                    Package::active()
+                        ->invitationPackageType(Constant::INVITATION_TYPE['User Design'])
+                        ->whereIn('package_type', [
+                            Constant::PACKAGE_TYPE['Static Package'],
+                            Constant::PACKAGE_TYPE['Free Package'],
+                        ])
+                        ->excludeUsedFreePackagesForUser(auth()->id())
+                        ->get()
+                );
+                $dynamicPackage = Package::active()
+                    ->invitationPackageType(Constant::INVITATION_TYPE['User Design'])
+                    ->PackageType(Constant::PACKAGE_TYPE['Dynamic Package'])
+                    ->latest()
+                    ->first();
+                $data['single_invitation_price'] = $dynamicPackage?->price ?? 0;
 
                 // Send notification when invitation request created
                 try {
@@ -252,15 +261,20 @@ class InvitationsController extends Controller
         $data['packages'] = PackageResource::collection(
             Package::active()
                 ->invitationPackageType($invitation->invitation_type)
-                ->PackageType(Constant::PACKAGE_TYPE['Static Package'])
+                ->whereIn('package_type', [
+                    Constant::PACKAGE_TYPE['Static Package'],
+                    Constant::PACKAGE_TYPE['Free Package'],
+                ])
+                ->excludeUsedFreePackagesForUser(auth()->id())
                 ->get(),
         );
 
-        $data['single_invitation_price'] = Package::active()
-        ->invitationPackageType($invitation->invitation_type)
-        ->PackageType(Constant::PACKAGE_TYPE['Dynamic Package'])
-        ->latest()
-        ->first()->price ?? 0;
+        $dynamicPackage = Package::active()
+            ->invitationPackageType($invitation->invitation_type)
+            ->PackageType(Constant::PACKAGE_TYPE['Dynamic Package'])
+            ->latest()
+            ->first();
+        $data['single_invitation_price'] = $dynamicPackage?->price ?? 0;
 
         $data['invitation'] = new InvitationResource($invitation);
 

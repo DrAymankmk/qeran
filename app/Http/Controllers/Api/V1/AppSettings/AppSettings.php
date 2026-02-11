@@ -34,4 +34,25 @@ class AppSettings extends Controller
 
         return RespondActive::success('Setting retrieved successfully.', new AppSettingsResource($setting));
     }
+
+    /**
+     * Get app settings filtered by category.
+     */
+    public function byCategory(Request $request): JsonResponse
+    {
+        $category = $request->get('category');
+
+        $query = AppSetting::query()->orderBy('key');
+
+        if ($category) {
+            $query->where('category', $category);
+        }
+
+        $settings = $query->get();
+
+        return RespondActive::success(
+            'Settings retrieved successfully.',
+            AppSettingsResource::collection($settings)
+        );
+    }
 }

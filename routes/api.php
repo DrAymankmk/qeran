@@ -113,6 +113,7 @@ Route::get('app-settings/by-category', [AppSettings::class, 'byCategory']);
             Route::get('/{invitation}', 'show');
             Route::get('show-by-id/{id}', 'showById');
             Route::post('update/{invitation}', 'update');
+	  Route::delete('delete/{id}','delete');
             Route::post('add-admin/{invitation}', 'addAdmin');
             Route::post('add-guard/{invitation}', 'addGuard');
             Route::post('add-user/{invitation}', 'addUser');

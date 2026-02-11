@@ -556,7 +556,7 @@ class InvitationsController extends Controller
         }
 
 
-   
+
 
     public function show(Invitation $invitation)
     {
@@ -581,6 +581,16 @@ class InvitationsController extends Controller
 
         return $this->show($invitation);
     }
+
+    // delete method
+public function delete($id){
+
+$invitation = Invitation::findOrFail($id);
+$invitation->delete();
+
+        return RespondActive::success('Invitation Deleted Successfully',[]);
+
+}
 
     public function users(GetUserRequest $request, Invitation $invitation)
     {

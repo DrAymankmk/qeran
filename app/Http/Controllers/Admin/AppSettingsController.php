@@ -34,14 +34,18 @@ class AppSettingsController extends Controller
     {
         $request->validate([
             'key' => 'required|string|unique:app_settings,key',
+            'title' => 'nullable|string|max:255',
+            'category' => 'required|string|in:general,documentation,other',
             'value' => 'required|string',
-            'type' => 'required|string|in:text,video,number,email,textarea,editor'
+            'type' => 'required|string|in:text,video,number,email,textarea,editor',
         ]);
 
         $appSetting = AppSetting::create([
             'key' => $request->key,
+            'title' => $request->title,
+            'category' => $request->category,
             'value' => $request->value,
-            'type' => $request->type
+            'type' => $request->type,
         ]);
 
         if ($request->ajax()) {
@@ -58,7 +62,9 @@ class AppSettingsController extends Controller
     public function update(Request $request, $key)
     {
         $request->validate([
-            'value' => 'required|string'
+            'title' => 'nullable|string|max:255',
+            'category' => 'nullable|string|in:general,documentation,other',
+            'value' => 'required|string',
         ]);
 
         $appSetting = AppSetting::key($key)->first();
@@ -74,7 +80,9 @@ class AppSettingsController extends Controller
         }
 
         $appSetting->update([
-            'value' => $request->value
+            'title' => $request->title,
+            'category' => $request->category ?? $appSetting->category,
+            'value' => $request->value,
         ]);
 
         if ($request->ajax()) {

@@ -9,7 +9,13 @@ use Illuminate\Database\Eloquent\Model;
 class AppSetting extends Model
 {
     use HasFactory;
-    protected $fillable=['key','value','type'];
+    protected $fillable = [
+        'key',
+        'title',
+        'category',
+        'value',
+        'type',
+    ];
     public $translatable = ['value'];
 
     public function scopeKey($query , $key)

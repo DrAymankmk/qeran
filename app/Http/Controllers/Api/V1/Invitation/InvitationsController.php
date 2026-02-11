@@ -572,6 +572,16 @@ class InvitationsController extends Controller
         return  RespondActive::success('action ran successfully', $data);
     }
 
+    /**
+     * Get invitation details by ID instead of route model binding.
+     */
+    public function showById(int $id)
+    {
+        $invitation = Invitation::findOrFail($id);
+
+        return $this->show($invitation);
+    }
+
     public function users(GetUserRequest $request, Invitation $invitation)
     {
         $usersInvitationCount = 0;

@@ -497,38 +497,48 @@ class InvitationsController extends Controller
 
             $invitation->update(['paid' => $newPaidStatus]);
 
-            // Send notifications only when status changes to Paid
+            // Send notifications only when status changes to Paid.
+            // If push/HTTP fails (e.g. Guzzle/cURL issues), we log the error but DO NOT rollback the paid status.
             if ($newPaidStatus == Constant::PAID_STATUS['Paid']) {
-                // Notify all users associated with the invitation
-                $userIds = $invitation->users->pluck('id')->toArray();
+                try {
+                    // Notify all users associated with the invitation
+                    $userIds = $invitation->users->pluck('id')->toArray();
 
-                if (! empty($userIds)) {
-                    // Order category: New Order Created (invitation received)
+                    if (! empty($userIds)) {
+                        // Order category: New Order Created (invitation received)
+                        Notification::notify(
+                            'users',
+                            Constant::NOTIFICATIONS_TYPE['Invitations'],
+                            $userIds,
+                            $invitation->id,
+                            'invitation_received',
+                            [],
+                            true,
+                            Constant::NOTIFICATION_CATEGORY['Order'],
+                            Constant::NOTIFICATION_ORDER_TYPES['New Order Created']
+                        );
+                    }
+
+                    // Notify the invitation owner - Payment category: New Payment Received
                     Notification::notify(
                         'users',
                         Constant::NOTIFICATIONS_TYPE['Invitations'],
-                        $userIds,
+                        [$invitation->user_id],
                         $invitation->id,
-                        'invitation_received',
+                        'payment_approved',
                         [],
                         true,
-                        Constant::NOTIFICATION_CATEGORY['Order'],
-                        Constant::NOTIFICATION_ORDER_TYPES['New Order Created']
+                        Constant::NOTIFICATION_CATEGORY['Payment'],
+                        Constant::NOTIFICATION_PAYMENT_TYPES['New Payment Received']
                     );
+                } catch (\Throwable $e) {
+                    Log::error('Error sending payment notifications after status change', [
+                        'error' => $e->getMessage(),
+                        'invitation_id' => $id,
+                        'trace' => $e->getTraceAsString(),
+                    ]);
+                    // Intentionally swallow the exception so the status change remains committed.
                 }
-
-                // Notify the invitation owner - Payment category: New Payment Received
-                Notification::notify(
-                    'users',
-                    Constant::NOTIFICATIONS_TYPE['Invitations'],
-                    [$invitation->user_id],
-                    $invitation->id,
-                    'payment_approved',
-                    [],
-                    true,
-                    Constant::NOTIFICATION_CATEGORY['Payment'],
-                    Constant::NOTIFICATION_PAYMENT_TYPES['New Payment Received']
-                );
             }
 
             DB::commit();

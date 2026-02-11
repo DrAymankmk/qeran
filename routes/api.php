@@ -111,6 +111,7 @@ Route::prefix('/v1')->group(function () {
             Route::get('', 'index');
             Route::post('store', 'store');
             Route::get('/{invitation}', 'show');
+            Route::get('show-by-id/{id}', 'showById');
             Route::post('update/{invitation}', 'update');
             Route::post('add-admin/{invitation}', 'addAdmin');
             Route::post('add-guard/{invitation}', 'addGuard');

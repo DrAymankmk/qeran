@@ -61,16 +61,13 @@
 						<thead>
 							<tr class="tr-colored">
 								<th scope="col">{{__('admin.id')}}</th>
-
 								<th scope="col">{{__('admin.key')}}</th>
+								<th scope="col">{{__('admin.title')}}</th>
+								<th scope="col">{{__('admin.category')}}</th>
 								<th scope="col">{{__('admin.type')}}</th>
-								<th scope="col">{{__('admin.value')}}
-								</th>
-								<th scope="col">
-									{{__('admin.created_at')}}
-								</th>
-								<th scope="col">{{__('admin.more')}}
-								</th>
+								<th scope="col">{{__('admin.value')}}</th>
+								<th scope="col">{{__('admin.created_at')}}</th>
+								<th scope="col">{{__('admin.more')}}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -80,8 +77,12 @@
 								<td><a href="javascript: void(0);"
 										class="text-body fw-bold">{{$appSetting->id}}</a>
 								</td>
+								<td>{{$appSetting->key}}</td>
+								<td>{{$appSetting->title}}</td>
 								<td>
-									{{$appSetting->key}}
+									<span class="badge bg-secondary">
+										{{$appSetting->category ?? 'general'}}
+									</span>
 								</td>
 								<td>
 									<span class="badge bg-info">{{$appSetting->type ?? 'text'}}</span>
@@ -102,7 +103,7 @@
 
 									@can('view-app-settings')
 										<a href="javascript:void(0);"
-											onclick="openEditModal({{json_encode($appSetting->key)}}, {{json_encode($appSetting->value)}}, {{json_encode($appSetting->type ?? 'text')}})"
+											onclick="openEditModal({{ json_encode($appSetting->key) }}, {{ json_encode($appSetting->value) }}, {{ json_encode($appSetting->type ?? 'text') }}, {{ json_encode($appSetting->title) }}, {{ json_encode($appSetting->category ?? 'general') }})"
 											title="{{__('admin.edit')}}"
 											class="text-warning"><i
 												class="mdi mdi-file-edit-outline font-size-22"></i></a>
@@ -226,17 +227,13 @@ function showEditInputByType(type, value) {
 
 $(document).ready(function() {
 	// Initialize DataTable using reusable function
-	var table = initAdminDataTable({
+		var table = initAdminDataTable({
 		tableId: '#appSettingsTable',
 		pdfRoute: '{{route("app-settings.export.pdf")}}',
 		orderColumn: 0,
 		orderDirection: 'desc',
-		nonOrderableColumns: [1,
-			5
-		], // Key and Actions columns are not orderable
-		nonSearchableColumns: [
-			5
-		], // Only Actions column is not searchable (Key, Type and Value should be searchable)
+		nonOrderableColumns: [1, 7], // Key and Actions columns are not orderable
+		nonSearchableColumns: [7],   // Only Actions column is not searchable
 		pageLength: 10,
 		lengthMenu: [
 			[10, 25, 50, 100],
@@ -577,11 +574,15 @@ $(document).ready(function() {
 });
 
 // Function to open edit modal
-function openEditModal(key, value, type) {
+function openEditModal(key, value, type, title, category) {
 	$('#edit_key').val(key);
 	$('#edit_key_display').val(key);
 	$('#edit_type_display').val(type || 'text');
 	$('#edit_type_display').data('type', type || 'text');
+
+	// Set title and category fields
+	$('#edit_title').val(title || '');
+	$('#edit_category').val(category || 'general');
 
 	// Store type and value in modal data attributes
 	$('#editSettingModal').data('edit-type', type || 'text');
@@ -626,6 +627,21 @@ function openModalDelete(settingId) {
 								class="text-danger">*</span></label>
 						<input type="text" class="form-control" id="create_key"
 							name="key" required>
+						<div class="invalid-feedback"></div>
+					</div>
+					<div class="mb-3">
+						<label for="create_title" class="form-label">{{__('admin.title')}}</label>
+						<input type="text" class="form-control" id="create_title" name="title">
+						<div class="invalid-feedback"></div>
+					</div>
+					<div class="mb-3">
+						<label for="create_category" class="form-label">{{__('admin.category')}} <span
+								class="text-danger">*</span></label>
+						<select class="form-select" id="create_category" name="category" required>
+							<option value="general">{{__('admin.general')}}</option>
+							<option value="documentation">{{__('admin.documentation')}}</option>
+							<option value="other">{{__('admin.other')}}</option>
+						</select>
 						<div class="invalid-feedback"></div>
 					</div>
 					<div class="mb-3">
@@ -697,6 +713,20 @@ function openModalDelete(settingId) {
 							class="form-label">{{__('admin.key')}}</label>
 						<input type="text" class="form-control"
 							id="edit_key_display" disabled>
+					</div>
+					<div class="mb-3">
+						<label for="edit_title" class="form-label">{{__('admin.title')}}</label>
+						<input type="text" class="form-control" id="edit_title" name="title">
+						<div class="invalid-feedback"></div>
+					</div>
+					<div class="mb-3">
+						<label for="edit_category" class="form-label">{{__('admin.category')}}</label>
+						<select class="form-select" id="edit_category" name="category">
+							<option value="general">{{__('admin.general')}}</option>
+							<option value="documentation">{{__('admin.documentation')}}</option>
+							<option value="other">{{__('admin.other')}}</option>
+						</select>
+						<div class="invalid-feedback"></div>
 					</div>
 					<div class="mb-3">
 						<label for="edit_type_display"

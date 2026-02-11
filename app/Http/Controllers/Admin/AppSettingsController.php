@@ -35,7 +35,7 @@ class AppSettingsController extends Controller
         $request->validate([
             'key' => 'required|string|unique:app_settings,key',
             'value' => 'required|string',
-            'type' => 'required|string|in:text,number,email,textarea,editor'
+            'type' => 'required|string|in:text,video,number,email,textarea,editor'
         ]);
 
         $appSetting = AppSetting::create([

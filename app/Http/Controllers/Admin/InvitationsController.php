@@ -485,9 +485,7 @@ class InvitationsController extends Controller
      */
     public function changeStatus(int $id): RedirectResponse
     {
-        // TODO: Enable authorization check
-        // $this->authorize('update', Invitation::class);
-
+    
         try {
             $invitation = Invitation::with('users')->findOrFail($id);
 

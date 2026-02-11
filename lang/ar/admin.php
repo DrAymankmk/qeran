@@ -942,4 +942,5 @@ return[
     'host-name'=>'اسم المضيف',
     'groom-and-bride'=>'الرجل والبرهان',
     'groom-and-bride-and-host'=>'الرجل والبرهان والمضيف',
+'video'=>'فيديو'
 ];

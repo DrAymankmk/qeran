@@ -189,6 +189,8 @@ function showEditInputByType(type, value) {
 	// Show and enable appropriate input and set value
 	if (type === 'text') {
 		$('#edit_value_text').show().prop('disabled', false).val(value || '');
+	}else if (type === 'video') {
+		$('#edit_value_video').show().prop('disabled', false).val(value || '');
 	} else if (type === 'number') {
 		$('#edit_value_number').show().prop('disabled', false).val(value || '');
 	} else if (type === 'email') {
@@ -263,6 +265,8 @@ $(document).ready(function() {
 		// Show and enable appropriate input
 		if (type === 'text') {
 			$('#create_value_text').show().prop('disabled', false);
+		}else if (type === 'video') {
+			$('#create_value_video').show().prop('disabled', false);
 		} else if (type === 'number') {
 			$('#create_value_number').show().prop('disabled', false);
 		} else if (type === 'email') {
@@ -630,6 +634,7 @@ function openModalDelete(settingId) {
 								class="text-danger">*</span></label>
 						<select class="form-select" id="create_type" name="type" required>
 							<option value="text">{{__('admin.text')}}</option>
+							<option value="video">{{__('admin.video')}}</option>
 							<option value="number">{{__('admin.number')}}</option>
 							<option value="email">{{__('admin.email')}}</option>
 							<option value="textarea">{{__('admin.textarea')}}</option>
@@ -643,6 +648,9 @@ function openModalDelete(settingId) {
 								class="text-danger">*</span></label>
 						<!-- Text Input -->
 						<input type="text" class="form-control create-value-input" id="create_value_text"
+							name="value" style="display: none;">
+						<!-- Video Input -->
+						<input type="text" class="form-control create-value-input" id="create_value_video"
 							name="value" style="display: none;">
 						<!-- Number Input -->
 						<input type="number" class="form-control create-value-input" id="create_value_number"
@@ -702,6 +710,9 @@ function openModalDelete(settingId) {
 								class="text-danger">*</span></label>
 						<!-- Text Input -->
 						<input type="text" class="form-control edit-value-input" id="edit_value_text"
+							name="value" style="display: none;">
+						<!-- Video Input -->
+						<input type="text" class="form-control edit-value-input" id="edit_value_video"
 							name="value" style="display: none;">
 						<!-- Number Input -->
 						<input type="number" class="form-control edit-value-input" id="edit_value_number"

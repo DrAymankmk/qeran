@@ -1259,12 +1259,6 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
 
        public function completeRequestInvitation(Invitation $invitation)
        {
-           if (! is_object($invitation)) {
-               return RespondActive::clientError('this packages not found');
-           }
-
-           $data['invitation'] = $invitation;
-
            $invitationPackages = InvitationPackage::query()
                ->select([
                    'invitation_package.id',
@@ -1275,29 +1269,33 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
                    'invitation_package.price as extra_price',
                ])
                ->where('invitation_package.invitation_id', $invitation->id)
-            ->where('invitation_package.status', Constant::PAID_STATUS['Not Paid'])
+               ->where('invitation_package.status', Constant::PAID_STATUS['Not Paid'])
                ->join('packages', 'packages.id', '=', 'invitation_package.package_id')
                ->first();
 
+           if (! $invitationPackages) {
+               return RespondActive::clientError(__('No unpaid package found for this invitation'));
+           }
+
            $appSetting = AppSetting::query()
-           ->where('key', '=', 'account_number')
-           ->first();
+               ->where('key', 'account_number')
+               ->first();
 
-           $data['package'] = [
-               'id' => $invitationPackages->id,
-               'count' => $invitationPackages->count,
-               'price' => $invitationPackages->price,
-               'free_invitations_count' => $invitationPackages->free_invitations_count,
+           $data = [
+               'invitation' => $invitation,
+               'package' => [
+                   'id' => $invitationPackages->id,
+                   'count' => $invitationPackages->count,
+                   'price' => $invitationPackages->price,
+                   'free_invitations_count' => $invitationPackages->free_invitations_count,
+               ],
+               'extra' => [
+                   'count' => $invitationPackages->extra_count,
+                   'price' => $invitationPackages->extra_price ?? 0,
+               ],
+               'account_number' => $appSetting?->value ?? '',
+               'total_price' => $invitationPackages->price + ($invitationPackages->extra_price ?? 0),
            ];
-
-           $data['extra'] = [
-               'count' => $invitationPackages->extra_count,
-               'price' => $invitationPackages->extra_price,
-           ];
-
-           $data['account_number'] = $appSetting->value;
-
-           $data['total_price'] = $data['package']['price'] + ($data['extra'] ? $data['extra']['price'] : 0);
 
            return RespondActive::success('Action ran successfully', $data);
        }

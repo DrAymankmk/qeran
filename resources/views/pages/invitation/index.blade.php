@@ -95,13 +95,7 @@
 									{{__('admin.invitation-mime-type')}}
 								</th>
 								<th scope="col">
-									{{__('admin.invitation-uploaded-image')}}
-								</th>
-								<th scope="col">
-									{{__('admin.invitation-uploaded-audio')}}
-								</th>
-								<th scope="col">
-									{{__('admin.invitation-uploaded-video')}}
+									{{__('admin.invitation-uploaded-media')}}
 								</th>
 								{{--  <th scope="col">{{__('admin.paid-status')}}
 								</th> --}}

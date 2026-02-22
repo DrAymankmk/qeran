@@ -169,26 +169,20 @@ class InvitationsController extends Controller
                 $imagePath = $invitation->designImage() ?: $invitation->getMainImagePath();
             }
 
-            // Format image HTML
+            // Build single media column: image, audio, video (each with type label)
             $imageHtml = $imagePath
                 ? '<a target="_blank" href="'.e($imagePath).'"><img class="header-profile-user" src="'.e($imagePath).'" alt="Invitation" loading="lazy" style="width: 50px; height: 50px; object-fit: cover;"></a>'
-                : __('admin.no-data-available');
-
-            // Get audio URLs (MP3 and OGG)
+                : null;
             $audioUrls = $invitation->getAudioUrls();
             $mp3Url = $audioUrls['mp3'];
             $oggUrl = $audioUrls['ogg'];
-
-            // Format audio HTML with both MP3 and OGG sources
             $audioHtml = ($mp3Url || $oggUrl)
                 ? '<audio controls style="width: 150px; height: 40px;">
                     '.($oggUrl ? '<source src="'.e($oggUrl).'" type="audio/ogg">' : '').'
                     '.($mp3Url ? '<source src="'.e($mp3Url).'" type="audio/mpeg">' : '').'
                     Your browser does not support the audio element.
                 </audio>'
-                : __('admin.no-data-available');
-
-            // Get video path and format video HTML
+                : null;
             $videoPath = null;
             if ($invitation->relationLoaded('hubFiles') && $invitation->hubFiles->isNotEmpty()) {
                 $videoFile = $invitation->hubFiles
@@ -202,7 +196,19 @@ class InvitationsController extends Controller
             }
             $videoHtml = $videoPath
                 ? '<video controls style="width: 120px; height: 80px; object-fit: cover;" preload="metadata"><source src="'.e($videoPath).'" type="video/mp4">Your browser does not support the video tag.</video>'
-                : __('admin.no-data-available');
+                : null;
+
+            $mediaParts = [];
+            if ($imageHtml) {
+                $mediaParts[] = '<div class="mb-1"><span class="badge bg-primary me-1">'.__('admin.media-type-1').'</span>'.$imageHtml.'</div>';
+            }
+            if ($audioHtml) {
+                $mediaParts[] = '<div class="mb-1"><span class="badge bg-info me-1">'.__('admin.media-type-3').'</span>'.$audioHtml.'</div>';
+            }
+            if ($videoHtml) {
+                $mediaParts[] = '<div class="mb-1"><span class="badge bg-success me-1">'.__('admin.media-type-2').'</span>'.$videoHtml.'</div>';
+            }
+            $mediaColumnHtml = count($mediaParts) > 0 ? implode('', $mediaParts) : __('admin.no-data-available');
 
             // Format actions HTML
             $whatsappUrl = 'https://api.whatsapp.com/send?phone='.str_replace('+', '', $invitation->user?->country_code ?? '').($invitation->user?->phone ?? '');
@@ -233,9 +239,7 @@ class InvitationsController extends Controller
                 __('admin.invitation-status-'.$invitation->status),
                 $invitation->name,
                 __('admin.media-type-'.$invitation->invitation_media_type),
-                $imageHtml,
-                $audioHtml,
-                $videoHtml,
+                $mediaColumnHtml,
                 \Carbon\Carbon::parse($invitation->created_at)->locale(app()->getLocale())->translatedFormat('l dS F G:i - Y'),
                 $actionsHtml,
             ];

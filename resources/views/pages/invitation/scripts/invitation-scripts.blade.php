@@ -101,7 +101,7 @@ $(document).ready(function() {
 			@endif
 		},
 		columnDefs: [{
-			targets: [1, 4, 7],
+			targets: [1, 4, 6, 8],
 			orderable: false,
 			searchable: false
 		}],

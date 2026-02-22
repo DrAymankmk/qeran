@@ -77,7 +77,8 @@ class InvitationsController extends Controller
             'hubFiles' => function ($query) {
                 $query->whereIn('file_type', [
                     \App\Helpers\Constant::FILE_TYPE['Image'],
-                    \App\Helpers\Constant::FILE_TYPE['Audio']
+                    \App\Helpers\Constant::FILE_TYPE['Audio'],
+                    \App\Helpers\Constant::FILE_TYPE['Video'],
                 ])
                     ->select('id', 'morphable_id', 'morphable_type', 'file_type', 'file_key', 'path', 'bucket_name')
                     ->orderBy('id', 'desc')
@@ -187,6 +188,22 @@ class InvitationsController extends Controller
                 </audio>'
                 : __('admin.no-data-available');
 
+            // Get video path and format video HTML
+            $videoPath = null;
+            if ($invitation->relationLoaded('hubFiles') && $invitation->hubFiles->isNotEmpty()) {
+                $videoFile = $invitation->hubFiles
+                    ->where('file_type', \App\Helpers\Constant::FILE_TYPE['Video'])
+                    ->sortByDesc('id')
+                    ->first();
+                $videoPath = $videoFile ? $videoFile->get_path() : null;
+            }
+            if (! $videoPath) {
+                $videoPath = $invitation->designVideo();
+            }
+            $videoHtml = $videoPath
+                ? '<video controls style="width: 120px; height: 80px; object-fit: cover;" preload="metadata"><source src="'.e($videoPath).'" type="video/mp4">Your browser does not support the video tag.</video>'
+                : __('admin.no-data-available');
+
             // Format actions HTML
             $whatsappUrl = 'https://api.whatsapp.com/send?phone='.str_replace('+', '', $invitation->user?->country_code ?? '').($invitation->user?->phone ?? '');
 
@@ -218,6 +235,7 @@ class InvitationsController extends Controller
                 __('admin.media-type-'.$invitation->invitation_media_type),
                 $imageHtml,
                 $audioHtml,
+                $videoHtml,
                 \Carbon\Carbon::parse($invitation->created_at)->locale(app()->getLocale())->translatedFormat('l dS F G:i - Y'),
                 $actionsHtml,
             ];
@@ -357,6 +375,7 @@ class InvitationsController extends Controller
 
     /**
      * Update the specified resource in storage.
+     * For large video uploads, ensure server PHP limits are raised (see public/user.ini.example).
      */
     public function update(InvitationRequest $request, int $id): RedirectResponse
     {
@@ -703,6 +722,8 @@ class InvitationsController extends Controller
         ];
 
         if (str_contains($mimeType, 'video/')) {
+            $fileConfig['folderName'] = Constant::INVITATION_VIDEO_FOLDER_NAME;
+            $fileConfig['file_type'] = Constant::FILE_TYPE['Video'];
             storeVideo($fileConfig);
         } elseif ($mimeType === 'image/gif') {
             storeGif($fileConfig);

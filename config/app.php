@@ -60,6 +60,14 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Invitation file upload limits (for admin update)
+    |--------------------------------------------------------------------------
+    | Max size in KB. Server must allow: php.ini upload_max_filesize & post_max_size >= this.
+    */
+    'max_invitation_upload_kb' => (int) env('MAX_INVITATION_UPLOAD_KB', 102400), // 100 MB default
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

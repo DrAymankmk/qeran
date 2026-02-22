@@ -1,0 +1,8 @@
+; Copy to .user.ini in public/ (or document root) to allow large invitation file uploads.
+; Rename to .user.ini and adjust values as needed. Restart PHP or wait for cache expiry.
+
+upload_max_filesize = 100M
+post_max_size = 100M
+max_execution_time = 300
+max_input_time = 300
+memory_limit = 256M

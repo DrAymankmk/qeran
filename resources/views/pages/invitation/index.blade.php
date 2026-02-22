@@ -100,10 +100,9 @@
 								<th scope="col">
 									{{__('admin.invitation-uploaded-audio')}}
 								</th>
-								<!--
-                                <th scope="col">{{__('admin.invitation-uploaded-video')}}</th>
-                                <th scope="col">{{__('admin.desc')}}</th>
-                                <th scope="col">{{__('admin.receipt-image')}}</th> -->
+								<th scope="col">
+									{{__('admin.invitation-uploaded-video')}}
+								</th>
 								{{--  <th scope="col">{{__('admin.paid-status')}}
 								</th> --}}
 								<th scope="col">

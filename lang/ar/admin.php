@@ -464,6 +464,7 @@ return[
     'invitation-requests' => 'طلبات الدعوات',
     'invitations' => 'الدعوات',
     'upload-invitation-file' => 'رفع ملف الدعوة',
+    'invitation-file-hint' => 'المسموح: صورة (JPEG, PNG, GIF)، فيديو (MP4, WebM, OGG, MOV, AVI). الحجم الأقصى: 100 ميجابايت. للفيديوهات الكبيرة، تأكد من رفع إعدادات PHP في السيرفر (upload_max_filesize, post_max_size).',
     'contact-us' => 'تواصل معانا',
     'receipt-image' => 'صورة الفاتورة',
     'paid-status' => 'تم الدفع',

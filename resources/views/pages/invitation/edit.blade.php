@@ -90,7 +90,14 @@
                             <div class="mb-3">
                                 <label for="formrow-firstname-input"
                                        class="form-label">    {{__('admin.upload-invitation-file')}}  </label>
-                                <input class="form-control" type="file" name="file" id="formFile">
+                                <input class="form-control" type="file" name="file" id="formFile"
+                                       accept="video/mp4,video/webm,video/ogg,video/quicktime,video/x-msvideo,image/jpeg,image/png,image/gif,.mp4,.webm,.ogg,.mov,.avi,.jpg,.jpeg,.png,.gif">
+                                <div class="form-text">
+                                    {{ __('admin.invitation-file-hint') }}
+                                </div>
+                                @error('file')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
                             </div>
                             <div class="mb-3">
                                 <label for="start_at-input"

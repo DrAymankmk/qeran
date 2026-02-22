@@ -449,6 +449,7 @@ return[
     'invitation-requests'=>'Invitation Requests',
     'invitations'=>'Invitations',
     'upload-invitation-file'=>'Upload Invitation File',
+    'invitation-file-hint'=>'Allowed: Image (JPEG, PNG, GIF), Video (MP4, WebM, OGG, MOV, AVI). Max size: 100 MB. For large videos, ensure server PHP settings (upload_max_filesize, post_max_size) are increased.',
     'contact-us'=>'Contact Us',
     'receipt-image'=>'Receipt Image',
     'paid-status'=>'Paid Status',

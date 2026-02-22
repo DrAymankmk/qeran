@@ -23,10 +23,17 @@ class InvitationRequest extends FormRequest
      */
     public function rules()
     {
-            return [
-                'file' => ['nullable'],
-            ];
+        $maxKb = config('app.max_invitation_upload_kb', 102400);
 
+        return [
+            'file' => [
+                'nullable',
+                'file',
+                'max:'.$maxKb,
+                'mimes:mp4,webm,ogg,mov,avi,jpeg,jpg,png,gif',
+                'mimetypes:video/mp4,video/webm,video/ogg,video/quicktime,video/x-msvideo,image/jpeg,image/png,image/gif',
+            ],
+        ];
     }
     public function messages()
     {

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Helpers\Constant;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\InvitationRequest;
+use App\Models\HubFile;
 use App\Models\Invitation;
 use App\Models\InvitationPackage;
 use App\Services\External\Notification;
@@ -366,7 +367,7 @@ class InvitationsController extends Controller
         // $this->authorize('update', Invitation::class);
 
         try {
-            $invitation = Invitation::with(['user', 'category'])->findOrFail($id);
+            $invitation = Invitation::with(['user', 'category', 'hubFiles'])->findOrFail($id);
 
             return view('pages.invitation.edit', compact('invitation'));
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -447,6 +448,88 @@ class InvitationsController extends Controller
                 'error' => $e->getMessage(),
                 'invitation_id' => $id,
                 'trace' => $e->getTraceAsString(),
+            ]);
+
+            return redirect()->back()->with('error', __('admin.error-updating-invitation'));
+        }
+    }
+
+    /**
+     * Delete a single hub file (media) belonging to the invitation.
+     */
+    public function destroyHubFile(int $invitation, int $hubFile): RedirectResponse
+    {
+        try {
+            $invitationModel = Invitation::findOrFail($invitation);
+            $file = HubFile::where('id', $hubFile)
+                ->where('morphable_id', $invitation)
+                ->where('morphable_type', Invitation::class)
+                ->firstOrFail();
+
+            deleteImage($file->get_folder_file(), $file);
+
+            return redirect()->route('invitation.edit', $invitation)
+                ->with('success', __('admin.hub-file-deleted'));
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::warning('Hub file or invitation not found', ['invitation_id' => $invitation, 'hub_file_id' => $hubFile]);
+
+            return redirect()->back()->with('error', __('admin.invitation-not-found'));
+        } catch (\Exception $e) {
+            Log::error('Error deleting invitation hub file', [
+                'error' => $e->getMessage(),
+                'invitation_id' => $invitation,
+                'hub_file_id' => $hubFile,
+            ]);
+
+            return redirect()->back()->with('error', __('admin.error-deleting-invitation'));
+        }
+    }
+
+    /**
+     * Replace a hub file (media) with a new upload.
+     */
+    public function replaceHubFile(Request $request, int $invitation, int $hubFile): RedirectResponse
+    {
+        $request->validate([
+            'file' => [
+                'required',
+                'file',
+                'max:'.config('app.max_invitation_upload_kb', 102400),
+                'mimes:mp4,webm,ogg,mov,avi,jpeg,jpg,png,gif',
+                'mimetypes:video/mp4,video/webm,video/ogg,video/quicktime,video/x-msvideo,image/jpeg,image/png,image/gif',
+            ],
+        ]);
+
+        try {
+            $invitationModel = Invitation::findOrFail($invitation);
+            $fileModel = HubFile::where('id', $hubFile)
+                ->where('morphable_id', $invitation)
+                ->where('morphable_type', Invitation::class)
+                ->firstOrFail();
+
+            DB::beginTransaction();
+
+            deleteImage($fileModel->get_folder_file(), $fileModel);
+            $this->handleFileUpload($request->file('file'), $invitationModel, [
+                'file_key' => $fileModel->file_key,
+                'file_type' => $fileModel->file_type,
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('invitation.edit', $invitation)
+                ->with('success', __('admin.hub-file-replaced'));
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
+            Log::warning('Hub file or invitation not found', ['invitation_id' => $invitation, 'hub_file_id' => $hubFile]);
+
+            return redirect()->back()->with('error', __('admin.invitation-not-found'));
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error replacing invitation hub file', [
+                'error' => $e->getMessage(),
+                'invitation_id' => $invitation,
+                'hub_file_id' => $hubFile,
             ]);
 
             return redirect()->back()->with('error', __('admin.error-updating-invitation'));
@@ -710,10 +793,11 @@ class InvitationsController extends Controller
      * Handle file upload based on file type.
      *
      * @param  \Illuminate\Http\UploadedFile  $file
+     * @param  array{file_key?: int, file_type?: int}  $overrides  Optional file_key/file_type (e.g. when replacing a hub file).
      *
      * @throws \Exception
      */
-    protected function handleFileUpload($file, Invitation $invitation): void
+    protected function handleFileUpload($file, Invitation $invitation, array $overrides = []): void
     {
         $mimeType = $file->getMimeType();
         $fileConfig = [
@@ -721,8 +805,8 @@ class InvitationsController extends Controller
             'folderName' => Constant::INVITATION_IMAGE_FOLDER_NAME,
             'model' => $invitation,
             'saveInDatabase' => true,
-            'file_key' => Constant::FILE_KEY['Main'],
-            'file_type' => Constant::FILE_TYPE['Image'],
+            'file_key' => $overrides['file_key'] ?? Constant::FILE_KEY['Main'],
+            'file_type' => $overrides['file_type'] ?? Constant::FILE_TYPE['Image'],
         ];
 
         if (str_contains($mimeType, 'video/')) {

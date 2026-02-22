@@ -261,6 +261,8 @@ Route::group(['prefix' => 'admin', 'middleware' => 'set.admin.locale'], function
             Route::get('/invitation-requests/export/pdf', 'invitationRequestExportPdf')->name('invitation-request.export.pdf');
         });
 
+        Route::delete('invitation/{invitation}/hub-file/{hubFile}', [InvitationsController::class, 'destroyHubFile'])->name('invitation.hub-file.destroy');
+        Route::post('invitation/{invitation}/hub-file/{hubFile}/replace', [InvitationsController::class, 'replaceHubFile'])->name('invitation.hub-file.replace');
         Route::resource('invitation', InvitationsController::class);
         Route::resource('users', UsersController::class);
         Route::controller(UsersController::class)->group(function () {

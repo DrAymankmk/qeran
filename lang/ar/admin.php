@@ -439,6 +439,8 @@ return[
     'new-invitation' => 'دعوة جديدة',
     'new-invitation-created' => 'تم إنشاء دعوة جديدة',
     'invitation-modified' => 'تم تعديل الدعوة',
+    'edit-invitation'=>'تعديل الدعوة',
+    'location'=>'المكان',
     'package-chosen' => 'تم اختيار الباقة',
     'package-chosen-description' => 'تم اختيار باقة من قبل المستخدم',
     'package-price' => 'سعر الباقة',

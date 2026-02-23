@@ -346,7 +346,7 @@
 						<div class="d-flex flex-wrap gap-2">
 							<button type="submit"
 								class="btn btn-primary waves-effect waves-light">
-								{{__('admin.add')}}</button>
+								{{__('admin.edit-invitation')}}</button>
 
 						</div>
 

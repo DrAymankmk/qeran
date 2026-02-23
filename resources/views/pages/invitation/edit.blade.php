@@ -47,8 +47,7 @@
 							<h5 class="mb-3">
 								{{ __('admin.invitation-media') }}</h5>
 							<div class="row g-3">
-								@foreach($invitation->hubFiles as
-								$hubFile)
+								@foreach($invitation->hubFiles as $hubFile)
 								@php
 								$fileType = $hubFile->file_type ?? 1;
 								$typeLabel = $fileType ===
@@ -265,16 +264,8 @@
 function initAutocomplete() {
 	const map = new google.maps.Map(document.getElementById("map"), {
 		center: {
-			lat: {
-				{
-					$invitation - > latitude
-				}
-			},
-			lng: {
-				{
-					$invitation - > longitude
-				}
-			}
+			lat: {{$invitation->latitude}},
+			lng: {{$invitation->longitude}}
 		},
 		zoom: 20,
 		mapTypeId: "roadmap",
@@ -283,15 +274,8 @@ function initAutocomplete() {
 	const input = document.getElementById("pac-input");
 	const searchBox = new google.maps.places.SearchBox(input);
 	marker = new google.maps.Marker({
-		position: new google.maps.LatLng({
-			{
-				$invitation - > latitude
-			}
-		}, {
-			{
-				$invitation - > longitude
-			}
-		}),
+		position: new google.maps.LatLng({{$invitation->latitude}}, 
+		{{$invitation->longitude}}),
 		map: map,
 	});
 

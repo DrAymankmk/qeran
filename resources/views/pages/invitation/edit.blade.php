@@ -41,13 +41,20 @@
 						@csrf
 						@method('patch')
 
-						{{-- List all invitation media (hub files) with update/delete --}}
+						{{-- List invitation media (hub files) separated by file_key --}}
 						@if($invitation->hubFiles->isNotEmpty())
+						@php
+						$adminHubFiles = $invitation->hubFiles->where('file_key', 1);
+						$clientHubFiles = $invitation->hubFiles->where('file_key', 2);
+						@endphp
 						<div class="mb-4">
 							<h5 class="mb-3">
 								{{ __('admin.invitation-media') }}</h5>
-							<div class="row g-3">
-								@foreach($invitation->hubFiles as $hubFile)
+
+							@if($adminHubFiles->isNotEmpty())
+							<h6 class="mb-2">Uploaded by admin</h6>
+							<div class="row g-3 mb-3">
+								@foreach($adminHubFiles as $hubFile)
 								@php
 								$fileType = $hubFile->file_type ?? 1;
 								$typeLabel = $fileType ===
@@ -64,8 +71,7 @@
 								@endphp
 								<div class="col-12 col-md-6 col-lg-4">
 									<div class="card h-100">
-										<div
-											class="card-body">
+										<div class="card-body">
 											<div
 												class="d-flex justify-content-between align-items-center mb-2">
 												<span
@@ -156,6 +162,120 @@
 								</div>
 								@endforeach
 							</div>
+							@endif
+
+							@if($clientHubFiles->isNotEmpty())
+							<h6 class="mb-2">Uploaded by client</h6>
+							<div class="row g-3">
+								@foreach($clientHubFiles as $hubFile)
+								@php
+								$fileType = $hubFile->file_type ?? 1;
+								$typeLabel = $fileType ===
+								\App\Helpers\Constant::FILE_TYPE['Video']
+								? __('admin.media-type-2') : ($fileType
+								===
+								\App\Helpers\Constant::FILE_TYPE['Audio']
+								? __('admin.media-type-3') : ($fileType
+								===
+								\App\Helpers\Constant::FILE_TYPE['Gif']
+								? __('admin.media-type-4') :
+								__('admin.media-type-1')));
+								$url = $hubFile->get_path();
+								@endphp
+								<div class="col-12 col-md-6 col-lg-4">
+									<div class="card h-100">
+										<div class="card-body">
+											<div
+												class="d-flex justify-content-between align-items-center mb-2">
+												<span
+													class="badge bg-primary">{{ $typeLabel }}</span>
+												<span
+													class="text-muted small">{{ $hubFile->original_name ?? $hubFile->path }}</span>
+											</div>
+											<div class="mb-2 text-center"
+												style="min-height: 120px;">
+												@if($fileType
+												===
+												\App\Helpers\Constant::FILE_TYPE['Image']
+												||
+												$fileType
+												===
+												\App\Helpers\Constant::FILE_TYPE['Gif'])
+												<a href="{{ $url }}"
+													target="_blank"><img
+														src="{{ $url }}"
+														alt=""
+														class="img-fluid rounded"
+														style="max-height: 180px; object-fit: contain;"></a>
+												@elseif($fileType
+												===
+												\App\Helpers\Constant::FILE_TYPE['Video'])
+												<video width="100%"
+													controls
+													style="max-height: 180px;"
+													preload="metadata">
+													<source src="{{ $url }}"
+														type="video/mp4">
+													Your
+													browser
+													does
+													not
+													support
+													the
+													video
+													tag.
+												</video>
+												@elseif($fileType
+												===
+												\App\Helpers\Constant::FILE_TYPE['Audio'])
+												<audio controls
+													class="w-100">
+													<source src="{{ $url }}"
+														type="audio/mpeg">
+													<source src="{{ $url }}"
+														type="audio/ogg">
+													Your
+													browser
+													does
+													not
+													support
+													the
+													audio
+													element.
+												</audio>
+												@endif
+											</div>
+											<div
+												class="d-flex flex-wrap gap-2">
+												<form action="{{ route('invitation.hub-file.replace', [$invitation->id, $hubFile->id]) }}"
+													method="post"
+													enctype="multipart/form-data"
+													class="d-inline replace-form">
+													@csrf
+													<input type="file"
+														name="file"
+														class="form-control form-control-sm d-inline-block w-auto"
+														accept="video/mp4,video/webm,video/ogg,video/quicktime,video/x-msvideo,image/jpeg,image/png,image/gif,.mp4,.webm,.ogg,.mov,.avi,.jpg,.jpeg,.png,.gif"
+														style="max-width: 140px;">
+													<button type="submit"
+														class="btn btn-sm btn-outline-primary">{{ __('admin.replace') }}</button>
+												</form>
+												<form action="{{ route('invitation.hub-file.destroy', [$invitation->id, $hubFile->id]) }}"
+													method="post"
+													class="d-inline"
+													onsubmit="return confirm('{{ __('admin.confirm-delete-hub-file') }}');">
+													@csrf
+													@method('delete')
+													<button type="submit"
+														class="btn btn-sm btn-outline-danger">{{ __('admin.delete') }}</button>
+												</form>
+											</div>
+										</div>
+									</div>
+								</div>
+								@endforeach
+							</div>
+							@endif
 						</div>
 						<hr class="my-4">
 						@endif

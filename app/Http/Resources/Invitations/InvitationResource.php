@@ -51,6 +51,20 @@ class InvitationResource extends JsonResource
             'extra_invitation_price'=>$this->price,
             'admin_invitation_count'=>$this->admin_invitation_count,
 
+            // All media (hub files) related to this invitation
+            'media' => $this->hubFiles->map(function ($file) {
+                return [
+                    'id' => $file->id,
+                    'file_type' => (int) $file->file_type,
+                    'file_key' => (int) $file->file_key,
+                    'url' => $file->get_path(),
+                    'original_name' => $file->original_name,
+                    'mime_type' => $file->getMimeType,
+                    'size' => $file->size,
+                    'created_at' => $file->created_at,
+                ];
+            }),
+
 
             // 'invitation_count'=> $this->whenPivotLoaded('invitation_user',
             //    function () {

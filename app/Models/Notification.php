@@ -5,6 +5,7 @@ namespace App\Models;
 use Astrotomic\Translatable\Translatable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 class Notification extends Model
 {
@@ -46,6 +47,25 @@ class Notification extends Model
     public function hubFiles()
     {
         return $this->morphOne(HubFile::class, 'morphable');
+    }
+
+    /**
+     * Scope notifications to those with valid targets:
+     * - type = 0 (no specific target required), or
+     * - target_id is null, or
+     * - target_id exists as an Invitation id.
+     */
+    public function scopeWithValidTarget(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q) {
+            $q->where('type', 0)
+                ->orWhereNull('target_id')
+                ->orWhereExists(function ($sub) {
+                    $sub->selectRaw(1)
+                        ->from('invitations')
+                        ->whereColumn('invitations.id', 'notifications.target_id');
+                });
+        });
     }
 
     public function getCreatedAtAttribute()

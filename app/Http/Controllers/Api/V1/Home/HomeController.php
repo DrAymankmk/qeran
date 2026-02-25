@@ -28,7 +28,8 @@ class HomeController extends Controller
                 ->where('created_at', '>=', $user->created_at)
                 ->where(function ($query) use ($user) {
                     $query->where('user_id', $user->id)->orWhere('user_id', null);
-                });
+                })
+                ->withValidTarget();
 
             $notificationsCount = (clone $baseQuery)->count();
             $unreadNotificationsCount = (clone $baseQuery)->unread()->count();

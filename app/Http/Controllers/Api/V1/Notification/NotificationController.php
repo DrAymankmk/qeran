@@ -29,6 +29,7 @@ class NotificationController extends Controller
                     $query->where('user_id', auth('sanctum')->id())
                         ->orWhere('user_id', null);
                 })
+                ->withValidTarget()
                 ->orderByReadStatus();
 
             auth('sanctum')->user()->update(['notification_count' => 0]);
@@ -37,6 +38,7 @@ class NotificationController extends Controller
         } else {
             $notifications = Notification::query()
                 ->where('user_id', null)
+                ->withValidTarget()
                 ->orderBy('created_at', 'desc')
                 ->paginate($request->input('per_page', 15));
         }

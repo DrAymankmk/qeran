@@ -186,6 +186,26 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        'design_category_id' => 'التصنيف',
+        'design_code' => 'الرمز',
+        'design_media' => 'الصورة أو الفيديو',
+        'design_show_on' => 'العرض في',
+        'design_show_on_page' => 'الصفحة',
+        'design_name_en' => 'الاسم (إنجليزي)',
+        'design_name_ar' => 'الاسم (عربي)',
+    ],
+
+    'design_media_max' => 'يجب ألا يتجاوز حجم الصورة أو الفيديو :max ميجابايت.',
+
+    'design_media_mimes' => 'يجب أن يكون الملف صورة (JPEG أو PNG أو GIF أو WebP) أو فيديو (MP4 أو WebM أو MOV وغيرها).',
+
+    'design_media_help' => 'صور: JPEG وPNG وGIF وWebP. فيديو: MP4 وWebM وMOV وما شابه. الحد الأقصى :max ميجابايت.',
+
+    'design_current_media' => 'الملف الحالي',
+
+    'design_media_replace_help' => 'اتركه فارغًا للإبقاء على الملف الحالي. الحد الأقصى :max ميجابايت.',
+
+    'design_no_media' => 'لا يوجد وسائط',
 
 ];

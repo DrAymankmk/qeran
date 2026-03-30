@@ -184,6 +184,26 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        'design_category_id' => 'category',
+        'design_code' => 'code',
+        'design_media' => 'image or video',
+        'design_show_on' => 'show on',
+        'design_show_on_page' => 'display page',
+        'design_name_en' => 'name (English)',
+        'design_name_ar' => 'name (Arabic)',
+    ],
+
+    'design_media_max' => 'The image or video must not be larger than :max MB.',
+
+    'design_media_mimes' => 'The file must be an image (JPEG, PNG, GIF, WebP) or a video (MP4, WebM, MOV, etc.).',
+
+    'design_media_help' => 'Images: JPEG, PNG, GIF, WebP. Videos: MP4, WebM, MOV and similar. Max :max MB.',
+
+    'design_current_media' => 'Current file',
+
+    'design_media_replace_help' => 'Leave empty to keep the current file. Maximum :max MB.',
+
+    'design_no_media' => 'No media',
 
 ];

@@ -121,14 +121,26 @@ class InvitationsController extends Controller
         switch ($request->invitation_type) {
             case Constant::INVITATION_TYPE['Contact Design']:
                 if ($request->image) {
-                    storeImage([
-                        'value' => $request->image,
-                        'folderName' => Constant::INVITATION_IMAGE_FOLDER_NAME,
-                        'file_key' => Constant::FILE_KEY['Not Main'],
-                        'file_type' => Constant::FILE_TYPE['Image'],
-                        'model' => $invitation,
-                        'saveInDatabase' => true,
-                    ]);
+                    $imageMime = $request->image->getMimeType();
+                    if ($imageMime && str_starts_with($imageMime, 'video/')) {
+                        storeVideo([
+                            'value' => $request->image,
+                            'file_key' => Constant::FILE_KEY['Not Main'],
+                            'file_type' => Constant::FILE_TYPE['Video'],
+                            'folderName' => Constant::INVITATION_VIDEO_FOLDER_NAME,
+                            'model' => $invitation,
+                            'saveInDatabase' => true,
+                        ]);
+                    } else {
+                        storeImage([
+                            'value' => $request->image,
+                            'folderName' => Constant::INVITATION_IMAGE_FOLDER_NAME,
+                            'file_key' => Constant::FILE_KEY['Not Main'],
+                            'file_type' => Constant::FILE_TYPE['Image'],
+                            'model' => $invitation,
+                            'saveInDatabase' => true,
+                        ]);
+                    }
                 }
                 if ($request->video) {
                     storeVideo([

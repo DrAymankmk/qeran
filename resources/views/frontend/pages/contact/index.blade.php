@@ -156,8 +156,8 @@ $contactSection = $contactPage->activeSections->where('name', 'contact')->first(
 
 		<div class="row">
 			@php
-			$phoneSetting = \App\Models\Setting::where('key', 'phone')->first();
-			$emailSetting = \App\Models\Setting::where('key', 'email')->first();
+			$phoneSetting = \App\Models\AppSetting::where('key', 'phone')->first();
+			$emailSetting = \App\Models\AppSetting::where('key', 'email')->first();
 			@endphp
 
 			<div class="col-lg-6 col-lg-offset-0 col-md-6 col-md-offset-3">
@@ -165,7 +165,7 @@ $contactSection = $contactPage->activeSections->where('name', 'contact')->first(
 					class="b-contact stellar section-texture section-texture_blue section-radius">
 					<div class="b-contact__name">{{ __('frontend.phone') }}</div>
 					<div class="b-contact__info">
-						{{ $phoneSetting?->content ?? '0571868088' }}
+						{{ $phoneSetting?->value ?? '0571868088' }}
 					</div>
 					<div class="b-contact__icon icon-call-in"></div>
 				</div>
@@ -176,7 +176,7 @@ $contactSection = $contactPage->activeSections->where('name', 'contact')->first(
 					class="b-contact stellar section-texture section-texture_grey section-radius">
 					<div class="b-contact__name">{{ __('frontend.email') }}</div>
 					<div class="b-contact__info">
-						{{ $emailSetting?->content ?? 'qeraninvitation@gmail.com' }}
+						{{ $emailSetting?->value ?? 'qeraninvitation@gmail.com' }}
 						<div class="b-contact__icon icon-envelope-open"></div>
 					</div>
 					<!-- end b-contact-->

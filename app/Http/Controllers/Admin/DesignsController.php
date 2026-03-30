@@ -8,6 +8,8 @@ use App\Http\Requests\Admin\DesignRequest;
 use App\Models\Category;
 use App\Models\Design;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class DesignsController extends Controller
 {
@@ -20,7 +22,7 @@ class DesignsController extends Controller
     {
         $categoryId = $request->get('category_id');
 
-        $query = Design::with(['category', 'translations']);
+        $query = Design::with(['category', 'translations', 'hubFiles']);
 
         if ($categoryId) {
             $query->where('category_id', $categoryId);
@@ -88,14 +90,8 @@ class DesignsController extends Controller
         $design->translateOrNew('ar')->name = $arData['name'];
         $design->save();
 
-        // Handle image upload
-        if ($request->image) {
-            storeImage([
-                'value' => $request->image,
-                'folderName' => Constant::DESIGN_IMAGE_FOLDER_NAME,
-                'model' => $design,
-                'saveInDatabase' => true
-            ]);
+        if ($request->hasFile('image')) {
+            $this->storeDesignMedia($request->file('image'), $design);
         }
 
         return redirect()->route('designs.index', ['category_id' => $design->category_id])->with('success', 'Created');
@@ -120,7 +116,7 @@ class DesignsController extends Controller
      */
     public function edit(Design $design)
     {
-        $design->load('translations');
+        $design->load(['translations', 'hubFiles']);
         $categories = Category::orderBy('created_at', 'desc')->get();
 
         return view('pages.designs.edit', compact('design', 'categories'));
@@ -169,18 +165,9 @@ class DesignsController extends Controller
         $design->translateOrNew('ar')->name = $arData['name'];
         $design->save();
 
-        // Handle image upload
-        if ($request->image) {
-            if ($design->hubFiles()->exists()) {
-                deleteImage($design->image(), $design->hubFiles());
-            }
-
-            storeImage([
-                'value' => $request->image,
-                'folderName' => Constant::DESIGN_IMAGE_FOLDER_NAME,
-                'model' => $design,
-                'saveInDatabase' => true
-            ]);
+        if ($request->hasFile('image')) {
+            $this->removeDesignMediaFiles($design);
+            $this->storeDesignMedia($request->file('image'), $design);
         }
 
         return redirect()->route('designs.index', ['category_id' => $design->category_id])->with('success', 'Updated');
@@ -194,13 +181,49 @@ class DesignsController extends Controller
      */
     public function destroy(Design $design)
     {
-        if ($design->hubFiles()->exists()) {
-            deleteImage($design->image(), $design->hubFiles());
-        }
+        $this->removeDesignMediaFiles($design);
 
         $categoryId = $design->category_id;
         $design->delete();
 
         return redirect()->route('designs.index', ['category_id' => $categoryId])->with('success', 'Deleted');
+    }
+
+    private function storeDesignMedia(UploadedFile $file, Design $design): void
+    {
+        $mime = $file->getMimeType();
+        if ($mime && str_starts_with($mime, 'video/')) {
+            storeVideo([
+                'value' => $file,
+                'folderName' => Constant::DESIGN_IMAGE_FOLDER_NAME,
+                'model' => $design,
+            ]);
+
+            return;
+        }
+
+        storeImage([
+            'value' => $file,
+            'folderName' => Constant::DESIGN_IMAGE_FOLDER_NAME,
+            'model' => $design,
+            'saveInDatabase' => true,
+        ]);
+    }
+
+    private function removeDesignMediaFiles(Design $design): void
+    {
+        $hub = $design->hubFiles;
+        if (! $hub) {
+            return;
+        }
+
+        $disk = Storage::disk('public');
+        $disk->delete($hub->bucket_name.'/'.$hub->path);
+        if ((int) $hub->file_type === Constant::FILE_TYPE['Image']) {
+            $disk->delete($hub->bucket_name.'/medium/'.$hub->path);
+            $disk->delete($hub->bucket_name.'/thumbnail/'.$hub->path);
+        }
+
+        $hub->delete();
     }
 }

@@ -133,35 +133,29 @@
 								<div class="col-sm-12">
 									<div class="mb-3">
 										<label for="image"
-											class="form-label">Image</label>
+											class="form-label">{{ __('validation.attributes.design_media') }}</label>
 										@if($design->image())
 										<div class="mb-2">
+											@php $hubMime = $design->hubFiles?->getMimeType ?? ''; @endphp
+											@if($hubMime && str_starts_with($hubMime, 'video/'))
+											<video src="{{ $design->image() }}" controls muted playsinline
+												style="max-width: 200px; max-height: 200px;"
+												class="img-thumbnail p-0"></video>
+											@else
 											<img src="{{$design->image()}}"
-												alt="Current Image"
+												alt="{{ __('validation.attributes.design_media') }}"
 												style="max-width: 200px; max-height: 200px; object-fit: cover;"
 												class="img-thumbnail">
-											<p
-												class="text-muted small mt-1">
-												Current
-												Image
-											</p>
+											@endif
+											<p class="text-muted small mt-1">{{ __('validation.design_current_media') }}</p>
 										</div>
 										@endif
 										<input type="file"
 											name="image"
-											accept="image/*"
+											accept="image/*,video/*"
 											class="form-control"
 											id="image">
-										<small
-											class="form-text text-muted">Leave
-											empty to
-											keep
-											current
-											image.
-											JPEG, PNG,
-											GIF, WebP,
-											max
-											5MB</small>
+										<small class="form-text text-muted">{{ __('validation.design_media_replace_help', ['max' => (int) round(\App\Helpers\Constant::DESIGN_MEDIA_MAX_UPLOAD_KB / 1024)]) }}</small>
 									</div>
 								</div>
 								<div class="col-sm-12">

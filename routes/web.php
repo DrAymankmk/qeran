@@ -73,15 +73,9 @@ Route::get('/', function () {
         $locale = request()->cookie('locale');
     }
 
-    // If still not found, try LaravelLocalization detection (browser preference)
+    // If still not found, negotiate from Accept-Language via LaravelLocalization (when useAcceptLanguageHeader is true)
     if (!$locale) {
-        try {
-            // This will detect from Accept-Language header if available
-            $locale = LaravelLocalization::getLocaleFromRequest();
-        } catch (\Exception $e) {
-            // Fallback to config default
-            $locale = null;
-        }
+        $locale = LaravelLocalization::getCurrentLocale();
     }
 
     // If still no locale found, use default from config

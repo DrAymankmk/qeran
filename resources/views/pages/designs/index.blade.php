@@ -68,7 +68,7 @@
                             <thead>
                             <tr class="tr-colored">
                                 <th scope="col">{{__('admin.id')}}</th>
-                                <th scope="col">Image</th>
+                                <th scope="col">{{ __('validation.attributes.design_media') }}</th>
                                 <th scope="col">Category</th>
                                 <th scope="col">Name</th>
                                 <th scope="col">Code</th>
@@ -82,15 +82,25 @@
                                 <tr>
                                     <td><a href="javascript: void(0);" class="text-body fw-bold">{{$design->id}}</a></td>
                                     <td>
-                                        @if($design->image())
-                                        <a target="_blank" href="{{$design->image()}}">
+                                        @php
+                                            $mediaUrl = $design->image();
+                                            $hubMime = $design->hubFiles?->getMimeType ?? '';
+                                        @endphp
+                                        @if($mediaUrl)
+                                        <a target="_blank" href="{{ $mediaUrl }}">
+                                            @if($hubMime && str_starts_with($hubMime, 'video/'))
+                                            <video src="{{ $mediaUrl }}" muted playsinline
+                                                class="header-profile-user"
+                                                style="width: 50px; height: 50px; object-fit: cover;"></video>
+                                            @else
                                             <img class="header-profile-user"
-                                                src="{{$design->image()}}"
-                                                alt="Design Image"
+                                                src="{{ $mediaUrl }}"
+                                                alt="{{ __('validation.attributes.design_media') }}"
                                                 style="width: 50px; height: 50px; object-fit: cover;">
+                                            @endif
                                         </a>
                                         @else
-                                        <span class="text-muted">No Image</span>
+                                        <span class="text-muted">{{ __('validation.design_no_media') }}</span>
                                         @endif
                                     </td>
                                     <td>{{$design->category->name ?? 'N/A'}}</td>

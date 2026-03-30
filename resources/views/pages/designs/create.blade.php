@@ -101,10 +101,10 @@
                                         </div>
                                         <div class="col-sm-12">
                                             <div class="mb-3">
-                                                <label for="image" class="form-label">Image</label>
-                                                <input type="file" name="image" accept="image/*"
+                                                <label for="image" class="form-label">{{ __('validation.attributes.design_media') }}</label>
+                                                <input type="file" name="image" accept="image/*,video/*"
                                                        class="form-control" id="image">
-                                                <small class="form-text text-muted">JPEG, PNG, GIF, WebP, max 5MB</small>
+                                                <small class="form-text text-muted">{{ __('validation.design_media_help', ['max' => (int) round(\App\Helpers\Constant::DESIGN_MEDIA_MAX_UPLOAD_KB / 1024)]) }}</small>
                                             </div>
                                         </div>
                                         <div class="col-sm-12">

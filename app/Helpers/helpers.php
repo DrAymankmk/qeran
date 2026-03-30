@@ -145,7 +145,8 @@ if (!function_exists('storeVideo')) {
     {
         if ($options['value']) {
 
-            $filename = time() . substr(str_shuffle("0123456789abcdefghijklmnopqrstvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 5) . '.mp4';
+            $ext = strtolower($options['value']->getClientOriginalExtension() ?: 'mp4');
+            $filename = time() . substr(str_shuffle("0123456789abcdefghijklmnopqrstvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 5) . '.' . $ext;
 
             Storage::putFileAs('public/' . $options['folderName'], $options['value'], $filename);
 

@@ -203,6 +203,9 @@ class Constant
 
     const DESIGN_IMAGE_FOLDER_NAME = 'designs';
 
+    /** Max upload size for design media (images + videos), in kilobytes (100 MB). */
+    const DESIGN_MEDIA_MAX_UPLOAD_KB = 102400;
+
     const TESTIMONIAL_IMAGE_FOLDER_NAME = 'testimonials';
 
     const INVITATION_IMAGE_FOLDER_NAME = 'invitations/images';

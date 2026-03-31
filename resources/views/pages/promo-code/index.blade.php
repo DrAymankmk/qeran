@@ -127,7 +127,7 @@
 									{{__('admin.unlimited')}}
 									@endif
 								</td>
-								<td>
+								<td data-order="{{ \Carbon\Carbon::parse($promoCode->created_at)->timestamp }}">
 									{{Carbon\Carbon::parse($promoCode->created_at)->locale(app()->getLocale())->translatedFormat('l dS F G:i - Y')}}
 								</td>
 								<td>

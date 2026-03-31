@@ -230,12 +230,22 @@ if (!function_exists('storeAudio')) {
                 }
             }
 
+            $finalSize = null;
+            try {
+                $finalAbs = storage_path('app/public/' . $options['folderName'] . '/' . $finalFilename);
+                if (file_exists($finalAbs)) {
+                    $finalSize = filesize($finalAbs);
+                }
+            } catch (\Throwable $e) {
+                $finalSize = $options['value']->getSize();
+            }
+
             $options['model']->hubFiles()->updateOrCreate([
                 'bucket_name' => $options['folderName'],
                 'original_name' => $options['value']->getClientOriginalName(),
                 'path' => $finalFilename,
                 'extension' => $finalExt,
-                'size' => $options['value']->getSize(),
+                'size' => $finalSize ?? $options['value']->getSize(),
                 'getMimeType' => $finalMime,
                 'file_type' => $options['file_type'] ?? Constant::FILE_TYPE['Audio'],
                 'file_key' => $options['file_key'] ?? Constant::FILE_KEY['Not Main'],

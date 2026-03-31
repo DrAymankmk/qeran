@@ -367,6 +367,8 @@ class InvitationRequestController extends Controller
              }
          }
 
+        $filename = 'invitation-requests_' . date('Y-m-d_His') . '.pdf';
+
         // Configure mPDF with Arabic font support
         $mpdf = new Mpdf([
             'mode' => 'utf-8',
@@ -378,27 +380,15 @@ class InvitationRequestController extends Controller
             'margin_bottom' => 16,
             'margin_header' => 9,
             'margin_footer' => 9,
-            // Avoid OTL/font auto-switch crashes on some servers
-            'default_font' => 'dejavusans',
-            'useOTL' => 0,
-            // Prevent mPDF from auto-enabling BiDi processing (still calls bidiReorder even in LTR)
-            'biDirectional' => false,
-            'autoLangToFont' => false,
-            'autoScriptToLang' => false,
+            'autoLangToFont' => true,
+            'autoScriptToLang' => true,
             'autoVietnamese' => true,
-            'autoArabic' => false,
+            'autoArabic' => true,
+            'direction' => app()->getLocale() == 'ar' ? 'rtl' : 'ltr',
         ]);
 
-        // Extra safety: some mPDF versions flip this on at runtime when Arabic chars appear.
-        $mpdf->biDirectional = false;
-
-        // Build HTML content
         $html = view('pages.invitation-request.pdf-export', compact('invitationRequests'))->render();
-        $html = self::sanitizePdfText($html);
-
         $mpdf->WriteHTML($html);
-
-        $filename = 'invitation-requests_' . date('Y-m-d_His') . '.pdf';
 
         return $mpdf->Output($filename, 'D'); // D = Download
     }

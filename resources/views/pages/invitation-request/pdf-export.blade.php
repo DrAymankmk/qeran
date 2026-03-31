@@ -9,7 +9,7 @@
 	body {
 		direction: ltr;
 		text-align: left;
-		font-family: dejavusans, sans-serif;
+		font-family: "DejaVu Sans", DejaVu Sans, sans-serif;
 	}
 
 	@if(app()->getLocale()=='ar')

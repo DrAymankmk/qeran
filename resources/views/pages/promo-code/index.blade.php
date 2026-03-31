@@ -174,7 +174,8 @@ $(document).ready(function() {
 	var table = initAdminDataTable({
 		tableId: '#promoCodesTable',
 		pdfRoute: '{{route("promo-code.export.pdf")}}',
-		orderColumn: 0,
+		// Sort by created_at column (index 9) so newest appear first
+		orderColumn: 9,
 		orderDirection: 'desc',
 		nonOrderableColumns: [4, 7, 8, 10],
 		nonSearchableColumns: [10],

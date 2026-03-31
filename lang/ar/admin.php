@@ -212,7 +212,7 @@ return[
     'expiry-date' => 'انتهاء الصلاحية',
     'choose-date' => 'اختر تاريخ',
     'currency-required' => 'العملة مطلوبة',
-    'currency' => 'العملة',
+    'currency' => 'ريال سعودى',
     'products-options' => 'خيارات المنتج',
     'give_all_permissions' => 'أعط كل الصلاحيات',
     'role_name' => 'اسم الدور',

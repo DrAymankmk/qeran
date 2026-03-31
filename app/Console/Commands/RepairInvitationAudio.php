@@ -18,6 +18,14 @@ class RepairInvitationAudio extends Command
 
     public function handle(): int
     {
+        if (! function_exists('exec')) {
+            $this->error('Cannot repair audio: PHP function exec() is disabled on this server.');
+            $this->line('Fix options:');
+            $this->line('- Enable exec() (and install ffmpeg) on the server, then rerun this command.');
+            $this->line('- Or convert the audio files offline to real MP3 and re-upload them.');
+            return self::FAILURE;
+        }
+
         $limit = (int) $this->option('limit');
         $dryRun = (bool) $this->option('dry-run');
         $onlyMp3 = (bool) $this->option('only-mp3');
@@ -76,7 +84,7 @@ class RepairInvitationAudio extends Command
 
             // Transcode with ffmpeg
             $cmd = 'ffmpeg -y -i '.escapeshellarg($sourceAbs).' -vn -acodec libmp3lame -q:a 4 '.escapeshellarg($targetAbs).' 2>&1';
-            exec($cmd, $out, $code);
+            \exec($cmd, $out, $code);
 
             if ($code !== 0 || ! file_exists($targetAbs) || filesize($targetAbs) === 0) {
                 $failed++;

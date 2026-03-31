@@ -21,6 +21,22 @@ use Mpdf\Mpdf;
 
 class InvitationsController extends Controller
 {
+    private static function sanitizePdfText($value): string
+    {
+        $text = (string) ($value ?? '');
+
+        // Some content may include Arabic presentation forms / variation selectors / zero-width chars
+        // which can trigger mPDF OTL/BiDi bugs in some hosting environments.
+        $text = preg_replace('/[\x{200C}\x{200D}\x{2060}\x{FEFF}]/u', '', $text) ?? $text; // ZWNJ/ZWJ/WORD JOINER/BOM
+        $text = preg_replace('/[\x{FE00}-\x{FE0F}]/u', '', $text) ?? $text; // Variation selectors
+        $text = preg_replace('/[\x{FB50}-\x{FDFF}\x{FE70}-\x{FEFF}]/u', '', $text) ?? $text; // Arabic Presentation Forms
+
+        // Remove other control chars except newlines/tabs
+        $text = preg_replace('/[\p{Cc}&&[^\n\t]]/u', '', $text) ?? $text;
+
+        return $text;
+    }
+
     /**
      * Display a listing of invitations.
      *
@@ -823,7 +839,22 @@ class InvitationsController extends Controller
 
      public function invitationsExportPdf()
      {
-         $invitations = Invitation::whereNotNull('user_id')->orderBy('created_at', 'desc')->get();
+         $invitations = Invitation::with('category')
+             ->whereNotNull('user_id')
+             ->orderBy('created_at', 'desc')
+             ->get();
+
+         foreach ($invitations as $invitation) {
+             $invitation->name = self::sanitizePdfText($invitation->name);
+             $invitation->email = self::sanitizePdfText($invitation->email);
+             $invitation->host_name = self::sanitizePdfText($invitation->host_name);
+             $invitation->address = self::sanitizePdfText($invitation->address);
+             $invitation->groom = self::sanitizePdfText($invitation->groom);
+             $invitation->bride = self::sanitizePdfText($invitation->bride);
+             if ($invitation->category) {
+                 $invitation->category->name = self::sanitizePdfText($invitation->category->name);
+             }
+         }
 
          // Configure mPDF with Arabic font support
          $mpdf = new Mpdf([

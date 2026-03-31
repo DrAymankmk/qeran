@@ -20,6 +20,22 @@ use Illuminate\Support\Facades\Gate;
 
 class InvitationRequestController extends Controller
 {
+    private static function sanitizePdfText($value): string
+    {
+        $text = (string) ($value ?? '');
+
+        // Some content may include Arabic presentation forms / variation selectors / zero-width chars
+        // which can trigger mPDF OTL/BiDi bugs in some hosting environments.
+        $text = preg_replace('/[\x{200C}\x{200D}\x{2060}\x{FEFF}]/u', '', $text) ?? $text; // ZWNJ/ZWJ/WORD JOINER/BOM
+        $text = preg_replace('/[\x{FE00}-\x{FE0F}]/u', '', $text) ?? $text; // Variation selectors
+        $text = preg_replace('/[\x{FB50}-\x{FDFF}\x{FE70}-\x{FEFF}]/u', '', $text) ?? $text; // Arabic Presentation Forms
+
+        // Remove other control chars except newlines/tabs
+        $text = preg_replace('/[\p{Cc}&&[^\n\t]]/u', '', $text) ?? $text;
+
+        return $text;
+    }
+
 
 
         /**
@@ -334,7 +350,22 @@ class InvitationRequestController extends Controller
 
     //
     public function invitationRequestExportPdf(){
-         $invitationRequests = Invitation::where('invitation_type', Constant::INVITATION_TYPE['Contact Design'])->orderBy('created_at', 'desc')->get();
+         $invitationRequests = Invitation::with('category')
+             ->where('invitation_type', Constant::INVITATION_TYPE['Contact Design'])
+             ->orderBy('created_at', 'desc')
+             ->get();
+
+         foreach ($invitationRequests as $invitationRequest) {
+             $invitationRequest->name = self::sanitizePdfText($invitationRequest->name);
+             $invitationRequest->email = self::sanitizePdfText($invitationRequest->email);
+             $invitationRequest->host_name = self::sanitizePdfText($invitationRequest->host_name);
+             $invitationRequest->address = self::sanitizePdfText($invitationRequest->address);
+             $invitationRequest->groom = self::sanitizePdfText($invitationRequest->groom);
+             $invitationRequest->bride = self::sanitizePdfText($invitationRequest->bride);
+             if ($invitationRequest->category) {
+                 $invitationRequest->category->name = self::sanitizePdfText($invitationRequest->category->name);
+             }
+         }
 
         // Configure mPDF with Arabic font support
         $mpdf = new Mpdf([

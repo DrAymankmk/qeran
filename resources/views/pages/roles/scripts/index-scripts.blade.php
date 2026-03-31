@@ -8,8 +8,8 @@ $(document).ready(function() {
 		tableId: '#rolesTable',
 		orderColumn: 0,
 		orderDirection: 'desc',
-		nonOrderableColumns: [1, 4],
-		nonSearchableColumns: [1, 4],
+		nonOrderableColumns: [4],
+		nonSearchableColumns: [4],
 		pageLength: 10,
 		lengthMenu: [
 			[10, 25, 50, 100],

@@ -59,8 +59,8 @@ class InvitationRequest extends FormRequest
                 ])],
             'image'=>['nullable','mimes:jpeg,jpg,png,gif,webp,mp4,webm,ogg,mov,avi,m4v'],
             'video'=>['nullable','mimes:mp4,webm,ogg,mov,avi,m4v'],
-            // Browser playback is most reliable with mp3/ogg; server-side transcoding isn't always available.
-            'audio'=>['nullable','mimes:mp3,ogg'],
+            // Voice records from mobile apps are often m4a/aac/3gp/amr; allow them.
+            'audio'=>['nullable','mimes:mp3,ogg,m4a,aac,wav,amr,3gp'],
             'event_name'=>['required_if:invitation_type,==,'.Constant::INVITATION_TYPE['Contact Design']],
             'package_id'=>['nullable',Rule::exists('packages','id')],
             'price'=>['nullable'],

@@ -274,10 +274,37 @@ window.showInvitationRequestDetails = function(invitationId) {
 					'modal_design_audio'
 				);
 			if (designAudioEl) {
-				designAudioEl.innerHTML = data
-					.design_audio ?
-					`<audio controls style="width: 100%;"><source src="${data.design_audio}" type="audio/mpeg">Your browser does not support the audio element.</audio>` :
-					'{{ __("admin.no-data-available") }}';
+				const guessAudioType = (url) => {
+					if (!url) return '';
+					const clean = url.split('?')[0].split('#')[0];
+					const ext = (clean.split('.').pop() || '').toLowerCase();
+					switch (ext) {
+						case 'mp3':
+							return 'audio/mpeg';
+						case 'ogg':
+						case 'oga':
+							return 'audio/ogg';
+						case 'wav':
+							return 'audio/wav';
+						case 'm4a':
+							return 'audio/mp4';
+						default:
+							return '';
+					}
+				};
+
+				if (data.design_audio) {
+					const t = guessAudioType(data.design_audio);
+					const typeAttr = t ? `type="${t}"` : '';
+					designAudioEl.innerHTML = `
+						<audio controls style="width: 100%;">
+							<source src="${data.design_audio}" ${typeAttr}>
+							Your browser does not support the audio element.
+						</audio>
+					`;
+				} else {
+					designAudioEl.innerHTML = '{{ __("admin.no-data-available") }}';
+				}
 			}
 		})
 		.catch(error => {

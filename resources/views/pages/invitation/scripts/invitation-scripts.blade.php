@@ -465,15 +465,38 @@ window.showInvitationDetails = function(invitationId) {
 					mp3Url = fixUrl(mp3Url);
 					oggUrl = fixUrl(oggUrl);
 
-					// Create audio element with both OGG and MP3 sources
+					const guessAudioType = (url) => {
+						if (!url) return '';
+						const clean = url.split('?')[0].split('#')[0];
+						const ext = (clean.split('.').pop() || '').toLowerCase();
+						switch (ext) {
+							case 'mp3':
+								return 'audio/mpeg';
+							case 'ogg':
+							case 'oga':
+								return 'audio/ogg';
+							case 'wav':
+								return 'audio/wav';
+							case 'm4a':
+								return 'audio/mp4';
+							default:
+								return '';
+						}
+					};
+
+					// Create audio element with multiple sources (type is important for non-mp3)
 					let audioSources = '';
 					if (oggUrl) {
-						audioSources +=
-							`<source src="${oggUrl}" type="audio/ogg">`;
+						const t = guessAudioType(oggUrl);
+						audioSources += t ?
+							`<source src="${oggUrl}" type="${t}">` :
+							`<source src="${oggUrl}">`;
 					}
 					if (mp3Url) {
-						audioSources +=
-							`<source src="${mp3Url}" type="audio/mpeg">`;
+						const t = guessAudioType(mp3Url);
+						audioSources += t ?
+							`<source src="${mp3Url}" type="${t}">` :
+							`<source src="${mp3Url}">`;
 					}
 
 					designAudioEl.innerHTML = `

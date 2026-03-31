@@ -294,11 +294,12 @@ window.showInvitationRequestDetails = function(invitationId) {
 				};
 
 				if (data.design_audio) {
-					const t = guessAudioType(data.design_audio);
+					const audioUrl = `{{ route('media.proxy') }}?url=${encodeURIComponent(data.design_audio)}`;
+					const t = guessAudioType(audioUrl);
 					const typeAttr = t ? `type="${t}"` : '';
 					designAudioEl.innerHTML = `
 						<audio controls style="width: 100%;">
-							<source src="${data.design_audio}" ${typeAttr}>
+							<source src="${audioUrl}" ${typeAttr}>
 							Your browser does not support the audio element.
 						</audio>
 					`;

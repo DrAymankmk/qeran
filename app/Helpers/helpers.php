@@ -192,18 +192,51 @@ if (!function_exists('storeAudio')) {
     {
         if ($options['value']) {
 
-            $ext = strtolower($options['value']->getClientOriginalExtension() ?: 'mp3');
-            $filename = time() . substr(str_shuffle("0123456789abcdefghijklmnopqrstvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 5) . '.' . $ext;
+            $randomBase = time() . substr(str_shuffle("0123456789abcdefghijklmnopqrstvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 5);
+            $ext = strtolower($options['value']->getClientOriginalExtension() ?: ($options['value']->extension() ?: 'mp3'));
 
+            // Save original upload first
+            $filename = $randomBase . '.' . $ext;
             Storage::putFileAs('public/' . $options['folderName'], $options['value'], $filename);
+
+            // If it's not mp3, try to transcode to mp3 (best browser support).
+            // If ffmpeg isn't available on the server, we keep the original file.
+            $finalFilename = $filename;
+            $finalExt = $ext;
+            $finalMime = ($options['value']->getMimeType() ?: $options['value']->getClientMimeType());
+
+            if ($ext !== 'mp3') {
+                try {
+                    $sourceAbs = storage_path('app/public/' . $options['folderName'] . '/' . $filename);
+                    $targetFilename = $randomBase . '.mp3';
+                    $targetAbs = storage_path('app/public/' . $options['folderName'] . '/' . $targetFilename);
+
+                    // Basic ffmpeg command; avoids needing extra PHP libs at runtime.
+                    // -y overwrite, -vn ignore video, libmp3lame preferred, fallback should still work on common ffmpeg builds.
+                    $cmd = 'ffmpeg -y -i ' . escapeshellarg($sourceAbs) . ' -vn -acodec libmp3lame -q:a 4 ' . escapeshellarg($targetAbs) . ' 2>&1';
+                    exec($cmd, $out, $code);
+
+                    if ($code === 0 && file_exists($targetAbs) && filesize($targetAbs) > 0) {
+                        // Swap to transcoded mp3
+                        $finalFilename = $targetFilename;
+                        $finalExt = 'mp3';
+                        $finalMime = 'audio/mpeg';
+
+                        // Remove the original uploaded non-mp3 file to avoid duplicates
+                        Storage::disk('public')->delete($options['folderName'] . '/' . $filename);
+                    }
+                } catch (\Throwable $e) {
+                    // Keep original file on any failure
+                }
+            }
 
             $options['model']->hubFiles()->updateOrCreate([
                 'bucket_name' => $options['folderName'],
                 'original_name' => $options['value']->getClientOriginalName(),
-                'path' => $filename,
-                'extension' => $ext,
+                'path' => $finalFilename,
+                'extension' => $finalExt,
                 'size' => $options['value']->getSize(),
-                'getMimeType' => ($options['value']->getMimeType() ?: $options['value']->getClientMimeType()),
+                'getMimeType' => $finalMime,
                 'file_type' => $options['file_type'] ?? Constant::FILE_TYPE['Audio'],
                 'file_key' => $options['file_key'] ?? Constant::FILE_KEY['Not Main'],
 

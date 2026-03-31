@@ -6,18 +6,18 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>{{__('admin.invitation-requests')}}</title>
 	<style>
-	body {
-		direction: ltr;
-		text-align: left;
-		font-family: "DejaVu Sans", DejaVu Sans, sans-serif;
-	}
-
-	@if(app()->getLocale()=='ar')
-	body { text-align: right; }
-	td, th { text-align: right; }
-	@endif
-
-	h1 {
+		 @if(app()->getLocale() == 'ar')
+        body {
+            direction: rtl;
+            text-align: right;
+        }
+        @else
+        body {
+            direction: ltr;
+            text-align: left;
+        }
+        @endif
+	 h1 {
 		text-align: center;
 		color: #333;
 		margin-bottom: 20px;

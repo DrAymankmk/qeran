@@ -298,7 +298,7 @@ window.showInvitationRequestDetails = function(invitationId) {
 					const t = guessAudioType(audioUrl);
 					const typeAttr = t ? `type="${t}"` : '';
 					designAudioEl.innerHTML = `
-						<audio controls preload="metadata" style="width: 100%;" onerror="handleAudioError(this)">
+						<audio controls preload="metadata" style="width: 100%;" onerror="handleAudioError(this, this.currentSrc)">
 							<source src="${audioUrl}" ${typeAttr}>
 							Your browser does not support the audio element.
 						</audio>

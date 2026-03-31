@@ -508,7 +508,7 @@ window.showInvitationDetails = function(invitationId) {
 					}
 
 					designAudioEl.innerHTML = `
-						<audio controls preload="metadata" style="width:100%;" onerror="handleAudioError(this)">
+						<audio controls preload="metadata" style="width:100%;" onerror="handleAudioError(this, this.currentSrc)">
 							${audioSources}
 							Your browser does not support the audio element.
 						</audio>
@@ -526,7 +526,8 @@ window.showInvitationDetails = function(invitationId) {
 			}
 			// Error handler function
 			window.handleAudioError = function(audioElement, url) {
-				console.error('Audio failed to load:', url);
+				url = url || (audioElement ? audioElement.currentSrc : null);
+				console.error('Audio failed to load:', url || '(unknown url)');
 				const errorDiv = document.getElementById(
 					'audio-error-message');
 				if (errorDiv) {

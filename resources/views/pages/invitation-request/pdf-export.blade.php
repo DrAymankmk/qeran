@@ -1,22 +1,24 @@
 <!DOCTYPE html>
-<html lang="{{app()->getLocale()}}" dir="{{app()->getLocale() == 'ar' ? 'rtl' : 'ltr'}}">
+<html lang="{{app()->getLocale()}}" dir="ltr">
 
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>{{__('admin.invitation-requests')}}</title>
 	<style>
-	@if(app()->getLocale()=='ar') body {
-		direction: rtl;
-		text-align: right;
-	}
-
-	@else body {
+	body {
 		direction: ltr;
 		text-align: left;
+		font-family: dejavusans, sans-serif;
 	}
 
-	@endif h1 {
+	@if(app()->getLocale()=='ar')
+	body { text-align: right; }
+	td, th { text-align: right; }
+	.header-info { text-align: right; }
+	@endif
+
+	h1 {
 		text-align: center;
 		color: #333;
 		margin-bottom: 20px;
@@ -52,15 +54,10 @@
 
 	.header-info {
 		margin-bottom: 20px;
-		text-align: right;
+		text-align: left;
 		color: #666;
 		font-size: 12px;
 	}
-
-	@if(app()->getLocale()!='ar')
-	td, th { text-align: left; }
-	.header-info { text-align: left; }
-	@endif
 	</style>
 </head>
 

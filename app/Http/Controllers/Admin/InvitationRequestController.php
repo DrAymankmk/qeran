@@ -356,10 +356,6 @@ class InvitationRequestController extends Controller
             'autoArabic' => false,
         ]);
 
-        if (app()->getLocale() == 'ar') {
-            $mpdf->SetDirectionality('rtl');
-        }
-
         // Build HTML content
         $html = view('pages.invitation-request.pdf-export', compact('invitationRequests'))->render();
 

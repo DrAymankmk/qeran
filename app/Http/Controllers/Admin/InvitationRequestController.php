@@ -349,12 +349,16 @@ class InvitationRequestController extends Controller
             'margin_footer' => 9,
             // Avoid OTL/font auto-switch crashes on some servers
             'default_font' => 'dejavusans',
+            'useOTL' => 0,
             'autoLangToFont' => false,
             'autoScriptToLang' => false,
             'autoVietnamese' => true,
-            'autoArabic' => true, // Enable Arabic support
-            'direction' => app()->getLocale() == 'ar' ? 'rtl' : 'ltr',
+            'autoArabic' => false,
         ]);
+
+        if (app()->getLocale() == 'ar') {
+            $mpdf->SetDirectionality('rtl');
+        }
 
         // Build HTML content
         $html = view('pages.invitation-request.pdf-export', compact('invitationRequests'))->render();

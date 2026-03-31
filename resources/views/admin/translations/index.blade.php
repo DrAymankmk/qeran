@@ -189,6 +189,7 @@ $(document).ready(function() {
 	// Initialize DataTable
 	var table = initAdminDataTable({
 		tableId: '#translationsTable',
+		pdfRoute: '{{ route("admin.translations.export.pdf", ["locale" => $locale, "file" => $file]) }}',
 		orderColumn: 0,
 		orderDirection: 'asc',
 		nonOrderableColumns: [3], // Actions column

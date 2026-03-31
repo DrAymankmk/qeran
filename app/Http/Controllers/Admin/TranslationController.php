@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Lang;
+use Mpdf\Mpdf;
 
 class TranslationController extends Controller
 {
@@ -135,10 +136,10 @@ class TranslationController extends Controller
             'value' => 'required|string',
         ]);
         
-        $locale = $request->locale;
-        $file = $request->file;
-        $key = $request->key;
-        $value = $request->value;
+        $locale = (string) $request->input('locale');
+        $file = (string) $request->input('file');
+        $key = (string) $request->input('key');
+        $value = (string) $request->input('value');
         
         $translationPath = lang_path("{$locale}/{$file}.php");
         
@@ -176,6 +177,44 @@ class TranslationController extends Controller
         
         return redirect()->route('admin.translations.index', ['locale' => $locale, 'file' => $file])
             ->with('success', 'Translation key added successfully.');
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $locale = $request->get('locale', 'ar');
+        $file = $request->get('file', null);
+
+        $allTranslations = $this->getAllTranslationsFlat($locale, $file);
+
+        // Configure mPDF with Arabic font support
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4-L', // Landscape
+            'orientation' => 'L',
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 16,
+            'margin_bottom' => 16,
+            'margin_header' => 9,
+            'margin_footer' => 9,
+            'autoLangToFont' => true,
+            'autoScriptToLang' => true,
+            'autoVietnamese' => true,
+            'autoArabic' => true,
+            'default_font' => 'dejavusans',
+            'direction' => $locale === 'ar' ? 'rtl' : 'ltr',
+        ]);
+
+        $html = view('admin.translations.pdf-export', [
+            'translations' => $allTranslations,
+            'locale' => $locale,
+        ])->render();
+
+        $mpdf->WriteHTML($html);
+
+        $filename = 'translations_' . $locale . '_' . date('Y-m-d_His') . '.pdf';
+
+        return $mpdf->Output($filename, 'D');
     }
 
     /**

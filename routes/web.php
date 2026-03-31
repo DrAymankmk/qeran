@@ -353,6 +353,7 @@ Route::group(['prefix' => 'admin', 'middleware' => 'set.admin.locale'], function
         // Translation Management Routes
         Route::group(['prefix' => 'translations', 'as' => 'admin.translations.'], function () {
             Route::get('/', [\App\Http\Controllers\Admin\TranslationController::class, 'index'])->name('index');
+            Route::get('/export/pdf', [\App\Http\Controllers\Admin\TranslationController::class, 'exportPdf'])->name('export.pdf');
             Route::get('/create', [\App\Http\Controllers\Admin\TranslationController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\Admin\TranslationController::class, 'store'])->name('store');
             Route::get('/{locale}/{file}/{key}/edit', [\App\Http\Controllers\Admin\TranslationController::class, 'edit'])->name('edit');

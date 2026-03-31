@@ -465,14 +465,6 @@ window.showInvitationDetails = function(invitationId) {
 					mp3Url = fixUrl(mp3Url);
 					oggUrl = fixUrl(oggUrl);
 					
-					// Serve through proxy to enforce correct Content-Type / Range behavior
-					const proxify = (url) => {
-						if (!url) return null;
-						return `{{ route('media.proxy') }}?url=${encodeURIComponent(url)}`;
-					};
-					mp3Url = proxify(mp3Url);
-					oggUrl = proxify(oggUrl);
-
 					const guessAudioType = (url) => {
 						if (!url) return '';
 						const clean = url.split('?')[0].split('#')[0];

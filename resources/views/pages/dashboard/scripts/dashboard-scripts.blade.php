@@ -360,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
 					};
 
 					if (data.design_audio) {
-						const audioUrl = `{{ route('media.proxy') }}?url=${encodeURIComponent(data.design_audio)}`;
+						const audioUrl = data.design_audio;
 						const t = guessAudioType(audioUrl);
 						const typeAttr = t ? `type="${t}"` : '';
 						designAudioEl.innerHTML = `

@@ -839,11 +839,16 @@ class InvitationsController extends Controller
              // Avoid OTL/font auto-switch crashes on some servers
              'default_font' => 'dejavusans',
              'useOTL' => 0,
+             // Prevent mPDF from auto-enabling BiDi processing (still calls bidiReorder even in LTR)
+             'biDirectional' => false,
              'autoLangToFont' => false,
              'autoScriptToLang' => false,
              'autoVietnamese' => true,
              'autoArabic' => false,
          ]);
+
+         // Extra safety: some mPDF versions flip this on at runtime when Arabic chars appear.
+         $mpdf->biDirectional = false;
 
          // Build HTML content
          $html = view('pages.invitation.pdf-export', compact('invitations'))->render();

@@ -364,11 +364,15 @@ document.addEventListener('DOMContentLoaded', function() {
 						const t = guessAudioType(audioUrl);
 						const typeAttr = t ? `type="${t}"` : '';
 						designAudioEl.innerHTML = `
-							<audio controls style="width: 100%;">
+							<audio controls preload="metadata" style="width: 100%;" onerror="handleAudioError(this)">
 								<source src="${audioUrl}" ${typeAttr}>
 								Your browser does not support the audio element.
 							</audio>
 						`;
+						setTimeout(() => {
+							const audio = designAudioEl.querySelector('audio');
+							if (audio) audio.load();
+						}, 0);
 					} else {
 						designAudioEl.innerHTML = '{{ __("admin.no-data-available") }}';
 					}

@@ -508,11 +508,17 @@ window.showInvitationDetails = function(invitationId) {
 					}
 
 					designAudioEl.innerHTML = `
-						<audio controls>
+						<audio controls preload="metadata" style="width:100%;" onerror="handleAudioError(this)">
 							${audioSources}
 							Your browser does not support the audio element.
 						</audio>
 					`;
+					
+					// Ensure the browser starts loading the new sources
+					setTimeout(() => {
+						const audio = designAudioEl.querySelector('audio');
+						if (audio) audio.load();
+					}, 0);
 				} else {
 					designAudioEl.innerHTML =
 						'{{ __("admin.no-data-available") }}';

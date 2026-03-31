@@ -59,7 +59,7 @@ class InvitationRequest extends FormRequest
                 ])],
             'image'=>['nullable','mimes:jpeg,jpg,png,gif,webp,mp4,webm,ogg,mov,avi,m4v'],
             'video'=>['nullable','mimes:mp4,webm,ogg,mov,avi,m4v'],
-            'audio'=>['nullable'],
+            'audio'=>['nullable','mimes:mp3,ogg,wav,m4a'],
             'event_name'=>['required_if:invitation_type,==,'.Constant::INVITATION_TYPE['Contact Design']],
             'package_id'=>['nullable',Rule::exists('packages','id')],
             'price'=>['nullable'],

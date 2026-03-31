@@ -192,7 +192,8 @@ if (!function_exists('storeAudio')) {
     {
         if ($options['value']) {
 
-            $filename = time() . substr(str_shuffle("0123456789abcdefghijklmnopqrstvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 5) . '.mp3';
+            $ext = strtolower($options['value']->getClientOriginalExtension() ?: 'mp3');
+            $filename = time() . substr(str_shuffle("0123456789abcdefghijklmnopqrstvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 5) . '.' . $ext;
 
             Storage::putFileAs('public/' . $options['folderName'], $options['value'], $filename);
 
@@ -200,10 +201,10 @@ if (!function_exists('storeAudio')) {
                 'bucket_name' => $options['folderName'],
                 'original_name' => $options['value']->getClientOriginalName(),
                 'path' => $filename,
-                'extension' => $options['value']->extension(),
+                'extension' => $ext,
                 'size' => $options['value']->getSize(),
-                'getMimeType' => ($options['value']->getMimeType() == $options['value']->getMimeType()),
-                'file_type' => $options['file_type'] ?? Constant::FILE_TYPE['Image'],
+                'getMimeType' => ($options['value']->getMimeType() ?: $options['value']->getClientMimeType()),
+                'file_type' => $options['file_type'] ?? Constant::FILE_TYPE['Audio'],
                 'file_key' => $options['file_key'] ?? Constant::FILE_KEY['Not Main'],
 
             ]);

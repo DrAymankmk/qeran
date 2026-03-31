@@ -394,6 +394,7 @@ class InvitationRequestController extends Controller
 
         // Build HTML content
         $html = view('pages.invitation-request.pdf-export', compact('invitationRequests'))->render();
+        $html = self::sanitizePdfText($html);
 
         $mpdf->WriteHTML($html);
 

@@ -883,6 +883,7 @@ class InvitationsController extends Controller
 
          // Build HTML content
          $html = view('pages.invitation.pdf-export', compact('invitations'))->render();
+         $html = self::sanitizePdfText($html);
 
          $mpdf->WriteHTML($html);
 

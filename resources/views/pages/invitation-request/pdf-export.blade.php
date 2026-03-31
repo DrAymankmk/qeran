@@ -33,14 +33,7 @@
 	td {
 		border: 1px solid #ddd;
 		padding: 8px;
-
-		text-align: {
-				{
-				app()->getLocale()=='ar'? 'right': 'left'
-			}
-		}
-
-		;
+		text-align: right;
 	}
 
 	th {
@@ -59,17 +52,15 @@
 
 	.header-info {
 		margin-bottom: 20px;
-
-		text-align: {
-				{
-				app()->getLocale()=='ar'? 'right': 'left'
-			}
-		}
-
-		;
+		text-align: right;
 		color: #666;
 		font-size: 12px;
 	}
+
+	@if(app()->getLocale()!='ar')
+	td, th { text-align: left; }
+	.header-info { text-align: left; }
+	@endif
 	</style>
 </head>
 
@@ -86,7 +77,6 @@
 			<tr>
 				<th>{{__('admin.id')}}</th>
 				<th>{{__('admin.name')}}</th>
-				/* category */
 				<th>{{__('admin.category')}}</th>
 				<th>{{__('admin.invitation-mime-type')}}</th>
 				<th>{{__('admin.email')}}</th>

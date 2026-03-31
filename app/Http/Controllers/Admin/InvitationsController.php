@@ -836,8 +836,10 @@ class InvitationsController extends Controller
              'margin_bottom' => 16,
              'margin_header' => 9,
              'margin_footer' => 9,
-             'autoLangToFont' => true, // Automatically detect and use appropriate fonts
-             'autoScriptToLang' => true, // Automatically set language
+             // Avoid OTL/font auto-switch crashes on some servers
+             'default_font' => 'dejavusans',
+             'autoLangToFont' => false,
+             'autoScriptToLang' => false,
              'autoVietnamese' => true,
              'autoArabic' => true, // Enable Arabic support
              'direction' => app()->getLocale() == 'ar' ? 'rtl' : 'ltr',

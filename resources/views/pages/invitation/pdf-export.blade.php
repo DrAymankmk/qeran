@@ -71,7 +71,6 @@
 			<tr>
 				<th>{{__('admin.id')}}</th>
 				<th>{{__('admin.name')}}</th>
-				/* category */
 				<th>{{__('admin.category')}}</th>
 				<th>{{__('admin.invitation-mime-type')}}</th>
 				<th>{{__('admin.email')}}</th>

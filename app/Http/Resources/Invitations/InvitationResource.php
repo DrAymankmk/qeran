@@ -4,6 +4,7 @@ namespace App\Http\Resources\Invitations;
 
 use App\Helpers\Constant;
 use App\Http\Resources\Advertisement\AdvertisementResource;
+use App\Models\Admin;
 use App\Http\Resources\Category\CategoryResource;
 use App\Http\Resources\User\UserResource;
 use App\Services\Website\CountryService;
@@ -51,19 +52,8 @@ class InvitationResource extends JsonResource
             'extra_invitation_price'=>$this->price,
             'admin_invitation_count'=>$this->admin_invitation_count,
 
-            // All media (hub files) related to this invitation
-            'media' => $this->hubFiles->map(function ($file) {
-                return [
-                    'id' => $file->id,
-                    'file_type' => (int) $file->file_type,
-                    'file_key' => (int) $file->file_key,
-                    'url' => $file->get_path(),
-                    'original_name' => $file->original_name,
-                    'mime_type' => $file->getMimeType,
-                    'size' => $file->size,
-                    'created_at' => $file->created_at,
-                ];
-            }),
+            // Hub files split by uploader; recent first in each list
+            'media' => $this->formatInvitationMediaByCreator(),
 
 
             // 'invitation_count'=> $this->whenPivotLoaded('invitation_user',
@@ -71,6 +61,46 @@ class InvitationResource extends JsonResource
             //        return $this->pivot->invitation_count;
             //    }),
 
+        ];
+    }
+
+    /**
+     * @return array{admin: \Illuminate\Support\Collection, user: \Illuminate\Support\Collection}
+     */
+    protected function formatInvitationMediaByCreator(): array
+    {
+        $mapFile = function ($file) {
+            return [
+                'id' => $file->id,
+                'file_type' => (int) $file->file_type,
+                'file_key' => (int) $file->file_key,
+                'url' => $file->get_path(),
+                'original_name' => $file->original_name,
+                'mime_type' => $file->getMimeType,
+                'size' => $file->size,
+                'created_at' => $file->created_at,
+                'created_by_type' => $file->created_by_type,
+            ];
+        };
+
+        $files = $this->hubFiles ?? collect();
+
+        $adminFiles = $files->filter(function ($file) {
+            return $file->created_by_type === Admin::class;
+        })->sortByDesc(function ($file) {
+            return $file->created_at?->timestamp ?? 0;
+        })->values()->map($mapFile);
+
+        // App user uploads, legacy rows without created_by, or any non-admin creator
+        $userFiles = $files->filter(function ($file) {
+            return $file->created_by_type !== Admin::class;
+        })->sortByDesc(function ($file) {
+            return $file->created_at?->timestamp ?? 0;
+        })->values()->map($mapFile);
+
+        return [
+            'admin' => $adminFiles,
+            'user' => $userFiles,
         ];
     }
 }

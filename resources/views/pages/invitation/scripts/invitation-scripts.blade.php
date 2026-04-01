@@ -5,6 +5,7 @@
 
 @include('pages.global.scripts.datatable-scripts')
 @include('pages.global.scripts.datatable-admin-init')
+@include('pages.invitation.scripts.hub-files-grid')
 
 <!-- init js -->
 <script src="{{asset('admin_assets/js/pages/crypto-orders.init.js')}}"></script>
@@ -345,16 +346,9 @@ window.showInvitationDetails = function(invitationId) {
 				}
 			});
 
-			// Handle media
-			const designImageEl = document
-				.getElementById(
-					'modal_design_image'
-				);
-			if (designImageEl) {
-				designImageEl.innerHTML = data
-					.design_image ?
-					`<a target="_blank" href="${data.design_image}"><img src="${data.design_image}" class="img-fluid" alt="Design Image"></a>` :
-					'{{ __("admin.no-data-available") }}';
+			// All hub_files (images, video, audio, gif) with uploader + type labels
+			if (typeof window.renderInvitationHubFilesGrid === 'function') {
+				window.renderInvitationHubFilesGrid(data);
 			}
 
 			const receiptImageEl = document
@@ -364,159 +358,11 @@ window.showInvitationDetails = function(invitationId) {
 			if (receiptImageEl) {
 				receiptImageEl.innerHTML =
 					data.receipt_image ?
-					`<a target="_blank" href="${data.receipt_image}"><img src="${data.receipt_image}" class="img-fluid" alt="Receipt Image"></a>` :
+					`<a target="_blank" href="${data.receipt_image}"><img src="${data.receipt_image}" class="img-fluid" alt="Receipt Image" style="max-width:200px;"></a>` :
 					'{{ __("admin.no-data-available") }}';
 			}
 
-			const designVideoEl = document
-				.getElementById(
-					'modal_design_video'
-				);
-			if (designVideoEl) {
-				if (data.design_video) {
-					// Fix URL - remove double slashes and ensure proper format
-					let videoUrl = data.design_video.replace(
-						/([^:]\/)\/+/g, "$1");
-					// If URL doesn't start with http, make it absolute
-					if (!videoUrl.startsWith('http')) {
-						videoUrl = videoUrl.startsWith('/') ?
-							videoUrl : '/' + videoUrl;
-					}
-
-					// Get file extension to determine MIME type
-					const fileExt = videoUrl.split('.').pop()
-						.toLowerCase();
-					let mimeType = 'video/mp4'; // default
-					if (fileExt === 'webm') {
-						mimeType = 'video/webm';
-					} else if (fileExt === 'ogg' || fileExt ===
-						'ogv') {
-						mimeType = 'video/ogg';
-					} else if (fileExt === 'mp4' || fileExt ===
-						'mpeg4') {
-						mimeType = 'video/mp4';
-					}
-
-					// Create video element with multiple source types for better compatibility
-					designVideoEl.innerHTML = `
-						<video width="100%" controls preload="metadata" onerror="this.parentElement.innerHTML='<span class=\\'text-danger\\'>{{ __("admin.error-loading-video") }}</span>'">
-							<source src="${videoUrl}" type="${mimeType}">
-							<source src="${videoUrl}" type="video/mp4">
-							<source src="${videoUrl}" type="video/webm">
-							Your browser does not support the video tag.
-						</video>
-						<div class="mt-2">
-							<a href="${videoUrl}" target="_blank" class="btn btn-sm btn-outline-primary">
-								<i class="mdi mdi-download"></i> {{__("admin.download-video")}}
-							</a>
-						</div>
-					`;
-
-					// Force video element to reload after being inserted into DOM
-					setTimeout(function() {
-						const video =
-							designVideoEl
-							.querySelector(
-								'video'
-							);
-						if (video) {
-							video
-								.load();
-						}
-					}, 100);
-				} else {
-					designVideoEl.innerHTML =
-						'{{ __("admin.no-data-available") }}';
-				}
-			}
-
-			const designAudioEl = document.getElementById('modal_design_audio');
-			if (designAudioEl) {
-				// Get both MP3 and OGG URLs
-				let mp3Url = data.design_audio || null;
-				let oggUrl = data.design_audio_ogg || null;
-
-				if (mp3Url || oggUrl) {
-					// Fix URLs - remove double slashes and ensure proper format
-					const fixUrl = (url) => {
-						if (!url) return null;
-						let fixedUrl = url.replace(
-							/([^:]\/)\/+/g,
-							"$1");
-						// If URL doesn't start with http, make it absolute
-						if (!fixedUrl.startsWith(
-								'http')) {
-							fixedUrl = fixedUrl
-								.startsWith(
-									'/'
-									) ?
-								fixedUrl :
-								'/' +
-								fixedUrl;
-							// Make it fully absolute
-							fixedUrl = window
-								.location
-								.origin +
-								fixedUrl;
-						}
-						return fixedUrl;
-					};
-
-					mp3Url = fixUrl(mp3Url);
-					oggUrl = fixUrl(oggUrl);
-					
-					const guessAudioType = (url) => {
-						if (!url) return '';
-						const clean = url.split('?')[0].split('#')[0];
-						const ext = (clean.split('.').pop() || '').toLowerCase();
-						switch (ext) {
-							case 'mp3':
-								return 'audio/mpeg';
-							case 'ogg':
-							case 'oga':
-								return 'audio/ogg';
-							case 'wav':
-								return 'audio/wav';
-							case 'm4a':
-								return 'audio/mp4';
-							default:
-								return '';
-						}
-					};
-
-					// Create audio element with multiple sources (type is important for non-mp3)
-					let audioSources = '';
-					if (oggUrl) {
-						const t = guessAudioType(oggUrl);
-						audioSources += t ?
-							`<source src="${oggUrl}" type="${t}">` :
-							`<source src="${oggUrl}">`;
-					}
-					if (mp3Url) {
-						const t = guessAudioType(mp3Url);
-						audioSources += t ?
-							`<source src="${mp3Url}" type="${t}">` :
-							`<source src="${mp3Url}">`;
-					}
-
-					designAudioEl.innerHTML = `
-						<audio controls preload="metadata" style="width:100%;" onerror="handleAudioError(this, this.currentSrc)">
-							${audioSources}
-							Your browser does not support the audio element.
-						</audio>
-					`;
-					
-					// Ensure the browser starts loading the new sources
-					setTimeout(() => {
-						const audio = designAudioEl.querySelector('audio');
-						if (audio) audio.load();
-					}, 0);
-				} else {
-					designAudioEl.innerHTML =
-						'{{ __("admin.no-data-available") }}';
-				}
-			}
-			// Error handler function
+			// Error handler function (legacy audio troubleshooting — kept for console)
 			window.handleAudioError = function(audioElement, url) {
 				url = url || (audioElement ? audioElement.currentSrc : null);
 				console.error('Audio failed to load:', url || '(unknown url)');

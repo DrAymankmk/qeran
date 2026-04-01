@@ -5,6 +5,7 @@
 
 @include('pages.global.scripts.datatable-scripts')
 @include('pages.global.scripts.datatable-admin-init')
+@include('pages.invitation.scripts.hub-files-grid')
 
 <!-- init js -->
 <script src="{{asset('admin_assets/js/pages/crypto-orders.init.js')}}"></script>
@@ -235,16 +236,8 @@ window.showInvitationRequestDetails = function(invitationId) {
 				}
 			});
 
-			// Handle media
-			const designImageEl = document
-				.getElementById(
-					'modal_design_image'
-				);
-			if (designImageEl) {
-				designImageEl.innerHTML = data
-					.design_image ?
-					`<a target="_blank" href="${data.design_image}"><img src="${data.design_image}" class="img-fluid" alt="Design Image"></a>` :
-					'{{ __("admin.no-data-available") }}';
+			if (typeof window.renderInvitationHubFilesGrid === 'function') {
+				window.renderInvitationHubFilesGrid(data);
 			}
 
 			const receiptImageEl = document
@@ -254,62 +247,8 @@ window.showInvitationRequestDetails = function(invitationId) {
 			if (receiptImageEl) {
 				receiptImageEl.innerHTML =
 					data.receipt_image ?
-					`<a target="_blank" href="${data.receipt_image}"><img src="${data.receipt_image}" class="img-fluid" alt="Receipt Image"></a>` :
+					`<a target="_blank" href="${data.receipt_image}"><img src="${data.receipt_image}" class="img-fluid" alt="Receipt Image" style="max-width:200px;"></a>` :
 					'{{ __("admin.no-data-available") }}';
-			}
-
-			const designVideoEl = document
-				.getElementById(
-					'modal_design_video'
-				);
-			if (designVideoEl) {
-				designVideoEl.innerHTML = data
-					.design_video ?
-					`<video width="100%" controls><source src="${data.design_video}" type="video/mp4">Your browser does not support the video tag.</video>` :
-					'{{ __("admin.no-data-available") }}';
-			}
-
-			const designAudioEl = document
-				.getElementById(
-					'modal_design_audio'
-				);
-			if (designAudioEl) {
-				const guessAudioType = (url) => {
-					if (!url) return '';
-					const clean = url.split('?')[0].split('#')[0];
-					const ext = (clean.split('.').pop() || '').toLowerCase();
-					switch (ext) {
-						case 'mp3':
-							return 'audio/mpeg';
-						case 'ogg':
-						case 'oga':
-							return 'audio/ogg';
-						case 'wav':
-							return 'audio/wav';
-						case 'm4a':
-							return 'audio/mp4';
-						default:
-							return '';
-					}
-				};
-
-				if (data.design_audio) {
-					const audioUrl = data.design_audio;
-					const t = guessAudioType(audioUrl);
-					const typeAttr = t ? `type="${t}"` : '';
-					designAudioEl.innerHTML = `
-						<audio controls preload="metadata" style="width: 100%;" onerror="handleAudioError(this, this.currentSrc)">
-							<source src="${audioUrl}" ${typeAttr}>
-							Your browser does not support the audio element.
-						</audio>
-					`;
-					setTimeout(() => {
-						const audio = designAudioEl.querySelector('audio');
-						if (audio) audio.load();
-					}, 0);
-				} else {
-					designAudioEl.innerHTML = '{{ __("admin.no-data-available") }}';
-				}
 			}
 		})
 		.catch(error => {

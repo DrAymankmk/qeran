@@ -348,16 +348,8 @@
 						<p id="modal_description" class="mt-2"></p>
 					</div>
 					<div class="col-12 mb-3">
-						<strong>{{__('admin.invitation-uploaded-image')}}:</strong>
-						<div id="modal_design_image" class="mt-2"></div>
-					</div>
-					<div class="col-12 mb-3">
-						<strong>{{__('admin.invitation-uploaded-video')}}:</strong>
-						<div id="modal_design_video" class="mt-2"></div>
-					</div>
-					<div class="col-12 mb-3">
-						<strong>{{__('admin.invitation-uploaded-audio')}}:</strong>
-						<div id="modal_design_audio" class="mt-2"></div>
+						<strong>{{__('admin.invitation-all-hub-files')}}</strong>
+						<div id="modal_invitation_hub_files" class="mt-2"></div>
 					</div>
 					<div class="col-12 mb-3">
 						<strong>{{__('admin.receipt-image')}}:</strong>

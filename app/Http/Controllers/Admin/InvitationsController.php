@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Helpers\Constant;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\InvitationRequest;
+use App\Models\Admin;
 use App\Models\HubFile;
 use App\Models\Invitation;
 use App\Models\InvitationPackage;
+use App\Models\User;
 use App\Services\External\Notification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -323,11 +325,35 @@ class InvitationsController extends Controller
     {
         try {
             // Use findOrFail for automatic 404 handling
-            $invitation = Invitation::with(['user', 'category', 'hubFiles'])
+            $invitation = Invitation::with(['user', 'category', 'hubFiles.createdBy'])
                 ->findOrFail($id);
 
             // Get audio URLs (MP3 and OGG)
             $audioUrls = $invitation->getAudioUrls();
+
+            $hubFilesPayload = $invitation->hubFiles->map(function (HubFile $f) {
+                $uploaderKey = 'unknown';
+                if ($f->created_by_id && $f->created_by_type) {
+                    if ($f->created_by_type === Admin::class) {
+                        $uploaderKey = 'admin';
+                    } elseif ($f->created_by_type === User::class) {
+                        $uploaderKey = 'user';
+                    }
+                }
+
+                return [
+                    'url' => $f->get_path(),
+                    'mime' => $f->getMimeType,
+                    'file_type' => (int) $f->file_type,
+                    'type_label' => __('admin.media-type-'.(int) $f->file_type),
+                    'uploader' => $uploaderKey,
+                    'uploader_label' => match ($uploaderKey) {
+                        'admin' => __('admin.hub-file-uploader-admin'),
+                        'user' => __('admin.hub-file-uploader-user'),
+                        default => __('admin.hub-file-uploader-unknown'),
+                    },
+                ];
+            })->values()->all();
 
             $data = [
                 'invitation_id' => $invitation->id,
@@ -356,6 +382,7 @@ class InvitationsController extends Controller
                 'design_audio_ogg' => $audioUrls['ogg'] ?? '',
                 'receipt_image' => $invitation->receiptImage() ?? '',
                 'category_name' => $invitation->category?->name ?? '',
+                'hub_files' => $hubFilesPayload,
             ];
 
             return response()->json($data);

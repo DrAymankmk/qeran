@@ -576,3 +576,22 @@ if (!function_exists('formatCmsContent')) {
         return '<div class="' . $wrapperClass . '">' . $processedContent . '</div>';
     }
 }
+
+if (!function_exists('asset_versioned')) {
+    /**
+     * Public asset URL with a cache-busting query string (?v=...) so browsers and proxies
+     * fetch fresh CSS/JS after deploy. Uses file mtime, or config app.asset_version if set.
+     */
+    function asset_versioned(string $path): string
+    {
+        $global = config('app.asset_version');
+        if ($global !== null && $global !== '') {
+            return asset($path) . '?v=' . rawurlencode((string) $global);
+        }
+
+        $full = public_path($path);
+        $version = is_file($full) ? filemtime($full) : time();
+
+        return asset($path) . '?v=' . $version;
+    }
+}

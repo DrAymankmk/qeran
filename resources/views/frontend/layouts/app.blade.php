@@ -13,12 +13,12 @@
 	<meta name="facebook-domain-verification" content="ab3tiraa0d4zs5bwgay4i2hmzobxec" />
 
 	@if(app()->getLocale() == 'ar')
-	<link rel="stylesheet" href="{{ asset('frontend/assets/css/ar/master.css') }}" />
+	<link rel="stylesheet" href="{{ asset_versioned('frontend/assets/css/ar/master.css') }}" />
 	@else
-	<link rel="stylesheet" href="{{ asset('frontend/assets/css/en/master.css') }}" />
+	<link rel="stylesheet" href="{{ asset_versioned('frontend/assets/css/en/master.css') }}" />
 	@endif
 	<!-- CMS Content Styling -->
-	<link rel="stylesheet" href="{{ asset('frontend/assets/css/cms-content.css') }}" />
+	<link rel="stylesheet" href="{{ asset_versioned('frontend/assets/css/cms-content.css') }}" />
 	<!-- Font Awesome 6 for CMS Icons -->
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
 		integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
@@ -328,7 +328,7 @@
 	<!-- Bootstrap-->
 	<script src="{{ asset('frontend/assets/libs/bootstrap/bootstrap.min.js') }}"></script>
 	<!-- User customization-->
-	<script src="{{ asset('frontend/assets/js/custom.js') }}"></script>
+	<script src="{{ asset_versioned('frontend/assets/js/custom.js') }}"></script>
 	<!---->
 	<!-- Color scheme-->
 	<script src="{{ asset('frontend/assets/plugins/switcher/js/dmss.js') }}"></script>

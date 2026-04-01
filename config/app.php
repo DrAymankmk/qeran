@@ -59,6 +59,13 @@ return [
     'asset_url' => env('ASSET_URL'),
 
     /*
+    | Optional global cache-buster for static assets (?v=...). If set, asset_versioned()
+    | uses this for all versioned URLs (useful when you edit @imported CSS like rtl.css).
+    | Leave empty to use each file's modification time instead.
+    */
+    'asset_version' => env('ASSET_VERSION'),
+
+    /*
     |--------------------------------------------------------------------------
     | Invitation file upload limits (for admin update)
     |--------------------------------------------------------------------------

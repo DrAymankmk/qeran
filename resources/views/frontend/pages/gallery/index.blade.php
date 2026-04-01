@@ -157,6 +157,7 @@
 			@foreach($category->designs as $design)
 			@php
 			$designImage = $design->image();
+			$isVideo = $design->isVideoMedia();
 			$designName = $design->name ?? '';
 			$designCode = $design->code ?? '';
 			$categorySlug = $category->slug ?? 'category-' . $category->id;
@@ -167,8 +168,14 @@
 					data-design-id="{{ $design->id }}"
 					data-design-name="{{ htmlspecialchars($designName, ENT_QUOTES, 'UTF-8') }}"
 					data-design-code="{{ htmlspecialchars($designCode, ENT_QUOTES, 'UTF-8') }}"
-					data-design-image="{{ htmlspecialchars($designImage, ENT_QUOTES, 'UTF-8') }}">
+					data-design-image="{{ htmlspecialchars($designImage, ENT_QUOTES, 'UTF-8') }}"
+					data-design-media-type="{{ $isVideo ? 'video' : 'image' }}">
+					@if($isVideo)
+					<video src="{{ $designImage }}" muted playsinline preload="metadata"
+						aria-label="{{ $designName ?: 'Design' }}"></video>
+					@else
 					<img src="{{ $designImage }}" alt="{{ $designName ?: 'Design' }}" />
+					@endif
 					<span class="b-isotope-grid__wrap-info">
 						<span class="b-isotope-grid__info">
 							@if($designName)
@@ -179,6 +186,17 @@
 								class="b-isotope-grid__categorie">{{ $category->name }}</span>
 						</span>
 						<i class="icon icon-magnifier-add text-primary"></i>
+					</span>
+					<span
+						class="design-media-badge {{ $isVideo ? 'design-media-badge--video' : 'design-media-badge--image' }}"
+						title="{{ $isVideo ? __('frontend.design_media_video') : __('frontend.design_media_image') }}">
+						@if($isVideo)
+						<i class="fas fa-play" aria-hidden="true"></i>
+						<span class="design-media-badge__label">{{ __('frontend.design_media_video') }}</span>
+						@else
+						<i class="fas fa-image" aria-hidden="true"></i>
+						<span class="design-media-badge__label">{{ __('frontend.design_media_image') }}</span>
+						@endif
 					</span>
 				</a>
 			</li>
@@ -210,7 +228,9 @@
 			<div class="modal-body text-center">
 				<div class="design-modal-image" style="margin-bottom: 20px;">
 					<img id="modalDesignImage" src="" alt="Design" class="img-responsive"
-						style="max-width: 100%; height: auto; margin: 0 auto;" />
+						style="display: none; max-width: 100%; height: auto; margin: 0 auto;" />
+					<video id="modalDesignVideo" controls playsinline preload="metadata"
+						style="display: none; max-width: 100%; height: auto; margin: 0 auto;"></video>
 				</div>
 				<div class="design-modal-info">
 					<h3 id="modalDesignName" style="margin-bottom: 10px;"></h3>
@@ -229,6 +249,75 @@
 @endsection
 @push('scripts')
 <script>
-
+jQuery(document).ready(function($) {
+	$(document).on('click', '.design-item', function(e) {
+		e.preventDefault();
+		e.stopPropagation();
+		var $item = $(this);
+		var designName = $item.attr('data-design-name') || '';
+		var designCode = $item.attr('data-design-code') || '';
+		var designImage = $item.attr('data-design-image') || '';
+		var mediaType = $item.attr('data-design-media-type') || 'image';
+		if (!designImage) {
+			return false;
+		}
+		var $modal = $('#designModal');
+		if ($modal.length === 0) {
+			return false;
+		}
+		var $modalImg = $('#modalDesignImage');
+		var $modalVideo = $('#modalDesignVideo');
+		if (mediaType === 'video') {
+			$modalImg.hide().attr('src', '');
+			$modalVideo.show().attr('src', designImage);
+			var vidEl = $modalVideo[0];
+			if (vidEl) {
+				vidEl.load();
+				vidEl.play().catch(function() {});
+			}
+		} else {
+			$modalVideo.hide();
+			var v = $modalVideo[0];
+			if (v) {
+				v.pause();
+				v.removeAttribute('src');
+			}
+			$modalImg.show().attr('src', designImage);
+		}
+		var $nameElement = $('#modalDesignName');
+		if (designName && designName.trim() !== '') {
+			$nameElement.text(designName).show();
+		} else {
+			$nameElement.text('Design').show();
+		}
+		var $codeContainer = $('#modalDesignCodeContainer');
+		if (designCode && designCode.trim() !== '') {
+			$('#modalDesignCode').text(designCode);
+			$codeContainer.show();
+		} else {
+			$codeContainer.hide();
+		}
+		$modal.modal({ backdrop: true, keyboard: true, show: true });
+		return false;
+	});
+	$('#designModal').on('hidden.bs.modal', function() {
+		$(this).removeClass('in');
+		$('body').removeClass('modal-open');
+		$('.modal-backdrop').remove();
+		var v = document.getElementById('modalDesignVideo');
+		if (v) {
+			v.pause();
+			v.removeAttribute('src');
+		}
+		$('#modalDesignImage').attr('src', '').hide();
+		$('#modalDesignVideo').hide();
+	});
+	$(document).on('loadedmetadata', '.b-isotope-grid.grid video', function() {
+		var $g = $('.b-isotope-grid.grid');
+		if ($g.data('isotope')) {
+			$g.isotope('layout');
+		}
+	});
+});
 </script>
 @endpush

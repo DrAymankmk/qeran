@@ -11,7 +11,8 @@ $designsSection = $homePage->activeSections->where('name', 'designs')->first();
 	overflow: hidden;
 }
 
-.section-designs .b-isotope-grid__inner > img {
+.section-designs .b-isotope-grid__inner > img,
+.section-designs .b-isotope-grid__inner > video {
 	width: 100%;
 	height: 100%;
 	object-fit: contain;
@@ -169,6 +170,7 @@ $designsSection = $homePage->activeSections->where('name', 'designs')->first();
 			continue;
 			}
 			$designImage = $design->image();
+			$isVideo = $design->isVideoMedia();
 			$designName = $design->name ?? '';
 			$designCode = $design->code ?? '';
 			$categorySlug = $category->slug ?? 'category-' . $category->id;
@@ -179,8 +181,14 @@ $designsSection = $homePage->activeSections->where('name', 'designs')->first();
 					data-design-id="{{ $design->id }}"
 					data-design-name="{{ htmlspecialchars($designName, ENT_QUOTES, 'UTF-8') }}"
 					data-design-code="{{ htmlspecialchars($designCode, ENT_QUOTES, 'UTF-8') }}"
-					data-design-image="{{ htmlspecialchars($designImage, ENT_QUOTES, 'UTF-8') }}">
+					data-design-image="{{ htmlspecialchars($designImage, ENT_QUOTES, 'UTF-8') }}"
+					data-design-media-type="{{ $isVideo ? 'video' : 'image' }}">
+					@if($isVideo)
+					<video src="{{ $designImage }}" muted playsinline preload="metadata"
+						aria-label="{{ $designName ?: 'Design' }}"></video>
+					@else
 					<img src="{{ $designImage }}" alt="{{ $designName ?: 'Design' }}" />
+					@endif
 					<span class="b-isotope-grid__wrap-info">
 						<span class="b-isotope-grid__info">
 							@if($designName)
@@ -191,6 +199,17 @@ $designsSection = $homePage->activeSections->where('name', 'designs')->first();
 								class="b-isotope-grid__categorie">{{ $category->name }}</span>
 						</span>
 						<i class="icon icon-magnifier-add text-primary"></i>
+					</span>
+					<span
+						class="design-media-badge {{ $isVideo ? 'design-media-badge--video' : 'design-media-badge--image' }}"
+						title="{{ $isVideo ? __('frontend.design_media_video') : __('frontend.design_media_image') }}">
+						@if($isVideo)
+						<i class="fas fa-play" aria-hidden="true"></i>
+						<span class="design-media-badge__label">{{ __('frontend.design_media_video') }}</span>
+						@else
+						<i class="fas fa-image" aria-hidden="true"></i>
+						<span class="design-media-badge__label">{{ __('frontend.design_media_image') }}</span>
+						@endif
 					</span>
 				</a>
 			</li>
@@ -226,7 +245,9 @@ $designsSection = $homePage->activeSections->where('name', 'designs')->first();
 			<div class="modal-body text-center">
 				<div class="design-modal-image" style="margin-bottom: 20px;">
 					<img id="modalDesignImage" src="" alt="Design" class="img-responsive"
-						style="max-width: 100%; height: auto; margin: 0 auto;" />
+						style="display: none; max-width: 100%; height: auto; margin: 0 auto;" />
+					<video id="modalDesignVideo" controls playsinline preload="metadata"
+						style="display: none; max-width: 100%; height: auto; margin: 0 auto;"></video>
 				</div>
 				<div class="design-modal-info">
 					<h3 id="modalDesignName" style="margin-bottom: 10px;"></h3>

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Helpers\Constant;
 use Astrotomic\Translatable\Translatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -33,6 +32,21 @@ class Design extends Model
     {
         $this->load('hubFiles');
         return $this->hubFiles?->get_path();
+    }
+
+    public function isVideoMedia(): bool
+    {
+        $this->loadMissing('hubFiles');
+        $mime = $this->hubFiles?->getMimeType ?? '';
+        if (is_string($mime) && str_starts_with($mime, 'video/')) {
+            return true;
+        }
+        $ext = strtolower((string) ($this->hubFiles?->extension ?? ''));
+        if ($ext === '' && $this->hubFiles && $this->hubFiles->path) {
+            $ext = strtolower(pathinfo($this->hubFiles->path, PATHINFO_EXTENSION));
+        }
+
+        return in_array($ext, ['mp4', 'webm', 'ogg', 'ogv', 'mov', 'm4v'], true);
     }
 
     public function hubFiles()

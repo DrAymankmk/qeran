@@ -571,6 +571,7 @@ jQuery(document).ready(function($) {
 		var designName = $item.attr('data-design-name') || '';
 		var designCode = $item.attr('data-design-code') || '';
 		var designImage = $item.attr('data-design-image') || '';
+		var mediaType = $item.attr('data-design-media-type') || 'image';
 
 		if (!designImage) {
 			console.warn('Design image not found');
@@ -583,8 +584,25 @@ jQuery(document).ready(function($) {
 			return false;
 		}
 
-		// Set modal content
-		$('#modalDesignImage').attr('src', designImage);
+		var $modalImg = $('#modalDesignImage');
+		var $modalVideo = $('#modalDesignVideo');
+		if (mediaType === 'video') {
+			$modalImg.hide().attr('src', '');
+			$modalVideo.show().attr('src', designImage);
+			var vidEl = $modalVideo[0];
+			if (vidEl) {
+				vidEl.load();
+				vidEl.play().catch(function() {});
+			}
+		} else {
+			$modalVideo.hide();
+			var v = $modalVideo[0];
+			if (v) {
+				v.pause();
+				v.removeAttribute('src');
+			}
+			$modalImg.show().attr('src', designImage);
+		}
 
 		// Handle design name
 		var $nameElement = $('#modalDesignName');
@@ -618,6 +636,13 @@ jQuery(document).ready(function($) {
 		$(this).removeClass('in');
 		$('body').removeClass('modal-open');
 		$('.modal-backdrop').remove();
+		var v = document.getElementById('modalDesignVideo');
+		if (v) {
+			v.pause();
+			v.removeAttribute('src');
+		}
+		$('#modalDesignImage').attr('src', '').hide();
+		$('#modalDesignVideo').hide();
 	});
 
 	// Ensure close buttons work
@@ -629,6 +654,14 @@ jQuery(document).ready(function($) {
 	// Handle backdrop clicks to close modal
 	$(document).on('click', '.modal-backdrop', function() {
 		$('#designModal').modal('hide');
+	});
+
+	// Reflow isotope when grid videos report dimensions
+	$(document).on('loadedmetadata', '.b-isotope-grid.grid video', function() {
+		var $g = $('.b-isotope-grid.grid');
+		if ($g.data('isotope')) {
+			$g.isotope('layout');
+		}
 	});
 });
 

@@ -40,4 +40,6 @@ return[
     'visit_full_gallery'=>'زيارة المعرض الكامل',
     'video-not-supported'=>'متصفحك لا يدعم علامة الفيديو.',
     'see_our_full_gallery_of_designs' => 'شاهد كل التصاميم الخاصه بنا',
+    'design_media_video' => 'فيديو',
+    'design_media_image' => 'صورة',
 ];

@@ -3,6 +3,22 @@ $designsSection = $homePage->activeSections->where('name', 'designs')->first();
 @endphp
 @push('styles')
 <style>
+/* Home designs grid: image centered, width-fitted inside tile */
+.section-designs .b-isotope-grid__inner {
+	position: relative;
+	display: block;
+	height: 100%;
+	overflow: hidden;
+}
+
+.section-designs .b-isotope-grid__inner > img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	object-position: center;
+	display: block;
+}
+
 /* Designs Section Responsive */
 @media (max-width: 767px) {
 	.section-default {
@@ -109,7 +125,7 @@ $designsSection = $homePage->activeSections->where('name', 'designs')->first();
 }
 </style>
 @endpush
-<section class="section-default">
+<section class="section-default section-designs">
 	<div class="container">
 		<div class="row">
 			<div class="col-xs-12">

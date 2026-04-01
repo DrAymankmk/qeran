@@ -231,11 +231,15 @@ function CharsStart() {
   if ($('.b-isotope').length > 0) {
 
     var $container = $('.b-isotope-grid');
+    var gridEl = $container.get(0);
+    var isRTL = gridEl && typeof window.getComputedStyle === 'function' &&
+      window.getComputedStyle(gridEl).direction === 'rtl';
 
-    // init Isotope
+    // init Isotope (grid uses LTR in rtl.css so masonry column math matches theme)
     var $grid = $('.grid').isotope({
       itemSelector: '.grid-item',
       percentPosition: true,
+      isOriginLeft: !isRTL,
       masonry: {
         columnWidth: '.grid-sizer'
       }

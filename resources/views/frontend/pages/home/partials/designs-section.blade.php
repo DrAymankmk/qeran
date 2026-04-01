@@ -234,7 +234,7 @@ $designsSection = $homePage->activeSections->where('name', 'designs')->first();
 <!-- Design Modal -->
 <div class="modal fade" id="designModal" tabindex="-1" role="dialog" aria-labelledby="designModalLabel"
 	aria-hidden="true">
-	<div class="modal-dialog modal-lg" role="document">
+	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -243,11 +243,13 @@ $designsSection = $homePage->activeSections->where('name', 'designs')->first();
 				<h4 class="modal-title" id="designModalLabel">Design Details</h4>
 			</div>
 			<div class="modal-body text-center">
-				<div class="design-modal-image" style="margin-bottom: 20px;">
-					<img id="modalDesignImage" src="" alt="Design" class="img-responsive"
-						style="display: none; max-width: 100%; height: auto; margin: 0 auto;" />
+				<div class="design-modal-media-wrap">
+					<img id="modalDesignImage" src="" alt="Design"
+						class="img-responsive design-modal-media"
+						style="display: none;" />
 					<video id="modalDesignVideo" controls playsinline preload="metadata"
-						style="display: none; max-width: 100%; height: auto; margin: 0 auto;"></video>
+						class="design-modal-media"
+						style="display: none;"></video>
 				</div>
 				<div class="design-modal-info">
 					<h3 id="modalDesignName" style="margin-bottom: 10px;"></h3>

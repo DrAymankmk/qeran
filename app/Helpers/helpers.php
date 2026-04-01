@@ -577,6 +577,35 @@ if (!function_exists('formatCmsContent')) {
     }
 }
 
+if (!function_exists('hubFileCreatorAttributes')) {
+    /**
+     * Polymorphic creator fields for hub_files (admin dashboard vs app API user).
+     * Returns [] when no authenticated actor (nullable columns stay null).
+     *
+     * @return array{created_by_id?: int, created_by_type?: string}
+     */
+    function hubFileCreatorAttributes(): array
+    {
+        $admin = auth('admin')->user();
+        if ($admin) {
+            return [
+                'created_by_id' => $admin->getAuthIdentifier(),
+                'created_by_type' => $admin->getMorphClass(),
+            ];
+        }
+
+        $user = auth()->user();
+        if ($user) {
+            return [
+                'created_by_id' => $user->getAuthIdentifier(),
+                'created_by_type' => $user->getMorphClass(),
+            ];
+        }
+
+        return [];
+    }
+}
+
 if (!function_exists('asset_versioned')) {
     /**
      * Public asset URL with a cache-busting query string (?v=...) so browsers and proxies

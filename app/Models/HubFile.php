@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class HubFile extends Model
 {
@@ -12,6 +13,8 @@ class HubFile extends Model
     protected $fillable = [
         'morphable_id',
         'morphable_type',
+        'created_by_id',
+        'created_by_type',
         'file_type',
         'file_key',
         'path',
@@ -22,8 +25,25 @@ class HubFile extends Model
         'getMimeType',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (HubFile $hubFile) {
+            if ($hubFile->created_by_id !== null || $hubFile->created_by_type !== null) {
+                return;
+            }
+            $attrs = hubFileCreatorAttributes();
+            if ($attrs !== []) {
+                $hubFile->fill($attrs);
+            }
+        });
+    }
 
     public function morphable_id()
+    {
+        return $this->morphTo();
+    }
+
+    public function createdBy(): MorphTo
     {
         return $this->morphTo();
     }

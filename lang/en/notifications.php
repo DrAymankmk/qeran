@@ -6,7 +6,7 @@ return [
         'title' => 'Welcome',
         'body' => 'Welcome to our app, we hope you have a great experience!'
     ],
-    
+
     // Invitation notifications
     'invitation_created' => [
         'title' => 'New Invitation',
@@ -28,7 +28,7 @@ return [
         'title' => 'Invitation Reminder',
         'body' => 'Don\'t forget to attend the invitation'
     ],
-    
+
     // User notifications
     'user_registered' => [
         'title' => 'New User Registered',
@@ -42,7 +42,7 @@ return [
         'title' => 'Password Changed',
         'body' => 'Your password has been changed successfully'
     ],
-    
+
     // System notifications
     'system_maintenance' => [
         'title' => 'System Maintenance',
@@ -52,13 +52,13 @@ return [
         'title' => 'System Update',
         'body' => 'System has been updated successfully'
     ],
-    
+
     // Admin notifications
     'admin_message' => [
         'title' => 'Admin Message',
         'body' => 'You have a new message from administration'
     ],
-    
+
     // Order/Package notifications
     'order_created' => [
         'title' => 'New Order',
@@ -76,7 +76,7 @@ return [
         'title' => 'Order Cancelled',
         'body' => 'The order has been cancelled'
     ],
-    
+
     // Payment notifications
     'payment_success' => [
         'title' => 'Payment Successful',
@@ -86,7 +86,7 @@ return [
         'title' => 'Payment Failed',
         'body' => 'Payment failed, please try again'
     ],
-    
+
     // Rating notifications
     'rating_received' => [
         'title' => 'New Rating',
@@ -96,7 +96,7 @@ return [
         'title' => 'Rating Reminder',
         'body' => 'Don\'t forget to rate the service'
     ],
-    
+
     // Message notifications
     'new_message' => [
         'title' => 'New Message',
@@ -106,7 +106,7 @@ return [
         'title' => 'Message Reply',
         'body' => 'Your message has been replied to'
     ],
-    
+
     // Additional invitation notifications
     'invitation_received' => [
         'title' => 'New Invitation',
@@ -140,10 +140,15 @@ return [
         'title' => 'Payment Approved',
         'body' => 'Your payment is successfully approved!'
     ],
-    
+
+    'payment_rejected' => [
+        'title' => 'Payment Rejected',
+        'body' => 'Your payment is rejected!'
+    ],
+
     // Default fallback
     'default' => [
         'title' => 'New Notification',
         'body' => 'You have a new notification'
     ]
-]; 
+];

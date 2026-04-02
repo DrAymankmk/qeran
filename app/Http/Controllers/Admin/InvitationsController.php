@@ -634,7 +634,7 @@ class InvitationsController extends Controller
      */
     public function changeStatus(int $id): RedirectResponse
     {
-    
+
         try {
             $invitation = Invitation::with('users')->findOrFail($id);
 
@@ -781,6 +781,18 @@ class InvitationsController extends Controller
                     true,
                     Constant::NOTIFICATION_CATEGORY['Payment'],
                     Constant::NOTIFICATION_PAYMENT_TYPES['New Payment Received']
+                );
+            } else if ($newPackageStatus === Constant::PAID_STATUS['Rejected']) {
+                Notification::notify(
+                    'users',
+                    Constant::NOTIFICATIONS_TYPE['Invitations'],
+                    [$invitationPackage->invitation->user_id],
+                    $invitationPackage->invitation_id,
+                    'payment_rejected',
+                    [],
+                    true,
+                    Constant::NOTIFICATION_CATEGORY['Payment'],
+                    Constant::NOTIFICATION_PAYMENT_TYPES['Payment Rejected']
                 );
             }
 

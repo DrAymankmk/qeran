@@ -182,6 +182,7 @@ class Constant
         'New Payment Received' => 1,
         'Payment Failed' => 2,
         'Refund Issued' => 3,
+        'Payment Rejected' => 4,
     ];
 
     const NOTIFICATION_USER_TYPES = [

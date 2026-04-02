@@ -5,6 +5,7 @@
 <style>
 /* Contact Page Responsive Styles */
 @media (max-width: 991px) {
+
 	.section-contact .col-lg-6,
 	.section-contact .col-lg-4 {
 		margin-bottom: 25px;
@@ -16,66 +17,66 @@
 		padding: 40px 0 !important;
 		min-height: auto !important;
 	}
-	
+
 	.b-title-page__title {
 		font-size: 1.75rem !important;
 	}
-	
+
 	.section-contact {
 		padding: 30px 0 !important;
 	}
-	
+
 	.section-contact .row {
 		margin-bottom: 20px !important;
 	}
-	
+
 	.b-contact {
 		margin-bottom: 20px;
 		padding: 25px 20px !important;
 		min-height: auto !important;
 	}
-	
+
 	.b-contact__name {
 		font-size: 1.1rem;
 		margin-bottom: 10px;
 	}
-	
+
 	.b-contact__info {
 		font-size: 1rem;
 		line-height: 1.6;
 	}
-	
+
 	.b-contact__icon {
 		font-size: 2rem;
 	}
-	
+
 	.section-form-contact {
 		padding: 30px 15px !important;
 	}
-	
+
 	.section-form-contact .ui-title-block {
 		font-size: 1.5rem !important;
 		margin-bottom: 20px;
 	}
-	
+
 	.section-form-contact .form-control {
 		font-size: 16px !important;
 		padding: 12px 15px;
 		margin-bottom: 15px;
 	}
-	
+
 	.section-form-contact textarea.form-control {
 		min-height: 120px;
 		resize: vertical;
 	}
-	
+
 	.section-form-contact .btn {
 		width: 100%;
 		padding: 12px 20px;
 		font-size: 1rem;
 		margin-top: 10px;
 	}
-	
+
 	.col-lg-6.col-lg-offset-0,
 	.col-lg-4.col-lg-offset-0 {
 		margin-left: 0 !important;
@@ -87,27 +88,27 @@
 	.b-title-page__title {
 		font-size: 1.5rem !important;
 	}
-	
+
 	.b-contact {
 		padding: 20px 15px !important;
 	}
-	
+
 	.b-contact__name {
 		font-size: 1rem;
 	}
-	
+
 	.b-contact__info {
 		font-size: 0.9rem;
 	}
-	
+
 	.section-form-contact {
 		padding: 25px 10px !important;
 	}
-	
+
 	.section-form-contact .ui-title-block {
 		font-size: 1.25rem !important;
 	}
-	
+
 	.form-control {
 		padding: 10px 12px;
 		font-size: 16px;
@@ -156,8 +157,8 @@ $contactSection = $contactPage->activeSections->where('name', 'contact')->first(
 
 		<div class="row">
 			@php
-			$phoneSetting = \App\Models\AppSetting::where('key', 'phone')->first();
-			$emailSetting = \App\Models\AppSetting::where('key', 'email')->first();
+			$phoneSetting = \App\Models\AppSetting::where('key', 'phone_number')->first();
+			$emailSetting = \App\Models\AppSetting::where('key', 'email_address')->first();
 			@endphp
 
 			<div class="col-lg-6 col-lg-offset-0 col-md-6 col-md-offset-3">

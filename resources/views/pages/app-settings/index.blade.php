@@ -176,7 +176,8 @@ function showEditInputByType(type, value) {
 			tinymce.remove('#edit_value_editor');
 		}
 	}
-	
+	$('#editSettingForm').find('.tox-tinymce').remove();
+
 	// Hide and disable all inputs, and clear their values
 	$('.edit-value-input').each(function() {
 		$(this).hide().prop('disabled', true).val('');
@@ -248,21 +249,36 @@ $(document).ready(function() {
 		showCreateInputByType(type);
 	});
 
-	// Function to show appropriate input based on type
+	// Function to show appropriate input based on type (create modal — mirror edit modal cleanup)
 	function showCreateInputByType(type) {
-		// Hide and disable all inputs
-		$('.create-value-input').hide().prop('disabled', true);
-		
-		// Remove TinyMCE if exists
 		if (createEditorInstance) {
+			try {
+				createEditorInstance.save();
+			} catch (e) { /* ignore */ }
 			tinymce.remove('#create_value_editor');
 			createEditorInstance = null;
 		}
+		if (typeof tinymce !== 'undefined') {
+			const ed = tinymce.get('create_value_editor');
+			if (ed) {
+				try {
+					ed.save();
+				} catch (e) { /* ignore */ }
+				tinymce.remove('#create_value_editor');
+			}
+		}
+		// TinyMCE leaves a .tox-tinymce wrapper; remove it or it stays visible after switching type
+		$('#createSettingForm').find('.tox-tinymce').remove();
 
-		// Show and enable appropriate input
+		$('.create-value-input').each(function() {
+			$(this).hide().prop('disabled', true).val('');
+		});
+		const $editorTextarea = $('#create_value_editor');
+		$editorTextarea.hide().prop('disabled', true).val('').css('display', 'none');
+
 		if (type === 'text') {
 			$('#create_value_text').show().prop('disabled', false);
-		}else if (type === 'video') {
+		} else if (type === 'video') {
 			$('#create_value_video').show().prop('disabled', false);
 		} else if (type === 'number') {
 			$('#create_value_number').show().prop('disabled', false);
@@ -271,8 +287,7 @@ $(document).ready(function() {
 		} else if (type === 'textarea') {
 			$('#create_value_textarea').show().prop('disabled', false);
 		} else if (type === 'editor') {
-			$('#create_value_editor').show().prop('disabled', false);
-			// Initialize TinyMCE for editor
+			$editorTextarea.show().prop('disabled', false).css('display', 'block');
 			if (typeof tinymce !== 'undefined') {
 				tinymce.init({
 					selector: '#create_value_editor',
@@ -545,24 +560,48 @@ $(document).ready(function() {
 
 	// Reset form when modal is closed
 	$('#createSettingModal').on('hidden.bs.modal', function() {
-		// Destroy TinyMCE instance
 		if (createEditorInstance) {
+			try {
+				createEditorInstance.save();
+			} catch (e) { /* ignore */ }
 			tinymce.remove('#create_value_editor');
 			createEditorInstance = null;
 		}
+		if (typeof tinymce !== 'undefined') {
+			const ed = tinymce.get('create_value_editor');
+			if (ed) {
+				try {
+					ed.save();
+				} catch (e) { /* ignore */ }
+				tinymce.remove('#create_value_editor');
+			}
+		}
+		$('#createSettingForm').find('.tox-tinymce').remove();
 		$('#createSettingForm')[0].reset();
 		$('#createSettingForm').find('.is-invalid').removeClass('is-invalid');
 		$('#createSettingForm').find('.invalid-feedback').text('');
-		// Hide all inputs
-		$('.create-value-input').hide();
+		$('.create-value-input').hide().prop('disabled', true).val('');
+		$('#create_value_editor').css('display', 'none');
 	});
 
 	$('#editSettingModal').on('hidden.bs.modal', function() {
-		// Destroy TinyMCE instance
 		if (editEditorInstance) {
+			try {
+				editEditorInstance.save();
+			} catch (e) { /* ignore */ }
 			tinymce.remove('#edit_value_editor');
 			editEditorInstance = null;
 		}
+		if (typeof tinymce !== 'undefined') {
+			const ed = tinymce.get('edit_value_editor');
+			if (ed) {
+				try {
+					ed.save();
+				} catch (e) { /* ignore */ }
+				tinymce.remove('#edit_value_editor');
+			}
+		}
+		$('#editSettingForm').find('.tox-tinymce').remove();
 		$('#editSettingForm').find('.is-invalid').removeClass('is-invalid');
 		$('#editSettingForm').find('.invalid-feedback').text('');
 		// Hide all inputs

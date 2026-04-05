@@ -44,8 +44,12 @@
 						{{-- List invitation media (hub files) separated by file_key --}}
 						@if($invitation->hubFiles->isNotEmpty())
 						@php
-						$adminHubFiles = $invitation->hubFiles->where('file_key', 1);
-						$clientHubFiles = $invitation->hubFiles->where('file_key', 2);
+						$adminHubFiles = $invitation->hubFiles->filter(
+							fn ($file) => $file->created_by_type === \App\Models\Admin::class
+						);
+						$clientHubFiles = $invitation->hubFiles->filter(
+							fn ($file) => $file->created_by_type !== \App\Models\Admin::class
+						);
 						@endphp
 						<div class="mb-4">
 							<h5 class="mb-3">

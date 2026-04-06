@@ -1014,4 +1014,5 @@ return[
 'folder-name-help-placeholder'=>'ادخل اسم المجلد',
 'original-name'=>'اسم الملف الأصلي',
 'related-to'=>'المرتبط ب',
+'folder'=>'المجلد',
 ];

@@ -14,7 +14,7 @@
 <div class="row">
 	<div class="col-12">
 		<div class="page-title-box d-sm-flex align-items-center justify-content-between">
-			<h4 class="mb-sm-0 font-size-18">Edit Design</h4>
+			<h4 class="mb-sm-0 font-size-18">{{__('admin.edit-design')}}</h4>
 
 			<div class="page-title-right">
 				<ol class="breadcrumb m-0">
@@ -22,12 +22,12 @@
 							href="{{route('admin.dashboard')}}">{{__('admin.Dashboard')}}</a>
 					</li>
 					<li class="breadcrumb-item"><a
-							href="{{route('category.index')}}">Categories</a>
+							href="{{route('category.index')}}">{{__('admin.categories')}}</a>
 					</li>
 					<li class="breadcrumb-item"><a
-							href="{{route('designs.index', ['category_id' => $design->category_id])}}">Designs</a>
+							href="{{route('designs.index', ['category_id' => $design->category_id])}}">{{__('admin.designs')}}</a>
 					</li>
-					<li class="breadcrumb-item active">Edit</li>
+					<li class="breadcrumb-item active">{{__('admin.edit-design')}}</li>
 				</ol>
 			</div>
 
@@ -49,7 +49,7 @@
 								<div class="col-sm-12">
 									<div class="mb-3">
 										<label for="category_id"
-											class="form-label">Category
+											class="form-label">{{__('admin.category')}}
 											<span
 												class="text-danger">*</span></label>
 										<select id="category_id"
@@ -58,8 +58,7 @@
 											required>
 											<option
 												value="">
-												Select
-												Category
+												{{__('admin.select-category')}}
 											</option>
 											@foreach($categories as $cat)
 											<option value="{{$cat->id}}"
@@ -73,7 +72,7 @@
 								<div class="col-sm-12">
 									<div class="mb-3">
 										<label for="code"
-											class="form-label">Code</label>
+											class="form-label">{{__('admin.code')}}</label>
 										<div
 											class="input-group">
 											<input type="text"
@@ -81,13 +80,13 @@
 												value="{{old('code', $design->code)}}"
 												class="form-control"
 												id="code"
-												placeholder="Design Code">
+												placeholder="{{__('admin.design-code')}}">
 											<button type="button"
 												class="btn btn-outline-secondary"
 												id="generateCodeBtn">
 												<i
 													class="mdi mdi-refresh"></i>
-												Generate
+												{{__('admin.generate')}}
 											</button>
 										</div>
 										<div class="mt-2">
@@ -96,7 +95,7 @@
 												<div
 													class="col-md-6">
 													<label for="codeLength"
-														class="form-label small">Length</label>
+														class="form-label small">{{__('admin.length')}}</label>
 													<input type="number"
 														id="codeLength"
 														class="form-control form-control-sm"
@@ -107,22 +106,20 @@
 												<div
 													class="col-md-6">
 													<label for="codeType"
-														class="form-label small">Type</label>
+														class="form-label small">{{__('admin.type')}}</label>
 													<select id="codeType"
 														class="form-select form-select-sm">
 														<option
 															value="numbers">
-															Numbers
+															{{__('admin.numbers')}}
 														</option>
 														<option
 															value="characters">
-															Characters
+															{{__('admin.characters')}}
 														</option>
 														<option value="mixed"
 															selected>
-															Numbers
-															&
-															Characters
+															{{__('admin.numbers-characters')}}
 														</option>
 													</select>
 												</div>
@@ -133,7 +130,7 @@
 								<div class="col-sm-12">
 									<div class="mb-3">
 										<label for="image"
-											class="form-label">{{ __('validation.attributes.design_media') }}</label>
+											class="form-label">{{ __('admin.image-or-video') }}</label>
 										@if($design->image())
 										<div class="mb-2">
 											@php $hubMime = $design->hubFiles?->getMimeType ?? ''; @endphp
@@ -143,7 +140,7 @@
 												class="img-thumbnail p-0"></video>
 											@else
 											<img src="{{$design->image()}}"
-												alt="{{ __('validation.attributes.design_media') }}"
+												alt="{{ __('admin.image-or-video') }}"
 												style="max-width: 200px; max-height: 200px; object-fit: cover;"
 												class="img-thumbnail">
 											@endif
@@ -161,8 +158,7 @@
 								<div class="col-sm-12">
 									<div class="mb-3">
 										<label
-											class="form-label">Show
-											On</label>
+											class="form-label">{{__('admin.show-on')}}</label>
 										@php
 										$showOn =
 										old('show_on',
@@ -187,8 +183,7 @@
 														{{ in_array('home', $showOn) ? 'checked' : '' }}>
 													<label class="form-check-label"
 														for="show_on_home">
-														Home
-														Page
+														{{__('admin.home-page')}}
 													</label>
 												</div>
 												<div
@@ -201,7 +196,7 @@
 														{{ in_array('footer', $showOn) ? 'checked' : '' }}>
 													<label class="form-check-label"
 														for="show_on_footer">
-														Footer
+														{{__('admin.footer')}}
 													</label>
 												</div>
 												<div
@@ -214,8 +209,7 @@
 														{{ in_array('gallery', $showOn) ? 'checked' : '' }}>
 													<label class="form-check-label"
 														for="show_on_gallery">
-														Gallery
-														Page
+														{{__('admin.gallery-page')}}
 													</label>
 												</div>
 											</div>
@@ -231,8 +225,7 @@
 														{{ in_array('services', $showOn) ? 'checked' : '' }}>
 													<label class="form-check-label"
 														for="show_on_services">
-														Services
-														Page
+														{{__('admin.services-page')}}
 													</label>
 												</div>
 												<div
@@ -245,18 +238,13 @@
 														{{ in_array('about', $showOn) ? 'checked' : '' }}>
 													<label class="form-check-label"
 														for="show_on_about">
-														About
-														Page
+														{{__('admin.about-page')}}
 													</label>
 												</div>
 											</div>
 										</div>
 										<small
-											class="form-text text-muted">Select
-											where this
-											design
-											should be
-											displayed</small>
+											class="form-text text-muted">{{__('admin.select-where-this-design-should-be-displayed')}}</small>
 									</div>
 								</div>
 							</div>
@@ -271,7 +259,7 @@
 										data-bs-target="#en"
 										type="button"
 										role="tab">
-										English
+										{{__('admin.english')}}
 									</button>
 								</li>
 								<li class="nav-item"
@@ -282,7 +270,7 @@
 										data-bs-target="#ar"
 										type="button"
 										role="tab">
-										العربية
+										{{__('admin.arabic')}}
 									</button>
 								</li>
 							</ul>
@@ -298,14 +286,14 @@
 											<div
 												class="mb-3">
 												<label for="en-name"
-													class="form-label">Name
-													(EN)</label>
+													class="form-label">{{__('admin.name-en')}}
+													</label>
 												<input type="text"
 													name="en[name]"
 													value="{{old('en.name', $design->translate('en')->name ?? '')}}"
 													class="form-control"
 													id="en-name"
-													placeholder="Design Name">
+													placeholder="{{__('admin.design-name')}}">
 											</div>
 										</div>
 									</div>
@@ -320,14 +308,14 @@
 											<div
 												class="mb-3">
 												<label for="ar-name"
-													class="form-label">الاسم
-													(AR)</label>
+													class="form-label">{{__('admin.name-ar')}}
+													</label>
 												<input type="text"
 													name="ar[name]"
 													value="{{old('ar.name', $design->translate('ar')->name ?? '')}}"
 													class="form-control"
 													id="ar-name"
-													placeholder="اسم التصميم">
+													placeholder="{{__('admin.design-name')}}">
 											</div>
 										</div>
 									</div>
@@ -342,7 +330,7 @@
 							class="btn btn-primary waves-effect waves-light">
 							{{__('admin.update')}}</button>
 						<a href="{{route('designs.index', ['category_id' => $design->category_id])}}"
-							class="btn btn-secondary waves-effect waves-light">Cancel</a>
+							class="btn btn-secondary waves-effect waves-light">{{__('admin.cancel')}}</a>
 
 					</div>
 
@@ -403,7 +391,7 @@ $(document).ready(function() {
 		const type = $('#codeType').val() || 'mixed';
 
 		if (length < 1 || length > 50) {
-			alert('Length must be between 1 and 50');
+			alert('{{__('admin.length-must-be-between-1-and-50')}}');
 			return;
 		}
 

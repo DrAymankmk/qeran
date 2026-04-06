@@ -81,11 +81,11 @@
 								<td>{{$appSetting->title}}</td>
 								<td>
 									<span class="badge bg-secondary">
-										{{$appSetting->category ?? 'general'}}
+										{{__('admin.' . $appSetting->category ?? 'general')}}
 									</span>
 								</td>
 								<td>
-									<span class="badge bg-info">{{$appSetting->type ?? 'text'}}</span>
+									<span class="badge bg-info">{{__('admin.' . $appSetting->type ?? 'text')}}</span>
 								</td>
 								<td>
 									<div class="text-truncate"
@@ -159,50 +159,76 @@ $('.btnprn').printPage();
 let createEditorInstance = null;
 let editEditorInstance = null;
 
+/** Only one value field may have name="value" — duplicate names break focus/input in many browsers */
+function resetEditValueFields() {
+	$('#editSettingForm .edit-value-input').each(function() {
+		const el = this;
+		$(el).addClass('d-none').removeAttr('name').val('');
+		el.disabled = true;
+		el.removeAttribute('readonly');
+	});
+}
+
+function activateEditValueField($el, value) {
+	const el = $el[0];
+	if (!el) {
+		return;
+	}
+	$el.val(value != null ? String(value) : '');
+	$el.removeClass('d-none');
+	el.disabled = false;
+	el.removeAttribute('disabled');
+	el.removeAttribute('readonly');
+	$el.removeAttr('style');
+	$el.attr('name', 'value');
+}
+
 // Global function to show appropriate input based on type in edit modal
 function showEditInputByType(type, value) {
-	// Remove TinyMCE if exists first, before hiding inputs
+	const normalizedType = String(type || 'text').toLowerCase().trim();
+
 	if (editEditorInstance) {
-		editEditorInstance.save(); // Save content before removing
+		try {
+			editEditorInstance.save();
+		} catch (e) { /* ignore */ }
 		tinymce.remove('#edit_value_editor');
 		editEditorInstance = null;
 	}
-	
-	// Also try to remove any TinyMCE instance that might exist
+
 	if (typeof tinymce !== 'undefined') {
 		const editor = tinymce.get('edit_value_editor');
 		if (editor) {
-			editor.save(); // Save content before removing
+			try {
+				editor.save();
+			} catch (e) { /* ignore */ }
 			tinymce.remove('#edit_value_editor');
 		}
 	}
-	$('#editSettingForm').find('.tox-tinymce').remove();
+	$('#editSettingForm').find('.tox-tinymce, .tox-tinymce-aux, .tox-silver-sink').remove();
 
-	// Hide and disable all inputs, and clear their values
-	$('.edit-value-input').each(function() {
-		$(this).hide().prop('disabled', true).val('');
-	});
-	
-	// Explicitly hide and clear the editor textarea
-	// Force hide with both hide() and css display none to ensure it's hidden
+	resetEditValueFields();
+
 	const $editorTextarea = $('#edit_value_editor');
-	$editorTextarea.hide().prop('disabled', true).val('').css('display', 'none');
 
-	// Show and enable appropriate input and set value
-	if (type === 'text') {
-		$('#edit_value_text').show().prop('disabled', false).val(value || '');
-	}else if (type === 'video') {
-		$('#edit_value_video').show().prop('disabled', false).val(value || '');
-	} else if (type === 'number') {
-		$('#edit_value_number').show().prop('disabled', false).val(value || '');
-	} else if (type === 'email') {
-		$('#edit_value_email').show().prop('disabled', false).val(value || '');
-	} else if (type === 'textarea') {
-		$('#edit_value_textarea').show().prop('disabled', false).val(value || '');
-	} else if (type === 'editor') {
-		// Clear the textarea first, then show it
-		$editorTextarea.val(value || '').show().prop('disabled', false).css('display', 'block');
-		// Initialize TinyMCE for editor
+	if (normalizedType === 'text') {
+		activateEditValueField($('#edit_value_text'), value);
+	} else if (normalizedType === 'video') {
+		activateEditValueField($('#edit_value_video'), value);
+	} else if (normalizedType === 'number') {
+		activateEditValueField($('#edit_value_number'), value);
+	} else if (normalizedType === 'email') {
+		activateEditValueField($('#edit_value_email'), value);
+	} else if (normalizedType === 'textarea') {
+		const $ta = $('#edit_value_textarea');
+		activateEditValueField($ta, value);
+		setTimeout(function() {
+			const node = document.getElementById('edit_value_textarea');
+			if (node && !node.disabled) {
+				node.focus();
+			}
+		}, 150);
+	} else if (normalizedType === 'editor') {
+		activateEditValueField($editorTextarea, value);
 		if (typeof tinymce !== 'undefined') {
 			tinymce.init({
 				selector: '#edit_value_editor',
@@ -223,6 +249,8 @@ function showEditInputByType(type, value) {
 			});
 			editEditorInstance = tinymce.get('edit_value_editor');
 		}
+	} else {
+		activateEditValueField($('#edit_value_text'), value);
 	}
 }
 
@@ -231,8 +259,8 @@ $(document).ready(function() {
 		var table = initAdminDataTable({
 		tableId: '#appSettingsTable',
 		pdfRoute: '{{route("app-settings.export.pdf")}}',
-		orderColumn: 0,
-		orderDirection: 'desc',
+		orderColumn: 6,
+		orderDirection: 'asc',
 		nonOrderableColumns: [1, 7], // Key and Actions columns are not orderable
 		nonSearchableColumns: [7],   // Only Actions column is not searchable
 		pageLength: 10,
@@ -249,8 +277,32 @@ $(document).ready(function() {
 		showCreateInputByType(type);
 	});
 
+	function resetCreateValueFields() {
+		$('#createSettingForm .create-value-input').each(function() {
+			const el = this;
+			$(el).addClass('d-none').removeAttr('name').val('');
+			el.disabled = true;
+			el.removeAttribute('readonly');
+		});
+	}
+
+	function activateCreateValueField($el) {
+		const el = $el[0];
+		if (!el) {
+			return;
+		}
+		$el.removeClass('d-none');
+		el.disabled = false;
+		el.removeAttribute('disabled');
+		el.removeAttribute('readonly');
+		$el.removeAttr('style');
+		$el.attr('name', 'value');
+	}
+
 	// Function to show appropriate input based on type (create modal — mirror edit modal cleanup)
 	function showCreateInputByType(type) {
+		const normalizedType = String(type || 'text').toLowerCase().trim();
+
 		if (createEditorInstance) {
 			try {
 				createEditorInstance.save();
@@ -267,27 +319,31 @@ $(document).ready(function() {
 				tinymce.remove('#create_value_editor');
 			}
 		}
-		// TinyMCE leaves a .tox-tinymce wrapper; remove it or it stays visible after switching type
-		$('#createSettingForm').find('.tox-tinymce').remove();
+		$('#createSettingForm').find('.tox-tinymce, .tox-tinymce-aux, .tox-silver-sink').remove();
 
-		$('.create-value-input').each(function() {
-			$(this).hide().prop('disabled', true).val('');
-		});
+		resetCreateValueFields();
+
 		const $editorTextarea = $('#create_value_editor');
-		$editorTextarea.hide().prop('disabled', true).val('').css('display', 'none');
 
-		if (type === 'text') {
-			$('#create_value_text').show().prop('disabled', false);
-		} else if (type === 'video') {
-			$('#create_value_video').show().prop('disabled', false);
-		} else if (type === 'number') {
-			$('#create_value_number').show().prop('disabled', false);
-		} else if (type === 'email') {
-			$('#create_value_email').show().prop('disabled', false);
-		} else if (type === 'textarea') {
-			$('#create_value_textarea').show().prop('disabled', false);
-		} else if (type === 'editor') {
-			$editorTextarea.show().prop('disabled', false).css('display', 'block');
+		if (normalizedType === 'text') {
+			activateCreateValueField($('#create_value_text'));
+		} else if (normalizedType === 'video') {
+			activateCreateValueField($('#create_value_video'));
+		} else if (normalizedType === 'number') {
+			activateCreateValueField($('#create_value_number'));
+		} else if (normalizedType === 'email') {
+			activateCreateValueField($('#create_value_email'));
+		} else if (normalizedType === 'textarea') {
+			const $cta = $('#create_value_textarea');
+			activateCreateValueField($cta);
+			setTimeout(function() {
+				const node = document.getElementById('create_value_textarea');
+				if (node && !node.disabled) {
+					node.focus();
+				}
+			}, 150);
+		} else if (normalizedType === 'editor') {
+			activateCreateValueField($editorTextarea);
 			if (typeof tinymce !== 'undefined') {
 				tinymce.init({
 					selector: '#create_value_editor',
@@ -301,6 +357,8 @@ $(document).ready(function() {
 				});
 				createEditorInstance = tinymce.get('create_value_editor');
 			}
+		} else {
+			activateCreateValueField($('#create_value_text'));
 		}
 	}
 
@@ -328,7 +386,7 @@ $(document).ready(function() {
 		const originalText = submitBtn.html();
 
 		// Get content from appropriate input based on type
-		const type = $('#create_type').val();
+		const type = String($('#create_type').val() || 'text').toLowerCase().trim();
 		let valueContent = '';
 		
 		if (type === 'editor') {
@@ -449,7 +507,7 @@ $(document).ready(function() {
 		const key = $('#edit_key').val();
 
 		// Get content from appropriate input based on type
-		const type = $('#edit_type_display').data('type') || 'text';
+		const type = String($('#edit_type_display').data('type') || 'text').toLowerCase().trim();
 		let valueContent = '';
 		
 		if (type === 'editor') {
@@ -576,12 +634,11 @@ $(document).ready(function() {
 				tinymce.remove('#create_value_editor');
 			}
 		}
-		$('#createSettingForm').find('.tox-tinymce').remove();
+		$('#createSettingForm').find('.tox-tinymce, .tox-tinymce-aux, .tox-silver-sink').remove();
 		$('#createSettingForm')[0].reset();
 		$('#createSettingForm').find('.is-invalid').removeClass('is-invalid');
 		$('#createSettingForm').find('.invalid-feedback').text('');
-		$('.create-value-input').hide().prop('disabled', true).val('');
-		$('#create_value_editor').css('display', 'none');
+		$('#createSettingForm .create-value-input').addClass('d-none').removeAttr('name').prop('disabled', true).val('');
 	});
 
 	$('#editSettingModal').on('hidden.bs.modal', function() {
@@ -601,33 +658,52 @@ $(document).ready(function() {
 				tinymce.remove('#edit_value_editor');
 			}
 		}
-		$('#editSettingForm').find('.tox-tinymce').remove();
+		$('#editSettingForm').find('.tox-tinymce, .tox-tinymce-aux, .tox-silver-sink').remove();
 		$('#editSettingForm').find('.is-invalid').removeClass('is-invalid');
 		$('#editSettingForm').find('.invalid-feedback').text('');
-		// Hide all inputs
-		$('.edit-value-input').hide().prop('disabled', true);
+		$('#editSettingForm .edit-value-input').addClass('d-none').removeAttr('name').prop('disabled', true).val('');
 		// Clear data attributes
 		$('#editSettingModal').removeData('edit-type');
 		$('#editSettingModal').removeData('edit-value');
 	});
 });
 
+// Labels for read-only type field (must match keys in create modal)
+@php
+	$appSettingTypeLabels = [
+		'text' => __('admin.text'),
+		'video' => __('admin.video'),
+		'number' => __('admin.number'),
+		'email' => __('admin.email'),
+		'textarea' => __('admin.textarea'),
+		'editor' => __('admin.editor'),
+	];
+@endphp
+const appSettingTypeLabels = @json($appSettingTypeLabels);
+
 // Function to open edit modal
 function openEditModal(key, value, type, title, category) {
+	const normalizedType = String(type || 'text').toLowerCase().trim();
+
 	$('#edit_key').val(key);
 	$('#edit_key_display').val(key);
-	$('#edit_type_display').val(type || 'text');
-	$('#edit_type_display').data('type', type || 'text');
+	$('#edit_type_display').val(appSettingTypeLabels[normalizedType] || (type || ''));
+	$('#edit_type_display').data('type', normalizedType);
 
 	// Set title and category fields
 	$('#edit_title').val(title || '');
 	$('#edit_category').val(category || 'general');
 
 	// Store type and value in modal data attributes
-	$('#editSettingModal').data('edit-type', type || 'text');
+	$('#editSettingModal').data('edit-type', normalizedType);
 	$('#editSettingModal').data('edit-value', value || '');
 
-	$('#editSettingModal').modal('show');
+	const editModalEl = document.getElementById('editSettingModal');
+	if (editModalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+		bootstrap.Modal.getOrCreateInstance(editModalEl).show();
+	} else {
+		$('#editSettingModal').modal('show');
+	}
 }
 
 function openModalDelete(settingId) {
@@ -698,27 +774,23 @@ function openModalDelete(settingId) {
 						<div class="invalid-feedback"></div>
 					</div>
 					<div class="mb-3">
-						<label for="create_value"
+						<label
 							class="form-label">{{__('admin.value')}} <span
 								class="text-danger">*</span></label>
 						<!-- Text Input -->
-						<input type="text" class="form-control create-value-input" id="create_value_text"
-							name="value" style="display: none;">
+						<input type="text" class="form-control create-value-input d-none" id="create_value_text">
 						<!-- Video Input -->
-						<input type="text" class="form-control create-value-input" id="create_value_video"
-							name="value" style="display: none;">
+						<input type="text" class="form-control create-value-input d-none" id="create_value_video">
 						<!-- Number Input -->
-						<input type="number" class="form-control create-value-input" id="create_value_number"
-							name="value" style="display: none;">
+						<input type="number" class="form-control create-value-input d-none" id="create_value_number">
 						<!-- Email Input -->
-						<input type="email" class="form-control create-value-input" id="create_value_email"
-							name="value" style="display: none;">
+						<input type="email" class="form-control create-value-input d-none" id="create_value_email">
 						<!-- Textarea Input -->
-						<textarea class="form-control create-value-input" id="create_value_textarea"
-							name="value" rows="5" style="display: none;"></textarea>
+						<textarea class="form-control create-value-input d-none" id="create_value_textarea"
+							rows="5"></textarea>
 						<!-- Editor Input -->
-						<textarea class="form-control create-value-input" id="create_value_editor"
-							name="value" rows="10" style="display: none;"></textarea>
+						<textarea class="form-control create-value-input d-none" id="create_value_editor"
+							rows="10"></textarea>
 						<div class="invalid-feedback"></div>
 					</div>
 				</div>
@@ -774,27 +846,23 @@ function openModalDelete(settingId) {
 							id="edit_type_display" disabled>
 					</div>
 					<div class="mb-3">
-						<label for="edit_value"
+						<label
 							class="form-label">{{__('admin.value')}} <span
 								class="text-danger">*</span></label>
 						<!-- Text Input -->
-						<input type="text" class="form-control edit-value-input" id="edit_value_text"
-							name="value" style="display: none;">
+						<input type="text" class="form-control edit-value-input d-none" id="edit_value_text">
 						<!-- Video Input -->
-						<input type="text" class="form-control edit-value-input" id="edit_value_video"
-							name="value" style="display: none;">
+						<input type="text" class="form-control edit-value-input d-none" id="edit_value_video">
 						<!-- Number Input -->
-						<input type="number" class="form-control edit-value-input" id="edit_value_number"
-							name="value" style="display: none;">
+						<input type="number" class="form-control edit-value-input d-none" id="edit_value_number">
 						<!-- Email Input -->
-						<input type="email" class="form-control edit-value-input" id="edit_value_email"
-							name="value" style="display: none;">
+						<input type="email" class="form-control edit-value-input d-none" id="edit_value_email">
 						<!-- Textarea Input -->
-						<textarea class="form-control edit-value-input" id="edit_value_textarea"
-							name="value" rows="5" style="display: none;"></textarea>
+						<textarea class="form-control edit-value-input d-none" id="edit_value_textarea"
+							rows="5"></textarea>
 						<!-- Editor Input -->
-						<textarea class="form-control edit-value-input" id="edit_value_editor"
-							name="value" rows="10" style="display: none;"></textarea>
+						<textarea class="form-control edit-value-input d-none" id="edit_value_editor"
+							rows="10"></textarea>
 						<div class="invalid-feedback"></div>
 					</div>
 				</div>

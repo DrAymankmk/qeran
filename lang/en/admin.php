@@ -114,6 +114,7 @@ return[
     'text-required'=>'Please enter text',
     'socials'=>'Social Media',
     'text'=>'Text',
+    'video'=>'Video',
     'number'=>'Number',
     'textarea'=>'Textarea',
     'editor'=>'Editor',

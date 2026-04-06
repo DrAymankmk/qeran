@@ -84,8 +84,8 @@
                             <div class="tab-pane fade @if($activeTab == 'buy') active show @endif" id="buy" role="tabpanel">
                                 
                                 @if($errors->has('ar.title') || $errors->has('ar.description'))
-                                    <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
-                                        <i class="icon-thumb-down"></i>
+                                    <div class="alert alert-danger alert-dismissible fade show mb-3 border-0 shadow-sm" role="alert">
+                                        <i class="mdi mdi-alert-circle-outline me-2 text-danger"></i>
                                         <strong>{{__('admin.arabic-validation-errors')}}</strong>
                                         <ul class="mb-0 mt-2">
                                             @if($errors->has('ar.title'))
@@ -95,8 +95,7 @@
                                                 <li>{{ $errors->first('ar.description') }}</li>
                                             @endif
                                         </ul>
-                                        <button class="close" type="button" data-dismiss="alert" aria-label="Close"
-                                                data-original-title="" title=""><span aria-hidden="true">×</span></button>
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ __('admin.close') }}"></button>
                                     </div>
                                 @endif
 
@@ -137,8 +136,8 @@
                             <div class="tab-pane fade @if($activeTab == 'sell') active show @endif" id="sell" role="tabpanel">
                                 
                                 @if($errors->has('en.title') || $errors->has('en.description'))
-                                    <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
-                                        <i class="icon-thumb-down"></i>
+                                    <div class="alert alert-danger alert-dismissible fade show mb-3 border-0 shadow-sm" role="alert">
+                                        <i class="mdi mdi-alert-circle-outline me-2 text-danger"></i>
                                         <strong>{{__('admin.english-validation-errors')}}</strong>
                                         <ul class="mb-0 mt-2">
                                             @if($errors->has('en.title'))
@@ -148,8 +147,7 @@
                                                 <li>{{ $errors->first('en.description') }}</li>
                                             @endif
                                         </ul>
-                                        <button class="close" type="button" data-dismiss="alert" aria-label="Close"
-                                                data-original-title="" title=""><span aria-hidden="true">×</span></button>
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ __('admin.close') }}"></button>
                                     </div>
                                 @endif
 

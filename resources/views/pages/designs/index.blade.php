@@ -17,7 +17,7 @@
     <div class="row">
         <div class="col-12">
             <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                <h4 class="mb-sm-0 font-size-18">Designs
+                <h4 class="mb-sm-0 font-size-18">{{__('admin.designs')}}
                     @if($category)
                         - {{ $category->name }}
                     @endif
@@ -29,9 +29,9 @@
                         </li>
                         <li class="breadcrumb-item"><a href="{{route('category.index')}}">Categories</a></li>
                         @if($category)
-                        <li class="breadcrumb-item active">Designs - {{ $category->name }}</li>
+                        <li class="breadcrumb-item active">{{__('admin.designs')}} - {{ $category->name }}</li>
                         @else
-                        <li class="breadcrumb-item active">Designs</li>
+                        <li class="breadcrumb-item active">{{__('admin.designs')}}</li>
                         @endif
                     </ol>
                 </div>
@@ -53,11 +53,11 @@
                                 <div class="text-sm-start">
                                     <a href="{{route('designs.create', ['category_id' => $category?->id])}}"
                                        class="btn btn-primary btn-rounded waves-effect waves-light mb-2 me-2"><i
-                                            class="mdi mdi-plus me-1"></i> Add New Design </a>
+                                            class="mdi mdi-plus me-1"></i> {{__('admin.add-new-design')}} </a>
                                     @if($category)
                                     <a href="{{route('category.index')}}"
                                        class="btn btn-secondary btn-rounded waves-effect waves-light mb-2 me-2"><i
-                                            class="mdi mdi-arrow-left me-1"></i> Back to Categories </a>
+                                            class="mdi mdi-arrow-left me-1"></i> {{__('admin.back-to-categories')}} </a>
                                     @endif
                                 </div>
                             </div>
@@ -68,10 +68,10 @@
                             <thead>
                             <tr class="tr-colored">
                                 <th scope="col">{{__('admin.id')}}</th>
-                                <th scope="col">{{ __('validation.attributes.design_media') }}</th>
-                                <th scope="col">Category</th>
-                                <th scope="col">Name</th>
-                                <th scope="col">Code</th>
+                                <th scope="col">{{ __('admin.image-or-video') }}</th>
+                                <th scope="col">{{__('admin.category')}}</th>
+                                <th scope="col">{{__('admin.name')}}</th>
+                                <th scope="col">{{__('admin.code')}}</th>
                                 <th scope="col">{{__('admin.created_at')}}</th>
                                 <th scope="col">{{__('admin.actions')}}</th>
                             </tr>
@@ -95,12 +95,12 @@
                                             @else
                                             <img class="header-profile-user"
                                                 src="{{ $mediaUrl }}"
-                                                alt="{{ __('validation.attributes.design_media') }}"
+                                                alt="{{ __('admin.image-or-video') }}"
                                                 style="width: 50px; height: 50px; object-fit: cover;">
                                             @endif
                                         </a>
                                         @else
-                                        <span class="text-muted">{{ __('validation.design_no_media') }}</span>
+                                        <span class="text-muted">{{ __('admin.design-no-media') }}</span>
                                         @endif
                                     </td>
                                     <td>{{$design->category->name ?? 'N/A'}}</td>

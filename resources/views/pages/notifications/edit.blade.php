@@ -81,9 +81,9 @@
 
 							@if(($value == 'ar' && $hasArabicErrors) ||
 							($value == 'en' && $hasEnglishErrors))
-							<div class="alert alert-danger alert-dismissible fade show mb-3"
+							<div class="alert alert-danger alert-dismissible fade show mb-3 border-0 shadow-sm"
 								role="alert">
-								<i class="icon-thumb-down"></i>
+								<i class="mdi mdi-alert-circle-outline me-2 text-danger"></i>
 								<strong>{{__('admin.'.$key.'-validation-errors')}}</strong>
 								<ul class="mb-0 mt-2">
 									@if($errors->has('title.'.$value))
@@ -95,12 +95,7 @@
 									</li>
 									@endif
 								</ul>
-								<button class="close" type="button"
-									data-dismiss="alert"
-									aria-label="Close"
-									data-original-title=""
-									title=""><span
-										aria-hidden="true">×</span></button>
+								<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ __('admin.close') }}"></button>
 							</div>
 							@endif
 

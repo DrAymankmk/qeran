@@ -41,8 +41,8 @@ $(document).ready(function() {
 	var table = initAdminDataTable({
 		tableId: '#categoriesTable',
 		pdfRoute: '{{route("category.export.pdf")}}',
-		orderColumn: 0,
-		orderDirection: 'desc',
+		orderColumn: 3,
+		orderDirection: 'asc',
 		nonOrderableColumns: [1, 4],
 		nonSearchableColumns: [1, 4],
 		pageLength: 10,

@@ -35,19 +35,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    @if ($errors->any())
-                        @foreach ($errors->all() as $error)
-                            <div class="alert alert-danger inverse alert-dismissible fade show" role="alert"><i
-                                    class="icon-thumb-down"></i>
-
-                                <p>{{ $error }}</p>
-                                <button class="close" type="button" data-dismiss="alert" aria-label="Close"
-                                        data-original-title="" title=""><span aria-hidden="true">×</span></button>
-
-                            </div>
-
-                        @endforeach
-                    @endif
+                    <x-validation-errors />
                     <div class="crypto-buy-sell-nav">
 
                         <ul class="nav nav-tabs nav-tabs-custom" role="tablist">

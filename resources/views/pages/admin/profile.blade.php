@@ -36,16 +36,7 @@
 				</div>
 				@endif
 
-				@if ($errors->any())
-				@foreach ($errors->all() as $error)
-				<div class="alert alert-danger alert-dismissible fade show" role="alert">
-					<i class="mdi mdi-alert-circle me-2"></i>
-					{{ $error }}
-					<button type="button" class="btn-close" data-bs-dismiss="alert"
-						aria-label="Close"></button>
-				</div>
-				@endforeach
-				@endif
+				<x-validation-errors />
 
 				<form action="{{route('admin.profile.update')}}" method="post"
 					enctype="multipart/form-data">

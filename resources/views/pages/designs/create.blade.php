@@ -17,15 +17,15 @@
     <div class="row">
         <div class="col-12">
             <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                <h4 class="mb-sm-0 font-size-18">Create Design</h4>
+                <h4 class="mb-sm-0 font-size-18">{{__('admin.create-design')}}</h4>
 
                 <div class="page-title-right">
                     <ol class="breadcrumb m-0">
                         <li class="breadcrumb-item"><a href="{{route('admin.dashboard')}}">{{__('admin.Dashboard')}}</a>
                         </li>
-                        <li class="breadcrumb-item"><a href="{{route('category.index')}}">Categories</a></li>
-                        <li class="breadcrumb-item"><a href="{{route('designs.index', ['category_id' => $category?->id])}}">Designs</a></li>
-                        <li class="breadcrumb-item active">Create</li>
+                        	<li class="breadcrumb-item"><a href="{{route('category.index')}}">{{__('admin.categories')}}</a></li>
+                        <li class="breadcrumb-item"><a href="{{route('designs.index', ['category_id' => $category?->id])}}">{{__('admin.designs')}}</a></li>
+                        <li class="breadcrumb-item active">{{__('admin.create-design')}}</li>
                     </ol>
                 </div>
 
@@ -37,19 +37,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    @if ($errors->any())
-                        @foreach ($errors->all() as $error)
-                            <div class="alert alert-danger inverse alert-dismissible fade show" role="alert"><i
-                                    class="icon-thumb-down"></i>
-
-                                <p>{{ $error }}</p>
-                                <button class="close" type="button" data-dismiss="alert" aria-label="Close"
-                                        data-original-title="" title=""><span aria-hidden="true">×</span></button>
-
-                            </div>
-
-                        @endforeach
-                    @endif
+                    <x-validation-errors />
                     <div class="crypto-buy-sell-nav">
 
                         <form action="{{route('designs.store')}}" method="post" enctype="multipart/form-data">
@@ -60,9 +48,9 @@
                                     <div class="row">
                                         <div class="col-sm-12">
                                             <div class="mb-3">
-                                                <label for="category_id" class="form-label">Category <span class="text-danger">*</span></label>
+                                                <label for="category_id" class="form-label">{{__('admin.category')}} <span class="text-danger">*</span></label>
                                                 <select id="category_id" class="form-select" name="category_id" required>
-                                                    <option value="">Select Category</option>
+                                                    <option value="">{{__('admin.select-category')}}</option>
                                                     @foreach($categories as $cat)
                                                         <option value="{{$cat->id}}" {{old('category_id', $category?->id) == $cat->id ? 'selected' : ''}}>{{$cat->name}}</option>
                                                     @endforeach
@@ -71,28 +59,28 @@
                                         </div>
                                         <div class="col-sm-12">
                                             <div class="mb-3">
-                                                <label for="code" class="form-label">Code</label>
+                                                <label for="code" class="form-label">{{__('admin.code')}}</label>
                                                 <div class="input-group">
                                                     <input type="text" name="code" value="{{old('code')}}"
                                                            class="form-control" id="code"
-                                                           placeholder="Design Code">
+                                                           placeholder="{{__('admin.design-code')}}">
                                                     <button type="button" class="btn btn-outline-secondary" id="generateCodeBtn">
-                                                        <i class="mdi mdi-refresh"></i> Generate
+                                                        <i class="mdi mdi-refresh"></i> {{__('admin.generate')}}
                                                     </button>
                                                 </div>
                                                 <div class="mt-2">
                                                     <div class="row">
                                                         <div class="col-md-6">
-                                                            <label for="codeLength" class="form-label small">Length</label>
+                                                            <label for="codeLength" class="form-label small">{{__('admin.length')}}</label>
                                                             <input type="number" id="codeLength" class="form-control form-control-sm"
                                                                    value="8" min="1" max="50">
                                                         </div>
                                                         <div class="col-md-6">
-                                                            <label for="codeType" class="form-label small">Type</label>
+                                                            <label for="codeType" class="form-label small">{{__('admin.type')}}</label>
                                                             <select id="codeType" class="form-select form-select-sm">
-                                                                <option value="numbers">Numbers</option>
-                                                                <option value="characters">Characters</option>
-                                                                <option value="mixed" selected>Numbers & Characters</option>
+                                                                <option value="numbers">{{__('admin.numbers')}}</option>
+                                                                <option value="characters">{{__('admin.characters')}}</option>
+                                                                <option value="mixed" selected>{{__('admin.numbers-characters')}}</option>
                                                             </select>
                                                         </div>
                                                     </div>
@@ -101,33 +89,33 @@
                                         </div>
                                         <div class="col-sm-12">
                                             <div class="mb-3">
-                                                <label for="image" class="form-label">{{ __('validation.attributes.design_media') }}</label>
+                                                <label for="image" class="form-label">{{ __('admin.image-or-video') }}</label>
                                                 <input type="file" name="image" accept="image/*,video/*"
                                                        class="form-control" id="image">
-                                                <small class="form-text text-muted">{{ __('validation.design_media_help', ['max' => (int) round(\App\Helpers\Constant::DESIGN_MEDIA_MAX_UPLOAD_KB / 1024)]) }}</small>
+                                                <small class="form-text text-muted">{{ __('admin.image-or-video-help', ['max' => (int) round(\App\Helpers\Constant::DESIGN_MEDIA_MAX_UPLOAD_KB / 1024)]) }}</small>
                                             </div>
                                         </div>
                                         <div class="col-sm-12">
                                             <div class="mb-3">
-                                                <label class="form-label">Show On</label>
+                                                <label class="form-label">{{__('admin.show-on')}}</label>
                                                 <div class="row">
                                                     <div class="col-md-6">
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" name="show_on[]" value="home" id="show_on_home" {{ in_array('home', old('show_on', [])) ? 'checked' : '' }}>
                                                             <label class="form-check-label" for="show_on_home">
-                                                                Home Page
+                                                                {{__('admin.home-page')}}
                                                             </label>
                                                         </div>
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" name="show_on[]" value="footer" id="show_on_footer" {{ in_array('footer', old('show_on', [])) ? 'checked' : '' }}>
                                                             <label class="form-check-label" for="show_on_footer">
-                                                                Footer
+                                                                {{__('admin.footer')}}
                                                             </label>
                                                         </div>
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" name="show_on[]" value="gallery" id="show_on_gallery" {{ in_array('gallery', old('show_on', [])) ? 'checked' : '' }}>
                                                             <label class="form-check-label" for="show_on_gallery">
-                                                                Gallery Page
+                                                                {{__('admin.gallery-page')}}
                                                             </label>
                                                         </div>
                                                     </div>
@@ -135,18 +123,18 @@
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" name="show_on[]" value="services" id="show_on_services" {{ in_array('services', old('show_on', [])) ? 'checked' : '' }}>
                                                             <label class="form-check-label" for="show_on_services">
-                                                                Services Page
+                                                                {{__('admin.services-page')}}
                                                             </label>
                                                         </div>
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" name="show_on[]" value="about" id="show_on_about" {{ in_array('about', old('show_on', [])) ? 'checked' : '' }}>
                                                             <label class="form-check-label" for="show_on_about">
-                                                                About Page
+                                                                {{__('admin.about-page')}}
                                                             </label>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <small class="form-text text-muted">Select where this design should be displayed</small>
+                                                <small class="form-text text-muted">{{__('admin.select-where-this-design-should-be-displayed')}}</small>
                                             </div>
                                         </div>
                                     </div>
@@ -155,12 +143,12 @@
                                     <ul class="nav nav-tabs mt-4" role="tablist">
                                         <li class="nav-item" role="presentation">
                                             <button class="nav-link active" id="en-tab" data-bs-toggle="tab" data-bs-target="#en" type="button" role="tab">
-                                                English
+                                                {{__('admin.english')}}
                                             </button>
                                         </li>
                                         <li class="nav-item" role="presentation">
                                             <button class="nav-link" id="ar-tab" data-bs-toggle="tab" data-bs-target="#ar" type="button" role="tab">
-                                                العربية
+                                                {{__('admin.arabic')}}
                                             </button>
                                         </li>
                                     </ul>
@@ -171,10 +159,10 @@
                                             <div class="row">
                                                 <div class="col-sm-12">
                                                     <div class="mb-3">
-                                                        <label for="en-name" class="form-label">Name (EN)</label>
+                                                        <label for="en-name" class="form-label">{{__('admin.name-en')}}</label>
                                                         <input type="text" name="en[name]" value="{{old('en.name')}}"
                                                                class="form-control" id="en-name"
-                                                               placeholder="Design Name">
+                                                               placeholder="{{__('admin.design-name')}}">
                                                     </div>
                                                 </div>
                                             </div>
@@ -185,10 +173,10 @@
                                             <div class="row">
                                                 <div class="col-sm-12">
                                                     <div class="mb-3">
-                                                        <label for="ar-name" class="form-label">الاسم (AR)</label>
+                                                        <label for="ar-name" class="form-label">{{__('admin.name-ar')}}</label>
                                                         <input type="text" name="ar[name]" value="{{old('ar.name')}}"
                                                                class="form-control" id="ar-name"
-                                                               placeholder="اسم التصميم">
+                                                               placeholder="{{__('admin.design-name')}}">
                                                     </div>
                                                 </div>
                                             </div>
@@ -199,9 +187,9 @@
                             </div>
                            <div class="d-flex flex-wrap gap-2">
                                 <button type="submit"
-                                        class="btn btn-primary waves-effect waves-light"> {{__('admin.add')}}</button>
+                                        class="btn btn-primary waves-effect waves-light"> {{__('admin.save')}}</button>
                                 <a href="{{route('designs.index', ['category_id' => $category?->id])}}"
-                                   class="btn btn-secondary waves-effect waves-light">Cancel</a>
+                                   class="btn btn-secondary waves-effect waves-light">{{__('admin.cancel')}}</a>
 
                             </div>
 
@@ -263,7 +251,7 @@
                 const type = $('#codeType').val() || 'mixed';
 
                 if (length < 1 || length > 50) {
-                    alert('Length must be between 1 and 50');
+                    alert('{{__('admin.length-must-be-between-1-and-50')}}');
                     return;
                 }
 

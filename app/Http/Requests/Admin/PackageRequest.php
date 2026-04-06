@@ -42,11 +42,18 @@ class PackageRequest extends FormRequest
 
         return $rules;
     }
+    /**
+     * Custom validation messages.
+     * Keys must match Laravel’s "attribute.rule" format (same keys as in rules(), not ar.* prefixes).
+     */
     public function messages()
     {
-        return[
-            'ar.package_invitation_type.required'=>__('admin.package_invitation_type-required'),
-            'ar.name.string'=>__('admin.string'),
+        return [
+            'package_invitation_type.required' => __('messages.package-invitation-type-required'),
+            'package_type.required' => __('messages.package-type-required'),
+            'free_invitations_count.required' => __('messages.free-invitations-count-required'),
+            'count.required' => __('messages.count-required'),
+            'price.required' => __('messages.price-required'),
         ];
     }
 }

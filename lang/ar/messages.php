@@ -55,4 +55,10 @@ return [
     'User Deleted' => 'تم حذف المستخدم',
     'A user has been deleted from the platform' => 'تم حذف مستخدم من المنصة',
     'SAR' => 'ريال',
+
+	'package-invitation-type-required'=>'نوع الدعوة مطلوب',
+	'package-type-required'=>'نوع الباقة مطلوب',
+	'free-invitations-count-required'=>'عدد الدعوات المجانية مطلوب',
+	'count-required'=>'عدد الباقة مطلوب',
+	'price-required'=>'سعر الباقة مطلوب',
 ];

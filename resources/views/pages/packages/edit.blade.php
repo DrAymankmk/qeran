@@ -34,6 +34,8 @@
 	<div class="col-12">
 		<div class="card">
 			<div class="card-body">
+                    	<x-validation-errors />
+
 				<form action="{{route('package.update',$package->id)}}" method="post"
 					enctype="multipart/form-data">
 					@method('PATCH')
@@ -277,7 +279,7 @@
 					<div class="d-flex flex-wrap gap-2">
 						<button type="submit"
 							class="btn btn-primary waves-effect waves-light">
-							{{__('admin.add')}}</button>
+							{{__('admin.edit')}}</button>
 
 					</div>
 

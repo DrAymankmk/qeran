@@ -54,4 +54,11 @@ return [
     'User Deleted' => 'User Deleted',
     'A user has been deleted from the platform' => 'A user has been deleted from the platform',
     'SAR' => 'SAR',
+
+    // Package validation (admin)
+    'package-invitation-type-required' => 'Invitation type is required.',
+    'package-type-required' => 'Package type is required.',
+    'free-invitations-count-required' => 'Free invitations count is required.',
+    'count-required' => 'Package count is required.',
+    'price-required' => 'Price is required.',
 ];

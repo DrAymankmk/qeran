@@ -1180,9 +1180,9 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
             ->where('status', '=', Constant::PAID_STATUS['Not Paid'] || Constant::PAID_STATUS['Pending Admin Payment'] || Constant::PAID_STATUS['Rejected'])
         ->first();
 
-    if (! $invitationPackage) {
-        return RespondActive::clientError('Sorry, there are existing unpaid invitation packages.');
-    }
+//     if (! $invitationPackage) {
+//         return RespondActive::clientError('Sorry, there are existing unpaid invitation packages.');
+//     }
 
     $invitationPackage->update([
         'status' => Constant::PAID_STATUS['Pending Admin Payment'],

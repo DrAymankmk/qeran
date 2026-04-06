@@ -1291,7 +1291,7 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
                    'invitation_package.price as extra_price',
                ])
                ->where('invitation_package.invitation_id', $invitation->id)
-               ->where('invitation_package.status', Constant::PAID_STATUS['Not Paid'])
+               ->whereIn('invitation_package.status', [Constant::PAID_STATUS['Not Paid'], Constant::PAID_STATUS['Pending Admin Payment'], Constant::PAID_STATUS['Rejected'] ])
                ->join('packages', 'packages.id', '=', 'invitation_package.package_id')
                ->first();
 

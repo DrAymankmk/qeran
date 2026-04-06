@@ -1177,7 +1177,7 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
     DB::beginTransaction();
     $invitationPackage = InvitationPackage::query()
         ->where('invitation_id', '=', $invitation->id)
-            ->where('status', '=', Constant::PAID_STATUS['Not Paid'] || Constant::PAID_STATUS['Pending Admin Payment'] || Constant::PAID_STATUS['Rejected'])
+            ->where('status', '=', Constant::PAID_STATUS['Not Paid'])
         ->first();
 
 //     if (! $invitationPackage) {

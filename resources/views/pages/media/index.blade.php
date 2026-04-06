@@ -191,7 +191,8 @@
 									@endif
 									@endif
 								</td>
-								<td>
+<!-- truncate the original name , show one line -->
+								<td style="max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; ">
 									@if($isHubFile)
 									{{$item->original_name ?? 'N/A'}}
 									@elseif($isSpatie)

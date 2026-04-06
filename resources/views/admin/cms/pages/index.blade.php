@@ -49,7 +49,7 @@
 					<table class="table table-bordered table-striped">
 						<thead>
 							<tr>
-								<th>{{__('admin.id')}}</th>
+								<th>{{__('cms.id')}}</th>
 								<th>{{__('cms.name')}}</th>
 								<th>{{__('cms.slug')}}</th>
 								<th>{{__('cms.title-en')}}</th>
@@ -73,31 +73,31 @@
 								<td>
 									<span
 										class="badge bg-{{ $page->is_active ? 'success' : 'danger' }}">
-										{{ $page->is_active ? 'Active' : 'Inactive' }}
+										{{ $page->is_active ? __('cms.active') : __('cms.inactive') }}
 									</span>
 								</td>
 								<td>
 									<a href="{{route('cms.sections.index', $page)}}"
 										class="btn btn-sm btn-info"
-										title="Sections">
+										title="{{__('cms.sections')}}">
 										<i
 											class="mdi mdi-folder"></i>
 									</a>
 									<a href="{{route('cms.pages.edit', $page)}}"
 										class="btn btn-sm btn-primary"
-										title="Edit">
+										title="{{__('cms.edit')}}">
 										<i
 											class="mdi mdi-pencil"></i>
 									</a>
 									<form action="{{route('cms.pages.destroy', $page)}}"
 										method="POST"
 										class="d-inline"
-										onsubmit="return confirm('Are you sure?')">
+										onsubmit="return confirm('{{__('cms.are-you-sure')}}')">
 										@csrf
 										@method('DELETE')
 										<button type="submit"
 											class="btn btn-sm btn-danger"
-											title="Delete">
+											title="{{__('cms.delete')}}">
 											<i
 												class="mdi mdi-delete"></i>
 										</button>

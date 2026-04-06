@@ -646,8 +646,8 @@ return[
     'summary' => 'الملخص',
     'promo-codes' => 'أكواد الخصم',
     'promo-code' => 'كود الخصم',
-    'active' => 'فعال',
-    'inactive' => 'غير فعال',
+    'active' => 'نشط',
+    'inactive' => 'غير نشط',
     'usage' => 'الاستخدام',
     'usage-limit' => 'الحد الأقصي للاستخدام',
     'all-packages' => 'جميع الباقات',
@@ -999,4 +999,5 @@ return[
 'add-new-design'=>'إضافة تصميم جديد',
 'back-to-categories'=>'العودة إلى التصنيفات',
 'design-no-media'=>'لا يوجد صورة أو فيديو',
+''
 ];

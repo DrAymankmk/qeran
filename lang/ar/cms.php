@@ -80,4 +80,12 @@ return [
 'create-link'=>'إضافة رابط',
 'link-type'=>'نوع الرابط',
 'no-links-found'=>'لا توجد روابط موجودة',
+'edit'=>'تعديل',
+'delete'=>'حذف',
+'are-you-sure'=>'هل أنت متأكد؟',
+'id'=>'المعرف',
+'active'=>'نشط',
+'inactive'=>'غير نشط',
+'no-sections-found'=>'لا توجد أجزاء موجودة',
+'links'=>'الروابط',
 ];

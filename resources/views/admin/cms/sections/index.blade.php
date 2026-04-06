@@ -57,7 +57,7 @@
 					<table class="table table-bordered table-striped">
 						<thead>
 							<tr>
-								<th>{{ __('admin.id') }}</th>
+								<th>{{ __('cms.id') }}</th>
 								<th>{{ __('cms.name') }}</th>
 								<th>{{ __('cms.type') }}</th>
 								<th>{{ __('cms.title-en') }}</th>
@@ -81,37 +81,37 @@
 								<td>
 									<span
 										class="badge bg-{{ $section->is_active ? 'success' : 'danger' }}">
-										{{ $section->is_active ? 'Active' : 'Inactive' }}
+										{{ $section->is_active ? __('cms.active') : __('cms.inactive') }}
 									</span>
 								</td>
 								<td>
 									<a href="{{route('cms.items.index', [$page, $section])}}"
 										class="btn btn-sm btn-info"
-										title="Items">
+										title="{{__('cms.items')}}">
 										<i
 											class="mdi mdi-file-multiple"></i>
 									</a>
 									<a href="{{route('cms.links.index', ['section', $section->id])}}"
 										class="btn btn-sm btn-warning"
-										title="Links">
+										title="{{__('cms.links')}}">
 										<i
 											class="mdi mdi-link"></i>
 									</a>
 									<a href="{{route('cms.sections.edit', [$page, $section])}}"
 										class="btn btn-sm btn-primary"
-										title="Edit">
+										title="{{__('cms.edit')}}">
 										<i
 											class="mdi mdi-pencil"></i>
 									</a>
 									<form action="{{route('cms.sections.destroy', [$page, $section])}}"
 										method="POST"
 										class="d-inline"
-										onsubmit="return confirm('Are you sure?')">
+										onsubmit="return confirm('{{__('cms.are-you-sure')}}')">
 										@csrf
 										@method('DELETE')
 										<button type="submit"
 											class="btn btn-sm btn-danger"
-											title="Delete">
+											title="{{__('cms.delete')}}">
 											<i
 												class="mdi mdi-delete"></i>
 										</button>

@@ -70,7 +70,7 @@
 					<table class="table table-bordered table-striped">
 						<thead>
 							<tr>
-								<th>{{ __('admin.id') }}</th>
+								<th>{{ __('cms.id') }}</th>
 								<th>{{ __('cms.name') }}</th>
 								<th>{{ __('cms.link-route') }}</th>
 								<th>{{ __('cms.icon') }}</th>
@@ -110,25 +110,25 @@
 								<td>
 									<span
 										class="badge bg-{{ $link->is_active ? 'success' : 'danger' }}">
-										{{ $link->is_active ? 'Active' : 'Inactive' }}
+										{{ $link->is_active ? __('cms.active') : __('cms.inactive') }}
 									</span>
 								</td>
 								<td>
 									<a href="{{route('cms.links.edit', [$type, $id, $link])}}"
 										class="btn btn-sm btn-primary"
-										title="Edit">
+										title="{{__('cms.edit')}}">
 										<i
 											class="mdi mdi-pencil"></i>
 									</a>
 									<form action="{{route('cms.links.destroy', [$type, $id, $link])}}"
 										method="POST"
 										class="d-inline"
-										onsubmit="return confirm('Are you sure?')">
+										onsubmit="return confirm('{{__('cms.are-you-sure')}}')">
 										@csrf
 										@method('DELETE')
 										<button type="submit"
 											class="btn btn-sm btn-danger"
-											title="Delete">
+											title="{{__('cms.delete')}}">
 											<i
 												class="mdi mdi-delete"></i>
 										</button>

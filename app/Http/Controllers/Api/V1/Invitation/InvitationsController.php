@@ -636,24 +636,36 @@ $invitation->delete();
         $data['users_not_attended'] = (int) $invitation->users()->wherePivot('seen', Constant::SEEN_STATUS['all not attended'])->where('invited_by', auth()->id())->sum('invitation_count');
         $invitationCount = checkPackageCount($invitation, 'checkAllUsersInvitationCount');
         $data['users_rest_of_package'] = ($extraCountInvitation + $invitationCount) - $usersInvitationCount;
-        $users = UserResource::collection(
-            $invitation->users()
-                ->when($request->seen > 1 && $request->seen != null, function ($query) use ($request) {
-                    if ($request->seen == 2) {
-                        $query->whereIn('invitation_user.seen', [Constant::SEEN_STATUS['accepted'], Constant::SEEN_STATUS['seen'], Constant::SEEN_STATUS['scanned']]);
-                    } elseif ($request->seen == 5) {
-                        $query->whereIn('invitation_user.seen', [Constant::SEEN_STATUS['declined'], Constant::SEEN_STATUS['all not attended']]);
-                    } elseif ($request->seen == 8) {
-                        $query->whereNotIn('invitation_user.seen', [Constant::SEEN_STATUS['scanned']]);
-                    } else {
-                        $query->where('invitation_user.seen', $request->seen);
-                    }
-                })
-                ->when($request->seen <= 1 && $request->seen != null, function ($query) {
-                    $query->whereIn('invitation_user.seen', [Constant::SEEN_STATUS['not in the app'], Constant::SEEN_STATUS['in app']]);
-                })
-                ->where('invitation_user.invited_by', auth()->id())
-                ->get());
+        $usersQuery = $invitation->users()
+            ->when($request->seen > 1 && $request->seen != null, function ($query) use ($request) {
+                if ($request->seen == 2) {
+                    $query->whereIn('invitation_user.seen', [Constant::SEEN_STATUS['accepted'], Constant::SEEN_STATUS['seen'], Constant::SEEN_STATUS['scanned']]);
+                } elseif ($request->seen == 5) {
+                    $query->whereIn('invitation_user.seen', [Constant::SEEN_STATUS['declined'], Constant::SEEN_STATUS['all not attended']]);
+                } elseif ($request->seen == 8) {
+                    $query->whereNotIn('invitation_user.seen', [Constant::SEEN_STATUS['scanned']]);
+                } else {
+                    $query->where('invitation_user.seen', $request->seen);
+                }
+            })
+            ->when($request->seen <= 1 && $request->seen != null, function ($query) {
+                $query->whereIn('invitation_user.seen', [Constant::SEEN_STATUS['not in the app'], Constant::SEEN_STATUS['in app']]);
+            })
+            ->where('invitation_user.invited_by', auth()->id());
+
+        $usersModels = $usersQuery->get();
+
+        // Ensure invitation_link is always present for this endpoint.
+        // UserResource reads $this->invitation_link, but Eloquent users won't have it unless we attach it.
+        foreach ($usersModels as $u) {
+            $u->invitation_link = route('user.invitation.show', [
+                'invitation_code' => $invitation->code,
+                'user_id' => $u->id,
+                'inserted_by' => auth()->id(),
+            ]);
+        }
+
+        $users = UserResource::collection($usersModels);
 
         $data['users'] = $users;
 

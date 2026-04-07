@@ -655,14 +655,17 @@ $invitation->delete();
 
         $usersModels = $usersQuery->get();
 
-        // Ensure invitation_link is always present for this endpoint.
-        // UserResource reads $this->invitation_link, but Eloquent users won't have it unless we attach it.
+        $invitation->loadMissing(['category']);
+
+        // Ensure invitation_link and invitation_message are present for this endpoint.
+        // UserResource reads dynamic attributes; Eloquent users won't have them unless we attach them.
         foreach ($usersModels as $u) {
             $u->invitation_link = route('user.invitation.show', [
                 'invitation_code' => $invitation->code,
                 'user_id' => $u->id,
                 'inserted_by' => auth()->id(),
             ]);
+            $u->invitation_message = $this->buildInvitationMessage($invitation, $u->id);
         }
 
         $users = UserResource::collection($usersModels);

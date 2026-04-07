@@ -57,6 +57,8 @@ class UserResource extends JsonResource
             'invitation_count' => $this->pivot?$this->pivot->invitation_count:$this->invitation_count,
             'invitation_link' => $this->invitation_link ?? null,
             'invitation_message' => $this->invitation_message ?? null,
+            'apple_link' => $this->apple_link ?? null,
+            'google_play_link' => $this->google_play_link ?? null,
             'token'         => $this->token ?? null,
             'event_name'         => $this->event_name ?? null,
 

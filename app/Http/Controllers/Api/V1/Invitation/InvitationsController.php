@@ -657,7 +657,10 @@ $invitation->delete();
 
         $invitation->loadMissing(['category']);
 
-        // Ensure invitation_link and invitation_message are present for this endpoint.
+        $appleLink = env('APPLE_LINK');
+        $googlePlayLink = env('GOOGLE_PLAY_LINK');
+
+        // Ensure invitation_link, invitation_message, and store links are present for this endpoint.
         // UserResource reads dynamic attributes; Eloquent users won't have them unless we attach them.
         foreach ($usersModels as $u) {
             $u->invitation_link = route('user.invitation.show', [
@@ -666,6 +669,8 @@ $invitation->delete();
                 'inserted_by' => auth()->id(),
             ]);
             $u->invitation_message = $this->buildInvitationMessage($invitation, $u->id);
+            $u->apple_link = $appleLink;
+            $u->google_play_link = $googlePlayLink;
         }
 
         $users = UserResource::collection($usersModels);

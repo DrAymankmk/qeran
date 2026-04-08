@@ -1346,13 +1346,13 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
          {
              // Check if there are existing unpaid packages
              $unpaidPackages = InvitationPackage::query()
-                              ->where('status', Constant::PAID_STATUS['Not Paid'])
+                              // ->where('status', Constant::PAID_STATUS['Not Paid'])
                                    ->where('invitation_id', $invitation->id)
                                    ->get();
 
-             if ($unpaidPackages->isNotEmpty() && count($unpaidPackages) > 0) {
-                 return RespondActive::clientError('Sorry, there are existing unpaid invitation packages.');
-             }
+          //    if ($unpaidPackages->isNotEmpty() && count($unpaidPackages) > 0) {
+          //        return RespondActive::clientError('Sorry, there are existing unpaid invitation packages.');
+          //    }
 
              $singleInvitationPrice = Package::active()
              ->invitationPackageType($invitation->invitation_type)

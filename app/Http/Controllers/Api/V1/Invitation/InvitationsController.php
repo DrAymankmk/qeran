@@ -48,6 +48,7 @@ class InvitationsController extends Controller
     public function index(GetInvitationRequest $request)
     {
         switch ($request->type) {
+ 
             case 1:
                 return RespondActive::success('action ran successfully', CategoryResource::collection(
                     Category::whereHas('invitations', function ($query) {
@@ -119,6 +120,7 @@ class InvitationsController extends Controller
 
         $data = [];
         switch ($request->invitation_type) {
+		// Contact Design , user contact to admin to create invitation
             case Constant::INVITATION_TYPE['Contact Design']:
                 if ($request->image) {
                     $imageMime = (string) $request->image->getMimeType();
@@ -174,7 +176,7 @@ class InvitationsController extends Controller
                     ]);
                 }
 
-                // Send notification when invitation request created
+                // Send notification and mail to admin when invitation request created
                 try {
                     $this->sendAdminNotification(
                         notificationKey: 'invitation_request_created',
@@ -208,6 +210,9 @@ class InvitationsController extends Controller
                     ]);
                 }
                 break;
+
+ 
+	  // User Design , user design invitation and send to admin to approve
             case Constant::INVITATION_TYPE['User Design']:
 
                 if ($request->image) {

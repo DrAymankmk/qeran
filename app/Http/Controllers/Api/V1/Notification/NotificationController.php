@@ -22,6 +22,7 @@ class NotificationController extends Controller
      */
     public function index(Request $request)
     {
+// exculde notifications where type is 0 and category is 1
         if (auth('sanctum')->check()) {
             $query = Notification::query()
                 ->where('created_at', '>=', auth('sanctum')->user()->created_at)
@@ -29,6 +30,8 @@ class NotificationController extends Controller
                     $query->where('user_id', auth('sanctum')->id())
                         ->orWhere('user_id', null);
                 })
+                ->where('type', '!=', Constant::NOTIFICATIONS_TYPE['Admin'])
+                ->where('category', '!=', Constant::NOTIFICATION_CATEGORY['Order'])
                 ->withValidTarget()
                 ->orderByReadStatus();
 

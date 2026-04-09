@@ -9,6 +9,7 @@ use App\Services\RespondActive;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Pusher\Pusher;
+use App\Helpers\Constant;
 
 class NotificationController extends Controller
 {

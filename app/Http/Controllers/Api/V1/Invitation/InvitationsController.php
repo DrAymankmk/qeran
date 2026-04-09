@@ -1152,6 +1152,7 @@ $invitation->delete();
     {
         $invitation->update($request->validated());
 
+          $user = User::findOrFail(auth()->id());
 	if ($request->status == Constant::INVITATION_STATUS['Approved']) {
 	 //Final Design Delivered
                     try {
@@ -1190,7 +1191,6 @@ $invitation->delete();
                     } 
 
 	}
-
 
 
         if ($invitation->paid == Constant::PAID_STATUS['Paid'] && $request->status == Constant::INVITATION_STATUS['Cancelled']) {

@@ -1151,6 +1151,48 @@ $invitation->delete();
     public function updateStatus(UpdateStatusRequest $request, Invitation $invitation)
     {
         $invitation->update($request->validated());
+
+	if ($request->status == Constant::INVITATION_STATUS['Approved']) {
+	 //Final Design Delivered
+                    try {
+                        $this->sendAdminNotification(
+                            notificationKey: 'final_design_delivered',
+                            targetId: $invitation->id,
+                            params: [
+                                'invitation_id' => $invitation->id,
+                                'invitation_name' => $invitation->event_name ?? $invitation->name,
+                                'user_name' => $user->name ?? 'User',
+                                'user_id' => $user->id,
+                                'invitation_type' => $invitation->invitation_type,
+                                'status' => 'Approved',
+                                'step' => 'Update Invitation',
+
+                            ],
+                            category: Constant::NOTIFICATION_CATEGORY['Order'] ?? 1,
+                            notificationType: Constant::NOTIFICATION_ORDER_TYPES['Final Design Delivered'] ?? 1,
+                            emailSubject: 'Final Design Delivered - '.($invitation->event_name ?? $invitation->name),
+                            emailView: 'emails.order.invitation_modified',
+                            emailTo: env('MAIL_TO_ADDRESS'),
+                            emailData: [
+                                'invitation' => $invitation,
+                                'user' => $user,
+                                'invitation_type' => $invitation->invitation_type,
+                                'status' => 'Approved',
+                                'step' => 'Update Invitation',
+
+                            ]
+                        );
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error('Failed to send invitation modified notification: '.$e->getMessage(), [
+                            'invitation_id' => $invitation->id,
+                            'error' => $e->getTraceAsString(),
+                        ]);
+                    } 
+
+	}
+
+
+
         if ($invitation->paid == Constant::PAID_STATUS['Paid'] && $request->status == Constant::INVITATION_STATUS['Cancelled']) {
             foreach ($invitation->users as $user) {
                 Notification::notify('users',

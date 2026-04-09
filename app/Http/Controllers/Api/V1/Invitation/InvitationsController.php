@@ -314,6 +314,12 @@ class InvitationsController extends Controller
 
             $user = User::findOrFail(auth()->id());
 
+		// invitation request info
+	Log::info('invitation request info update', [
+		$request->all(),
+		]);
+
+
             switch ($request->invitation_step) {
                 case Constant::INVITATION_STEP['Choose Package']:
                     // Get dynamic package price
@@ -500,11 +506,6 @@ class InvitationsController extends Controller
                             'file_key' => Constant::FILE_KEY['Main'],
                         ]);
                     }
-
-		// invitation request info
-		Log::info('invitation request info', [
-		$request->all(),
-		]);
 
                    // if user update invitation status to approved send notification to admin
                    if($request->status == Constant::INVITATION_STATUS['Approved']){

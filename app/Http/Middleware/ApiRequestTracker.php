@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Support\Arr;
 use Symfony\Component\HttpFoundation\Response;
 
 class ApiRequestTracker
@@ -38,6 +39,10 @@ class ApiRequestTracker
             $baseContext['payload_keys'] = array_keys($request->all());
         }
 
+        if (config('api_tracker.log_payload')) {
+            $baseContext['payload'] = $this->sanitizePayload($request);
+        }
+
         $channel = config('api_tracker.channel');
         $logger = $channel ? Log::channel($channel) : Log::getFacadeRoot();
 
@@ -67,6 +72,84 @@ class ApiRequestTracker
             ]);
 
             throw $e;
+        }
+    }
+
+    private function sanitizePayload(Request $request): array
+    {
+        $payload = $request->all();
+
+        // Add file metadata without logging contents
+        if ($request->files->count() > 0) {
+            $payload['_files'] = collect($request->allFiles())
+                ->map(function ($file) {
+                    if (is_array($file)) {
+                        return collect($file)->map(fn ($f) => $this->fileMeta($f))->all();
+                    }
+                    return $this->fileMeta($file);
+                })
+                ->all();
+        }
+
+        // Redact sensitive keys (case-insensitive)
+        $redactKeys = array_map('strtolower', (array) config('api_tracker.redact_keys', []));
+        $payload = $this->redactRecursive($payload, $redactKeys);
+
+        // Truncate long strings
+        $maxLen = (int) config('api_tracker.max_string_length', 2000);
+        $payload = $this->truncateStringsRecursive($payload, $maxLen);
+
+        return $payload;
+    }
+
+    private function redactRecursive(mixed $value, array $redactKeys): mixed
+    {
+        if (is_array($value)) {
+            $out = [];
+            foreach ($value as $k => $v) {
+                $keyLower = is_string($k) ? strtolower($k) : null;
+                if ($keyLower !== null && in_array($keyLower, $redactKeys, true)) {
+                    $out[$k] = '[REDACTED]';
+                    continue;
+                }
+                $out[$k] = $this->redactRecursive($v, $redactKeys);
+            }
+            return $out;
+        }
+
+        return $value;
+    }
+
+    private function truncateStringsRecursive(mixed $value, int $maxLen): mixed
+    {
+        if (is_array($value)) {
+            foreach ($value as $k => $v) {
+                $value[$k] = $this->truncateStringsRecursive($v, $maxLen);
+            }
+            return $value;
+        }
+
+        if (is_string($value) && $maxLen > 0 && mb_strlen($value) > $maxLen) {
+            return mb_substr($value, 0, $maxLen).'...[TRUNCATED]';
+        }
+
+        return $value;
+    }
+
+    private function fileMeta($file): array
+    {
+        try {
+            return [
+                'original_name' => method_exists($file, 'getClientOriginalName') ? $file->getClientOriginalName() : null,
+                'mime' => method_exists($file, 'getClientMimeType') ? $file->getClientMimeType() : null,
+                'size' => method_exists($file, 'getSize') ? $file->getSize() : null,
+            ];
+        } catch (\Throwable) {
+            return [
+                'original_name' => null,
+                'mime' => null,
+                'size' => null,
+            ];
         }
     }
 }

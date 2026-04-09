@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Notification;
 use App\Services\RespondActive;
 use Illuminate\Http\Request;
+use App\Helpers\Constant;
 
 class HomeController extends Controller
 {
@@ -28,6 +29,11 @@ class HomeController extends Controller
                 ->where('created_at', '>=', $user->created_at)
                 ->where(function ($query) use ($user) {
                     $query->where('user_id', $user->id)->orWhere('user_id', null);
+                })
+                ->where(function ($query) {
+                    $query
+                        ->where('type', '!=', Constant::NOTIFICATIONS_TYPE['Admin'])
+                        ->orWhere('category', '!=', Constant::NOTIFICATION_CATEGORY['Order']);
                 })
                 ->withValidTarget();
 

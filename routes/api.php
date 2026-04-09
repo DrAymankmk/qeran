@@ -107,7 +107,10 @@ Route::prefix('/v1')->group(function () {
 //             Route::get('/packages/{invitation}', 'packages');
 	Route::get('/packages/{invitation}',[PackageController::class ,'invitationPackages'])->name('packages');
 
-        Route::prefix('invitations')->controller(InvitationsController::class)->group(function () {
+        Route::prefix('invitations')
+            ->middleware('api.tracker')
+            ->controller(InvitationsController::class)
+            ->group(function () {
             Route::get('', 'index');
             Route::post('store', 'store');
             Route::get('/{invitation}', 'show');

@@ -314,11 +314,6 @@ class InvitationsController extends Controller
 
             $user = User::findOrFail(auth()->id());
 
-		// invitation request info
-	Log::info('invitation request info update', [
-		$request->all(),
-		]);
-
 
             switch ($request->invitation_step) {
                 case Constant::INVITATION_STEP['Choose Package']:
@@ -495,7 +490,6 @@ class InvitationsController extends Controller
                         'event_name' => $request->event_name ?? $invitation->event_name,
                         'invitation_media_type' => $request->invitation_media_type ?? $invitation->invitation_media_type,
                         'host_name' => $request->host_name ?? $invitation->host_name,
-
                     ]);
                     if ($request->image) {
                         storeImage([

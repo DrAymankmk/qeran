@@ -31,8 +31,8 @@ class NotificationController extends Controller
                     $query->where('user_id', auth('sanctum')->id())
                         ->orWhere('user_id', null);
                 })
-                ->where('type', '!=', Constant::NOTIFICATIONS_TYPE['Admin'])
-                ->where('category', '!=', Constant::NOTIFICATION_CATEGORY['Order'])
+          //       ->where('type', '!=', Constant::NOTIFICATIONS_TYPE['Admin'])
+          //       ->where('category', '!=', Constant::NOTIFICATION_CATEGORY['Order'])
                 ->withValidTarget()
                 ->orderByReadStatus();
 

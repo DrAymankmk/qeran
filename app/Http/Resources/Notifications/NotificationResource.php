@@ -17,7 +17,8 @@ class NotificationResource extends JsonResource
      */
     public function toArray($request)
     {
-$isOwner = $this->user_id == auth('sanctum')->id();
+       $isOwner = $this->user_id == auth('sanctum')->id();
+
         return [
             'id'          => $this->id,
             'title'          => $this->title,
@@ -25,6 +26,8 @@ $isOwner = $this->user_id == auth('sanctum')->id();
             'type'   => $this->type,
 	  'category' => $this->category,
             'target_id'   => $this->target_id,
+	   'user_id' => $this->user_id,
+             'auth_id' => auth('sanctum')->id(),
 	  'is_owner' => $isOwner,
 	  'read_at'   => $this->read_at,
             'created_at'    => $this->created_at,

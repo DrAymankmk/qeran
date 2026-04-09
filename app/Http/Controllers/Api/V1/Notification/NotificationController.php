@@ -23,7 +23,7 @@ class NotificationController extends Controller
      */
     public function index(Request $request)
     {
-// exculde notifications where type is 0 and category is 1
+        // exculde notifications where type is 0 and category is 1
         if (auth('sanctum')->check()) {
             $query = Notification::query()
                 ->where('created_at', '>=', auth('sanctum')->user()->created_at)

@@ -314,6 +314,29 @@ class InvitationRequestController extends Controller
                 $invitation->update([
                     'status' => Constant::INVITATION_STATUS['Pending user approval'],
                 ]);
+
+		// send notification to user when invitation request updated
+		try {
+		Notification::notify(
+		'users',
+		Constant::NOTIFICATIONS_TYPE['Invitation Request'],
+		[$invitation->user_id],
+		$invitation->id,
+		'invitation_request_updated',
+		[],
+		true,
+		Constant::NOTIFICATION_CATEGORY['Order'],
+		Constant::NOTIFICATION_ORDER_TYPES['Order Modified or Canceled']
+		);
+	} catch (\Exception $e) {
+		DB::rollBack();
+            Log::error('Failed to send invitation request updated notification: '.$e->getMessage(), [
+                'invitation_id' => $invitation->id,
+                'error' => $e->getTraceAsString(),
+            ]);
+        }
+		}
+
             }
 
             DB::commit();

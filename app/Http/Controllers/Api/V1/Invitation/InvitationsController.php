@@ -501,6 +501,12 @@ class InvitationsController extends Controller
                         ]);
                     }
 
+		// invitation request info
+		Log::info('invitation request info', [
+		$request->all(),
+		]);
+
+                   // if user update invitation status to approved send notification to admin
                    if($request->status == Constant::INVITATION_STATUS['Approved']){
 
                     //Final Design Delivered
@@ -1205,9 +1211,9 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
           //   ->where('status', '=', Constant::PAID_STATUS['Not Paid'])
         ->first();
 
-//     if (! $invitationPackage) {
-//         return RespondActive::clientError('Sorry, there are existing unpaid invitation packages.');
-//     }
+	//     if (! $invitationPackage) {
+	//         return RespondActive::clientError('Sorry, there are existing unpaid invitation packages.');
+	//     }
 
     $invitationPackage->update([
         'status' => Constant::PAID_STATUS['Pending Admin Payment'],
@@ -1402,16 +1408,54 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
                      'paid' => Constant::PAID_STATUS['Pending Admin Payment'],
                  ]);
 
-                 // Send email notification
-                 Mail::send('emails.payment-receipt',
-                     [
-                         'invitationPackage' => $invitationPackage,
-                         'invitation' => $invitation,
-                     ], function ($message) {
-                         $message->to('moderninvitation420@gmail.com')
-                             ->from('info@modern-invitation.com', 'Modern Invitation')
-                    ->subject('دفع باقة جديدة');
-                     });
+	// send notification to admin 
+	try {
+	$this->sendAdminNotification(
+	notificationKey: 'extra_packages_added',
+	targetId: $invitation->id,
+	params: [
+		'invitation_id' => $invitation->id,
+		'invitation_name' => $invitation->event_name ?? $invitation->name,
+		'user_name' => auth()->user()->name ?? 'User',
+		'user_id' => auth()->id(),
+		'invitation_type' => $invitation->invitation_type,
+		'status' => 'Pending Admin Payment',
+		'step' => 'Add Extra Packages',
+
+	],
+	category: Constant::NOTIFICATION_CATEGORY['Order'] ?? 1,
+	notificationType: Constant::NOTIFICATION_ORDER_TYPES['Order Modified or Canceled'] ?? 1,
+	emailSubject: 'Extra Packages Added - '.($invitation->event_name ?? $invitation->name),
+	emailView: 'emails.order.extra_packages_added',
+	emailTo: env('MAIL_TO_ADDRESS'),
+	emailData: [
+	'invitation' => $invitation,
+	'user' => auth()->user(),
+	'invitation_type' => $invitation->invitation_type,
+	'status' => 'Pending Admin Payment',
+	'step' => 'Add Extra Packages',
+	'package' => $invitationPackage,
+	]
+	);
+	} catch (\Exception $e) {
+		DB::rollBack();
+		Log::error('Failed to send extra packages added notification: '.$e->getMessage(), [
+		'invitation_id' => $invitation->id,
+		'error' => $e->getTraceAsString(),
+		]);
+	}
+
+
+          //        // Send email notification
+          //        Mail::send('emails.payment-receipt',
+          //            [
+          //                'invitationPackage' => $invitationPackage,
+          //                'invitation' => $invitation,
+          //            ], function ($message) {
+          //                $message->to('moderninvitation420@gmail.com')
+          //                    ->from('info@modern-invitation.com', 'Modern Invitation')
+          //           ->subject('دفع باقة جديدة');
+          //            });
 
                  DB::commit();
 

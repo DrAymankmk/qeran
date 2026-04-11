@@ -490,6 +490,7 @@ class InvitationsController extends Controller
                         'event_name' => $request->event_name ?? $invitation->event_name,
                         'invitation_media_type' => $request->invitation_media_type ?? $invitation->invitation_media_type,
                         'host_name' => $request->host_name ?? $invitation->host_name,
+                        'status' => $request->status ?? $invitation->status,
                     ]);
                     if ($request->image) {
                         storeImage([

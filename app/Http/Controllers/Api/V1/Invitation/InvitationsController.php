@@ -1273,6 +1273,45 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
                 ->subject('دفع باقة جديدة');
     });
 
+
+    // send notification to admin 
+	try {
+		$this->sendAdminNotification(
+		notificationKey: 'payment_receipt_uploaded',
+		targetId: $invitation->id,
+		params: [
+			'invitation_id' => $invitation->id,
+			'invitation_name' => $invitation->event_name ?? $invitation->name,
+			'user_name' => $user->name ?? 'User',
+			'user_id' => $user->id,
+			'invitation_type' => $invitation->invitation_type,
+			'status' => 'Pending Admin Approval',
+			'step' => 'Choose Package',
+
+		],
+		category: Constant::NOTIFICATION_CATEGORY['Order'] ?? 1,
+		notificationType: Constant::NOTIFICATION_ORDER_TYPES['Order Modified or Canceled'] ?? 1,
+		emailSubject: 'Payment Receipt Uploaded - '.($invitation->event_name ?? $invitation->name),
+		emailView: 'emails.order.payment_receipt_uploaded',
+		emailTo: env('MAIL_TO_ADDRESS'),
+		emailData: [
+		'invitation' => $invitation,
+		'user' => $user,
+		'invitation_type' => $invitation->invitation_type,
+		'status' => 'Pending Admin Approval',
+		'step' => 'Choose Package',
+		'package' => $invitationPackage,
+		]
+	);
+	} catch (\Exception $e) {
+		DB::rollBack();
+		Log::error('Failed to send extra packages added notification: '.$e->getMessage(), [
+		'invitation_id' => $invitation->id,
+		'error' => $e->getTraceAsString(),
+		]);
+	}
+
+
     DB::commit();
 
     return RespondActive::success(__('action ran successfully'));

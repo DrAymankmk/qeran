@@ -1448,32 +1448,32 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
 
 	// send notification to admin 
 	try {
-	$this->sendAdminNotification(
-	notificationKey: 'extra_packages_added',
-	targetId: $invitation->id,
-	params: [
-		'invitation_id' => $invitation->id,
-		'invitation_name' => $invitation->event_name ?? $invitation->name,
-		'user_name' => auth()->user()->name ?? 'User',
-		'user_id' => auth()->id(),
+		$this->sendAdminNotification(
+		notificationKey: 'extra_packages_added',
+		targetId: $invitation->id,
+		params: [
+			'invitation_id' => $invitation->id,
+			'invitation_name' => $invitation->event_name ?? $invitation->name,
+			'user_name' => auth()->user()->name ?? 'User',
+			'user_id' => auth()->id(),
+			'invitation_type' => $invitation->invitation_type,
+			'status' => 'Pending Admin Payment',
+			'step' => 'Add Extra Packages',
+
+		],
+		category: Constant::NOTIFICATION_CATEGORY['Order'] ?? 1,
+		notificationType: Constant::NOTIFICATION_ORDER_TYPES['Order Modified or Canceled'] ?? 1,
+		emailSubject: 'Extra Packages Added - '.($invitation->event_name ?? $invitation->name),
+		emailView: 'emails.order.extra_packages_added',
+		emailTo: env('MAIL_TO_ADDRESS'),
+		emailData: [
+		'invitation' => $invitation,
+		'user' => auth()->user(),
 		'invitation_type' => $invitation->invitation_type,
 		'status' => 'Pending Admin Payment',
 		'step' => 'Add Extra Packages',
-
-	],
-	category: Constant::NOTIFICATION_CATEGORY['Order'] ?? 1,
-	notificationType: Constant::NOTIFICATION_ORDER_TYPES['Order Modified or Canceled'] ?? 1,
-	emailSubject: 'Extra Packages Added - '.($invitation->event_name ?? $invitation->name),
-	emailView: 'emails.order.extra_packages_added',
-	emailTo: env('MAIL_TO_ADDRESS'),
-	emailData: [
-	'invitation' => $invitation,
-	'user' => auth()->user(),
-	'invitation_type' => $invitation->invitation_type,
-	'status' => 'Pending Admin Payment',
-	'step' => 'Add Extra Packages',
-	'package' => $invitationPackage,
-	]
+		'package' => $invitationPackage,
+		]
 	);
 	} catch (\Exception $e) {
 		DB::rollBack();

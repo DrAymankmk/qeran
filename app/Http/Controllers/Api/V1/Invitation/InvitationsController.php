@@ -1274,6 +1274,7 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
                 ->subject('دفع باقة جديدة');
     });
 
+    $user = User::findOrFail(auth()->id());
 
     // send notification to admin 
 	try {

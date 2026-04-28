@@ -217,7 +217,7 @@ class DesignsController extends Controller
             return;
         }
 
-        $disk = Storage::disk('public');
+        $disk = Storage::disk(mediaDisk());
         $disk->delete($hub->bucket_name.'/'.$hub->path);
         if ((int) $hub->file_type === Constant::FILE_TYPE['Image']) {
             $disk->delete($hub->bucket_name.'/medium/'.$hub->path);

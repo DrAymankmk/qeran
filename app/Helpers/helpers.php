@@ -65,7 +65,7 @@ function thumbnailImage($image, $options, $filename)
 
     $image->resize($width, $height)->encode('webp', 50);
 
-    Storage::put('public/' . $options['folderName'] . '/thumbnail/' . $filename, $image);
+    Storage::disk(mediaDisk())->put($options['folderName'] . '/thumbnail/' . $filename, (string) $image);
 }
 
 function mediumImage($image, $options, $filename)
@@ -98,7 +98,7 @@ function mediumImage($image, $options, $filename)
 
     $image->resize($width, $height)->encode('webp', 90);
 
-    Storage::put('public/' . $options['folderName'] . '/medium/' . $filename, $image);
+    Storage::disk(mediaDisk())->put($options['folderName'] . '/medium/' . $filename, (string) $image);
 }
 
 function originalImage($image, $options, $filename)
@@ -127,7 +127,7 @@ function originalImage($image, $options, $filename)
         $constraint->upsize();
     })->encode('webp');
 
-    Storage::put('public/' . $options['folderName'] . '/' . $filename, $image);
+    Storage::disk(mediaDisk())->put($options['folderName'] . '/' . $filename, (string) $image);
 }
 
 if (!function_exists('settings')) {
@@ -148,7 +148,10 @@ if (!function_exists('storeVideo')) {
             $ext = strtolower($options['value']->getClientOriginalExtension() ?: 'mp4');
             $filename = time() . substr(str_shuffle("0123456789abcdefghijklmnopqrstvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 5) . '.' . $ext;
 
-            Storage::putFileAs('public/' . $options['folderName'], $options['value'], $filename);
+            Storage::disk(mediaDisk())->put(
+                $options['folderName'] . '/' . $filename,
+                file_get_contents($options['value']->getRealPath())
+            );
 
             $options['model']->hubFiles()->updateOrCreate([
                 'bucket_name' => $options['folderName'],
@@ -171,7 +174,10 @@ if (!function_exists('storeGif')) {
 
             $filename = time() . substr(str_shuffle("0123456789abcdefghijklmnopqrstvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 5) . '.gif';
 
-            Storage::putFileAs('public/' . $options['folderName'], $options['value'], $filename);
+            Storage::disk(mediaDisk())->put(
+                $options['folderName'] . '/' . $filename,
+                file_get_contents($options['value']->getRealPath())
+            );
 
             $options['model']->hubFiles()->updateOrCreate([
                 'bucket_name' => $options['folderName'],
@@ -197,7 +203,12 @@ if (!function_exists('storeAudio')) {
 
             // Save original upload first
             $filename = $randomBase . '.' . $ext;
-            Storage::putFileAs('public/' . $options['folderName'], $options['value'], $filename);
+            $diskName = mediaDisk();
+            $disk = Storage::disk($diskName);
+            $disk->put(
+                $options['folderName'] . '/' . $filename,
+                file_get_contents($options['value']->getRealPath())
+            );
 
             // If it's not mp3, try to transcode to mp3 (best browser support).
             // If ffmpeg isn't available on the server, we keep the original file.
@@ -207,9 +218,16 @@ if (!function_exists('storeAudio')) {
 
             if ($ext !== 'mp3') {
                 try {
-                    $sourceAbs = storage_path('app/public/' . $options['folderName'] . '/' . $filename);
+                    $sourceBytes = $disk->get($options['folderName'] . '/' . $filename);
+                    $tempDir = storage_path('app/tmp/audio');
+                    if (!is_dir($tempDir)) {
+                        @mkdir($tempDir, 0775, true);
+                    }
+
                     $targetFilename = $randomBase . '.mp3';
-                    $targetAbs = storage_path('app/public/' . $options['folderName'] . '/' . $targetFilename);
+                    $sourceAbs = $tempDir . '/' . $filename;
+                    $targetAbs = $tempDir . '/' . $targetFilename;
+                    file_put_contents($sourceAbs, $sourceBytes);
 
                     // Basic ffmpeg command; avoids needing extra PHP libs at runtime.
                     // -y overwrite, -vn ignore video, libmp3lame preferred, fallback should still work on common ffmpeg builds.
@@ -223,8 +241,12 @@ if (!function_exists('storeAudio')) {
                         $finalMime = 'audio/mpeg';
 
                         // Remove the original uploaded non-mp3 file to avoid duplicates
-                        Storage::disk('public')->delete($options['folderName'] . '/' . $filename);
+                        $disk->put($options['folderName'] . '/' . $targetFilename, file_get_contents($targetAbs));
+                        $disk->delete($options['folderName'] . '/' . $filename);
                     }
+
+                    @unlink($sourceAbs);
+                    @unlink($targetAbs);
                 } catch (\Throwable $e) {
                     // Keep original file on any failure
                 }
@@ -232,9 +254,8 @@ if (!function_exists('storeAudio')) {
 
             $finalSize = null;
             try {
-                $finalAbs = storage_path('app/public/' . $options['folderName'] . '/' . $finalFilename);
-                if (file_exists($finalAbs)) {
-                    $finalSize = filesize($finalAbs);
+                if ($disk->exists($options['folderName'] . '/' . $finalFilename)) {
+                    $finalSize = $disk->size($options['folderName'] . '/' . $finalFilename);
                 }
             } catch (\Throwable $e) {
                 $finalSize = $options['value']->getSize();
@@ -257,7 +278,7 @@ if (!function_exists('storeAudio')) {
 if (!function_exists('deleteImage')) {
     function deleteImage($path, $record = null)
     {
-        Storage::disk('public')->delete($path);
+        Storage::disk(mediaDisk())->delete($path);
         if ($record) {
             $record->delete();
         }
@@ -623,4 +644,12 @@ if (!function_exists('asset_versioned')) {
 
         return asset($path) . '?v=' . $version;
     }
+}
+
+// media 
+
+if(!function_exists('mediaDisk')){
+	function mediaDisk(): string {
+	return (string) config('filesystems.media_disk', 'public');
+	}
 }

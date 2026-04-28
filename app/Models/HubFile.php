@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Facades\Storage;
 
 class HubFile extends Model
 {
@@ -50,7 +51,9 @@ class HubFile extends Model
 
     public function get_real_url()
     {
-        return \Storage::disk($this->bucket_name)->url(strtolower($this->visibility).$this->path.$this->name);
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk($this->bucket_name);
+        return $disk->url(strtolower($this->visibility).$this->path.$this->name);
     }
 
     public function get_folder_file()
@@ -60,41 +63,36 @@ class HubFile extends Model
 
     public function get_thumbnail_path()
     {
-        // Use Storage::url() for better server compatibility
-        if (\Storage::disk('public')->exists($this->bucket_name.'/thumbnail/'.$this->path)) {
-            return \Storage::disk('public')->url($this->bucket_name.'/thumbnail/'.$this->path);
-        }
-        // Fallback to asset() if file doesn't exist or storage link issue
-        return asset('storage/' . $this->bucket_name.'/thumbnail/'.$this->path);
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk(mediaDisk());
+        return $disk->url(trim($this->bucket_name.'/thumbnail/'.$this->path, '/'));
     }
 
     public function get_medium_path()
     {
-        // Use Storage::url() for better server compatibility
-        if (\Storage::disk('public')->exists($this->bucket_name.'/medium/'.$this->path)) {
-            return \Storage::disk('public')->url($this->bucket_name.'/medium/'.$this->path);
-        }
-        // Fallback to asset() if file doesn't exist or storage link issue
-        return asset('storage/' . $this->bucket_name.'/medium/'.$this->path);
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk(mediaDisk());
+        return $disk->url(trim($this->bucket_name.'/medium/'.$this->path, '/'));
     }
 
     public function get_path()
     {
-        // Use Storage::url() for better server compatibility
-        if (\Storage::disk('public')->exists($this->bucket_name.'/'.$this->path)) {
-            return \Storage::disk('public')->url($this->bucket_name.'/'.$this->path);
-        }
-        // Fallback to asset() if file doesn't exist or storage link issue
-        return asset('storage/' . $this->bucket_name.'/'.$this->path);
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk(mediaDisk());
+        return $disk->url(trim($this->bucket_name.'/'.$this->path, '/'));
     }
 
     public function get_size()
     {
-        return \Storage::disk($this->bucket_name)->size(strtolower($this->visibility).$this->path.$this->name);
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk($this->bucket_name);
+        return $disk->size(strtolower($this->visibility).$this->path.$this->name);
     }
 
     public function download()
     {
-        return \Storage::disk($this->bucket_name)->download(strtolower($this->visibility).$this->path.$this->name);
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk($this->bucket_name);
+        return $disk->download(strtolower($this->visibility).$this->path.$this->name);
     }
 }

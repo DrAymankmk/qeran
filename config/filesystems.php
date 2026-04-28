@@ -15,6 +15,8 @@ return [
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
+    'media_disk' => env('MEDIA_FILESYSTEM_DISK', env('FILESYSTEM_DISK', 'public')),
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks
@@ -53,6 +55,18 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'throw' => false,
+        ],
+
+        'wasabi' => [
+            'driver' => 's3',
+            'key' => env('WASABI_ACCESS_KEY_ID'),
+            'secret' => env('WASABI_SECRET_ACCESS_KEY'),
+            'region' => env('WASABI_DEFAULT_REGION', 'eu-central-2'),
+            'bucket' => env('WASABI_BUCKET'),
+            'endpoint' => env('WASABI_ENDPOINT', 'https://s3.eu-central-2.wasabisys.com'),
+            'url' => env('WASABI_URL'), // optional: CDN URL or custom domain
+            'use_path_style_endpoint' => env('WASABI_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => false,
         ],
 

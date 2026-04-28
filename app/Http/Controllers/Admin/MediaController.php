@@ -141,6 +141,8 @@ class MediaController extends Controller
         
         $filename = time() . substr(str_shuffle("0123456789abcdefghijklmnopqrstvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 5) . '.' . $file->extension();
         
+        $disk = Storage::disk(mediaDisk());
+
         // Store file based on type
         if ($fileType == Constant::FILE_TYPE['Image']) {
             // Use existing storeImage helper logic
@@ -151,24 +153,27 @@ class MediaController extends Controller
                 $constraint->aspectRatio();
                 $constraint->upsize();
             })->encode('webp');
-            Storage::disk('public')->put($request->bucket_name . '/' . $filename, $image);
+            $disk->put($request->bucket_name . '/' . $filename, (string) $image);
             
             // Store medium
             $imageMedium = \Intervention\Image\Facades\Image::make($file);
             $imageMedium->resize(256, 170, function ($constraint) {
                 $constraint->aspectRatio();
             })->encode('webp', 90);
-            Storage::disk('public')->put($request->bucket_name . '/medium/' . $filename, $imageMedium);
+            $disk->put($request->bucket_name . '/medium/' . $filename, (string) $imageMedium);
             
             // Store thumbnail
             $imageThumb = \Intervention\Image\Facades\Image::make($file);
             $imageThumb->resize(170, 130, function ($constraint) {
                 $constraint->aspectRatio();
             })->encode('webp', 50);
-            Storage::disk('public')->put($request->bucket_name . '/thumbnail/' . $filename, $imageThumb);
+            $disk->put($request->bucket_name . '/thumbnail/' . $filename, (string) $imageThumb);
         } else {
             // For video, audio, etc., store directly
-            Storage::putFileAs('public/' . $request->bucket_name, $file, $filename);
+            $disk->put(
+                $request->bucket_name . '/' . $filename,
+                file_get_contents($file->getRealPath())
+            );
         }
         
         // Use custom file name if provided, otherwise use original name
@@ -249,9 +254,10 @@ class MediaController extends Controller
             $oldMediumPath = $medium->bucket_name . '/medium/' . $medium->path;
             $oldThumbnailPath = $medium->bucket_name . '/thumbnail/' . $medium->path;
             
-            Storage::disk('public')->delete($oldFilePath);
-            Storage::disk('public')->delete($oldMediumPath);
-            Storage::disk('public')->delete($oldThumbnailPath);
+            $disk = Storage::disk(mediaDisk());
+            $disk->delete($oldFilePath);
+            $disk->delete($oldMediumPath);
+            $disk->delete($oldThumbnailPath);
             
             // Generate new filename (consistent with store method)
             $extension = $file->extension();
@@ -267,24 +273,27 @@ class MediaController extends Controller
                     $constraint->aspectRatio();
                     $constraint->upsize();
                 })->encode('webp');
-                Storage::disk('public')->put($request->bucket_name . '/' . $filename, $image);
+                $disk->put($request->bucket_name . '/' . $filename, (string) $image);
                 
                 // Store medium
                 $imageMedium = \Intervention\Image\Facades\Image::make($file);
                 $imageMedium->resize(256, 170, function ($constraint) {
                     $constraint->aspectRatio();
                 })->encode('webp', 90);
-                Storage::disk('public')->put($request->bucket_name . '/medium/' . $filename, $imageMedium);
+                $disk->put($request->bucket_name . '/medium/' . $filename, (string) $imageMedium);
                 
                 // Store thumbnail
                 $imageThumb = \Intervention\Image\Facades\Image::make($file);
                 $imageThumb->resize(170, 130, function ($constraint) {
                     $constraint->aspectRatio();
                 })->encode('webp', 50);
-                Storage::disk('public')->put($request->bucket_name . '/thumbnail/' . $filename, $imageThumb);
+                $disk->put($request->bucket_name . '/thumbnail/' . $filename, (string) $imageThumb);
             } else {
                 // For video, audio, etc., store directly
-                Storage::putFileAs('public/' . $request->bucket_name, $file, $filename);
+                $disk->put(
+                    $request->bucket_name . '/' . $filename,
+                    file_get_contents($file->getRealPath())
+                );
             }
             
             // Update file information
@@ -317,9 +326,10 @@ class MediaController extends Controller
         $mediumPath = $medium->bucket_name . '/medium/' . $medium->path;
         $thumbnailPath = $medium->bucket_name . '/thumbnail/' . $medium->path;
         
-        Storage::disk('public')->delete($filePath);
-        Storage::disk('public')->delete($mediumPath);
-        Storage::disk('public')->delete($thumbnailPath);
+        $disk = Storage::disk(mediaDisk());
+        $disk->delete($filePath);
+        $disk->delete($mediumPath);
+        $disk->delete($thumbnailPath);
         
         // Delete database record
         $medium->delete();

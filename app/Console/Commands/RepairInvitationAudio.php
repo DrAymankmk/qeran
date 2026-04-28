@@ -53,21 +53,28 @@ class RepairInvitationAudio extends Command
         $converted = 0;
         $skippedMissing = 0;
         $failed = 0;
+        $disk = Storage::disk(mediaDisk());
 
         foreach ($files as $hub) {
             $processed++;
 
             $rel = $hub->bucket_name.'/'.$hub->path;
-            if (! Storage::disk('public')->exists($rel)) {
+            if (! $disk->exists($rel)) {
                 $skippedMissing++;
                 $this->warn("Missing: {$rel} (hub_file id {$hub->id})");
                 continue;
             }
 
-            $sourceAbs = storage_path('app/public/'.$rel);
+            $tempDir = storage_path('app/tmp/audio-repair');
+            if (!is_dir($tempDir)) {
+                @mkdir($tempDir, 0775, true);
+            }
+
+            $sourceAbs = $tempDir.'/'.basename($rel);
+            file_put_contents($sourceAbs, $disk->get($rel));
             $baseName = pathinfo($hub->path, PATHINFO_FILENAME);
             $targetRel = $hub->bucket_name.'/'.$baseName.'.mp3';
-            $targetAbs = storage_path('app/public/'.$targetRel);
+            $targetAbs = $tempDir.'/'.$baseName.'.mp3';
 
             // If already a clean mp3 (by metadata), skip
             $metaExt = strtolower((string) ($hub->extension ?? ''));
@@ -89,22 +96,37 @@ class RepairInvitationAudio extends Command
             if ($code !== 0 || ! file_exists($targetAbs) || filesize($targetAbs) === 0) {
                 $failed++;
                 $this->error("Failed (id {$hub->id}). ffmpeg exit {$code}");
+                @unlink($sourceAbs);
+                @unlink($targetAbs);
                 continue;
             }
+
+            $mp3Bytes = file_get_contents($targetAbs);
+            if ($mp3Bytes === false) {
+                $failed++;
+                $this->error("Failed (id {$hub->id}). Could not read transcoded file.");
+                @unlink($sourceAbs);
+                @unlink($targetAbs);
+                continue;
+            }
+
+            $disk->put($targetRel, $mp3Bytes);
 
             // Update DB to point to the mp3
             $hub->path = $baseName.'.mp3';
             $hub->extension = 'mp3';
             $hub->getMimeType = 'audio/mpeg';
-            $hub->size = filesize($targetAbs);
+            $hub->size = $disk->size($targetRel);
             $hub->save();
 
             // Remove original if it wasn't already the mp3 file
             if ($rel !== $targetRel) {
-                Storage::disk('public')->delete($rel);
+                $disk->delete($rel);
             }
 
             $converted++;
+            @unlink($sourceAbs);
+            @unlink($targetAbs);
         }
 
         $this->newLine();

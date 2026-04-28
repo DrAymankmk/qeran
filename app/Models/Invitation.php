@@ -144,6 +144,7 @@ class Invitation extends Model
     public function getAudioUrls()
     {
         $this->load('hubFiles');
+        $disk = Storage::disk(mediaDisk());
         
         $audioFile = $this->hubFiles()->where([
             'file_type' => Constant::FILE_TYPE['Audio'],
@@ -162,12 +163,10 @@ class Invitation extends Model
             return ['mp3' => $mp3Path, 'ogg' => $mp3Path];
         }
 
-        // Get the file path on disk
-        $storagePath = storage_path('app/public/' . $audioFile->bucket_name . '/' . $audioFile->path);
-        
         // Check if OGG version exists
         $oggFileName = pathinfo($audioFile->path, PATHINFO_FILENAME) . '.ogg';
-        $oggStoragePath = storage_path('app/public/' . $audioFile->bucket_name . '/' . $oggFileName);
+        $originalObject = $audioFile->bucket_name . '/' . $audioFile->path;
+        $oggObject = $audioFile->bucket_name . '/' . $oggFileName;
         $oggUrl = null;
 
         // Check if OGG file already exists in database
@@ -180,10 +179,12 @@ class Invitation extends Model
         if ($oggFile) {
             // OGG file exists in database
             $oggUrl = $oggFile->get_path();
-        } elseif (file_exists($oggStoragePath)) {
-            // OGG file exists on disk but not in database
-            $oggUrl = Storage::disk('public')->url($audioFile->bucket_name . '/' . $oggFileName);
-        } elseif (file_exists($storagePath) && $mp3Extension === 'mp3') {
+        } elseif ($disk->exists($oggObject)) {
+            // OGG file exists on storage but not in database
+            /** @var \Illuminate\Filesystem\FilesystemAdapter $urlDisk */
+            $urlDisk = Storage::disk(mediaDisk());
+            $oggUrl = $urlDisk->url($oggObject);
+        } elseif ($disk->exists($originalObject) && $mp3Extension === 'mp3') {
             // Try to convert MP3 to OGG using FFmpeg
             try {
                 // Check if FFmpeg is available
@@ -191,13 +192,27 @@ class Invitation extends Model
                 $ffmpegCheck = shell_exec($ffmpegPath . ' -version 2>&1');
                 
                 if ($ffmpegCheck && strpos($ffmpegCheck, 'ffmpeg version') !== false) {
+                    $tempDir = storage_path('app/tmp/audio');
+                    if (!is_dir($tempDir)) {
+                        @mkdir($tempDir, 0775, true);
+                    }
+
+                    $sourceAbs = $tempDir . '/' . basename($audioFile->path);
+                    $oggStoragePath = $tempDir . '/' . $oggFileName;
+                    file_put_contents($sourceAbs, $disk->get($originalObject));
+
                     // Convert MP3 to OGG using FFmpeg command
-                    $command = escapeshellarg($ffmpegPath) . ' -i ' . escapeshellarg($storagePath) . 
+                    $command = escapeshellarg($ffmpegPath) . ' -i ' . escapeshellarg($sourceAbs) .
                                ' -acodec libvorbis -q:a 5 ' . escapeshellarg($oggStoragePath) . ' 2>&1';
                     
                     exec($command, $output, $returnCode);
                     
                     if ($returnCode === 0 && file_exists($oggStoragePath)) {
+                        $oggBytes = file_get_contents($oggStoragePath);
+                        if ($oggBytes !== false) {
+                            $disk->put($oggObject, $oggBytes);
+                        }
+
                         // Create HubFile entry for OGG
                         $this->hubFiles()->create([
                             'bucket_name' => $audioFile->bucket_name,
@@ -207,11 +222,16 @@ class Invitation extends Model
                             'file_key' => Constant::FILE_KEY['Not Main'],
                             'original_name' => pathinfo($audioFile->original_name ?? 'audio', PATHINFO_FILENAME) . '.ogg',
                             'getMimeType' => 'audio/ogg',
-                            'size' => filesize($oggStoragePath),
+                            'size' => $disk->size($oggObject),
                         ]);
-                        
-                        $oggUrl = Storage::disk('public')->url($audioFile->bucket_name . '/' . $oggFileName);
+
+                        /** @var \Illuminate\Filesystem\FilesystemAdapter $urlDisk */
+                        $urlDisk = Storage::disk(mediaDisk());
+                        $oggUrl = $urlDisk->url($oggObject);
                     }
+
+                    @unlink($sourceAbs);
+                    @unlink($oggStoragePath);
                 }
             } catch (\Exception $e) {
                 Log::warning('Failed to convert MP3 to OGG', [

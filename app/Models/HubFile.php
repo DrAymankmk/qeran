@@ -65,21 +65,24 @@ class HubFile extends Model
     {
         /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
         $disk = Storage::disk(mediaDisk());
-        return $disk->url(trim($this->bucket_name.'/thumbnail/'.$this->path, '/'));
+        // return $disk->url(trim($this->bucket_name.'/thumbnail/'.$this->path, '/'));
+return $disk->temporaryUrl(trim($this->bucket_name.'/thumbnail/'.$this->path, '/'), now()->addMinutes(30));
     }
 
     public function get_medium_path()
     {
         /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
         $disk = Storage::disk(mediaDisk());
-        return $disk->url(trim($this->bucket_name.'/medium/'.$this->path, '/'));
+        // return $disk->url(trim($this->bucket_name.'/medium/'.$this->path, '/'));
+return $disk->temporaryUrl(trim($this->bucket_name.'/medium/'.$this->path, '/'), now()->addMinutes(30));
     }
 
     public function get_path()
     {
         /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
         $disk = Storage::disk(mediaDisk());
-        return $disk->url(trim($this->bucket_name.'/'.$this->path, '/'));
+        // return $disk->url(trim($this->bucket_name.'/'.$this->path, '/'));
+return $disk->temporaryUrl(trim($this->bucket_name.'/'.$this->path, '/'), now()->addMinutes(30));
     }
 
     public function get_size()

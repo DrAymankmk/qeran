@@ -562,6 +562,30 @@
 @push('scripts')
 <script>
 jQuery(document).ready(function($) {
+	var $designModal = $('#designModal');
+	// Move out of .l-theme (overflow/stacking); theme chrome uses z-index ~99999 vs Bootstrap's 1050
+	if ($designModal.length && $designModal.parent()[0] !== document.body) {
+		$designModal.appendTo(document.body);
+	}
+	if ($designModal.length) {
+		$designModal.on('shown.bs.modal', function () {
+			var $m = $(this);
+			var url = $m.data('pendingDesignVideoSrc');
+			var vidEl = document.getElementById('modalDesignVideo');
+			if (!url || !vidEl) {
+				return;
+			}
+			$m.removeData('pendingDesignVideoSrc');
+			vidEl.src = url;
+			vidEl.load();
+		});
+
+		// Native video controls can bubble oddly; don't let clicks reach Bootstrap's modal-shell dismiss logic
+		$designModal.on('mousedown touchstart click', '#modalDesignVideo', function (e) {
+			e.stopPropagation();
+		});
+	}
+
 	// Use event delegation to handle clicks on dynamically loaded content
 	$(document).on('click', '.design-item', function(e) {
 		e.preventDefault();
@@ -588,13 +612,21 @@ jQuery(document).ready(function($) {
 		var $modalVideo = $('#modalDesignVideo');
 		if (mediaType === 'video') {
 			$modalImg.hide().attr('src', '');
-			$modalVideo.show().attr('src', designImage);
 			var vidEl = $modalVideo[0];
 			if (vidEl) {
-				vidEl.load();
-				vidEl.play().catch(function() {});
+				vidEl.pause();
+				vidEl.removeAttribute('src');
 			}
+			$modalVideo.show();
+
+			var resolvedUrl = designImage;
+			var gridVid = $item.find('video').get(0);
+			if (gridVid && gridVid.currentSrc) {
+				resolvedUrl = gridVid.currentSrc;
+			}
+			$modal.data('pendingDesignVideoSrc', resolvedUrl);
 		} else {
+			$modal.removeData('pendingDesignVideoSrc');
 			$modalVideo.hide();
 			var v = $modalVideo[0];
 			if (v) {
@@ -621,9 +653,9 @@ jQuery(document).ready(function($) {
 			$codeContainer.hide();
 		}
 
-		// Show modal using Bootstrap
+		// Static backdrop: clicking outside the dialog won't close (fixes accidental dismiss when using video controls)
 		$modal.modal({
-			backdrop: true,
+			backdrop: 'static',
 			keyboard: true,
 			show: true
 		});
@@ -633,6 +665,7 @@ jQuery(document).ready(function($) {
 
 	// Handle modal close - ensure backdrop is removed
 	$('#designModal').on('hidden.bs.modal', function() {
+		$(this).removeData('pendingDesignVideoSrc');
 		$(this).removeClass('in');
 		$('body').removeClass('modal-open');
 		$('.modal-backdrop').remove();
@@ -648,11 +681,6 @@ jQuery(document).ready(function($) {
 	// Ensure close buttons work
 	$('#designModal').on('click', '.close, [data-dismiss="modal"]', function(e) {
 		e.preventDefault();
-		$('#designModal').modal('hide');
-	});
-
-	// Handle backdrop clicks to close modal
-	$(document).on('click', '.modal-backdrop', function() {
 		$('#designModal').modal('hide');
 	});
 

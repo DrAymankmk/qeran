@@ -1015,4 +1015,6 @@ return[
 'original-name'=>'اسم الملف الأصلي',
 'related-to'=>'المرتبط ب',
 'folder'=>'المجلد',
+    'php-ini-limits-summary' => 'حدود PHP للرفع وتشغيل السكربت (هذا الخادم)',
+    'php-ini-loaded-file' => 'ملف php.ini المحمّل',
 ];

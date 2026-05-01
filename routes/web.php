@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DesignsController;
 use App\Http\Controllers\Admin\TestimonialsController;
 use App\Http\Controllers\Admin\MediaController;
+use App\Http\Controllers\Admin\MediaDirectUploadController;
 use App\Http\Controllers\Admin\ContactsController;
 use App\Http\Controllers\Admin\InvitationRequestController;
 use App\Http\Controllers\Admin\InvitationsController;
@@ -214,10 +215,12 @@ Route::group(['prefix' => 'admin', 'middleware' => 'set.admin.locale'], function
         });
         Route::resource('category', CategoryController::class);
         Route::get('category/export/pdf', [CategoryController::class, 'exportPdf'])->name('category.export.pdf');
-        Route::resource('designs', DesignsController::class);
+        Route::resource('designs', DesignsController::class)->middleware('design.upload.timeouts');
         Route::resource('testimonials', TestimonialsController::class);
         // Media proxy route must be defined before resource route with more specific path
         Route::get('media/proxy/file', [MediaController::class, 'proxy'])->name('media.proxy');
+        Route::post('media/direct-upload/presign', [MediaDirectUploadController::class, 'presign'])
+            ->name('media.direct-upload.presign');
         Route::resource('media', MediaController::class)->parameters([
             'media' => 'medium'
         ]);

@@ -769,4 +769,6 @@ return[
     'audio-file-error' => 'Audio file error',
     'ready-to-play' => 'Ready to play',
     'can-play' => 'Can play',
+    'php-ini-limits-summary' => 'PHP upload & runtime limits (this server)',
+    'php-ini-loaded-file' => 'Loaded php.ini',
 ];

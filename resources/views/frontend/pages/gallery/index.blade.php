@@ -216,7 +216,7 @@
 
 <!-- Design Modal -->
 <div class="modal fade" id="designModal" tabindex="-1" role="dialog" aria-labelledby="designModalLabel"
-	aria-hidden="true">
+	aria-hidden="true" data-backdrop="static" data-keyboard="true">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -252,6 +252,28 @@
 @push('scripts')
 <script>
 jQuery(document).ready(function($) {
+	var $designModal = $('#designModal');
+	if ($designModal.length && $designModal.parent()[0] !== document.body) {
+		$designModal.appendTo(document.body);
+	}
+	if ($designModal.length) {
+		$designModal.on('shown.bs.modal', function () {
+			var $m = $(this);
+			var url = $m.data('pendingDesignVideoSrc');
+			var vidEl = document.getElementById('modalDesignVideo');
+			if (!url || !vidEl) {
+				return;
+			}
+			$m.removeData('pendingDesignVideoSrc');
+			vidEl.src = url;
+			vidEl.load();
+		});
+
+		$designModal.on('mousedown touchstart click', '#modalDesignVideo', function (e) {
+			e.stopPropagation();
+		});
+	}
+
 	$(document).on('click', '.design-item', function(e) {
 		e.preventDefault();
 		e.stopPropagation();
@@ -267,17 +289,26 @@ jQuery(document).ready(function($) {
 		if ($modal.length === 0) {
 			return false;
 		}
+
 		var $modalImg = $('#modalDesignImage');
 		var $modalVideo = $('#modalDesignVideo');
 		if (mediaType === 'video') {
 			$modalImg.hide().attr('src', '');
-			$modalVideo.show().attr('src', designImage);
 			var vidEl = $modalVideo[0];
 			if (vidEl) {
-				vidEl.load();
-				vidEl.play().catch(function() {});
+				vidEl.pause();
+				vidEl.removeAttribute('src');
 			}
+			$modalVideo.show();
+
+			var resolvedUrl = designImage;
+			var gridVid = $item.find('video').get(0);
+			if (gridVid && gridVid.currentSrc) {
+				resolvedUrl = gridVid.currentSrc;
+			}
+			$modal.data('pendingDesignVideoSrc', resolvedUrl);
 		} else {
+			$modal.removeData('pendingDesignVideoSrc');
 			$modalVideo.hide();
 			var v = $modalVideo[0];
 			if (v) {
@@ -299,10 +330,11 @@ jQuery(document).ready(function($) {
 		} else {
 			$codeContainer.hide();
 		}
-		$modal.modal({ backdrop: true, keyboard: true, show: true });
+		$modal.modal({ backdrop: 'static', keyboard: true, show: true });
 		return false;
 	});
 	$('#designModal').on('hidden.bs.modal', function() {
+		$(this).removeData('pendingDesignVideoSrc');
 		$(this).removeClass('in');
 		$('body').removeClass('modal-open');
 		$('.modal-backdrop').remove();

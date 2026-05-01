@@ -5,6 +5,7 @@ namespace App\Http\Requests\Admin;
 use App\Helpers\Constant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\File;
+use Illuminate\Validation\Validator;
 
 class DesignRequest extends FormRequest
 {
@@ -16,6 +17,14 @@ class DesignRequest extends FormRequest
     public function authorize()
     {
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $token = $this->input('media_upload_token');
+        if ($token === '' || $token === null) {
+            $this->merge(['media_upload_token' => null]);
+        }
     }
 
     /**
@@ -46,6 +55,7 @@ class DesignRequest extends FormRequest
             'category_id' => __('validation.attributes.design_category_id'),
             'code' => __('validation.attributes.design_code'),
             'image' => __('validation.attributes.design_media'),
+            'media_upload_token' => __('validation.attributes.design_media_upload_token'),
             'show_on' => __('validation.attributes.design_show_on'),
             'show_on.*' => __('validation.attributes.design_show_on_page'),
             'en.name' => __('validation.attributes.design_name_en'),

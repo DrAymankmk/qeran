@@ -38,6 +38,7 @@
             <div class="card">
                 <div class="card-body">
                     <x-validation-errors />
+                    @include('pages.designs.partials.php-ini-upload-limits')
                     <div class="crypto-buy-sell-nav">
 
                         <form action="{{route('designs.store')}}" method="post" enctype="multipart/form-data">
@@ -93,6 +94,7 @@
                                                 <input type="file" name="image" accept="image/*,video/*"
                                                        class="form-control" id="image">
                                                 <small class="form-text text-muted">{{ __('admin.image-or-video-help', ['max' => (int) round(\App\Helpers\Constant::DESIGN_MEDIA_MAX_UPLOAD_KB / 1024)]) }}</small>
+                                                @include('pages.designs.partials.media-direct-upload')
                                             </div>
                                         </div>
                                         <div class="col-sm-12">

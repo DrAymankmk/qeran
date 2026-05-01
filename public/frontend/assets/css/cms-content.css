@@ -186,11 +186,21 @@
     }
 }
 
+/* Design modal: Bootstrap default z-index (1050) sits below theme header/slidebar (~99999), blocking clicks */
+body.modal-open > .modal-backdrop.in {
+    z-index: 100055 !important;
+}
+
+#designModal.modal {
+    z-index: 100060 !important;
+}
+
 /* Design details modal (home + gallery): compact media, centered in dialog */
 #designModal .modal-dialog {
     max-width: 560px;
     margin-left: auto;
     margin-right: auto;
+    pointer-events: auto;
 }
 
 #designModal .design-modal-media-wrap {

@@ -39,6 +39,7 @@
 	<div class="col-12">
 		<div class="card">
 			<div class="card-body">
+				@include('pages.designs.partials.php-ini-upload-limits')
 				<form action="{{route('designs.update',$design->id)}}" method="post"
 					enctype="multipart/form-data">
 					@method('PATCH')
@@ -153,6 +154,7 @@
 											class="form-control"
 											id="image">
 										<small class="form-text text-muted">{{ __('validation.design_media_replace_help', ['max' => (int) round(\App\Helpers\Constant::DESIGN_MEDIA_MAX_UPLOAD_KB / 1024)]) }}</small>
+										@include('pages.designs.partials.media-direct-upload')
 									</div>
 								</div>
 								<div class="col-sm-12">

@@ -73,5 +73,6 @@ class Kernel extends HttpKernel
         'localeViewPath'          => \Mcamara\LaravelLocalization\Middleware\LaravelLocalizationViewPath::class,
         'set.admin.locale'        => \App\Http\Middleware\SetAdminLocale::class,
         'docs.auth'               => \App\Http\Middleware\ProtectDocsWithBasicAuth::class,
+        'design.upload.timeouts'  => \App\Http\Middleware\ExtendTimeoutForDesignMediaUploads::class,
     ];
 }

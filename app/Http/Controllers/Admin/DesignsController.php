@@ -9,7 +9,10 @@ use App\Models\Category;
 use App\Models\Design;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class DesignsController extends Controller
 {
@@ -81,17 +84,26 @@ class DesignsController extends Controller
         }
 
         // Remove translation data from main data
-        unset($validated['en'], $validated['ar'], $validated['image']);
+        unset($validated['en'], $validated['ar'], $validated['image'], $validated['media_upload_token']);
 
-        $design = Design::create($validated);
+        try {
+            $design = DB::transaction(function () use ($request, $validated, $enData, $arData) {
+                $design = Design::create($validated);
 
-        // Save translations
-        $design->translateOrNew('en')->name = $enData['name'];
-        $design->translateOrNew('ar')->name = $arData['name'];
-        $design->save();
+                $design->translateOrNew('en')->name = $enData['name'];
+                $design->translateOrNew('ar')->name = $arData['name'];
+                $design->save();
 
-        if ($request->hasFile('image')) {
-            $this->storeDesignMedia($request->file('image'), $design);
+                if ($request->filled('media_upload_token') && ! $request->hasFile('image')) {
+                    $this->attachDesignMediaFromDirectToken($design, $request->string('media_upload_token')->toString());
+                } elseif ($request->hasFile('image')) {
+                    $this->storeDesignMedia($request->file('image'), $design);
+                }
+
+                return $design;
+            });
+        } catch (ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->withInput();
         }
 
         return redirect()->route('designs.index', ['category_id' => $design->category_id])->with('success', 'Created');
@@ -156,18 +168,26 @@ class DesignsController extends Controller
         }
 
         // Remove translation data from main data
-        unset($validated['en'], $validated['ar'], $validated['image']);
+        unset($validated['en'], $validated['ar'], $validated['image'], $validated['media_upload_token']);
 
-        $design->update($validated);
+        try {
+            DB::transaction(function () use ($request, $design, $validated, $enData, $arData) {
+                $design->update($validated);
 
-        // Save translations
-        $design->translateOrNew('en')->name = $enData['name'];
-        $design->translateOrNew('ar')->name = $arData['name'];
-        $design->save();
+                $design->translateOrNew('en')->name = $enData['name'];
+                $design->translateOrNew('ar')->name = $arData['name'];
+                $design->save();
 
-        if ($request->hasFile('image')) {
-            $this->removeDesignMediaFiles($design);
-            $this->storeDesignMedia($request->file('image'), $design);
+                if ($request->filled('media_upload_token') && ! $request->hasFile('image')) {
+                    $this->removeDesignMediaFiles($design);
+                    $this->attachDesignMediaFromDirectToken($design, $request->string('media_upload_token')->toString());
+                } elseif ($request->hasFile('image')) {
+                    $this->removeDesignMediaFiles($design);
+                    $this->storeDesignMedia($request->file('image'), $design);
+                }
+            });
+        } catch (ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->withInput();
         }
 
         return redirect()->route('designs.index', ['category_id' => $design->category_id])->with('success', 'Updated');
@@ -207,6 +227,60 @@ class DesignsController extends Controller
             'folderName' => Constant::DESIGN_IMAGE_FOLDER_NAME,
             'model' => $design,
             'saveInDatabase' => true,
+        ]);
+    }
+
+    /**
+     * Attach video metadata after the browser uploaded the object via presigned PUT (Wasabi/S3).
+     */
+    private function attachDesignMediaFromDirectToken(Design $design, string $token): void
+    {
+        $cacheKey = 'media_direct_upload:'.$token;
+        $payload = Cache::get($cacheKey);
+
+        if (! is_array($payload)
+            || ($payload['disk'] ?? '') !== mediaDisk()
+            || ($payload['bucket_name'] ?? '') !== Constant::DESIGN_IMAGE_FOLDER_NAME) {
+            throw ValidationException::withMessages([
+                'image' => [__('validation.design_direct_upload_invalid')],
+            ]);
+        }
+
+        $disk = Storage::disk(mediaDisk());
+        $relativeKey = $payload['relative_key'];
+
+        if (! $disk->exists($relativeKey)) {
+            throw ValidationException::withMessages([
+                'image' => [__('validation.design_direct_upload_missing')],
+            ]);
+        }
+
+        $actualSize = $disk->size($relativeKey);
+        if ($actualSize !== (int) $payload['expected_size']) {
+            try {
+                $disk->delete($relativeKey);
+            } catch (\Throwable $e) {
+            }
+
+            throw ValidationException::withMessages([
+                'image' => [__('validation.design_direct_upload_size')],
+            ]);
+        }
+
+        Cache::forget($cacheKey);
+
+        $mime = $payload['mime'];
+        $storedMime = ($mime === 'video/quicktime' ? 'video/mp4' : $mime);
+
+        $design->hubFiles()->updateOrCreate([
+            'bucket_name' => $payload['bucket_name'],
+            'original_name' => $payload['original_name'],
+            'path' => $payload['filename'],
+            'extension' => $payload['extension'],
+            'size' => $actualSize,
+            'getMimeType' => $storedMime,
+            'file_type' => Constant::FILE_TYPE['Video'],
+            'file_key' => Constant::FILE_KEY['Not Main'],
         ]);
     }
 

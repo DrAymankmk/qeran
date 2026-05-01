@@ -68,6 +68,11 @@ return [
             'url' => env('WASABI_URL'), // optional: CDN URL or custom domain
             'use_path_style_endpoint' => env('WASABI_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => false,
+            // Long timeouts for large objects when the server still proxies uploads (e.g. images / non-direct flows).
+            'http' => [
+                'connect_timeout' => 30,
+                'timeout' => (int) env('WASABI_HTTP_TIMEOUT', 3600),
+            ],
         ],
 
     ],

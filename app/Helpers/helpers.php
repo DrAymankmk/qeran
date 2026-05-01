@@ -148,10 +148,8 @@ if (!function_exists('storeVideo')) {
             $ext = strtolower($options['value']->getClientOriginalExtension() ?: 'mp4');
             $filename = time() . substr(str_shuffle("0123456789abcdefghijklmnopqrstvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 5) . '.' . $ext;
 
-            Storage::disk(mediaDisk())->put(
-                $options['folderName'] . '/' . $filename,
-                file_get_contents($options['value']->getRealPath())
-            );
+            // Stream from temp upload instead of file_get_contents() — avoids loading the whole file into memory.
+            Storage::disk(mediaDisk())->putFileAs($options['folderName'], $options['value'], $filename);
 
             $options['model']->hubFiles()->updateOrCreate([
                 'bucket_name' => $options['folderName'],
@@ -174,10 +172,7 @@ if (!function_exists('storeGif')) {
 
             $filename = time() . substr(str_shuffle("0123456789abcdefghijklmnopqrstvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 5) . '.gif';
 
-            Storage::disk(mediaDisk())->put(
-                $options['folderName'] . '/' . $filename,
-                file_get_contents($options['value']->getRealPath())
-            );
+            Storage::disk(mediaDisk())->putFileAs($options['folderName'], $options['value'], $filename);
 
             $options['model']->hubFiles()->updateOrCreate([
                 'bucket_name' => $options['folderName'],
@@ -648,8 +643,29 @@ if (!function_exists('asset_versioned')) {
 
 // media 
 
-if(!function_exists('mediaDisk')){
-	function mediaDisk(): string {
-	return (string) config('filesystems.media_disk', 'public');
-	}
+if (! function_exists('mediaDisk')) {
+    function mediaDisk(): string
+    {
+        return (string) config('filesystems.media_disk', 'public');
+    }
+}
+
+if (! function_exists('mediaDiskSupportsDirectUpload')) {
+    /**
+     * True when media is stored on S3-compatible disk (Wasabi, AWS S3) and presigned uploads are supported.
+     */
+    function mediaDiskSupportsDirectUpload(): bool
+    {
+        $name = mediaDisk();
+        $cfg = config("filesystems.disks.{$name}", []);
+        if (($cfg['driver'] ?? '') !== 's3') {
+            return false;
+        }
+
+        try {
+            return method_exists(Storage::disk($name), 'temporaryUploadUrl');
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
 }

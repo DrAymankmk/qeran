@@ -231,9 +231,9 @@ $designsSection = $homePage->activeSections->where('name', 'designs')->first();
 			gallery</a></div> -->
 </section>
 
-<!-- Design Modal -->
+<!-- Design Modal (static backdrop: avoids Bootstrap closing when interacting with native video controls) -->
 <div class="modal fade" id="designModal" tabindex="-1" role="dialog" aria-labelledby="designModalLabel"
-	aria-hidden="true">
+	aria-hidden="true" data-backdrop="static" data-keyboard="true">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">

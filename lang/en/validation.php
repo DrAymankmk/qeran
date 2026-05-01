@@ -204,6 +204,20 @@ return [
 
     'design_media_replace_help' => 'Leave empty to keep the current file. Maximum :max MB.',
 
+    'design_media_duplicate_upload_method' => 'Use either file upload or cloud direct upload—not both.',
+
+    'design_direct_upload_invalid' => 'The video upload session expired or is invalid. Please select the video again.',
+
+    'design_direct_upload_missing' => 'The video did not finish uploading to storage. Please try again.',
+
+    'design_direct_upload_size' => 'The uploaded file size did not match. Please try again.',
+
+    'design_direct_upload_wait' => 'Please wait until the video finishes uploading to cloud storage.',
+
+    'design_direct_upload_progress' => 'Uploading video directly to cloud storage…',
+
+    'design_direct_upload_done' => 'Video uploaded. Save the form when ready.',
+
     'design_no_media' => 'No media',
 
 ];

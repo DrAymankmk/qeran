@@ -14,8 +14,10 @@ use App\Http\Resources\User\UserResource;
 use App\Models\Invitation;
 use App\Models\User;
 use App\Models\VerificationCode;
+use App\Services\Auth\Exceptions\VerificationOtpDeliveryException;
 use App\Services\Auth\VerificationService;
 use App\Services\RespondActive;
+use Illuminate\Support\Facades\Log;
 use App\Traits\SendsNotificationAndEmail;
 use Carbon\Carbon;
 use Exception;
@@ -143,8 +145,15 @@ class AuthController extends Controller
                         $request->phone,
                         $request->country_code
                     );
+                } catch (VerificationOtpDeliveryException $exception) {
+                    return $this->otpDeliveryErrorResponse($exception, 'login_unverified');
                 } catch (Exception $exception) {
-                    return RespondActive::clientError(__('Wrong info!'));
+                    Log::error('OTP unexpected error on login', [
+                        'user_id' => $user->id,
+                        'error' => $exception->getMessage(),
+                    ]);
+
+                    return RespondActive::clientError(__('messages.otp_unexpected_error'));
                 }
 
                 return RespondActive::clientNotActivated('Code sent');
@@ -190,8 +199,15 @@ class AuthController extends Controller
                 $request->phone,
                 $request->country_code
             );
+        } catch (VerificationOtpDeliveryException $exception) {
+            return $this->otpDeliveryErrorResponse($exception, 'register');
         } catch (Exception $exception) {
-            return RespondActive::clientError(__('Wrong info!'));
+            Log::error('OTP unexpected error on register', [
+                'user_id' => $user->id,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return RespondActive::clientError(__('messages.otp_unexpected_error'));
         }
         $user['token'] = $user->createToken('token'.$user->id)->plainTextToken;
 
@@ -229,19 +245,51 @@ class AuthController extends Controller
             $user = User::checkUserExist($request->phone)->first();
         }
 
+        if (! $user) {
+            Log::warning('sendCode: user not found for phone', [
+                'phone_masked' => substr((string) $request->phone, -4),
+                'country_code' => $request->country_code,
+            ]);
+
+            return RespondActive::clientError(__('messages.otp_user_not_found'));
+        }
+
         try {
             VerificationService::verifyAccount(
-                $user?->id,
+                $user->id,
                 $request->type ?? Constant::VERIFICATION_OBJECTIVE['Verify'],
                 Constant::VERIFICATION_INFORMATION_TYPE['Phone'],
                 $request->phone,
                 $request->country_code
             );
+        } catch (VerificationOtpDeliveryException $exception) {
+            return $this->otpDeliveryErrorResponse($exception, 'send_code');
         } catch (Exception $exception) {
-            return RespondActive::clientError(__('Wrong phone number!'));
+            Log::error('OTP unexpected error on sendCode', [
+                'user_id' => $user->id,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return RespondActive::clientError(__('messages.otp_unexpected_error'));
         }
 
         return RespondActive::success(__('Code sent successfully.'));
+    }
+
+    protected function otpDeliveryErrorResponse(VerificationOtpDeliveryException $exception, string $flow): \Illuminate\Http\JsonResponse
+    {
+        Log::warning('OTP delivery failed', array_merge([
+            'flow' => $flow,
+            'reason' => $exception->reason,
+        ], $exception->context));
+
+        $message = $exception->getMessage();
+
+        if (config('app.debug') && ! empty($exception->context['gateway_error'])) {
+            $message .= ' ('.$exception->context['gateway_error'].')';
+        }
+
+        return RespondActive::clientError($message);
     }
 
     public function verifyCode(VerifyUserConfirmationCodeRequest $request)

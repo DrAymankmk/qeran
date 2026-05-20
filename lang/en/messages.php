@@ -77,4 +77,13 @@ return [
     'whatsapp_pairing_step_1' => 'Open WhatsApp on the same phone.',
     'whatsapp_pairing_step_2' => 'Linked devices → Link a device → Link with phone number.',
     'whatsapp_pairing_step_3' => 'Enter the pairing code shown in the app (not your Qeran OTP).',
+
+    'otp_user_not_found' => 'No user found for this phone number.',
+    'otp_gateway_not_configured' => 'WhatsApp service is not configured on the server.',
+    'otp_gateway_unreachable' => 'Could not reach the WhatsApp gateway. Try again later.',
+    'otp_system_whatsapp_not_connected' => 'Qeran verification WhatsApp is not connected. Try again later or contact support.',
+    'otp_whatsapp_send_failed' => 'Could not send verification code via WhatsApp. Make sure the number has WhatsApp.',
+    'otp_invalid_phone' => 'Invalid phone number.',
+    'otp_email_send_failed' => 'Could not send verification code by email.',
+    'otp_unexpected_error' => 'An error occurred while sending the verification code.',
 ];

@@ -245,6 +245,7 @@ class AuthController extends Controller
             $user = User::checkUserExist($request->phone)->first();
         }
 
+        \Log::info('sendCode: user', ['user' => $user]);
         // if (! $user) {
         //     Log::warning('sendCode: user not found for phone', [
         //         'phone_masked' => substr((string) $request->phone, -4),

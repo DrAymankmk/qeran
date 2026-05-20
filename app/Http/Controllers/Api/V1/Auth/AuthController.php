@@ -239,6 +239,8 @@ class AuthController extends Controller
 
     public function sendCode(SendUserConfirmationCodeRequest $request)
     {
+
+        \Log::info('sendCode: request', ['request' => $request->all()]);
         if (auth('sanctum')->user()) {
             $user = auth('sanctum')->user();
         } else {

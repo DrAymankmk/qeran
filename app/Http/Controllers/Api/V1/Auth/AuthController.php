@@ -153,6 +153,7 @@ class AuthController extends Controller
                 $user['token'] = $user->createToken('token'.$user->id)->plainTextToken;
                 $user['event_name'] = $invitationName;
 
+
                 return RespondActive::success('Logged in successfully', new UserResource($user));
 
             default:

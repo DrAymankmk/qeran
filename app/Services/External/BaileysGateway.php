@@ -32,6 +32,22 @@ class BaileysGateway
         ]);
     }
 
+    public static function normalizeUserPhone(?string $countryCode, ?string $phone, ?string $override = null): string
+    {
+        if ($override !== null && $override !== '') {
+            return preg_replace('/\D+/', '', $override);
+        }
+
+        $cc = preg_replace('/\D+/', '', (string) $countryCode);
+        $local = preg_replace('/\D+/', '', (string) $phone);
+
+        if ($cc !== '' && str_starts_with($local, $cc)) {
+            return $local;
+        }
+
+        return $cc.$local;
+    }
+
     public static function startSessionWithPairing(string $sessionId, string $phone): array
     {
         return self::request('post', '/sessions', [

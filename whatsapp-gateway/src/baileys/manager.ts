@@ -40,6 +40,11 @@ function sessionPath(sessionId: string): string {
   return path.join(sessionsDir(), safe);
 }
 
+function sessionAuthExists(sessionId: string): boolean {
+  const dir = sessionPath(sessionId);
+  return fs.existsSync(path.join(dir, 'creds.json'));
+}
+
 export function normalizePhoneDigits(phone: string): string {
   let digits = phone.replace(/\D/g, '');
   if (digits.startsWith('00')) {
@@ -66,6 +71,41 @@ export function getPairingCode(sessionId: string): string | undefined {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function endSocket(meta: SessionMeta): void {
+  if (meta.sock) {
+    try {
+      meta.sock.end(undefined);
+    } catch {
+      // ignore
+    }
+    meta.sock = undefined;
+  }
+}
+
+function wipeSessionAuth(sessionId: string): void {
+  const meta = sessions.get(sessionId);
+  if (meta) {
+    endSocket(meta);
+    sessions.delete(sessionId);
+  }
+  const dir = sessionPath(sessionId);
+  if (fs.existsSync(dir)) {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+async function waitForConnected(sessionId: string, timeoutMs: number): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const meta = sessions.get(sessionId);
+    if (meta?.status === 'connected') {
+      return true;
+    }
+    await sleep(500);
+  }
+  return false;
 }
 
 export async function waitForQrOrConnected(
@@ -180,6 +220,65 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
   return sock;
 }
 
+async function requestPairingCodeWithRetry(sock: WASocket, digits: string, sessionId: string): Promise<string> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    try {
+      await sleep(attempt * 1500);
+      const code = await sock.requestPairingCode(digits);
+      logger.info({ sessionId, attempt }, 'Pairing code ready');
+      return code;
+    } catch (err) {
+      lastError = err;
+      logger.warn({ sessionId, attempt, err }, 'requestPairingCode attempt failed');
+    }
+  }
+
+  const message = lastError instanceof Error ? lastError.message : 'requestPairingCode failed';
+  throw new Error(message);
+}
+
+async function runPairingFlow(sessionId: string, digits: string, fresh: boolean): Promise<SessionMeta> {
+  if (fresh) {
+    wipeSessionAuth(sessionId);
+  } else {
+    const existing = sessions.get(sessionId);
+    if (existing?.sock) {
+      endSocket(existing);
+    }
+  }
+
+  const meta: SessionMeta = {
+    sessionId,
+    status: 'starting',
+    qr: undefined,
+    pairingCode: undefined,
+    linkPhone: digits,
+    phone: undefined,
+    sock: undefined,
+  };
+  sessions.set(sessionId, meta);
+
+  const sock = await createSocket(sessionId, meta);
+
+  if (sock.authState.creds.registered) {
+    const reconnected = await waitForConnected(sessionId, 15_000);
+    if (reconnected) {
+      return meta;
+    }
+    logger.warn({ sessionId }, 'Stale registered session — wiping for fresh pairing');
+    wipeSessionAuth(sessionId);
+    return runPairingFlow(sessionId, digits, true);
+  }
+
+  const code = await requestPairingCodeWithRetry(sock, digits, sessionId);
+  meta.pairingCode = code;
+  meta.status = 'pending_pairing';
+
+  return meta;
+}
+
 export async function startSession(sessionId: string): Promise<SessionMeta> {
   const existing = sessions.get(sessionId);
   if (existing?.status === 'connected') {
@@ -245,42 +344,7 @@ export async function startSessionWithPairing(
     return inFlight;
   }
 
-  const promise = (async (): Promise<SessionMeta> => {
-    let meta = sessions.get(sessionId);
-    if (!meta) {
-      meta = {
-        sessionId,
-        status: 'starting',
-        qr: undefined,
-        pairingCode: undefined,
-        linkPhone: digits,
-        phone: undefined,
-        sock: undefined,
-      };
-      sessions.set(sessionId, meta);
-    } else {
-      meta.status = 'starting';
-      meta.linkPhone = digits;
-      meta.pairingCode = undefined;
-    }
-
-    const sock = meta.sock ?? (await createSocket(sessionId, meta));
-    await sleep(2000);
-
-    if (meta.status !== 'connected' && !sock.authState.creds.registered) {
-      try {
-        const code = await sock.requestPairingCode(digits);
-        meta.pairingCode = code;
-        meta.status = 'pending_pairing';
-        logger.info({ sessionId }, 'Pairing code ready');
-      } catch (err) {
-        logger.error({ sessionId, err }, 'requestPairingCode failed');
-        throw err;
-      }
-    }
-
-    return meta;
-  })();
+  const promise = runPairingFlow(sessionId, digits, sessionAuthExists(sessionId));
 
   startPromises.set(sessionId, promise);
 

@@ -8,6 +8,7 @@ use App\Services\External\BaileysGateway;
 use App\Services\RespondActive;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class WhatsAppConnectController extends Controller
 {
@@ -18,10 +19,11 @@ class WhatsAppConnectController extends Controller
         }
 
         $user = auth()->user();
-        $phone = preg_replace('/\D+/', '', (string) (
+        $phone = BaileysGateway::normalizeUserPhone(
+            $user->country_code,
+            $user->phone,
             $request->input('phone')
-            ?? ($user->country_code.$user->phone)
-        ));
+        );
 
         if ($phone === '') {
             return RespondActive::clientError(__('messages.whatsapp_phone_required'));
@@ -32,7 +34,16 @@ class WhatsAppConnectController extends Controller
         $result = BaileysGateway::startSessionWithPairing($sessionId, $phone);
 
         if (! $result['ok']) {
-            return RespondActive::clientError($result['error'] ?? __('messages.whatsapp_connect_failed'));
+            Log::warning('WhatsApp connect: gateway start failed', [
+                'user_id' => $user->id,
+                'session_id' => $sessionId,
+                'phone' => $phone,
+                'error' => $result['error'] ?? null,
+            ]);
+
+            return RespondActive::clientError(
+                $this->formatGatewayError($result['error'] ?? null, __('messages.whatsapp_connect_failed'))
+            );
         }
 
         $data = $result['data'] ?? [];
@@ -49,11 +60,15 @@ class WhatsAppConnectController extends Controller
         }
 
         $pairingCode = $data['pairingCode'] ?? null;
+        $pairingError = null;
+
         if (! $pairingCode) {
             $pairing = BaileysGateway::getPairingCode($sessionId, $phone);
             if ($pairing['ok']) {
                 $pairingCode = $pairing['data']['pairingCode'] ?? null;
                 $status = $pairing['data']['status'] ?? $status;
+            } else {
+                $pairingError = $pairing['error'] ?? null;
             }
         }
 
@@ -68,7 +83,21 @@ class WhatsAppConnectController extends Controller
         }
 
         if (! $pairingCode) {
-            return RespondActive::clientError(__('messages.whatsapp_pairing_code_failed'));
+            Log::warning('WhatsApp connect: pairing code missing', [
+                'user_id' => $user->id,
+                'session_id' => $sessionId,
+                'phone' => $phone,
+                'gateway_status' => $status,
+                'start_response' => $data,
+                'pairing_error' => $pairingError,
+            ]);
+
+            return RespondActive::clientError(
+                $this->formatGatewayError(
+                    $pairingError ?? ($data['error'] ?? null),
+                    __('messages.whatsapp_pairing_code_failed')
+                )
+            );
         }
 
         return RespondActive::success(__('messages.whatsapp_pairing_code_ready'), [
@@ -131,6 +160,19 @@ class WhatsAppConnectController extends Controller
         ]);
 
         return RespondActive::success(__('messages.whatsapp_disconnected'));
+    }
+
+    protected function formatGatewayError(?string $gatewayError, string $fallback): string
+    {
+        if (! $gatewayError) {
+            return $fallback;
+        }
+
+        if (config('app.debug')) {
+            return $fallback.' ('.$gatewayError.')';
+        }
+
+        return $fallback;
     }
 
     protected function syncSessionRecord(int $userId, string $sessionId, string $status, ?string $phone): void

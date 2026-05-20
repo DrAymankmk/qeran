@@ -57,6 +57,23 @@ class BaileysGateway
         ]);
     }
 
+    public static function gatewaySupportsPairing(): bool
+    {
+        if (! self::isConfigured()) {
+            return false;
+        }
+
+        try {
+            $response = Http::timeout(10)->get(self::baseUrl().'/health');
+            $json = $response->json();
+
+            return ($json['features']['pairingCode'] ?? false) === true
+                || version_compare((string) ($json['version'] ?? '0'), '1.2.1', '>=');
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
     public static function getPairingCode(string $sessionId, string $phone): array
     {
         $digits = preg_replace('/\D+/', '', $phone);
@@ -90,6 +107,10 @@ class BaileysGateway
             $message = is_array($json)
                 ? ($json['error'] ?? $response->body())
                 : $response->body();
+
+            if (is_string($message) && str_contains($message, 'Cannot GET') && str_contains($message, 'pairing-code')) {
+                $message = 'Gateway is outdated — deploy whatsapp-gateway v1.2.1+ and restart PM2 (missing /pairing-code route).';
+            }
 
             return [
                 'ok' => false,

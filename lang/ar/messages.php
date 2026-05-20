@@ -63,6 +63,7 @@ return [
 	'price-required'=>'سعر الباقة مطلوب',
 
     'whatsapp_gateway_not_configured' => 'بوابة واتساب غير مهيأة.',
+    'whatsapp_gateway_outdated' => 'بوابة واتساب على السيرفر قديمة. حدّث whatsapp-gateway إلى v1.2.1+ وأعد تشغيل PM2.',
     'whatsapp_phone_required' => 'رقم الهاتف مطلوب لربط واتساب.',
     'whatsapp_connect_failed' => 'تعذر بدء ربط واتساب.',
     'whatsapp_pairing_code_failed' => 'تعذر الحصول على رمز الربط. حاول مرة أخرى.',

@@ -72,6 +72,10 @@ app.get('/health', (_req, res) => {
     version: '1.2.1',
     qrSetupPage: QR_SETUP_PAGE_ENABLED,
     secretConfigured: Boolean(SECRET),
+    features: {
+      pairingCode: true,
+      qrPage: QR_SETUP_PAGE_ENABLED,
+    },
   });
 });
 

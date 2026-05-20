@@ -18,6 +18,12 @@ class WhatsAppConnectController extends Controller
             return RespondActive::clientError(__('messages.whatsapp_gateway_not_configured'));
         }
 
+        if (! BaileysGateway::gatewaySupportsPairing()) {
+            Log::error('WhatsApp connect: gateway missing pairing-code support');
+
+            return RespondActive::clientError(__('messages.whatsapp_gateway_outdated'));
+        }
+
         $user = auth()->user();
         $phone = BaileysGateway::normalizeUserPhone(
             $user->country_code,

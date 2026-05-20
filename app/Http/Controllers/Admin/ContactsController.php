@@ -9,7 +9,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Mail;
 use App\Helpers\Constant;
 use App\Services\External\Notification as PushNotificationService;
-use App\Services\External\TwilioWhatsApp;
+use App\Services\External\BaileysWhatsApp;
 use Carbon\Carbon;
 use Mpdf\Mpdf;
 use Illuminate\Support\Facades\Log;
@@ -84,7 +84,7 @@ class ContactsController extends Controller
                 $message .= "{$request->message}\n\n";
                 $message .= "شكراً لتواصلك معنا!";
 
-                $response = TwilioWhatsApp::send($phone, $message);
+                $response = BaileysWhatsApp::send($phone, $message);
                 
                 // Check if message was sent successfully
                 if (isset($response->sent) && $response->sent === 'false') {

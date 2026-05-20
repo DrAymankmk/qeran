@@ -43,4 +43,10 @@ return [
         'whatsapp_messaging_service_sid' => env('TWILIO_WHATSAPP_MESSAGING_SERVICE_SID'),
     ],
 
+    'baileys' => [
+        'gateway_url' => env('BAILEYS_GATEWAY_URL', 'http://127.0.0.1:3000'),
+        'gateway_secret' => env('BAILEYS_GATEWAY_SECRET'),
+        'system_session' => env('BAILEYS_SYSTEM_SESSION', 'system'),
+    ],
+
 ];

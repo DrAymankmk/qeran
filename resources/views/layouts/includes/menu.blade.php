@@ -248,6 +248,12 @@
 							{{__('translations.manage-translations')}}
 						</a>
 					</li>
+					<li @if(Route::is('admin.whatsapp-system.*')) class="mm-active" @endif>
+						<a href="{{ route('admin.whatsapp-system.index') }}">
+							<i class="bx bx-right-arrow-alt"></i>
+							{{ __('admin.menu-whatsapp-system') }}
+						</a>
+					</li>
 				</ul>
 			</li>
 			@endcan

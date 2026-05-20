@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Admin\PromoCodeController;
 use App\Http\Controllers\Admin\RolesController;
 use App\Http\Controllers\Admin\UsersController;
+use App\Http\Controllers\Admin\WhatsAppSystemController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\AboutController;
 use App\Http\Controllers\Frontend\ServiceController;
@@ -202,6 +203,13 @@ Route::group(['prefix' => 'admin', 'middleware' => 'set.admin.locale'], function
             Route::get('/logout', 'logout')->name('admin.logout');
             Route::get('/profile', 'profile')->name('admin.profile');
             Route::post('/profile', 'updateProfile')->name('admin.profile.update');
+        });
+
+        Route::controller(WhatsAppSystemController::class)->prefix('whatsapp-system')->name('admin.whatsapp-system.')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/status', 'status')->name('status');
+            Route::post('/refresh-qr', 'refreshQr')->name('refresh-qr');
+            Route::post('/disconnect', 'disconnect')->name('disconnect');
         });
         Route::controller(ContactsController::class)->group(function () {
             Route::get('/contacts', 'index')->name('contact.index');

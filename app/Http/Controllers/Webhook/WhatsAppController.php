@@ -458,7 +458,7 @@ class WhatsAppController extends Controller
      */
     private function sendWhatsAppMessage($phone, $message)
     {
-        return \App\Services\External\TwilioWhatsApp::send($phone, $message);
+        return \App\Services\External\BaileysWhatsApp::send($phone, $message);
     }
 
     /**

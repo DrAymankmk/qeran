@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Profile\ProfileController;
 use App\Http\Controllers\Api\V1\Packages\PackageController;
 use App\Http\Controllers\Api\V1\Settings\GetSettings;
 use App\Http\Controllers\Api\V1\Settings\SetContactUs;
+use App\Http\Controllers\Api\V1\WhatsApp\WhatsAppConnectController;
 use App\Http\Controllers\Webhook\WhatsAppController;
 use App\Services\External\Notification;
 use Illuminate\Support\Facades\Route;
@@ -102,6 +103,12 @@ Route::prefix('/v1')->group(function () {
         Route::prefix('profile')->controller(ProfileController::class)->group(function () {
             Route::get('', 'show');
             Route::post('update', 'update');
+        });
+
+        Route::prefix('whatsapp')->controller(WhatsAppConnectController::class)->group(function () {
+            Route::post('connect', 'connect');
+            Route::get('status', 'status');
+            Route::post('disconnect', 'disconnect');
         });
 
 //             Route::get('/packages/{invitation}', 'packages');

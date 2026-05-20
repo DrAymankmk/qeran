@@ -7,7 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Setting\SetContactUsRequest;
 use App\Models\ContactUs;
 use App\Services\RespondActive;
-use App\Services\External\TwilioWhatsApp;
+use App\Services\External\BaileysWhatsApp;
 use App\Services\External\Notification;
 use Illuminate\Support\Facades\Log;
 use App\Traits\SendsNotificationAndEmail;
@@ -66,7 +66,7 @@ class SetContactUs extends Controller
             $message .= "الموضوع: {$request->subject}";
 
             // TwilioWhatsApp::send sends message directly
-            TwilioWhatsApp::send($phone, $message);
+            BaileysWhatsApp::send($phone, $message);
         } catch (\Exception $e) {
             // Log error but don't fail the request
             Log::error('Failed to send WhatsApp reply for contact us', [

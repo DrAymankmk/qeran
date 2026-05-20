@@ -31,8 +31,10 @@ use App\Models\InvitationPackage;
 use App\Models\Package;
 use App\Models\User;
 use App\Services\External\Notification;
+use App\Jobs\SendBaileysInvitationMessage;
+use App\Services\External\BaileysGateway;
+use App\Services\External\BaileysWhatsApp;
 use App\Services\External\TwilioSMS;
-use App\Services\External\TwilioWhatsApp;
 use App\Services\RespondActive;
 use App\Traits\SendsNotificationAndEmail;
 use Illuminate\Http\Request;
@@ -1073,51 +1075,48 @@ $invitation->delete();
 
     public function sendNotificationToUser(SendNotificationToUserRequest $request, Invitation $invitation)
     {
-        if ($invitation->users()->count() > 0) {
-            // Use generic invitation notification key for translated notifications
-            foreach ($invitation->users()->where('invited_by', auth()->id())->get() as $user) {
-                $message = $this->buildStyledInvitationMessage($invitation, $request->message);
-
-                TwilioWhatsApp::send(
-                    $user->country_code.$user->phone,
-                    $message
-                );
-            }
-
-            return RespondActive::success('Action ran successfully');
-        } else {
-            return RespondActive::clientError('no_users_found_for_this_invitation');
+        if ($error = $this->ensureClientWhatsAppConnected()) {
+            return $error;
         }
+
+        if ($invitation->users()->count() > 0) {
+            $this->queueInvitationMessages(
+                $invitation,
+                $invitation->users()->where('invited_by', auth()->id())->get(),
+                fn ($user) => $this->buildStyledInvitationMessage($invitation, $request->message)
+            );
+
+            return RespondActive::success(__('messages.whatsapp_invitations_queued'));
+        }
+
+        return RespondActive::clientError('no_users_found_for_this_invitation');
     }
 
     public function sendSMSToUser(SendNotificationToUserRequest $request, Invitation $invitation)
     {
-        foreach ($invitation->users as $user) {
-            // Use template message if use_template is true or no custom message provided
-            $message = $request->use_template || ! $request->message
-                ? $this->buildInvitationMessage($invitation, 'invitation_sms_template')
-                : $request->message;
-
-            // Replace {user_id} placeholder with actual user ID for the invitation link
-            $personalizedMessage = str_replace('{user_id}', $user->id, $message);
-
-            TwilioWhatsApp::send($user->country_code.$user->phone, $personalizedMessage);
-
-        //    TwilioSMS::send([
-        //        'phone' => $user->phone,
-        //        'country_code' => $user->country_code,
-        //        'message' => $personalizedMessage
-        //    ]);
+        if ($error = $this->ensureClientWhatsAppConnected()) {
+            return $error;
         }
 
-        // Send app notification using translation key
+        $this->queueInvitationMessages(
+            $invitation,
+            $invitation->users,
+            function ($user) use ($request, $invitation) {
+                $message = $request->use_template || ! $request->message
+                    ? $this->buildInvitationMessage($invitation, 'invitation_sms_template')
+                    : $request->message;
+
+                return str_replace('{user_id}', $user->id, $message);
+            }
+        );
+
         Notification::notify('users',
             Constant::NOTIFICATIONS_TYPE['Invitations'],
             $invitation->users()->pluck('users.id')->toArray(),
             $invitation->id,
             'invitation_notification');
 
-        return RespondActive::success('Action ran successfully');
+        return RespondActive::success(__('messages.whatsapp_invitations_queued'));
     }
 
     /**
@@ -1127,27 +1126,31 @@ $invitation->delete();
      */
     public function sendTemplateMessage(Invitation $invitation)
     {
+        if ($error = $this->ensureClientWhatsAppConnected()) {
+            return $error;
+        }
+
         if ($invitation->users()->count() > 0) {
-            // Build dynamic message template for SMS
-            $smsMessage = $this->buildInvitationMessage($invitation, 'invitation_sms_template');
+            $this->queueInvitationMessages(
+                $invitation,
+                $invitation->users,
+                function ($user) use ($invitation) {
+                    $smsMessage = $this->buildInvitationMessage($invitation, 'invitation_sms_template');
 
-            // Send SMS to all users
-            foreach ($invitation->users as $user) {
-                $personalizedMessage = str_replace('{user_id}', $user->id, $smsMessage);
-                TwilioWhatsApp::send($user->country_code.$user->phone, $personalizedMessage);
-            }
+                    return str_replace('{user_id}', $user->id, $smsMessage);
+                }
+            );
 
-            // Send in-app notification using translation key
             Notification::notify('users',
                 Constant::NOTIFICATIONS_TYPE['Invitations'],
                 $invitation->users()->pluck('users.id')->toArray(),
                 $invitation->id,
                 'invitation_notification');
 
-            return RespondActive::success('Template message sent successfully');
-        } else {
-            return RespondActive::clientError('no_users_found_for_this_invitation');
+            return RespondActive::success(__('messages.whatsapp_invitations_queued'));
         }
+
+        return RespondActive::clientError('no_users_found_for_this_invitation');
     }
 
     public function updateStatus(UpdateStatusRequest $request, Invitation $invitation)
@@ -1321,22 +1324,23 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
 
     public function shareInvitation(Invitation $invitation)
     {
-        foreach ($invitation->users()->whereIn('seen', [Constant::SEEN_STATUS['in app'], Constant::SEEN_STATUS['not in the app']])->where('invited_by', auth()->id())->get() as $user) {
-            // Build dynamic message template for this user
-            $message = $this->buildInvitationMessage($invitation, $user->id, 'invitation_sms_template');
-
-            $response = TwilioWhatsApp::send(
-                $user->country_code.$user->phone,
-                $message,
-                $invitation->id.'-'.$user->id
-            );
-
-            if (isset($response->sent) && $response->sent == 'true') {
-                $invitation->users()->where('user_id', $user->id)->update(['seen' => Constant::SEEN_STATUS['Sent']]);
-            }
+        if ($error = $this->ensureClientWhatsAppConnected()) {
+            return $error;
         }
 
-        return RespondActive::success('Action ran successfully');
+        $users = $invitation->users()
+            ->whereIn('seen', [Constant::SEEN_STATUS['in app'], Constant::SEEN_STATUS['not in the app']])
+            ->where('invited_by', auth()->id())
+            ->get();
+
+        $this->queueInvitationMessages(
+            $invitation,
+            $users,
+            fn ($user) => $this->buildInvitationMessage($invitation, $user->id, 'invitation_sms_template'),
+            true
+        );
+
+        return RespondActive::success(__('messages.whatsapp_invitations_queued'));
     }
 
     public function shareSmsInvitationApp(Invitation $invitation, User $user)
@@ -1552,4 +1556,58 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
                  return RespondActive::serverError('An error occurred while processing your request.');
              }
          }
+
+    private function clientSessionId(): string
+    {
+        return BaileysGateway::sessionIdForUser((int) auth()->id());
+    }
+
+    private function ensureClientWhatsAppConnected(): ?\Illuminate\Http\JsonResponse
+    {
+        if (! BaileysGateway::isConfigured()) {
+            return RespondActive::clientError(__('messages.whatsapp_gateway_not_configured'));
+        }
+
+        $status = BaileysGateway::getStatus($this->clientSessionId());
+        $connectionStatus = $status['data']['status'] ?? 'disconnected';
+
+        if (! $status['ok'] || $connectionStatus !== 'connected') {
+            return RespondActive::clientError(__('messages.whatsapp_not_connected'));
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  iterable<int, User>  $users
+     */
+    private function queueInvitationMessages(
+        Invitation $invitation,
+        iterable $users,
+        callable $messageBuilder,
+        bool $withReferenceId = false
+    ): void {
+        $hostId = (int) auth()->id();
+        $index = 0;
+
+        foreach ($users as $user) {
+            $message = $messageBuilder($user);
+            $dayOffset = intdiv($index, 80);
+            $delaySeconds = ($index % 80) * 12;
+
+            SendBaileysInvitationMessage::dispatch(
+                hostUserId: $hostId,
+                invitationId: $invitation->id,
+                guestUserId: $user->id,
+                countryCode: (string) $user->country_code,
+                phone: (string) $user->phone,
+                message: $message,
+                referenceId: $withReferenceId ? $invitation->id.'-'.$user->id : '',
+            )->delay(
+                now()->addDays($dayOffset)->setHour(10)->addSeconds($delaySeconds)
+            );
+
+            $index++;
+        }
+    }
 }

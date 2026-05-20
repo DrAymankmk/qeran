@@ -245,14 +245,14 @@ class AuthController extends Controller
             $user = User::checkUserExist($request->phone)->first();
         }
 
-        if (! $user) {
-            Log::warning('sendCode: user not found for phone', [
-                'phone_masked' => substr((string) $request->phone, -4),
-                'country_code' => $request->country_code,
-            ]);
+        // if (! $user) {
+        //     Log::warning('sendCode: user not found for phone', [
+        //         'phone_masked' => substr((string) $request->phone, -4),
+        //         'country_code' => $request->country_code,
+        //     ]);
 
-            return RespondActive::clientError(__('messages.otp_user_not_found'));
-        }
+        //     return RespondActive::clientError(__('messages.otp_user_not_found'));
+        // }
 
         try {
             VerificationService::verifyAccount(

@@ -2,11 +2,11 @@
 
 namespace App\Http\Requests\Api\V1\Auth;
 
+use App\Models\User;
 use App\Services\RespondActive;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 class ChangePasswordRequest extends FormRequest
@@ -30,7 +30,21 @@ class ChangePasswordRequest extends FormRequest
     {
         return [
             'old_password'  => ['nullable', 'string', 'max:190'],
-            'phone' => ['required', 'max:150', Rule::exists('users'),'phone:INTERNATIONAL,EG,SA'],
+            'phone' => [
+                'required_without:old_password',
+                'nullable',
+                'max:150',
+                'phone:INTERNATIONAL,EG,SA',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if ($this->filled('old_password') || $value === null || $value === '') {
+                        return;
+                    }
+                    if (! User::findByPhone((string) $value, $this->input('country_code'))) {
+                        $fail(__('messages.otp_reset_user_not_found'));
+                    }
+                },
+            ],
+            'country_code' => ['nullable', 'max:6'],
 
             'password'      => [
                 'required',

@@ -17,6 +17,7 @@ use App\Models\VerificationCode;
 use App\Services\Auth\Exceptions\VerificationOtpDeliveryException;
 use App\Services\Auth\VerificationService;
 use App\Services\RespondActive;
+use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\Log;
 use App\Traits\SendsNotificationAndEmail;
 use Carbon\Carbon;
@@ -239,44 +240,88 @@ class AuthController extends Controller
 
     public function sendCode(SendUserConfirmationCodeRequest $request)
     {
+        $objective = (int) ($request->type ?? Constant::VERIFICATION_OBJECTIVE['Verify']);
+        $phone = (string) $request->phone;
+        $countryCode = (string) $request->country_code;
 
-        \Log::info('sendCode: request', ['request' => $request->all()]);
-        if (auth('sanctum')->user()) {
-            $user = auth('sanctum')->user();
-        } else {
-            $user = User::checkUserExist($request->phone)->first();
+        $user = $this->resolveUserForSendCode($request, $objective);
+
+        if (! $user) {
+            $message = $objective === (int) Constant::VERIFICATION_OBJECTIVE['Reset']
+                ? __('messages.otp_reset_user_not_found')
+                : __('messages.otp_user_not_found');
+
+            Log::warning('sendCode: user not found', [
+                'objective' => $objective,
+                'phone_variants' => VerificationCode::phoneVariants($phone, $countryCode),
+            ]);
+
+            return RespondActive::clientError($message);
         }
 
-        \Log::info('sendCode: user', ['user' => $user]);
-        // if (! $user) {
-        //     Log::warning('sendCode: user not found for phone', [
-        //         'phone_masked' => substr((string) $request->phone, -4),
-        //         'country_code' => $request->country_code,
-        //     ]);
+        if ($objective === (int) Constant::VERIFICATION_OBJECTIVE['Reset'] && ! $user->hasPassword()) {
+            Log::warning('sendCode: reset requested for account without password', [
+                'user_id' => $user->id,
+            ]);
 
-        //     return RespondActive::clientError(__('messages.otp_user_not_found'));
-        // }
+            return RespondActive::clientError(__('messages.otp_reset_account_incomplete'));
+        }
+
+        $storedPhone = PhoneNumber::informationForStorage(
+            $countryCode,
+            $phone,
+            (string) $user->phone
+        );
 
         try {
             VerificationService::verifyAccount(
                 $user->id,
-                $request->type ?? Constant::VERIFICATION_OBJECTIVE['Verify'],
+                $objective,
                 Constant::VERIFICATION_INFORMATION_TYPE['Phone'],
-                $request->phone,
-                $request->country_code
+                $storedPhone,
+                $user->country_code ?? $countryCode
             );
         } catch (VerificationOtpDeliveryException $exception) {
             return $this->otpDeliveryErrorResponse($exception, 'send_code');
         } catch (Exception $exception) {
             Log::error('OTP unexpected error on sendCode', [
                 'user_id' => $user->id,
+                'objective' => $objective,
                 'error' => $exception->getMessage(),
             ]);
 
             return RespondActive::clientError(__('messages.otp_unexpected_error'));
         }
 
-        return RespondActive::success(__('Code sent successfully.'));
+        $successMessage = $objective === (int) Constant::VERIFICATION_OBJECTIVE['Reset']
+            ? __('messages.otp_reset_code_sent')
+            : __('messages.otp_code_sent');
+
+        Log::info('sendCode: OTP sent', [
+            'user_id' => $user->id,
+            'objective' => $objective,
+            'stored_phone_suffix' => substr($storedPhone, -4),
+        ]);
+
+        return RespondActive::success($successMessage);
+    }
+
+    protected function resolveUserForSendCode(
+        SendUserConfirmationCodeRequest $request,
+        int $objective
+    ): ?User {
+        $phone = (string) $request->phone;
+        $countryCode = (string) $request->country_code;
+
+        if ($objective === (int) Constant::VERIFICATION_OBJECTIVE['Reset']) {
+            return User::findByPhone($phone, $countryCode);
+        }
+
+        if (auth('sanctum')->user()) {
+            return auth('sanctum')->user();
+        }
+
+        return User::findByPhone($phone, $countryCode);
     }
 
     protected function otpDeliveryErrorResponse(VerificationOtpDeliveryException $exception, string $flow): \Illuminate\Http\JsonResponse
@@ -354,12 +399,27 @@ class AuthController extends Controller
 
         try {
             $check->update(['used' => Constant::VERIFICATION_USED['Used']]);
+
+            if ($objective === (int) Constant::VERIFICATION_OBJECTIVE['Reset']) {
+                Log::info('OTP verify: reset code accepted', [
+                    'user_id' => $user->id,
+                    'verification_id' => $check->id,
+                ]);
+
+                return RespondActive::success(__('messages.otp_reset_verified'), [
+                    'password_reset_allowed' => true,
+                    'phone' => $user->phone,
+                    'country_code' => $user->country_code,
+                ]);
+            }
+
             $user->update(['verified' => 2]);
             $user['token'] = $user->createToken('token'.$user->id)->plainTextToken;
         } catch (\Throwable $e) {
-            Log::error('OTP verify: failed to mark user verified', [
+            Log::error('OTP verify: failed after valid code', [
                 'user_id' => $user->id,
                 'verification_id' => $check->id,
+                'objective' => $objective,
                 'error' => $e->getMessage(),
             ]);
 
@@ -373,24 +433,25 @@ class AuthController extends Controller
 
     protected function resolveUserForVerifyCode(VerifyUserConfirmationCodeRequest $request): ?User
     {
+        $objective = (int) ($request->type ?? Constant::VERIFICATION_OBJECTIVE['Verify']);
+        $phone = (string) $request->phone;
+        $countryCode = (string) $request->country_code;
+
+        if ($objective === (int) Constant::VERIFICATION_OBJECTIVE['Reset']) {
+            return User::findByPhone($phone, $countryCode);
+        }
+
         if (auth('sanctum')->user()) {
             $user = auth('sanctum')->user();
             $user->update([
-                'phone' => $request->phone,
-                'country_code' => $request->country_code,
+                'phone' => PhoneNumber::informationForStorage($countryCode, $phone, (string) $user->phone),
+                'country_code' => $countryCode,
             ]);
 
             return $user->fresh();
         }
 
-        foreach (VerificationCode::phoneVariants((string) $request->phone, (string) $request->country_code) as $variant) {
-            $user = User::checkUserExist($variant)->first();
-            if ($user) {
-                return $user;
-            }
-        }
-
-        return null;
+        return User::findByPhone($phone, $countryCode);
     }
 
     protected function verifyCodeFailureMessage(string $reason): string
@@ -418,14 +479,54 @@ class AuthController extends Controller
             }
 
             return RespondActive::clientError(__('Wrong password!'));
-        } else {
-            $user = User::checkUserExist($request->phone)->first();
-
-            $user->password = $request->password;
-            $user->save();
-
-            return RespondActive::success(__('Password changed successfully.'));
         }
+
+        $user = User::findByPhone(
+            (string) $request->phone,
+            $request->filled('country_code') ? (string) $request->country_code : null
+        );
+
+        if (! $user) {
+            Log::warning('changePassword: user not found', [
+                'phone_variants' => VerificationCode::phoneVariants(
+                    (string) $request->phone,
+                    $request->country_code
+                ),
+            ]);
+
+            return RespondActive::clientError(__('messages.otp_reset_user_not_found'));
+        }
+
+        if (! $this->hasRecentPasswordResetVerification($user)) {
+            Log::warning('changePassword: no recent reset verification', ['user_id' => $user->id]);
+
+            return RespondActive::clientError(__('messages.otp_reset_verify_required'));
+        }
+
+        $user->password = $request->password;
+        $user->save();
+
+        Log::info('changePassword: password reset via OTP', ['user_id' => $user->id]);
+
+        return RespondActive::success(__('Password changed successfully.'));
+    }
+
+    protected function hasRecentPasswordResetVerification(User $user): bool
+    {
+        $phoneVariants = VerificationCode::phoneVariants(
+            (string) $user->phone,
+            (string) $user->country_code
+        );
+
+        return VerificationCode::query()
+            ->where('user_id', $user->id)
+            ->where('objective', Constant::VERIFICATION_OBJECTIVE['Reset'])
+            ->where('used', Constant::VERIFICATION_USED['Used'])
+            ->where(function ($query) use ($phoneVariants) {
+                $query->whereIn('information', $phoneVariants);
+            })
+            ->where('updated_at', '>=', now()->subMinutes(30))
+            ->exists();
     }
 
     public function logout()

@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Helpers\Constant;
-use App\Services\External\BaileysGateway;
+use App\Support\PhoneNumber;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
@@ -117,24 +117,7 @@ class VerificationCode extends Model
      */
     public static function phoneVariants(string $phone, ?string $countryCode): array
     {
-        $digits = preg_replace('/\D+/', '', $phone);
-        $cc = preg_replace('/\D+/', '', (string) $countryCode);
-        $normalized = BaileysGateway::normalizeUserPhone($cc, $phone);
-
-        $local = $digits;
-        if ($cc !== '' && str_starts_with($digits, $cc)) {
-            $local = substr($digits, strlen($cc));
-        }
-
-        $variants = array_filter(array_unique([
-            $phone,
-            $digits,
-            $normalized,
-            $local,
-            $cc !== '' ? $cc.$local : null,
-        ]));
-
-        return array_values($variants);
+        return PhoneNumber::variants($countryCode, $phone);
     }
 
     public static function logVerificationFailure(

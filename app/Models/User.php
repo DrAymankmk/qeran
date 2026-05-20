@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Helpers\Constant;
+use App\Support\PhoneNumber;
 use App\Services\External\CometChat;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -56,7 +57,25 @@ class User extends Authenticatable
 
     public function scopeCheckUserExist($query, $phone)
     {
-        return $query->where(['phone' => $phone])->where('deleted_at', null);
+        return $query->where(['phone' => $phone])->whereNull('deleted_at');
+    }
+
+    /**
+     * Find user by phone, matching leading-zero and country-code variants.
+     */
+    public static function findByPhone(string $phone, ?string $countryCode = null): ?self
+    {
+        $variants = PhoneNumber::variants($countryCode, $phone);
+
+        return self::query()
+            ->whereIn('phone', $variants)
+            ->whereNull('deleted_at')
+            ->first();
+    }
+
+    public function hasPassword(): bool
+    {
+        return $this->password !== null && $this->password !== '';
     }
 
     public function setPasswordAttribute($value)

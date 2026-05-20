@@ -97,4 +97,11 @@ return [
     'otp_verify_user_mismatch' => 'هذا الرمز لا يخص حسابك.',
     'otp_verify_failed' => 'تعذر إكمال التحقق. حاول مرة أخرى.',
     'otp_verify_success' => 'تم التحقق بنجاح.',
+
+    'otp_code_sent' => 'تم إرسال رمز التحقق بنجاح.',
+    'otp_reset_code_sent' => 'تم إرسال رمز إعادة تعيين كلمة المرور إلى واتساب.',
+    'otp_reset_user_not_found' => 'لا يوجد حساب مسجل بهذا الرقم.',
+    'otp_reset_account_incomplete' => 'هذا الرقم غير مسجل بعد. يرجى التسجيل أولاً.',
+    'otp_reset_verified' => 'تم التحقق من الرمز. يمكنك تعيين كلمة مرور جديدة الآن.',
+    'otp_reset_verify_required' => 'يجب التحقق من الرمز أولاً قبل تغيير كلمة المرور.',
 ];

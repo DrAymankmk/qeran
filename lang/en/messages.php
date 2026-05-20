@@ -97,4 +97,11 @@ return [
     'otp_verify_user_mismatch' => 'This code does not belong to your account.',
     'otp_verify_failed' => 'Could not complete verification. Try again.',
     'otp_verify_success' => 'Verified successfully.',
+
+    'otp_code_sent' => 'Verification code sent successfully.',
+    'otp_reset_code_sent' => 'Password reset code sent to your WhatsApp.',
+    'otp_reset_user_not_found' => 'No account found for this phone number.',
+    'otp_reset_account_incomplete' => 'This phone is not registered yet. Please sign up first.',
+    'otp_reset_verified' => 'Code verified. You can set a new password now.',
+    'otp_reset_verify_required' => 'Verify the code first before changing your password.',
 ];

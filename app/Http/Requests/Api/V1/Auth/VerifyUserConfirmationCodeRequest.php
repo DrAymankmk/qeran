@@ -32,7 +32,7 @@ class VerifyUserConfirmationCodeRequest extends FormRequest
             'phone' => [
                 'required', 'max:100','phone:INTERNATIONAL,EG,SA'
             ],
-            'code'  => ['required', 'min:1', 'max:4'],
+            'code'  => ['required', 'digits:4'],
             'country_code'  => ['required'],
             'type'=>['nullable','in:1,2,3,4']
         ];

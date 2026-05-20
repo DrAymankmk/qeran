@@ -294,32 +294,112 @@ class AuthController extends Controller
 
     public function verifyCode(VerifyUserConfirmationCodeRequest $request)
     {
-        $check = VerificationCode::checkCode($request->phone, $request->code, $request->type ?? Constant::VERIFICATION_OBJECTIVE['Verify'])->first();
+        $objective = (int) ($request->type ?? Constant::VERIFICATION_OBJECTIVE['Verify']);
+        $code = trim((string) $request->code);
+
+        $check = VerificationCode::findActive(
+            (string) $request->phone,
+            (string) $request->country_code,
+            $code,
+            $objective
+        );
 
         if (! $check) {
-            return RespondActive::clientError('Invalid code.');
+            $reason = VerificationCode::failureReason(
+                (string) $request->phone,
+                (string) $request->country_code,
+                $code,
+                $objective
+            );
+
+            VerificationCode::logVerificationFailure(
+                $reason,
+                (string) $request->phone,
+                (string) $request->country_code,
+                $code,
+                $objective,
+                auth('sanctum')->id()
+            );
+
+            return RespondActive::clientError($this->verifyCodeFailureMessage($reason));
         }
 
-        switch (auth('sanctum')->user()) {
-            case true:
-                $user = auth('sanctum')->user();
+        $user = $this->resolveUserForVerifyCode($request);
 
-                auth('sanctum')->user()->update([
-                    'phone' => $request->phone,
-                    'country_code' => $request->country_code,
-                ]);
-                break;
-            case false:
-                $user = User::checkUserExist($request->phone)->first();
+        if (! $user) {
+            Log::warning('OTP verify: user not found after valid code', [
+                'verification_id' => $check->id,
+                'user_id_on_code' => $check->user_id,
+                'phone_variants' => VerificationCode::phoneVariants(
+                    (string) $request->phone,
+                    (string) $request->country_code
+                ),
+            ]);
 
-                break;
+            return RespondActive::clientError(__('messages.otp_verify_user_not_found'));
         }
-        $check->update(['used' => Constant::VERIFICATION_USED['Used']]);
-        $user->update(['verified' => 2]);
 
-        $user['token'] = $user->createToken('token'.$user->id)->plainTextToken;
+        if ($check->user_id && (int) $check->user_id !== (int) $user->id) {
+            Log::warning('OTP verify: code belongs to another user', [
+                'verification_id' => $check->id,
+                'code_user_id' => $check->user_id,
+                'resolved_user_id' => $user->id,
+            ]);
 
-        return RespondActive::success('Verified successfully.', new UserResource($user));
+            return RespondActive::clientError(__('messages.otp_verify_user_mismatch'));
+        }
+
+        try {
+            $check->update(['used' => Constant::VERIFICATION_USED['Used']]);
+            $user->update(['verified' => 2]);
+            $user['token'] = $user->createToken('token'.$user->id)->plainTextToken;
+        } catch (\Throwable $e) {
+            Log::error('OTP verify: failed to mark user verified', [
+                'user_id' => $user->id,
+                'verification_id' => $check->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return RespondActive::clientError(__('messages.otp_verify_failed'));
+        }
+
+        Log::info('OTP verify: success', ['user_id' => $user->id, 'verification_id' => $check->id]);
+
+        return RespondActive::success(__('messages.otp_verify_success'), new UserResource($user));
+    }
+
+    protected function resolveUserForVerifyCode(VerifyUserConfirmationCodeRequest $request): ?User
+    {
+        if (auth('sanctum')->user()) {
+            $user = auth('sanctum')->user();
+            $user->update([
+                'phone' => $request->phone,
+                'country_code' => $request->country_code,
+            ]);
+
+            return $user->fresh();
+        }
+
+        foreach (VerificationCode::phoneVariants((string) $request->phone, (string) $request->country_code) as $variant) {
+            $user = User::checkUserExist($variant)->first();
+            if ($user) {
+                return $user;
+            }
+        }
+
+        return null;
+    }
+
+    protected function verifyCodeFailureMessage(string $reason): string
+    {
+        return match ($reason) {
+            'wrong_code' => __('messages.otp_verify_wrong_code'),
+            'expired' => __('messages.otp_verify_expired'),
+            'already_used' => __('messages.otp_verify_already_used'),
+            'wrong_type' => __('messages.otp_verify_wrong_type'),
+            'no_record' => __('messages.otp_verify_no_record'),
+            default => __('messages.otp_verify_invalid'),
+        };
     }
 
     public function changePassword(ChangePasswordRequest $request)

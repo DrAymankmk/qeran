@@ -86,4 +86,15 @@ return [
     'otp_invalid_phone' => 'رقم الهاتف غير صالح.',
     'otp_email_send_failed' => 'تعذر إرسال رمز التحقق بالبريد.',
     'otp_unexpected_error' => 'حدث خطأ أثناء إرسال رمز التحقق. حاول مرة أخرى.',
+
+    'otp_verify_invalid' => 'رمز التحقق غير صالح أو منتهي.',
+    'otp_verify_wrong_code' => 'رمز التحقق غير صحيح.',
+    'otp_verify_expired' => 'انتهت صلاحية رمز التحقق. اطلب رمزاً جديداً.',
+    'otp_verify_already_used' => 'تم استخدام هذا الرمز مسبقاً. اطلب رمزاً جديداً.',
+    'otp_verify_wrong_type' => 'نوع طلب التحقق غير صالح.',
+    'otp_verify_no_record' => 'لا يوجد رمز تحقق لهذا الرقم. اطلب رمزاً جديداً.',
+    'otp_verify_user_not_found' => 'لم يتم العثور على حساب لهذا الرقم.',
+    'otp_verify_user_mismatch' => 'هذا الرمز لا يخص حسابك.',
+    'otp_verify_failed' => 'تعذر إكمال التحقق. حاول مرة أخرى.',
+    'otp_verify_success' => 'تم التحقق بنجاح.',
 ];

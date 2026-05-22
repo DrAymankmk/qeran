@@ -193,8 +193,11 @@ class WhatsAppConnectController extends Controller
             'poll_status' => true,
             'poll_interval_seconds' => 3,
             'code_valid_seconds' => 120,
+            'expires_at' => now()->addSeconds(120)->toIso8601String(),
             'do_not_connect_again' => true,
+            'open_whatsapp_immediately' => true,
             'instructions' => $this->pairingInstructions($linkPhoneDisplay),
+            'warning' => __('messages.whatsapp_pairing_enter_fast'),
         ];
     }
 
@@ -239,16 +242,21 @@ class WhatsAppConnectController extends Controller
             ? PhoneNumber::formatForWhatsAppDisplay(PhoneNumber::e164ForWhatsAppPairing($user->country_code, $dbSession->phone))
             : PhoneNumber::formatForWhatsAppDisplay(PhoneNumber::e164ForWhatsAppPairing($user->country_code, $user->phone));
 
+        $socketAlive = (bool) ($data['socketAlive'] ?? false);
+        $codeAge = $data['pairingCodeAgeSeconds'] ?? null;
+
         return RespondActive::success('OK', [
             'status' => $connectionStatus,
             'phone' => $phone,
             'session_id' => $sessionId,
             'connected' => $connectionStatus === 'connected',
             'registered_on_disk' => $registeredOnDisk,
+            'socket_alive' => $socketAlive,
+            'pairing_code_age_seconds' => $codeAge,
             'awaiting_user' => $connectionStatus === 'pending_pairing' && ! $registeredOnDisk,
             'action' => $this->statusAction($connectionStatus, $registeredOnDisk),
             'link_phone_display' => $linkDisplay,
-            'message' => $this->statusMessage($connectionStatus, $registeredOnDisk),
+            'message' => $this->statusMessage($connectionStatus, $registeredOnDisk, $socketAlive),
         ]);
     }
 
@@ -292,7 +300,7 @@ class WhatsAppConnectController extends Controller
         return 'connect_whatsapp';
     }
 
-    protected function statusMessage(string $connectionStatus, bool $registeredOnDisk): string
+    protected function statusMessage(string $connectionStatus, bool $registeredOnDisk, bool $socketAlive = true): string
     {
         if ($connectionStatus === 'connected') {
             return __('messages.whatsapp_connected');
@@ -303,6 +311,10 @@ class WhatsAppConnectController extends Controller
         }
 
         if ($connectionStatus === 'pending_pairing') {
+            if (! $socketAlive) {
+                return __('messages.whatsapp_pairing_socket_down');
+            }
+
             return __('messages.whatsapp_pairing_waiting_user');
         }
 

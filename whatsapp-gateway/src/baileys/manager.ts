@@ -34,8 +34,11 @@ export interface SessionMeta {
 const sessions = new Map<string, SessionMeta>();
 const startPromises = new Map<string, Promise<SessionMeta>>();
 const finalizingSessions = new Set<string>();
+const pairingKeepaliveTimers = new Map<string, ReturnType<typeof setInterval>>();
 
 const PAIRING_READY_DELAY_MS = Number(process.env.PAIRING_READY_DELAY_MS ?? 8000);
+const PAIRING_KEEPALIVE_MS = Number(process.env.PAIRING_KEEPALIVE_MS ?? 15_000);
+const PAIRING_CODE_TTL_MS = Number(process.env.PAIRING_CODE_TTL_MS ?? 180_000);
 const PAIRING_SOCKET_READY_TIMEOUT_MS = Number(process.env.PAIRING_SOCKET_READY_TIMEOUT_MS ?? 45_000);
 
 function sessionsDir(): string {
@@ -133,7 +136,60 @@ function endSocket(meta: SessionMeta): void {
   }
 }
 
+function stopPairingKeepalive(sessionId: string): void {
+  const timer = pairingKeepaliveTimers.get(sessionId);
+  if (timer) {
+    clearInterval(timer);
+    pairingKeepaliveTimers.delete(sessionId);
+  }
+}
+
+function startPairingKeepalive(sessionId: string, meta: SessionMeta): void {
+  stopPairingKeepalive(sessionId);
+  const timer = setInterval(() => {
+    void maintainPairingSocketAlive(sessionId, meta);
+  }, PAIRING_KEEPALIVE_MS);
+  pairingKeepaliveTimers.set(sessionId, timer);
+}
+
+/**
+ * Pairing codes only work while the gateway socket is online. Recreate it if WA closed it.
+ */
+async function maintainPairingSocketAlive(sessionId: string, meta: SessionMeta): Promise<void> {
+  if (meta.status !== 'pending_pairing' || !meta.pairingCode) {
+    return;
+  }
+
+  if (meta.pairingRequestedAt && Date.now() - meta.pairingRequestedAt > PAIRING_CODE_TTL_MS) {
+    logger.warn({ sessionId }, 'pairing code TTL expired');
+    meta.status = 'disconnected';
+    meta.pairingCode = undefined;
+    stopPairingKeepalive(sessionId);
+    return;
+  }
+
+  if (meta.sock) {
+    return;
+  }
+
+  if (finalizingSessions.has(sessionId)) {
+    return;
+  }
+
+  logger.info(
+    { sessionId, code: formatPairingCodeDisplay(meta.pairingCode) },
+    'reopening socket so pairing code stays valid'
+  );
+
+  try {
+    await createSocket(sessionId, meta);
+  } catch (err) {
+    logger.error({ sessionId, err }, 'maintainPairingSocketAlive failed');
+  }
+}
+
 function wipeSessionAuth(sessionId: string): void {
+  stopPairingKeepalive(sessionId);
   const meta = sessions.get(sessionId);
   if (meta) {
     endSocket(meta);
@@ -371,6 +427,7 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
       meta.status = 'connected';
       meta.qr = undefined;
       meta.pairingCode = undefined;
+      stopPairingKeepalive(sessionId);
       const user = sock.user;
       meta.phone = user?.id?.split(':')[0]?.split('@')[0];
       logger.info({ sessionId, phone: meta.phone }, 'WhatsApp connected');
@@ -400,11 +457,14 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
         }
 
         if (restartRequired || isNewLogin) {
+          stopPairingKeepalive(sessionId);
           void reconnectAfterRestart(sessionId, meta);
           return;
         }
 
-        // WA often closes socket after code entry — reconnect if creds were saved
+        // Socket must stay alive while user opens WhatsApp and enters the code
+        void maintainPairingSocketAlive(sessionId, meta);
+
         setTimeout(() => {
           void (async () => {
             if (meta.status === 'connected') {
@@ -413,15 +473,13 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
             const registered = await isAuthRegistered(sessionId);
             if (registered) {
               logger.info({ sessionId, statusCode }, 'pairing close with saved creds — finalizing');
+              stopPairingKeepalive(sessionId);
               await reconnectAfterRestart(sessionId, meta);
             } else {
-              logger.info(
-                { sessionId, statusCode },
-                'pairing socket closed — waiting for user (creds not registered yet)'
-              );
+              void maintainPairingSocketAlive(sessionId, meta);
             }
           })();
-        }, 2500);
+        }, 1500);
 
         return;
       }
@@ -523,8 +581,13 @@ async function runPairingFlow(sessionId: string, digits: string, fresh: boolean)
   const code = await requestPairingCodeWithRetry(sock, digits, sessionId);
   meta.pairingCode = code;
   meta.status = 'pending_pairing';
+  meta.pairingRequestedAt = Date.now();
+  startPairingKeepalive(sessionId, meta);
 
-  logger.info({ sessionId, status: meta.status }, 'pairing code ready — waiting for user to enter in WhatsApp');
+  logger.info(
+    { sessionId, status: meta.status, display: formatPairingCodeDisplay(code) },
+    'pairing code ready — open WhatsApp immediately and enter code'
+  );
 
   return meta;
 }
@@ -615,7 +678,20 @@ export async function startSessionWithPairing(
   }
 }
 
+export function isPairingSocketAlive(sessionId: string): boolean {
+  return Boolean(sessions.get(sessionId)?.sock);
+}
+
+export function getPairingCodeAgeSeconds(sessionId: string): number | null {
+  const at = sessions.get(sessionId)?.pairingRequestedAt;
+  if (!at) {
+    return null;
+  }
+  return Math.floor((Date.now() - at) / 1000);
+}
+
 export async function deleteSession(sessionId: string): Promise<void> {
+  stopPairingKeepalive(sessionId);
   const meta = sessions.get(sessionId);
   if (meta?.sock) {
     try {

@@ -75,6 +75,8 @@ return [
     'whatsapp_status_failed' => 'Could not read connection status.',
     'whatsapp_not_connected' => 'Connect WhatsApp first.',
     'whatsapp_pairing_waiting_user' => 'Enter the pairing code in WhatsApp now. When asked for your number, use link_phone_display exactly.',
+    'whatsapp_pairing_enter_fast' => 'Open WhatsApp within 30 seconds and enter the code. Delayed entry often causes "something went wrong".',
+    'whatsapp_pairing_socket_down' => 'Pairing session was interrupted. Tap Connect again to get a new code.',
     'whatsapp_pairing_finishing' => 'WhatsApp accepted the code. Finishing connection…',
     'whatsapp_invitations_queued' => 'Invitations queued for WhatsApp delivery.',
     'whatsapp_pairing_step_1' => 'Open WhatsApp on the same phone.',

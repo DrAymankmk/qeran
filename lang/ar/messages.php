@@ -75,6 +75,8 @@ return [
     'whatsapp_status_failed' => 'تعذر قراءة حالة الاتصال.',
     'whatsapp_not_connected' => 'يجب ربط واتساب أولاً من الإعدادات.',
     'whatsapp_pairing_waiting_user' => 'أدخل رمز الربط في واتساب الآن. عند طلب الرقم، استخدم link_phone_display بالضبط.',
+    'whatsapp_pairing_enter_fast' => 'افتح واتساب خلال 30 ثانية وأدخل الرمز. التأخير يسبب غالباً "حدث خطأ ما".',
+    'whatsapp_pairing_socket_down' => 'انقطع جلسة الربط. اضغط ربط مرة أخرى للحصول على رمز جديد.',
     'whatsapp_pairing_finishing' => 'واتساب قبل الرمز. جاري إكمال الاتصال…',
     'whatsapp_invitations_queued' => 'تم جدولة إرسال الدعوات عبر واتساب.',
     'whatsapp_pairing_step_1' => 'افتح واتساب على نفس الهاتف.',

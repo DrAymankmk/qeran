@@ -5,11 +5,13 @@ import pino from 'pino';
 import {
   deleteSession,
   getPairingCode,
+  getPairingCodeAgeSeconds,
   getQr,
   ensurePairingFinalized,
   formatPairingCodeDisplay,
   getSessionMeta,
   isAuthRegistered,
+  isPairingSocketAlive,
   normalizePhoneDigits,
   startSession,
   startSessionWithPairing,
@@ -73,7 +75,7 @@ async function fetchQrPayload(sessionId: string) {
 app.get('/health', (_req, res) => {
   res.json({
     ok: true,
-    version: '1.2.4',
+    version: '1.2.5',
     qrSetupPage: QR_SETUP_PAGE_ENABLED,
     secretConfigured: Boolean(SECRET),
     features: {
@@ -177,13 +179,15 @@ app.get('/sessions/:id/status', async (req, res) => {
 
   const registered = await isAuthRegistered(sessionId);
 
-  res.json({
-    sessionId: meta.sessionId,
-    status: meta.status,
-    phone: meta.phone ?? null,
-    pairingCode: meta.pairingCode ? formatPairingCodeDisplay(meta.pairingCode) : null,
-    registeredOnDisk: registered,
-  });
+    res.json({
+      sessionId: meta.sessionId,
+      status: meta.status,
+      phone: meta.phone ?? null,
+      pairingCode: meta.pairingCode ? formatPairingCodeDisplay(meta.pairingCode) : null,
+      registeredOnDisk: registered,
+      socketAlive: isPairingSocketAlive(sessionId),
+      pairingCodeAgeSeconds: getPairingCodeAgeSeconds(sessionId),
+    });
 });
 
 app.post('/sessions/:id/finalize', async (req, res) => {

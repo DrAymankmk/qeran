@@ -41,6 +41,10 @@ class BaileysGateway
         $cc = preg_replace('/\D+/', '', (string) $countryCode);
         $local = preg_replace('/\D+/', '', (string) $phone);
 
+        if (str_starts_with($local, '0')) {
+            $local = ltrim($local, '0');
+        }
+
         if ($cc !== '' && str_starts_with($local, $cc)) {
             return $local;
         }
@@ -68,7 +72,7 @@ class BaileysGateway
             $json = $response->json();
 
             return ($json['features']['pairingCode'] ?? false) === true
-                || version_compare((string) ($json['version'] ?? '0'), '1.2.1', '>=');
+                || version_compare((string) ($json['version'] ?? '0'), '1.2.2', '>=');
         } catch (\Throwable) {
             return false;
         }

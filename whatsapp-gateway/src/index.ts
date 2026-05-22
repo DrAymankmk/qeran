@@ -69,7 +69,7 @@ async function fetchQrPayload(sessionId: string) {
 app.get('/health', (_req, res) => {
   res.json({
     ok: true,
-    version: '1.2.1',
+    version: '1.2.2',
     qrSetupPage: QR_SETUP_PAGE_ENABLED,
     secretConfigured: Boolean(SECRET),
     features: {
@@ -176,7 +176,7 @@ app.get('/sessions/:id/pairing-code', async (req, res) => {
       await startSessionWithPairing(sessionId, phone);
     }
 
-    const meta = await waitForPairingOrConnected(sessionId, 60_000);
+    const meta = await waitForPairingOrConnected(sessionId, 90_000);
 
     if (meta.status === 'connected') {
       res.json({

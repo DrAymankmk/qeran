@@ -2,6 +2,7 @@ import makeWASocket, {
   DisconnectReason,
   fetchLatestBaileysVersion,
   useMultiFileAuthState,
+  type ConnectionState,
   type WASocket,
 } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
@@ -26,10 +27,14 @@ export interface SessionMeta {
   linkPhone?: string;
   phone?: string;
   sock?: WASocket;
+  pairingRequestedAt?: number;
 }
 
 const sessions = new Map<string, SessionMeta>();
 const startPromises = new Map<string, Promise<SessionMeta>>();
+
+const PAIRING_READY_DELAY_MS = Number(process.env.PAIRING_READY_DELAY_MS ?? 8000);
+const PAIRING_SOCKET_READY_TIMEOUT_MS = Number(process.env.PAIRING_SOCKET_READY_TIMEOUT_MS ?? 45_000);
 
 function sessionsDir(): string {
   return process.env.SESSIONS_DIR ?? path.join(process.cwd(), 'sessions');
@@ -50,7 +55,25 @@ export function normalizePhoneDigits(phone: string): string {
   if (digits.startsWith('00')) {
     digits = digits.slice(2);
   }
+
+  // E.164: country code + national number without leading 0 (e.g. 20 + 1090537394)
+  if (digits.startsWith('20') && digits.length > 3 && digits[2] === '0') {
+    digits = `20${digits.slice(3)}`;
+  }
+
+  if (digits.startsWith('966') && digits.length > 4 && digits[3] === '0') {
+    digits = `966${digits.slice(4)}`;
+  }
+
+  if (digits.startsWith('0') && digits.length >= 10 && digits.length <= 12) {
+    digits = digits.slice(1);
+  }
+
   return digits;
+}
+
+export function formatPairingCodeForUser(code: string): string {
+  return code.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
 }
 
 export function getSessionMeta(sessionId: string): SessionMeta | undefined {
@@ -94,6 +117,7 @@ function wipeSessionAuth(sessionId: string): void {
   if (fs.existsSync(dir)) {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+  logger.info({ sessionId }, 'session auth wiped');
 }
 
 async function waitForConnected(sessionId: string, timeoutMs: number): Promise<boolean> {
@@ -132,7 +156,7 @@ export async function waitForQrOrConnected(
 
 export async function waitForPairingOrConnected(
   sessionId: string,
-  timeoutMs = 60_000
+  timeoutMs = 90_000
 ): Promise<SessionMeta> {
   const deadline = Date.now() + timeoutMs;
 
@@ -150,6 +174,72 @@ export async function waitForPairingOrConnected(
   throw new Error(
     `Timed out waiting for pairing code (${timeoutMs / 1000}s). DELETE /sessions/${sessionId} and try again.`
   );
+}
+
+async function waitUntilReadyForPairing(sock: WASocket, sessionId: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const deadline = Date.now() + PAIRING_SOCKET_READY_TIMEOUT_MS;
+
+    const onUpdate = (update: Partial<ConnectionState>) => {
+      const { connection, qr } = update;
+
+      if (connection === 'open') {
+        cleanup();
+        resolve();
+        return;
+      }
+
+      if (connection === 'connecting' || qr) {
+        logger.info({ sessionId, connection, hasQr: Boolean(qr) }, 'socket ready for pairing request');
+        cleanup();
+        resolve();
+        return;
+      }
+
+      if (connection === 'close') {
+        const code = (update.lastDisconnect?.error as Boom | undefined)?.output?.statusCode;
+        if (code === DisconnectReason.loggedOut) {
+          cleanup();
+          reject(new Error('WhatsApp logged out this session'));
+        }
+      }
+    };
+
+    const poll = setInterval(() => {
+      if (Date.now() > deadline) {
+        cleanup();
+        reject(
+          new Error(
+            `Socket not ready for pairing within ${PAIRING_SOCKET_READY_TIMEOUT_MS / 1000}s`
+          )
+        );
+      }
+    }, 500);
+
+    const cleanup = () => {
+      sock.ev.off('connection.update', onUpdate);
+      clearInterval(poll);
+    };
+
+    sock.ev.on('connection.update', onUpdate);
+  });
+}
+
+async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Promise<void> {
+  logger.info({ sessionId }, 'reconnecting after pairing restart (515)');
+  meta.status = 'starting';
+  meta.pairingCode = undefined;
+
+  try {
+    await createSocket(sessionId, meta);
+    const ok = await waitForConnected(sessionId, 90_000);
+    if (!ok) {
+      logger.warn({ sessionId }, 'reconnect after restart did not reach connected');
+    }
+  } catch (err) {
+    logger.error({ sessionId, err }, 'reconnect after restart failed');
+    meta.status = 'disconnected';
+  }
 }
 
 async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASocket> {
@@ -172,13 +262,14 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
 
   sock.ev.on('connection.update', (update) => {
     const { connection, lastDisconnect, qr } = update;
+    const statusCode = (lastDisconnect?.error as Boom | undefined)?.output?.statusCode;
 
     if (qr) {
       meta.qr = qr;
       if (meta.status !== 'pending_pairing') {
         meta.status = 'pending_qr';
       }
-      logger.info({ sessionId }, 'QR code ready');
+      logger.info({ sessionId, status: meta.status }, 'QR event (ignored during pairing if pending_pairing)');
     }
 
     if (connection === 'open') {
@@ -190,27 +281,47 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
       logger.info({ sessionId, phone: meta.phone }, 'WhatsApp connected');
     }
 
-    if (connection === 'close') {
-      meta.status = 'disconnected';
-      meta.sock = undefined;
-      meta.pairingCode = undefined;
-      const code = (lastDisconnect?.error as Boom | undefined)?.output?.statusCode;
-      const loggedOut = code === DisconnectReason.loggedOut;
+    if (connection === 'connecting') {
+      logger.info({ sessionId, status: meta.status }, 'WhatsApp connecting');
+    }
 
-      logger.warn({ sessionId, code, loggedOut }, 'connection closed');
+    if (connection === 'close') {
+      const loggedOut = statusCode === DisconnectReason.loggedOut;
+      const restartRequired = statusCode === DisconnectReason.restartRequired;
+      const wasPairing = meta.status === 'pending_pairing';
+
+      logger.warn(
+        { sessionId, statusCode, loggedOut, restartRequired, wasPairing, status: meta.status },
+        'connection closed'
+      );
+
+      meta.sock = undefined;
+
+      if (wasPairing) {
+        if (restartRequired) {
+          void reconnectAfterRestart(sessionId, meta);
+          return;
+        }
+        // User is entering the code — do not restart pairing (invalidates the code)
+        return;
+      }
+
+      meta.status = 'disconnected';
+      meta.pairingCode = undefined;
 
       if (loggedOut) {
         return;
       }
 
-      const linkPhone = meta.linkPhone;
-      setTimeout(() => {
-        if (linkPhone) {
-          void startSessionWithPairing(sessionId, linkPhone);
-        } else {
+      if (meta.linkPhone) {
+        setTimeout(() => {
+          void startSessionWithPairing(sessionId, meta.linkPhone!, true);
+        }, 5000);
+      } else {
+        setTimeout(() => {
           void startSession(sessionId);
-        }
-      }, 3000);
+        }, 3000);
+      }
     }
   });
 
@@ -220,18 +331,28 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
   return sock;
 }
 
-async function requestPairingCodeWithRetry(sock: WASocket, digits: string, sessionId: string): Promise<string> {
+async function requestPairingCodeWithRetry(
+  sock: WASocket,
+  digits: string,
+  sessionId: string
+): Promise<string> {
+  await waitUntilReadyForPairing(sock, sessionId);
+  logger.info({ sessionId, delayMs: PAIRING_READY_DELAY_MS }, 'waiting before requestPairingCode');
+  await sleep(PAIRING_READY_DELAY_MS);
+
   let lastError: unknown;
 
-  for (let attempt = 1; attempt <= 5; attempt++) {
+  for (let attempt = 1; attempt <= 4; attempt++) {
     try {
-      await sleep(attempt * 1500);
-      const code = await sock.requestPairingCode(digits);
-      logger.info({ sessionId, attempt }, 'Pairing code ready');
+      const raw = await sock.requestPairingCode(digits);
+      const code = formatPairingCodeForUser(raw);
+      logger.info({ sessionId, attempt, codeLength: code.length }, 'pairing code generated');
       return code;
     } catch (err) {
       lastError = err;
-      logger.warn({ sessionId, attempt, err }, 'requestPairingCode attempt failed');
+      const message = err instanceof Error ? err.message : String(err);
+      logger.warn({ sessionId, attempt, message }, 'requestPairingCode attempt failed');
+      await sleep(attempt * 2000);
     }
   }
 
@@ -257,17 +378,21 @@ async function runPairingFlow(sessionId: string, digits: string, fresh: boolean)
     linkPhone: digits,
     phone: undefined,
     sock: undefined,
+    pairingRequestedAt: Date.now(),
   };
   sessions.set(sessionId, meta);
+
+  logger.info({ sessionId, digits: digits.slice(-4), fresh }, 'starting pairing flow');
 
   const sock = await createSocket(sessionId, meta);
 
   if (sock.authState.creds.registered) {
-    const reconnected = await waitForConnected(sessionId, 15_000);
+    const reconnected = await waitForConnected(sessionId, 20_000);
     if (reconnected) {
+      logger.info({ sessionId }, 'session already registered and connected');
       return meta;
     }
-    logger.warn({ sessionId }, 'Stale registered session — wiping for fresh pairing');
+    logger.warn({ sessionId }, 'stale registered session — wiping for fresh pairing');
     wipeSessionAuth(sessionId);
     return runPairingFlow(sessionId, digits, true);
   }
@@ -275,6 +400,8 @@ async function runPairingFlow(sessionId: string, digits: string, fresh: boolean)
   const code = await requestPairingCodeWithRetry(sock, digits, sessionId);
   meta.pairingCode = code;
   meta.status = 'pending_pairing';
+
+  logger.info({ sessionId, status: meta.status }, 'pairing code ready — waiting for user to enter in WhatsApp');
 
   return meta;
 }
@@ -327,11 +454,12 @@ export async function startSession(sessionId: string): Promise<SessionMeta> {
 
 export async function startSessionWithPairing(
   sessionId: string,
-  phone: string
+  phone: string,
+  fresh = true
 ): Promise<SessionMeta> {
   const digits = normalizePhoneDigits(phone);
-  if (!digits) {
-    throw new Error('Invalid phone number for pairing');
+  if (!digits || digits.length < 10) {
+    throw new Error(`Invalid phone number for pairing (E.164 required): ${digits || 'empty'}`);
   }
 
   const existing = sessions.get(sessionId);
@@ -341,10 +469,13 @@ export async function startSessionWithPairing(
 
   const inFlight = startPromises.get(sessionId);
   if (inFlight) {
+    logger.info({ sessionId }, 'pairing already in progress — awaiting');
     return inFlight;
   }
 
-  const promise = runPairingFlow(sessionId, digits, sessionAuthExists(sessionId));
+  logger.info({ sessionId, digitsSuffix: digits.slice(-4), fresh }, 'startSessionWithPairing');
+
+  const promise = runPairingFlow(sessionId, digits, fresh);
 
   startPromises.set(sessionId, promise);
 
@@ -365,9 +496,12 @@ export async function deleteSession(sessionId: string): Promise<void> {
     }
   }
   sessions.delete(sessionId);
+  startPromises.delete(sessionId);
 
   const dir = sessionPath(sessionId);
   if (fs.existsSync(dir)) {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+
+  logger.info({ sessionId }, 'session deleted');
 }

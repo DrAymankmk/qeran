@@ -121,10 +121,13 @@ class AuthController extends Controller
      */
     public function login(AuthenticationRequest $request)
     {
-        $user = User::checkUserExist($request->phone)->first();
-
+        // $user = User::checkUserExist($request->phone)->first();
+        $user = User::findByPhone(
+            (string) $request->phone,
+            $request->filled('country_code') ? (string) $request->country_code : null
+        );
         // Verify user password
-        if (! Hash::check($request->password, $user->password)) {
+        if(! Hash::check($request->password, $user->password)) {
             return RespondActive::clientError('Wrong Info!');
         }
 

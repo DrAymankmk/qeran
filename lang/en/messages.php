@@ -74,6 +74,8 @@ return [
     'whatsapp_disconnected' => 'WhatsApp disconnected.',
     'whatsapp_status_failed' => 'Could not read connection status.',
     'whatsapp_not_connected' => 'Connect WhatsApp first.',
+    'whatsapp_pairing_waiting_user' => 'Enter the pairing code in WhatsApp now. When asked for your number, use link_phone_display exactly.',
+    'whatsapp_pairing_finishing' => 'WhatsApp accepted the code. Finishing connection…',
     'whatsapp_invitations_queued' => 'Invitations queued for WhatsApp delivery.',
     'whatsapp_pairing_step_1' => 'Open WhatsApp on the same phone.',
     'whatsapp_pairing_step_2' => 'Linked devices → Link a device → Link with phone number. When WhatsApp asks for your number, enter exactly: :phone',

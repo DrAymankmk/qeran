@@ -56,9 +56,9 @@ class WhatsAppConnectController extends Controller
             return RespondActive::clientError(__('messages.whatsapp_pairing_phone_invalid'));
         }
 
-        $dbSession = WhatsappSession::query()->where('session_id', $sessionId)->first();
         $existingStatus = BaileysGateway::getStatus($sessionId);
         $existingConnection = $existingStatus['data']['status'] ?? 'disconnected';
+        $registeredOnDisk = (bool) ($existingStatus['data']['registeredOnDisk'] ?? false);
 
         Log::info('WhatsApp connect: start', [
             'user_id' => $user->id,
@@ -67,6 +67,7 @@ class WhatsAppConnectController extends Controller
             'link_phone_display' => $phoneDisplay,
             'profile_phone' => $user->phone,
             'gateway_status' => $existingConnection,
+            'registered_on_disk' => $registeredOnDisk,
         ]);
 
         if ($existingConnection === 'connected') {
@@ -80,31 +81,13 @@ class WhatsAppConnectController extends Controller
             ]);
         }
 
-        // Reuse in-progress pairing (do not wipe — invalidates code user is entering in WhatsApp)
-        if ($this->shouldReusePendingPairing($dbSession, $existingConnection)) {
-            $pairing = BaileysGateway::getPairingCode($sessionId, $phone);
-            $pairingCode = $this->formatPairingCodeForDisplay($pairing['data']['pairingCode'] ?? null);
-
-            if ($pairing['ok'] && $pairingCode) {
-                Log::info('WhatsApp connect: reusing active pairing code', [
-                    'user_id' => $user->id,
-                    'session_id' => $sessionId,
-                ]);
-
-                return RespondActive::success(__('messages.whatsapp_pairing_code_ready'), $this->pairingPayload(
-                    $sessionId,
-                    $pairingCode,
-                    $phone,
-                    $phoneDisplay
-                ));
-            }
-        }
-
+        // User tapped Connect → always issue a fresh code (reusing failed codes causes WhatsApp errors)
         if (in_array($existingConnection, ['pending_pairing', 'pending_qr', 'starting', 'disconnected'], true)) {
             BaileysGateway::deleteSession($sessionId);
-            Log::info('WhatsApp connect: cleared stale gateway session', [
+            Log::info('WhatsApp connect: fresh pairing code requested', [
                 'user_id' => $user->id,
                 'previous_status' => $existingConnection,
+                'had_registered_creds' => $registeredOnDisk,
             ]);
         }
 
@@ -209,6 +192,8 @@ class WhatsAppConnectController extends Controller
             'phone' => $linkPhoneE164,
             'poll_status' => true,
             'poll_interval_seconds' => 3,
+            'code_valid_seconds' => 120,
+            'do_not_connect_again' => true,
             'instructions' => $this->pairingInstructions($linkPhoneDisplay),
         ];
     }
@@ -242,16 +227,17 @@ class WhatsAppConnectController extends Controller
                 'phone_suffix' => $phone ? substr((string) $phone, -4) : null,
             ]);
         } elseif ($connectionStatus === 'pending_pairing') {
-            $hint = $registeredOnDisk
-                ? 'Code accepted by WhatsApp — keep polling, connection is finishing'
-                : 'Enter pairing_code in WhatsApp (Link with phone number) on phone link_phone; wait until registered_on_disk is true';
-
             Log::warning('WhatsApp status: still pending_pairing', [
                 'user_id' => $user->id,
                 'registered_on_disk' => $registeredOnDisk,
-                'hint' => $hint,
+                'action' => $registeredOnDisk ? 'wait_for_connection' : 'enter_code_in_whatsapp',
             ]);
         }
+
+        $dbSession = WhatsappSession::query()->where('session_id', $sessionId)->first();
+        $linkDisplay = $dbSession?->phone
+            ? PhoneNumber::formatForWhatsAppDisplay(PhoneNumber::e164ForWhatsAppPairing($user->country_code, $dbSession->phone))
+            : PhoneNumber::formatForWhatsAppDisplay(PhoneNumber::e164ForWhatsAppPairing($user->country_code, $user->phone));
 
         return RespondActive::success('OK', [
             'status' => $connectionStatus,
@@ -260,6 +246,9 @@ class WhatsAppConnectController extends Controller
             'connected' => $connectionStatus === 'connected',
             'registered_on_disk' => $registeredOnDisk,
             'awaiting_user' => $connectionStatus === 'pending_pairing' && ! $registeredOnDisk,
+            'action' => $this->statusAction($connectionStatus, $registeredOnDisk),
+            'link_phone_display' => $linkDisplay,
+            'message' => $this->statusMessage($connectionStatus, $registeredOnDisk),
         ]);
     }
 
@@ -286,16 +275,38 @@ class WhatsAppConnectController extends Controller
         return RespondActive::success(__('messages.whatsapp_disconnected'));
     }
 
-    protected function shouldReusePendingPairing(?WhatsappSession $dbSession, string $gatewayStatus): bool
+    protected function statusAction(string $connectionStatus, bool $registeredOnDisk): string
     {
-        if ($gatewayStatus !== 'pending_pairing') {
-            return false;
+        if ($connectionStatus === 'connected') {
+            return 'connected';
         }
 
-        return $dbSession
-            && $dbSession->status === 'pending_pairing'
-            && $dbSession->last_seen_at
-            && $dbSession->last_seen_at->greaterThan(now()->subMinutes(5));
+        if ($connectionStatus === 'pending_pairing' && $registeredOnDisk) {
+            return 'wait_for_connection';
+        }
+
+        if ($connectionStatus === 'pending_pairing') {
+            return 'enter_code_in_whatsapp';
+        }
+
+        return 'connect_whatsapp';
+    }
+
+    protected function statusMessage(string $connectionStatus, bool $registeredOnDisk): string
+    {
+        if ($connectionStatus === 'connected') {
+            return __('messages.whatsapp_connected');
+        }
+
+        if ($connectionStatus === 'pending_pairing' && $registeredOnDisk) {
+            return __('messages.whatsapp_pairing_finishing');
+        }
+
+        if ($connectionStatus === 'pending_pairing') {
+            return __('messages.whatsapp_pairing_waiting_user');
+        }
+
+        return __('messages.whatsapp_not_connected');
     }
 
     /**

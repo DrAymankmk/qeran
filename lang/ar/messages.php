@@ -74,6 +74,8 @@ return [
     'whatsapp_disconnected' => 'تم قطع اتصال واتساب.',
     'whatsapp_status_failed' => 'تعذر قراءة حالة الاتصال.',
     'whatsapp_not_connected' => 'يجب ربط واتساب أولاً من الإعدادات.',
+    'whatsapp_pairing_waiting_user' => 'أدخل رمز الربط في واتساب الآن. عند طلب الرقم، استخدم link_phone_display بالضبط.',
+    'whatsapp_pairing_finishing' => 'واتساب قبل الرمز. جاري إكمال الاتصال…',
     'whatsapp_invitations_queued' => 'تم جدولة إرسال الدعوات عبر واتساب.',
     'whatsapp_pairing_step_1' => 'افتح واتساب على نفس الهاتف.',
     'whatsapp_pairing_step_2' => 'الأجهزة المرتبطة → ربط جهاز → ربط برقم الهاتف. عندما يطلب واتساب رقمك، أدخل بالضبط: :phone',

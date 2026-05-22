@@ -144,9 +144,12 @@ class BaileysGateway
     /**
      * After user enters pairing code in WhatsApp — wait for connection to complete.
      */
-    public static function finalizePairing(string $sessionId): array
+    public static function finalizePairing(string $sessionId, bool $quick = true): array
     {
-        return self::request('post', "/sessions/{$sessionId}/finalize", [], 60);
+        $path = "/sessions/{$sessionId}/finalize".($quick ? '?quick=1' : '');
+        $timeout = $quick ? 25 : 60;
+
+        return self::request('post', $path, [], $timeout);
     }
 
     public static function getQr(?string $sessionId = null): array

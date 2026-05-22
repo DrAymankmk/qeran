@@ -192,28 +192,7 @@ class WhatsAppConnectController extends Controller
         $user = auth()->user();
         $sessionId = BaileysGateway::sessionIdForUser((int) $user->id);
 
-        $quick = BaileysGateway::getStatus($sessionId);
-        $connectionStatus = $quick['data']['status'] ?? 'disconnected';
-
-        if ($connectionStatus === 'pending_pairing' || $connectionStatus === 'starting') {
-            Log::info('WhatsApp status: attempting finalize', [
-                'user_id' => $user->id,
-                'session_id' => $sessionId,
-                'status' => $connectionStatus,
-            ]);
-
-            $finalize = BaileysGateway::finalizePairing($sessionId);
-
-            Log::info('WhatsApp status: finalize result', [
-                'user_id' => $user->id,
-                'ok' => $finalize['ok'],
-                'connected' => $finalize['data']['connected'] ?? false,
-                'status' => $finalize['data']['status'] ?? null,
-                'registered_on_disk' => $finalize['data']['registeredOnDisk'] ?? null,
-                'error' => $finalize['error'] ?? null,
-            ]);
-        }
-
+        // Single gateway call: status endpoint tries finalize + up to ~10s wait (avoid 60s double-call)
         $result = BaileysGateway::getStatus($sessionId);
 
         if (! $result['ok']) {
@@ -233,10 +212,14 @@ class WhatsAppConnectController extends Controller
                 'phone_suffix' => $phone ? substr((string) $phone, -4) : null,
             ]);
         } elseif ($connectionStatus === 'pending_pairing') {
+            $hint = $registeredOnDisk
+                ? 'Code accepted by WhatsApp — keep polling, connection is finishing'
+                : 'Enter pairing_code in WhatsApp (Link with phone number) on phone link_phone; wait until registered_on_disk is true';
+
             Log::warning('WhatsApp status: still pending_pairing', [
                 'user_id' => $user->id,
                 'registered_on_disk' => $registeredOnDisk,
-                'hint' => 'Enter XXXX-XXXX in WhatsApp on the SAME phone as link_phone; do not tap Connect again',
+                'hint' => $hint,
             ]);
         }
 
@@ -246,6 +229,7 @@ class WhatsAppConnectController extends Controller
             'session_id' => $sessionId,
             'connected' => $connectionStatus === 'connected',
             'registered_on_disk' => $registeredOnDisk,
+            'awaiting_user' => $connectionStatus === 'pending_pairing' && ! $registeredOnDisk,
         ]);
     }
 

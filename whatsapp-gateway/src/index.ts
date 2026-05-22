@@ -163,36 +163,37 @@ app.get('/sessions/:id/status', async (req, res) => {
   let meta = getSessionMeta(sessionId);
 
   if (!meta) {
-    res.json({ status: 'disconnected', phone: null, sessionId });
+    res.json({ status: 'disconnected', phone: null, sessionId, registeredOnDisk: false });
     return;
   }
 
   if (meta.status === 'pending_pairing' || meta.status === 'starting') {
     meta = (await ensurePairingFinalized(sessionId)) ?? meta;
-  }
-
     if (meta.status === 'pending_pairing' || meta.status === 'starting') {
-      await waitForConnected(sessionId, 12_000);
+      await waitForConnected(sessionId, 10_000);
       meta = getSessionMeta(sessionId) ?? meta;
     }
+  }
 
-    const registered = await isAuthRegistered(sessionId);
+  const registered = await isAuthRegistered(sessionId);
 
-    res.json({
-      sessionId: meta.sessionId,
-      status: meta.status,
-      phone: meta.phone ?? null,
-      pairingCode: meta.pairingCode ? formatPairingCodeDisplay(meta.pairingCode) : null,
-      registeredOnDisk: registered,
-    });
+  res.json({
+    sessionId: meta.sessionId,
+    status: meta.status,
+    phone: meta.phone ?? null,
+    pairingCode: meta.pairingCode ? formatPairingCodeDisplay(meta.pairingCode) : null,
+    registeredOnDisk: registered,
   });
+});
 
 app.post('/sessions/:id/finalize', async (req, res) => {
   const sessionId = req.params.id;
+  const quick = req.query.quick === '1' || req.query.quick === 'true';
+  const waitMs = quick ? 18_000 : 45_000;
 
   try {
     await ensurePairingFinalized(sessionId);
-    const connected = await waitForConnected(sessionId, 45_000);
+    const connected = await waitForConnected(sessionId, waitMs);
     const meta = getSessionMeta(sessionId);
     const registered = await isAuthRegistered(sessionId);
 

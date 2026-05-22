@@ -65,6 +65,7 @@ return [
     'whatsapp_gateway_not_configured' => 'WhatsApp gateway is not configured.',
     'whatsapp_gateway_outdated' => 'WhatsApp gateway on the server is outdated. Deploy whatsapp-gateway v1.2.4+ and restart PM2.',
     'whatsapp_phone_required' => 'Phone number is required to link WhatsApp.',
+    'whatsapp_pairing_phone_invalid' => 'Phone number format is invalid for WhatsApp linking. Update your profile phone or pass the correct phone in the request.',
     'whatsapp_connect_failed' => 'Could not start WhatsApp linking.',
     'whatsapp_pairing_code_failed' => 'Could not get pairing code. Try again.',
     'whatsapp_pairing_code_ready' => 'Enter the pairing code in WhatsApp on the same phone.',
@@ -75,7 +76,7 @@ return [
     'whatsapp_not_connected' => 'Connect WhatsApp first.',
     'whatsapp_invitations_queued' => 'Invitations queued for WhatsApp delivery.',
     'whatsapp_pairing_step_1' => 'Open WhatsApp on the same phone.',
-    'whatsapp_pairing_step_2' => 'Linked devices → Link a device → Link with phone number.',
+    'whatsapp_pairing_step_2' => 'Linked devices → Link a device → Link with phone number. When WhatsApp asks for your number, enter exactly: :phone',
     'whatsapp_pairing_step_3' => 'Enter the code exactly as shown (XXXX-XXXX). Use the same phone number as your account.',
 
     'otp_user_not_found' => 'No user found for this phone number.',

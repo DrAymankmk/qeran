@@ -58,17 +58,32 @@ export function normalizePhoneDigits(phone: string): string {
     digits = digits.slice(2);
   }
 
-  // E.164: country code + national number without leading 0 (e.g. 20 + 1090537394)
-  if (digits.startsWith('20') && digits.length > 3 && digits[2] === '0') {
-    digits = `20${digits.slice(3)}`;
+  let cc = '';
+  let national = digits;
+
+  if (digits.startsWith('966')) {
+    cc = '966';
+    national = digits.slice(3);
+  } else if (digits.startsWith('20')) {
+    cc = '20';
+    national = digits.slice(2);
   }
 
-  if (digits.startsWith('966') && digits.length > 4 && digits[3] === '0') {
-    digits = `966${digits.slice(4)}`;
+  while (national.startsWith('0') && national.length > 1) {
+    national = national.slice(1);
   }
 
-  if (digits.startsWith('0') && digits.length >= 10 && digits.length <= 12) {
-    digits = digits.slice(1);
+  if (cc !== '') {
+    digits = cc + national;
+  } else {
+    digits = national;
+  }
+
+  if (cc === '20' && !/^20(10|11|12|15)\d{8}$/.test(digits)) {
+    logger.warn(
+      { phoneSuffix: digits.slice(-4), length: digits.length },
+      'Egypt pairing number may be invalid — expected 20 + 10/11/12/15 + 8 digits'
+    );
   }
 
   return digits;
@@ -568,6 +583,12 @@ export async function startSessionWithPairing(
   const digits = normalizePhoneDigits(phone);
   if (!digits || digits.length < 10) {
     throw new Error(`Invalid phone number for pairing (E.164 required): ${digits || 'empty'}`);
+  }
+
+  if (digits.startsWith('20') && !/^20(10|11|12|15)\d{8}$/.test(digits)) {
+    throw new Error(
+      `Invalid Egypt WhatsApp number "${digits}". Use 2010xxxxxxxx (must match the SIM on this phone).`
+    );
   }
 
   const existing = sessions.get(sessionId);

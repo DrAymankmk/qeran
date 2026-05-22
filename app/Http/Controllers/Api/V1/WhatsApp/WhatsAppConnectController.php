@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\WhatsappSession;
 use App\Services\External\BaileysGateway;
 use App\Services\RespondActive;
+use App\Support\PhoneNumber;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -27,19 +28,32 @@ class WhatsAppConnectController extends Controller
         $user = auth()->user();
         $sessionId = BaileysGateway::sessionIdForUser((int) $user->id);
 
-        $phone = BaileysGateway::normalizeUserPhone(
+        $phone = PhoneNumber::e164ForWhatsAppPairing(
             $user->country_code,
             $user->phone,
             $request->input('phone')
         );
+        $phoneDisplay = PhoneNumber::formatForWhatsAppDisplay($phone);
 
         if ($phone === '' || strlen($phone) < 10) {
             Log::warning('WhatsApp connect: invalid phone', [
                 'user_id' => $user->id,
                 'country_code' => $user->country_code,
+                'profile_phone' => $user->phone,
             ]);
 
             return RespondActive::clientError(__('messages.whatsapp_phone_required'));
+        }
+
+        if (! PhoneNumber::isValidWhatsAppPairingNumber($phone, $user->country_code)) {
+            Log::warning('WhatsApp connect: pairing phone format invalid', [
+                'user_id' => $user->id,
+                'link_phone' => $phone,
+                'profile_phone' => $user->phone,
+                'country_code' => $user->country_code,
+            ]);
+
+            return RespondActive::clientError(__('messages.whatsapp_pairing_phone_invalid'));
         }
 
         $dbSession = WhatsappSession::query()->where('session_id', $sessionId)->first();
@@ -50,6 +64,8 @@ class WhatsAppConnectController extends Controller
             'user_id' => $user->id,
             'session_id' => $sessionId,
             'link_phone' => $phone,
+            'link_phone_display' => $phoneDisplay,
+            'profile_phone' => $user->phone,
             'gateway_status' => $existingConnection,
         ]);
 
@@ -75,16 +91,12 @@ class WhatsAppConnectController extends Controller
                     'session_id' => $sessionId,
                 ]);
 
-                return RespondActive::success(__('messages.whatsapp_pairing_code_ready'), [
-                    'status' => 'pending_pairing',
-                    'session_id' => $sessionId,
-                    'pairing_code' => $pairingCode,
-                    'link_phone' => $phone,
-                    'phone' => $phone,
-                    'poll_status' => true,
-                    'poll_interval_seconds' => 3,
-                    'instructions' => $this->pairingInstructions(),
-                ]);
+                return RespondActive::success(__('messages.whatsapp_pairing_code_ready'), $this->pairingPayload(
+                    $sessionId,
+                    $pairingCode,
+                    $phone,
+                    $phoneDisplay
+                ));
             }
         }
 
@@ -171,16 +183,34 @@ class WhatsAppConnectController extends Controller
             'pairing_code' => $pairingCode,
         ]);
 
-        return RespondActive::success(__('messages.whatsapp_pairing_code_ready'), [
+        return RespondActive::success(__('messages.whatsapp_pairing_code_ready'), $this->pairingPayload(
+            $sessionId,
+            $pairingCode,
+            $phone,
+            $phoneDisplay
+        ));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function pairingPayload(
+        string $sessionId,
+        string $pairingCode,
+        string $linkPhoneE164,
+        string $linkPhoneDisplay
+    ): array {
+        return [
             'status' => 'pending_pairing',
             'session_id' => $sessionId,
             'pairing_code' => $pairingCode,
-            'link_phone' => $phone,
-            'phone' => $phone,
+            'link_phone' => $linkPhoneE164,
+            'link_phone_display' => $linkPhoneDisplay,
+            'phone' => $linkPhoneE164,
             'poll_status' => true,
             'poll_interval_seconds' => 3,
-            'instructions' => $this->pairingInstructions(),
-        ]);
+            'instructions' => $this->pairingInstructions($linkPhoneDisplay),
+        ];
     }
 
     public function status(): JsonResponse
@@ -289,11 +319,11 @@ class WhatsAppConnectController extends Controller
     /**
      * @return list<string>
      */
-    protected function pairingInstructions(): array
+    protected function pairingInstructions(string $linkPhoneDisplay): array
     {
         return [
             __('messages.whatsapp_pairing_step_1'),
-            __('messages.whatsapp_pairing_step_2'),
+            __('messages.whatsapp_pairing_step_2', ['phone' => $linkPhoneDisplay]),
             __('messages.whatsapp_pairing_step_3'),
         ];
     }

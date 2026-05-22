@@ -2,10 +2,74 @@
 
 namespace App\Support;
 
-use App\Services\External\BaileysGateway;
-
 class PhoneNumber
 {
+    /**
+     * E.164 digits for WhatsApp pairing (no + sign).
+     * Must match the SIM / WhatsApp account on the phone exactly.
+     */
+    public static function e164ForWhatsAppPairing(?string $countryCode, ?string $phone, ?string $override = null): string
+    {
+        $cc = preg_replace('/\D+/', '', (string) $countryCode);
+        $raw = preg_replace('/\D+/', '', (string) ($override !== null && $override !== '' ? $override : $phone));
+
+        if ($raw === '') {
+            return '';
+        }
+
+        if (str_starts_with($raw, '00')) {
+            $raw = substr($raw, 2);
+        }
+
+        if ($cc !== '' && str_starts_with($raw, $cc)) {
+            $national = substr($raw, strlen($cc));
+        } else {
+            $national = $raw;
+        }
+
+        // Egyptian local 010xxxxxxxx → 10xxxxxxxx (one leading 0 only)
+        while (str_starts_with($national, '0') && strlen($national) > 1) {
+            $national = substr($national, 1);
+        }
+
+        if ($cc === '') {
+            return $national;
+        }
+
+        return $cc.$national;
+    }
+
+    public static function isValidWhatsAppPairingNumber(string $e164, ?string $countryCode): bool
+    {
+        $cc = preg_replace('/\D+/', '', (string) $countryCode);
+
+        if ($cc === '20') {
+            return (bool) preg_match('/^20(10|11|12|15)\d{8}$/', $e164);
+        }
+
+        if ($cc === '966') {
+            return (bool) preg_match('/^9665\d{8}$/', $e164);
+        }
+
+        return strlen($e164) >= 10 && strlen($e164) <= 15;
+    }
+
+    /**
+     * Human-readable number the user must enter in WhatsApp when asked for phone.
+     */
+    public static function formatForWhatsAppDisplay(string $e164): string
+    {
+        if (preg_match('/^20(10|11|12|15)(\d{4})(\d{4})$/', $e164, $m)) {
+            return '+20 '.$m[1].' '.$m[2].' '.$m[3];
+        }
+
+        if (preg_match('/^9665(\d{2})(\d{3})(\d{4})$/', $e164, $m)) {
+            return '+966 5'.$m[1].' '.$m[2].' '.$m[3];
+        }
+
+        return '+'.$e164;
+    }
+
     /**
      * All plausible stored/request forms (leading zero, with/without country code, etc.).
      *
@@ -13,6 +77,7 @@ class PhoneNumber
      */
     public static function variants(?string $countryCode, string $phone): array
     {
+        $e164 = self::e164ForWhatsAppPairing($countryCode, $phone);
         $digits = preg_replace('/\D+/', '', $phone);
         $cc = preg_replace('/\D+/', '', (string) $countryCode);
 
@@ -28,21 +93,18 @@ class PhoneNumber
 
         $localWithZero = str_starts_with($local, '0') ? $local : '0'.$localNoZero;
 
-        $normalized = BaileysGateway::normalizeUserPhone($cc, $phone);
-
         $variants = [
             $phone,
             $digits,
             $local,
             $localNoZero,
             $localWithZero,
-            $normalized,
+            $e164,
         ];
 
         if ($cc !== '') {
             $variants[] = $cc.$local;
             $variants[] = $cc.$localNoZero;
-            $variants[] = $cc.$localWithZero;
         }
 
         return array_values(array_unique(array_filter($variants)));

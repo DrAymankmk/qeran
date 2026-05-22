@@ -2,12 +2,11 @@
 
 namespace App\Http\Requests\Api\V1\Auth;
 
-use App\Helpers\Constant;
+use App\Models\User;
 use App\Services\RespondActive;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\Rule;
 
 class GuardLoginRequest extends FormRequest
 {
@@ -29,7 +28,16 @@ class GuardLoginRequest extends FormRequest
     public function rules()
     {
         return [
-            'phone' => ['required', 'max:150', Rule::exists('users'), 'phone:INTERNATIONAL,EG,SA'],
+            'phone' => [
+                'required',
+                'max:150',
+                'phone:INTERNATIONAL,EG,SA',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (! User::findByPhone((string) $value, $this->input('country_code'))) {
+                        $fail(__('Wrong Info!'));
+                    }
+                },
+            ],
             'country_code' => ['required', 'max:6'],
             'code' => ['required', 'exists:invitations,code'],
         ];

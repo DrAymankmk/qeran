@@ -61,8 +61,12 @@ class AuthController extends Controller
      */
     public function loginGuard(GuardLoginRequest $request)
     {
-        $user = User::checkUserExist($request->phone)->first();
+        $user = User::findByPhone((string) $request->phone, (string) $request->country_code);
         $code = $request->code;
+
+        if (! $user) {
+            return RespondActive::clientError(__('Wrong Info!'));
+        }
 
         // Special handling for test phone number
         if ($request->phone == '560452425') {
@@ -121,14 +125,13 @@ class AuthController extends Controller
      */
     public function login(AuthenticationRequest $request)
     {
-        // $user = User::checkUserExist($request->phone)->first();
         $user = User::findByPhone(
             (string) $request->phone,
-            $request->filled('country_code') ? (string) $request->country_code : null
+            (string) $request->country_code
         );
-        // Verify user password
-        if(! Hash::check($request->password, $user->password)) {
-            return RespondActive::clientError('Wrong Info!');
+
+        if (! $user || ! Hash::check($request->password, $user->password)) {
+            return RespondActive::clientError(__('Wrong Info!'));
         }
 
         return $this->handleUserVerification($user, '', $request);

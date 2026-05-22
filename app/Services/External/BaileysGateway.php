@@ -72,7 +72,7 @@ class BaileysGateway
             $json = $response->json();
 
             return ($json['features']['pairingCode'] ?? false) === true
-                || version_compare((string) ($json['version'] ?? '0'), '1.2.3', '>=');
+                || version_compare((string) ($json['version'] ?? '0'), '1.2.4', '>=');
         } catch (\Throwable) {
             return false;
         }
@@ -141,6 +141,14 @@ class BaileysGateway
         return self::request('get', "/sessions/{$id}/status");
     }
 
+    /**
+     * After user enters pairing code in WhatsApp — wait for connection to complete.
+     */
+    public static function finalizePairing(string $sessionId): array
+    {
+        return self::request('post', "/sessions/{$sessionId}/finalize", [], 60);
+    }
+
     public static function getQr(?string $sessionId = null): array
     {
         $id = $sessionId ?? self::systemSessionId();
@@ -174,11 +182,11 @@ class BaileysGateway
         return self::request('post', '/send', $payload);
     }
 
-    protected static function http(): PendingRequest
+    protected static function http(int $timeoutSeconds = 90): PendingRequest
     {
         return Http::withToken((string) config('services.baileys.gateway_secret'))
             ->acceptJson()
-            ->timeout(90);
+            ->timeout($timeoutSeconds);
     }
 
     protected static function baseUrl(): string
@@ -189,7 +197,7 @@ class BaileysGateway
     /**
      * @param  array<string, mixed>  $body
      */
-    protected static function request(string $method, string $path, array $body = []): array
+    protected static function request(string $method, string $path, array $body = [], int $timeoutSeconds = 90): array
     {
         if (! self::isConfigured()) {
             return [
@@ -201,12 +209,13 @@ class BaileysGateway
         }
 
         $url = self::baseUrl().$path;
+        $http = self::http($timeoutSeconds);
 
         try {
             $response = match ($method) {
-                'get' => self::http()->get($url),
-                'post' => self::http()->post($url, $body),
-                'delete' => self::http()->delete($url),
+                'get' => $http->get($url),
+                'post' => $http->post($url, $body),
+                'delete' => $http->delete($url),
                 default => throw new \InvalidArgumentException("Unsupported method: {$method}"),
             };
 

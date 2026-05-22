@@ -7,10 +7,13 @@ import {
   getPairingCode,
   getQr,
   ensurePairingFinalized,
+  formatPairingCodeDisplay,
   getSessionMeta,
+  isAuthRegistered,
   normalizePhoneDigits,
   startSession,
   startSessionWithPairing,
+  waitForConnected,
   waitForPairingOrConnected,
   waitForQrOrConnected,
 } from './baileys/manager.js';
@@ -70,7 +73,7 @@ async function fetchQrPayload(sessionId: string) {
 app.get('/health', (_req, res) => {
   res.json({
     ok: true,
-    version: '1.2.3',
+    version: '1.2.4',
     qrSetupPage: QR_SETUP_PAGE_ENABLED,
     secretConfigured: Boolean(SECRET),
     features: {
@@ -143,8 +146,9 @@ app.post('/sessions', async (req, res) => {
     res.json({
       sessionId: meta.sessionId,
       status: meta.status,
-      phone: meta.phone ?? null,
-      pairingCode: meta.pairingCode ?? null,
+      phone: meta.phone ?? meta.linkPhone ?? null,
+      pairingCode: meta.pairingCode ? formatPairingCodeDisplay(meta.pairingCode) : null,
+      linkPhone: meta.linkPhone ?? null,
       linkMethod: usePairing ? 'pairing' : 'qr',
     });
   } catch (err) {
@@ -167,12 +171,48 @@ app.get('/sessions/:id/status', async (req, res) => {
     meta = (await ensurePairingFinalized(sessionId)) ?? meta;
   }
 
-  res.json({
-    sessionId: meta.sessionId,
-    status: meta.status,
-    phone: meta.phone ?? null,
-    pairingCode: meta.pairingCode ?? null,
+    if (meta.status === 'pending_pairing' || meta.status === 'starting') {
+      await waitForConnected(sessionId, 12_000);
+      meta = getSessionMeta(sessionId) ?? meta;
+    }
+
+    const registered = await isAuthRegistered(sessionId);
+
+    res.json({
+      sessionId: meta.sessionId,
+      status: meta.status,
+      phone: meta.phone ?? null,
+      pairingCode: meta.pairingCode ? formatPairingCodeDisplay(meta.pairingCode) : null,
+      registeredOnDisk: registered,
+    });
   });
+
+app.post('/sessions/:id/finalize', async (req, res) => {
+  const sessionId = req.params.id;
+
+  try {
+    await ensurePairingFinalized(sessionId);
+    const connected = await waitForConnected(sessionId, 45_000);
+    const meta = getSessionMeta(sessionId);
+    const registered = await isAuthRegistered(sessionId);
+
+    logger.info(
+      { sessionId, connected, status: meta?.status, registered },
+      'finalize pairing result'
+    );
+
+    res.json({
+      sessionId,
+      status: meta?.status ?? 'disconnected',
+      phone: meta?.phone ?? null,
+      connected: connected || meta?.status === 'connected',
+      registeredOnDisk: registered,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Finalize failed';
+    logger.error({ sessionId, err }, 'finalize pairing failed');
+    res.status(503).json({ error: message, connected: false });
+  }
 });
 
 app.get('/sessions/:id/pairing-code', async (req, res) => {

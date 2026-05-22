@@ -1,4 +1,5 @@
 import makeWASocket, {
+  Browsers,
   DisconnectReason,
   fetchLatestBaileysVersion,
   useMultiFileAuthState,
@@ -73,8 +74,17 @@ export function normalizePhoneDigits(phone: string): string {
   return digits;
 }
 
-export function formatPairingCodeForUser(code: string): string {
+/** Raw 8 chars for storage; use formatPairingCodeDisplay() for WhatsApp UI (XXXX-XXXX). */
+export function formatPairingCodeRaw(code: string): string {
   return code.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+}
+
+export function formatPairingCodeDisplay(code: string): string {
+  const raw = formatPairingCodeRaw(code);
+  if (raw.length === 8) {
+    return `${raw.slice(0, 4)}-${raw.slice(4)}`;
+  }
+  return raw;
 }
 
 export function getSessionMeta(sessionId: string): SessionMeta | undefined {
@@ -121,7 +131,7 @@ function wipeSessionAuth(sessionId: string): void {
   logger.info({ sessionId }, 'session auth wiped');
 }
 
-async function waitForConnected(sessionId: string, timeoutMs: number): Promise<boolean> {
+export async function waitForConnected(sessionId: string, timeoutMs: number): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const meta = sessions.get(sessionId);
@@ -226,7 +236,7 @@ async function waitUntilReadyForPairing(sock: WASocket, sessionId: string): Prom
   });
 }
 
-async function isAuthRegistered(sessionId: string): Promise<boolean> {
+export async function isAuthRegistered(sessionId: string): Promise<boolean> {
   if (!sessionAuthExists(sessionId)) {
     return false;
   }
@@ -308,6 +318,9 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
     auth: state,
     logger: pino({ level: 'silent' }),
     printQRInTerminal: false,
+    browser: Browsers.macOS('Chrome'),
+    markOnlineOnConnect: false,
+    syncFullHistory: false,
   });
 
   meta.sock = sock;
@@ -437,8 +450,11 @@ async function requestPairingCodeWithRetry(
   for (let attempt = 1; attempt <= 4; attempt++) {
     try {
       const raw = await sock.requestPairingCode(digits);
-      const code = formatPairingCodeForUser(raw);
-      logger.info({ sessionId, attempt, codeLength: code.length }, 'pairing code generated');
+      const code = formatPairingCodeRaw(raw);
+      logger.info(
+        { sessionId, attempt, codeLength: code.length, display: formatPairingCodeDisplay(code) },
+        'pairing code generated'
+      );
       return code;
     } catch (err) {
       lastError = err;

@@ -19,7 +19,7 @@ class WhatsAppConnectController extends Controller
         }
 
         if (! BaileysGateway::gatewaySupportsPairing()) {
-            Log::error('WhatsApp connect: gateway missing pairing-code support (deploy v1.2.2+)');
+            Log::error('WhatsApp connect: gateway outdated (need v1.2.4+)');
 
             return RespondActive::clientError(__('messages.whatsapp_gateway_outdated'));
         }
@@ -37,19 +37,19 @@ class WhatsAppConnectController extends Controller
             Log::warning('WhatsApp connect: invalid phone', [
                 'user_id' => $user->id,
                 'country_code' => $user->country_code,
-                'profile_phone_suffix' => substr((string) $user->phone, -4),
             ]);
 
             return RespondActive::clientError(__('messages.whatsapp_phone_required'));
         }
 
+        $dbSession = WhatsappSession::query()->where('session_id', $sessionId)->first();
         $existingStatus = BaileysGateway::getStatus($sessionId);
         $existingConnection = $existingStatus['data']['status'] ?? 'disconnected';
 
         Log::info('WhatsApp connect: start', [
             'user_id' => $user->id,
             'session_id' => $sessionId,
-            'phone_suffix' => substr($phone, -4),
+            'link_phone' => $phone,
             'gateway_status' => $existingConnection,
         ]);
 
@@ -64,7 +64,30 @@ class WhatsAppConnectController extends Controller
             ]);
         }
 
-        // Clear stale QR/pairing attempts so the user gets a fresh code
+        // Reuse in-progress pairing (do not wipe — invalidates code user is entering in WhatsApp)
+        if ($this->shouldReusePendingPairing($dbSession, $existingConnection)) {
+            $pairing = BaileysGateway::getPairingCode($sessionId, $phone);
+            $pairingCode = $this->formatPairingCodeForDisplay($pairing['data']['pairingCode'] ?? null);
+
+            if ($pairing['ok'] && $pairingCode) {
+                Log::info('WhatsApp connect: reusing active pairing code', [
+                    'user_id' => $user->id,
+                    'session_id' => $sessionId,
+                ]);
+
+                return RespondActive::success(__('messages.whatsapp_pairing_code_ready'), [
+                    'status' => 'pending_pairing',
+                    'session_id' => $sessionId,
+                    'pairing_code' => $pairingCode,
+                    'link_phone' => $phone,
+                    'phone' => $phone,
+                    'poll_status' => true,
+                    'poll_interval_seconds' => 3,
+                    'instructions' => $this->pairingInstructions(),
+                ]);
+            }
+        }
+
         if (in_array($existingConnection, ['pending_pairing', 'pending_qr', 'starting', 'disconnected'], true)) {
             BaileysGateway::deleteSession($sessionId);
             Log::info('WhatsApp connect: cleared stale gateway session', [
@@ -79,8 +102,7 @@ class WhatsAppConnectController extends Controller
             Log::warning('WhatsApp connect: gateway start failed', [
                 'user_id' => $user->id,
                 'session_id' => $sessionId,
-                'phone_suffix' => substr($phone, -4),
-                'http_status' => $result['status'] ?? 0,
+                'link_phone' => $phone,
                 'error' => $result['error'] ?? null,
             ]);
 
@@ -102,18 +124,13 @@ class WhatsAppConnectController extends Controller
             ]);
         }
 
-        $pairingCode = $this->normalizePairingCode($data['pairingCode'] ?? null);
+        $pairingCode = $this->formatPairingCodeForDisplay($data['pairingCode'] ?? null);
         $pairingError = null;
 
         if (! $pairingCode) {
-            Log::info('WhatsApp connect: fetching pairing code from gateway', [
-                'user_id' => $user->id,
-                'gateway_status' => $status,
-            ]);
-
             $pairing = BaileysGateway::getPairingCode($sessionId, $phone);
             if ($pairing['ok']) {
-                $pairingCode = $this->normalizePairingCode($pairing['data']['pairingCode'] ?? null);
+                $pairingCode = $this->formatPairingCodeForDisplay($pairing['data']['pairingCode'] ?? null);
                 $status = $pairing['data']['status'] ?? $status;
             } else {
                 $pairingError = $pairing['error'] ?? null;
@@ -134,9 +151,8 @@ class WhatsAppConnectController extends Controller
             Log::warning('WhatsApp connect: pairing code missing', [
                 'user_id' => $user->id,
                 'session_id' => $sessionId,
-                'phone_suffix' => substr($phone, -4),
+                'link_phone' => $phone,
                 'gateway_status' => $status,
-                'start_response' => $data,
                 'pairing_error' => $pairingError,
             ]);
 
@@ -151,22 +167,19 @@ class WhatsAppConnectController extends Controller
         Log::info('WhatsApp connect: pairing code issued', [
             'user_id' => $user->id,
             'session_id' => $sessionId,
-            'phone_suffix' => substr($phone, -4),
-            'code_length' => strlen($pairingCode),
+            'link_phone' => $phone,
+            'pairing_code' => $pairingCode,
         ]);
 
         return RespondActive::success(__('messages.whatsapp_pairing_code_ready'), [
             'status' => 'pending_pairing',
             'session_id' => $sessionId,
             'pairing_code' => $pairingCode,
+            'link_phone' => $phone,
             'phone' => $phone,
             'poll_status' => true,
             'poll_interval_seconds' => 3,
-            'instructions' => [
-                __('messages.whatsapp_pairing_step_1'),
-                __('messages.whatsapp_pairing_step_2'),
-                __('messages.whatsapp_pairing_step_3'),
-            ],
+            'instructions' => $this->pairingInstructions(),
         ]);
     }
 
@@ -178,38 +191,52 @@ class WhatsAppConnectController extends Controller
 
         $user = auth()->user();
         $sessionId = BaileysGateway::sessionIdForUser((int) $user->id);
+
+        $quick = BaileysGateway::getStatus($sessionId);
+        $connectionStatus = $quick['data']['status'] ?? 'disconnected';
+
+        if ($connectionStatus === 'pending_pairing' || $connectionStatus === 'starting') {
+            Log::info('WhatsApp status: attempting finalize', [
+                'user_id' => $user->id,
+                'session_id' => $sessionId,
+                'status' => $connectionStatus,
+            ]);
+
+            $finalize = BaileysGateway::finalizePairing($sessionId);
+
+            Log::info('WhatsApp status: finalize result', [
+                'user_id' => $user->id,
+                'ok' => $finalize['ok'],
+                'connected' => $finalize['data']['connected'] ?? false,
+                'status' => $finalize['data']['status'] ?? null,
+                'registered_on_disk' => $finalize['data']['registeredOnDisk'] ?? null,
+                'error' => $finalize['error'] ?? null,
+            ]);
+        }
+
         $result = BaileysGateway::getStatus($sessionId);
 
         if (! $result['ok']) {
-            Log::warning('WhatsApp status: gateway error', [
-                'user_id' => $user->id,
-                'error' => $result['error'] ?? null,
-            ]);
-
             return RespondActive::clientError($result['error'] ?? __('messages.whatsapp_status_failed'));
         }
 
         $data = $result['data'] ?? [];
         $connectionStatus = $data['status'] ?? 'disconnected';
         $phone = $data['phone'] ?? null;
+        $registeredOnDisk = (bool) ($data['registeredOnDisk'] ?? false);
 
         $this->syncSessionRecord($user->id, $sessionId, $connectionStatus, $phone);
 
-        if ($connectionStatus === 'pending_pairing') {
-            Log::info('WhatsApp status: still pending_pairing (gateway will try to finalize)', [
-                'user_id' => $user->id,
-                'session_id' => $sessionId,
-                'hint' => 'User should enter 8-char code in WhatsApp → Link with phone number; keep polling',
-            ]);
-        } elseif ($connectionStatus !== 'connected') {
-            Log::debug('WhatsApp status: not connected yet', [
-                'user_id' => $user->id,
-                'status' => $connectionStatus,
-            ]);
-        } else {
+        if ($connectionStatus === 'connected') {
             Log::info('WhatsApp status: connected', [
                 'user_id' => $user->id,
                 'phone_suffix' => $phone ? substr((string) $phone, -4) : null,
+            ]);
+        } elseif ($connectionStatus === 'pending_pairing') {
+            Log::warning('WhatsApp status: still pending_pairing', [
+                'user_id' => $user->id,
+                'registered_on_disk' => $registeredOnDisk,
+                'hint' => 'Enter XXXX-XXXX in WhatsApp on the SAME phone as link_phone; do not tap Connect again',
             ]);
         }
 
@@ -218,6 +245,7 @@ class WhatsAppConnectController extends Controller
             'phone' => $phone,
             'session_id' => $sessionId,
             'connected' => $connectionStatus === 'connected',
+            'registered_on_disk' => $registeredOnDisk,
         ]);
     }
 
@@ -244,15 +272,46 @@ class WhatsAppConnectController extends Controller
         return RespondActive::success(__('messages.whatsapp_disconnected'));
     }
 
-    protected function normalizePairingCode(?string $code): ?string
+    protected function shouldReusePendingPairing(?WhatsappSession $dbSession, string $gatewayStatus): bool
+    {
+        if ($gatewayStatus !== 'pending_pairing') {
+            return false;
+        }
+
+        return $dbSession
+            && $dbSession->status === 'pending_pairing'
+            && $dbSession->last_seen_at
+            && $dbSession->last_seen_at->greaterThan(now()->subMinutes(5));
+    }
+
+    /**
+     * WhatsApp expects XXXX-XXXX (8 chars with hyphen).
+     */
+    protected function formatPairingCodeForDisplay(?string $code): ?string
     {
         if ($code === null || $code === '') {
             return null;
         }
 
-        $normalized = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $code));
+        $raw = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $code));
 
-        return $normalized !== '' ? $normalized : null;
+        if (strlen($raw) === 8) {
+            return substr($raw, 0, 4).'-'.substr($raw, 4);
+        }
+
+        return $raw !== '' ? $raw : null;
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function pairingInstructions(): array
+    {
+        return [
+            __('messages.whatsapp_pairing_step_1'),
+            __('messages.whatsapp_pairing_step_2'),
+            __('messages.whatsapp_pairing_step_3'),
+        ];
     }
 
     protected function formatGatewayError(?string $gatewayError, string $fallback): string

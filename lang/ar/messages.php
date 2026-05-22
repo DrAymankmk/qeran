@@ -63,7 +63,7 @@ return [
 	'price-required'=>'سعر الباقة مطلوب',
 
     'whatsapp_gateway_not_configured' => 'بوابة واتساب غير مهيأة.',
-    'whatsapp_gateway_outdated' => 'بوابة واتساب على السيرفر قديمة. حدّث whatsapp-gateway إلى v1.2.3+ وأعد تشغيل PM2.',
+    'whatsapp_gateway_outdated' => 'بوابة واتساب على السيرفر قديمة. حدّث whatsapp-gateway إلى v1.2.4+ وأعد تشغيل PM2.',
     'whatsapp_phone_required' => 'رقم الهاتف مطلوب لربط واتساب.',
     'whatsapp_connect_failed' => 'تعذر بدء ربط واتساب.',
     'whatsapp_pairing_code_failed' => 'تعذر الحصول على رمز الربط. حاول مرة أخرى.',
@@ -76,7 +76,7 @@ return [
     'whatsapp_invitations_queued' => 'تم جدولة إرسال الدعوات عبر واتساب.',
     'whatsapp_pairing_step_1' => 'افتح واتساب على نفس الهاتف.',
     'whatsapp_pairing_step_2' => 'الأجهزة المرتبطة → ربط جهاز → ربط برقم الهاتف.',
-    'whatsapp_pairing_step_3' => 'أدخل رمز الربط المعروض في التطبيق (ليس رمز تسجيل قِرَان).',
+    'whatsapp_pairing_step_3' => 'أدخل الرمز كما هو معروض (XXXX-XXXX). استخدم نفس رقم هاتف حسابك.',
 
     'otp_user_not_found' => 'لم يتم العثور على المستخدم لهذا الرقم.',
     'otp_gateway_not_configured' => 'خدمة واتساب غير مهيأة على السيرفر. تواصل مع الدعم.',

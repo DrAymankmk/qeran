@@ -125,10 +125,14 @@ class AuthController extends Controller
      */
     public function login(AuthenticationRequest $request)
     {
+        Log::info('login: request', ['request' => $request->all()]);
+
         $user = User::findByPhone(
             (string) $request->phone,
             (string) $request->country_code
         );
+
+        Log::info('login: user found', ['user' => $user]);
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
             return RespondActive::clientError(__('Wrong Info!'));

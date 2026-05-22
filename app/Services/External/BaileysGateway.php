@@ -72,7 +72,7 @@ class BaileysGateway
             $json = $response->json();
 
             return ($json['features']['pairingCode'] ?? false) === true
-                || version_compare((string) ($json['version'] ?? '0'), '1.2.2', '>=');
+                || version_compare((string) ($json['version'] ?? '0'), '1.2.3', '>=');
         } catch (\Throwable) {
             return false;
         }

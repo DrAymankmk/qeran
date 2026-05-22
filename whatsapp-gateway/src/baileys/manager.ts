@@ -32,6 +32,7 @@ export interface SessionMeta {
 
 const sessions = new Map<string, SessionMeta>();
 const startPromises = new Map<string, Promise<SessionMeta>>();
+const finalizingSessions = new Set<string>();
 
 const PAIRING_READY_DELAY_MS = Number(process.env.PAIRING_READY_DELAY_MS ?? 8000);
 const PAIRING_SOCKET_READY_TIMEOUT_MS = Number(process.env.PAIRING_SOCKET_READY_TIMEOUT_MS ?? 45_000);
@@ -225,21 +226,74 @@ async function waitUntilReadyForPairing(sock: WASocket, sessionId: string): Prom
   });
 }
 
-async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Promise<void> {
-  logger.info({ sessionId }, 'reconnecting after pairing restart (515)');
-  meta.status = 'starting';
-  meta.pairingCode = undefined;
+async function isAuthRegistered(sessionId: string): Promise<boolean> {
+  if (!sessionAuthExists(sessionId)) {
+    return false;
+  }
 
   try {
+    const { state } = await useMultiFileAuthState(sessionPath(sessionId));
+    return Boolean(state.creds.registered);
+  } catch {
+    return false;
+  }
+}
+
+async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Promise<void> {
+  if (meta.status === 'connected') {
+    return;
+  }
+
+  if (finalizingSessions.has(sessionId)) {
+    return;
+  }
+
+  finalizingSessions.add(sessionId);
+
+  try {
+    logger.info({ sessionId, previousStatus: meta.status }, 'reconnecting after pairing (saved auth)');
+    meta.status = 'starting';
+    meta.pairingCode = undefined;
+
     await createSocket(sessionId, meta);
     const ok = await waitForConnected(sessionId, 90_000);
     if (!ok) {
-      logger.warn({ sessionId }, 'reconnect after restart did not reach connected');
+      logger.warn({ sessionId }, 'reconnect after pairing did not reach connected within timeout');
     }
   } catch (err) {
-    logger.error({ sessionId, err }, 'reconnect after restart failed');
+    logger.error({ sessionId, err }, 'reconnect after pairing failed');
     meta.status = 'disconnected';
+  } finally {
+    finalizingSessions.delete(sessionId);
   }
+}
+
+/**
+ * After user enters pairing code, complete the link if auth was saved but socket dropped.
+ */
+export async function ensurePairingFinalized(sessionId: string): Promise<SessionMeta | undefined> {
+  const meta = sessions.get(sessionId);
+  if (!meta) {
+    return undefined;
+  }
+
+  if (meta.status === 'connected') {
+    return meta;
+  }
+
+  if (meta.status !== 'pending_pairing' && meta.status !== 'starting') {
+    return meta;
+  }
+
+  const registered = await isAuthRegistered(sessionId);
+  if (!registered) {
+    logger.debug({ sessionId, status: meta.status }, 'pairing not finalized yet — creds not registered');
+    return meta;
+  }
+
+  logger.info({ sessionId }, 'pairing creds registered — finalizing connection');
+  await reconnectAfterRestart(sessionId, meta);
+  return sessions.get(sessionId);
 }
 
 async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASocket> {
@@ -258,11 +312,24 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
 
   meta.sock = sock;
 
-  sock.ev.on('creds.update', saveCreds);
+  sock.ev.on('creds.update', () => {
+    void saveCreds();
+    if (meta.status === 'pending_pairing' && sock.authState.creds.registered) {
+      logger.info({ sessionId }, 'creds.registered during pending_pairing — scheduling finalize');
+      setTimeout(() => {
+        void reconnectAfterRestart(sessionId, meta);
+      }, 1500);
+    }
+  });
 
   sock.ev.on('connection.update', (update) => {
-    const { connection, lastDisconnect, qr } = update;
+    const { connection, lastDisconnect, qr, isNewLogin } = update;
     const statusCode = (lastDisconnect?.error as Boom | undefined)?.output?.statusCode;
+
+    if (isNewLogin && meta.status === 'pending_pairing') {
+      logger.info({ sessionId }, 'isNewLogin during pairing — finalizing');
+      void reconnectAfterRestart(sessionId, meta);
+    }
 
     if (qr) {
       meta.qr = qr;
@@ -298,11 +365,36 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
       meta.sock = undefined;
 
       if (wasPairing) {
-        if (restartRequired) {
+        if (loggedOut) {
+          meta.status = 'disconnected';
+          meta.pairingCode = undefined;
+          return;
+        }
+
+        if (restartRequired || isNewLogin) {
           void reconnectAfterRestart(sessionId, meta);
           return;
         }
-        // User is entering the code — do not restart pairing (invalidates the code)
+
+        // WA often closes socket after code entry — reconnect if creds were saved
+        setTimeout(() => {
+          void (async () => {
+            if (meta.status === 'connected') {
+              return;
+            }
+            const registered = await isAuthRegistered(sessionId);
+            if (registered) {
+              logger.info({ sessionId, statusCode }, 'pairing close with saved creds — finalizing');
+              await reconnectAfterRestart(sessionId, meta);
+            } else {
+              logger.info(
+                { sessionId, statusCode },
+                'pairing socket closed — waiting for user (creds not registered yet)'
+              );
+            }
+          })();
+        }, 2500);
+
         return;
       }
 

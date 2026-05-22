@@ -63,7 +63,7 @@ return [
     'price-required' => 'Price is required.',
 
     'whatsapp_gateway_not_configured' => 'WhatsApp gateway is not configured.',
-    'whatsapp_gateway_outdated' => 'WhatsApp gateway on the server is outdated. Deploy whatsapp-gateway v1.2.2+ and restart PM2.',
+    'whatsapp_gateway_outdated' => 'WhatsApp gateway on the server is outdated. Deploy whatsapp-gateway v1.2.3+ and restart PM2.',
     'whatsapp_phone_required' => 'Phone number is required to link WhatsApp.',
     'whatsapp_connect_failed' => 'Could not start WhatsApp linking.',
     'whatsapp_pairing_code_failed' => 'Could not get pairing code. Try again.',

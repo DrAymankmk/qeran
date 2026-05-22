@@ -6,6 +6,7 @@ import {
   deleteSession,
   getPairingCode,
   getQr,
+  ensurePairingFinalized,
   getSessionMeta,
   normalizePhoneDigits,
   startSession,
@@ -69,7 +70,7 @@ async function fetchQrPayload(sessionId: string) {
 app.get('/health', (_req, res) => {
   res.json({
     ok: true,
-    version: '1.2.2',
+    version: '1.2.3',
     qrSetupPage: QR_SETUP_PAGE_ENABLED,
     secretConfigured: Boolean(SECRET),
     features: {
@@ -153,17 +154,24 @@ app.post('/sessions', async (req, res) => {
   }
 });
 
-app.get('/sessions/:id/status', (req, res) => {
-  const meta = getSessionMeta(req.params.id);
+app.get('/sessions/:id/status', async (req, res) => {
+  const sessionId = req.params.id;
+  let meta = getSessionMeta(sessionId);
+
   if (!meta) {
-    res.json({ status: 'disconnected', phone: null });
+    res.json({ status: 'disconnected', phone: null, sessionId });
     return;
+  }
+
+  if (meta.status === 'pending_pairing' || meta.status === 'starting') {
+    meta = (await ensurePairingFinalized(sessionId)) ?? meta;
   }
 
   res.json({
     sessionId: meta.sessionId,
     status: meta.status,
     phone: meta.phone ?? null,
+    pairingCode: meta.pairingCode ?? null,
   });
 });
 

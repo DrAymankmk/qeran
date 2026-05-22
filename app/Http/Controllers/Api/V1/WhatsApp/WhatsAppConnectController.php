@@ -195,7 +195,13 @@ class WhatsAppConnectController extends Controller
 
         $this->syncSessionRecord($user->id, $sessionId, $connectionStatus, $phone);
 
-        if ($connectionStatus !== 'connected') {
+        if ($connectionStatus === 'pending_pairing') {
+            Log::info('WhatsApp status: still pending_pairing (gateway will try to finalize)', [
+                'user_id' => $user->id,
+                'session_id' => $sessionId,
+                'hint' => 'User should enter 8-char code in WhatsApp → Link with phone number; keep polling',
+            ]);
+        } elseif ($connectionStatus !== 'connected') {
             Log::debug('WhatsApp status: not connected yet', [
                 'user_id' => $user->id,
                 'status' => $connectionStatus,

@@ -76,7 +76,7 @@ async function fetchQrPayload(sessionId: string) {
 app.get('/health', (_req, res) => {
   res.json({
     ok: true,
-    version: '1.2.6',
+    version: '1.2.7',
     qrSetupPage: QR_SETUP_PAGE_ENABLED,
     secretConfigured: Boolean(SECRET),
     features: {

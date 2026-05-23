@@ -81,6 +81,12 @@ return [
     'whatsapp_invitations_queued' => 'Invitations queued for WhatsApp delivery.',
     'whatsapp_pairing_step_1' => 'Open WhatsApp on the same phone.',
     'whatsapp_pairing_step_2' => 'Linked devices → Link a device → Link with phone number. When WhatsApp asks for your number, enter exactly: :phone',
+    'whatsapp_pairing_step_2_phone' => 'Linked devices → Link with phone number. When WhatsApp asks for your number, try first: :primary (if rejected, try: :alternate).',
+    'whatsapp_pairing_phone_try' => 'In WhatsApp phone field use :primary first. If rejected instantly, use :alternate.',
+    'whatsapp_pairing_cooldown' => 'Wait :seconds seconds before requesting a new code (too many attempts). Or use link_method=qr.',
+    'whatsapp_qr_ready' => 'Scan the QR code with WhatsApp on this phone.',
+    'whatsapp_qr_step_1' => 'Open WhatsApp → Linked devices → Link a device.',
+    'whatsapp_qr_step_2' => 'Scan the QR code shown in the app (more reliable than pairing code).',
     'whatsapp_pairing_step_3' => 'Enter the code exactly as shown (XXXX-XXXX). Use the same phone number as your account.',
 
     'otp_user_not_found' => 'No user found for this phone number.',

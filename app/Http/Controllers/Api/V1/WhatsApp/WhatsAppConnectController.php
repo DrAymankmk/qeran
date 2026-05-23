@@ -9,6 +9,7 @@ use App\Services\RespondActive;
 use App\Support\PhoneNumber;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class WhatsAppConnectController extends Controller
@@ -27,6 +28,19 @@ class WhatsAppConnectController extends Controller
 
         $user = auth()->user();
         $sessionId = BaileysGateway::sessionIdForUser((int) $user->id);
+
+        if ($request->input('link_method') === 'qr') {
+            return $this->connectViaQr($sessionId, $user);
+        }
+
+        $cooldownKey = 'whatsapp_pairing_cooldown:'.$user->id;
+        if (Cache::has($cooldownKey) && ! $request->boolean('force')) {
+            $wait = (int) Cache::get($cooldownKey, 45);
+
+            return RespondActive::clientError(__('messages.whatsapp_pairing_cooldown', ['seconds' => $wait]));
+        }
+
+        Cache::put($cooldownKey, 45, now()->addSeconds(45));
 
         $phone = PhoneNumber::e164ForWhatsAppPairing(
             $user->country_code,
@@ -170,8 +184,58 @@ class WhatsAppConnectController extends Controller
             $sessionId,
             $pairingCode,
             $phone,
-            $phoneDisplay
+            $phoneDisplay,
+            (string) $user->country_code
         ));
+    }
+
+    public function connectViaQr(string $sessionId, $user): JsonResponse
+    {
+        BaileysGateway::deleteSession($sessionId);
+
+        $result = BaileysGateway::getQr($sessionId);
+
+        if (! $result['ok']) {
+            Log::warning('WhatsApp QR connect failed', [
+                'user_id' => $user->id,
+                'error' => $result['error'] ?? null,
+            ]);
+
+            return RespondActive::clientError(
+                $this->formatGatewayError($result['error'] ?? null, __('messages.whatsapp_connect_failed'))
+            );
+        }
+
+        $data = $result['data'] ?? [];
+        $status = $data['status'] ?? 'pending_qr';
+
+        if ($status === 'connected') {
+            $this->syncSessionRecord($user->id, $sessionId, 'connected', $data['phone'] ?? null);
+
+            return RespondActive::success(__('messages.whatsapp_connected'), [
+                'status' => 'connected',
+                'phone' => $data['phone'] ?? null,
+                'session_id' => $sessionId,
+                'link_method' => 'qr',
+            ]);
+        }
+
+        $this->syncSessionRecord($user->id, $sessionId, 'pending_qr', null);
+
+        Log::info('WhatsApp QR ready', ['user_id' => $user->id, 'session_id' => $sessionId]);
+
+        return RespondActive::success(__('messages.whatsapp_qr_ready'), [
+            'status' => 'pending_qr',
+            'session_id' => $sessionId,
+            'link_method' => 'qr',
+            'qr_image' => $data['qrImage'] ?? null,
+            'poll_status' => true,
+            'poll_interval_seconds' => 3,
+            'instructions' => [
+                __('messages.whatsapp_qr_step_1'),
+                __('messages.whatsapp_qr_step_2'),
+            ],
+        ]);
     }
 
     /**
@@ -181,8 +245,13 @@ class WhatsAppConnectController extends Controller
         string $sessionId,
         string $pairingCode,
         string $linkPhoneE164,
-        string $linkPhoneDisplay
+        string $linkPhoneDisplay,
+        string $countryCode = ''
     ): array {
+        $entryOptions = PhoneNumber::whatsAppPhoneEntryOptions($linkPhoneE164, $countryCode);
+        $primary = $entryOptions[0] ?? $linkPhoneE164;
+        $alternate = $entryOptions[1] ?? PhoneNumber::localWithLeadingZero($linkPhoneE164, $countryCode);
+
         return [
             'status' => 'pending_pairing',
             'session_id' => $sessionId,
@@ -190,13 +259,21 @@ class WhatsAppConnectController extends Controller
             'link_phone' => $linkPhoneE164,
             'link_phone_display' => $linkPhoneDisplay,
             'phone' => $linkPhoneE164,
+            'whatsapp_phone_primary' => $primary,
+            'whatsapp_phone_alternate' => $alternate,
+            'whatsapp_phone_hint' => __('messages.whatsapp_pairing_phone_try', [
+                'primary' => $primary,
+                'alternate' => $alternate,
+            ]),
+            'link_method' => 'pairing',
+            'fallback_link_method' => 'qr',
             'poll_status' => true,
             'poll_interval_seconds' => 3,
             'code_valid_seconds' => 120,
             'expires_at' => now()->addSeconds(120)->toIso8601String(),
             'do_not_connect_again' => true,
             'open_whatsapp_immediately' => true,
-            'instructions' => $this->pairingInstructions($linkPhoneDisplay),
+            'instructions' => $this->pairingInstructions($linkPhoneDisplay, $primary, $alternate),
             'warning' => __('messages.whatsapp_pairing_enter_fast'),
         ];
     }
@@ -353,11 +430,11 @@ class WhatsAppConnectController extends Controller
     /**
      * @return list<string>
      */
-    protected function pairingInstructions(string $linkPhoneDisplay): array
+    protected function pairingInstructions(string $linkPhoneDisplay, string $primaryDigits, string $alternateDigits): array
     {
         return [
             __('messages.whatsapp_pairing_step_1'),
-            __('messages.whatsapp_pairing_step_2', ['phone' => $linkPhoneDisplay]),
+            __('messages.whatsapp_pairing_step_2_phone', ['primary' => $primaryDigits, 'alternate' => $alternateDigits]),
             __('messages.whatsapp_pairing_step_3'),
         ];
     }

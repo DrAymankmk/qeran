@@ -55,6 +55,29 @@ class PhoneNumber
     }
 
     /**
+     * Local format with leading 0 (e.g. 201090537394 → 01090537394).
+     */
+    public static function localWithLeadingZero(string $e164, ?string $countryCode): string
+    {
+        $cc = preg_replace('/\D+/', '', (string) $countryCode);
+        if ($cc !== '' && str_starts_with($e164, $cc)) {
+            return '0'.substr($e164, strlen($cc));
+        }
+
+        return $e164;
+    }
+
+    /**
+     * Digits to type in WhatsApp "link with phone number" (prefer E.164 without +).
+     */
+    public static function whatsAppPhoneEntryOptions(string $e164, ?string $countryCode): array
+    {
+        $local = self::localWithLeadingZero($e164, $countryCode);
+
+        return array_values(array_unique([$e164, $local]));
+    }
+
+    /**
      * Human-readable number the user must enter in WhatsApp when asked for phone.
      */
     public static function formatForWhatsAppDisplay(string $e164): string

@@ -81,6 +81,12 @@ return [
     'whatsapp_invitations_queued' => 'تم جدولة إرسال الدعوات عبر واتساب.',
     'whatsapp_pairing_step_1' => 'افتح واتساب على نفس الهاتف.',
     'whatsapp_pairing_step_2' => 'الأجهزة المرتبطة → ربط جهاز → ربط برقم الهاتف. عندما يطلب واتساب رقمك، أدخل بالضبط: :phone',
+    'whatsapp_pairing_step_2_phone' => 'الأجهزة المرتبطة → ربط برقم الهاتف. عند طلب الرقم جرّب أولاً: :primary (إن رُفض فوراً جرّب: :alternate).',
+    'whatsapp_pairing_phone_try' => 'في حقل رقم واتساب استخدم :primary أولاً. إن رُفض فوراً استخدم :alternate.',
+    'whatsapp_pairing_cooldown' => 'انتظر :seconds ثانية قبل طلب رمز جديد (محاولات كثيرة). أو استخدم link_method=qr.',
+    'whatsapp_qr_ready' => 'امسح رمز QR من واتساب على نفس الهاتف.',
+    'whatsapp_qr_step_1' => 'افتح واتساب → الأجهزة المرتبطة → ربط جهاز.',
+    'whatsapp_qr_step_2' => 'امسح رمز QR المعروض في التطبيق (أكثر موثوقية من رمز الربط).',
     'whatsapp_pairing_step_3' => 'أدخل الرمز كما هو معروض (XXXX-XXXX). استخدم نفس رقم هاتف حسابك.',
 
     'otp_user_not_found' => 'لم يتم العثور على المستخدم لهذا الرقم.',

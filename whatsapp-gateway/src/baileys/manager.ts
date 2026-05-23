@@ -36,7 +36,7 @@ const startPromises = new Map<string, Promise<SessionMeta>>();
 const finalizingSessions = new Set<string>();
 const pairingKeepaliveTimers = new Map<string, ReturnType<typeof setInterval>>();
 
-const PAIRING_READY_DELAY_MS = Number(process.env.PAIRING_READY_DELAY_MS ?? 8000);
+const PAIRING_READY_DELAY_MS = Number(process.env.PAIRING_READY_DELAY_MS ?? 3000);
 const PAIRING_KEEPALIVE_MS = Number(process.env.PAIRING_KEEPALIVE_MS ?? 15_000);
 const PAIRING_CODE_TTL_MS = Number(process.env.PAIRING_CODE_TTL_MS ?? 180_000);
 const PAIRING_SOCKET_READY_TIMEOUT_MS = Number(process.env.PAIRING_SOCKET_READY_TIMEOUT_MS ?? 45_000);
@@ -601,8 +601,8 @@ async function requestPairingCodeWithRetry(
       const raw = await sock.requestPairingCode(digits);
       const code = formatPairingCodeRaw(raw);
       logger.info(
-        { sessionId, attempt, codeLength: code.length, display: formatPairingCodeDisplay(code) },
-        'pairing code generated'
+        { sessionId, attempt, codeLength: code.length, display: formatPairingCodeDisplay(code), pairingPhone: digits },
+        'pairing code generated for phone (must match WhatsApp phone input)'
       );
       return code;
     } catch (err) {

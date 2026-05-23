@@ -221,6 +221,8 @@ class WhatsAppConnectController extends Controller
         $connectionStatus = $data['status'] ?? 'disconnected';
         $phone = $data['phone'] ?? null;
         $registeredOnDisk = (bool) ($data['registeredOnDisk'] ?? false);
+        $pairingAccepted = (bool) ($data['pairingAccepted'] ?? false);
+        $pairingProgress = (string) ($data['pairingProgress'] ?? 'awaiting_code');
 
         $this->syncSessionRecord($user->id, $sessionId, $connectionStatus, $phone);
 
@@ -230,10 +232,13 @@ class WhatsAppConnectController extends Controller
                 'phone_suffix' => $phone ? substr((string) $phone, -4) : null,
             ]);
         } elseif ($connectionStatus === 'pending_pairing') {
-            Log::warning('WhatsApp status: still pending_pairing', [
+            Log::info('WhatsApp status: pending_pairing', [
                 'user_id' => $user->id,
                 'registered_on_disk' => $registeredOnDisk,
-                'action' => $registeredOnDisk ? 'wait_for_connection' : 'enter_code_in_whatsapp',
+                'pairing_accepted' => $pairingAccepted,
+                'pairing_progress' => $pairingProgress,
+                'wa_id' => $data['waId'] ?? null,
+                'action' => $this->statusAction($connectionStatus, $registeredOnDisk, $pairingAccepted),
             ]);
         }
 
@@ -251,12 +256,14 @@ class WhatsAppConnectController extends Controller
             'session_id' => $sessionId,
             'connected' => $connectionStatus === 'connected',
             'registered_on_disk' => $registeredOnDisk,
+            'pairing_accepted' => $pairingAccepted,
+            'pairing_progress' => $pairingProgress,
             'socket_alive' => $socketAlive,
             'pairing_code_age_seconds' => $codeAge,
-            'awaiting_user' => $connectionStatus === 'pending_pairing' && ! $registeredOnDisk,
-            'action' => $this->statusAction($connectionStatus, $registeredOnDisk),
+            'awaiting_user' => $connectionStatus === 'pending_pairing' && ! $registeredOnDisk && ! $pairingAccepted,
+            'action' => $this->statusAction($connectionStatus, $registeredOnDisk, $pairingAccepted),
             'link_phone_display' => $linkDisplay,
-            'message' => $this->statusMessage($connectionStatus, $registeredOnDisk, $socketAlive),
+            'message' => $this->statusMessage($connectionStatus, $registeredOnDisk, $pairingAccepted, $socketAlive),
         ]);
     }
 
@@ -283,13 +290,13 @@ class WhatsAppConnectController extends Controller
         return RespondActive::success(__('messages.whatsapp_disconnected'));
     }
 
-    protected function statusAction(string $connectionStatus, bool $registeredOnDisk): string
+    protected function statusAction(string $connectionStatus, bool $registeredOnDisk, bool $pairingAccepted = false): string
     {
         if ($connectionStatus === 'connected') {
             return 'connected';
         }
 
-        if ($connectionStatus === 'pending_pairing' && $registeredOnDisk) {
+        if ($connectionStatus === 'pending_pairing' && ($registeredOnDisk || $pairingAccepted)) {
             return 'wait_for_connection';
         }
 
@@ -300,13 +307,17 @@ class WhatsAppConnectController extends Controller
         return 'connect_whatsapp';
     }
 
-    protected function statusMessage(string $connectionStatus, bool $registeredOnDisk, bool $socketAlive = true): string
-    {
+    protected function statusMessage(
+        string $connectionStatus,
+        bool $registeredOnDisk,
+        bool $pairingAccepted = false,
+        bool $socketAlive = true
+    ): string {
         if ($connectionStatus === 'connected') {
             return __('messages.whatsapp_connected');
         }
 
-        if ($connectionStatus === 'pending_pairing' && $registeredOnDisk) {
+        if ($connectionStatus === 'pending_pairing' && ($registeredOnDisk || $pairingAccepted)) {
             return __('messages.whatsapp_pairing_finishing');
         }
 

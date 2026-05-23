@@ -6,6 +6,7 @@ import {
   deleteSession,
   getPairingCode,
   getPairingCodeAgeSeconds,
+  getPairingProgress,
   getQr,
   ensurePairingFinalized,
   formatPairingCodeDisplay,
@@ -75,7 +76,7 @@ async function fetchQrPayload(sessionId: string) {
 app.get('/health', (_req, res) => {
   res.json({
     ok: true,
-    version: '1.2.5',
+    version: '1.2.6',
     qrSetupPage: QR_SETUP_PAGE_ENABLED,
     secretConfigured: Boolean(SECRET),
     features: {
@@ -177,17 +178,24 @@ app.get('/sessions/:id/status', async (req, res) => {
     }
   }
 
-  const registered = await isAuthRegistered(sessionId);
+  const progress = await getPairingProgress(sessionId);
 
-    res.json({
-      sessionId: meta.sessionId,
-      status: meta.status,
-      phone: meta.phone ?? null,
-      pairingCode: meta.pairingCode ? formatPairingCodeDisplay(meta.pairingCode) : null,
-      registeredOnDisk: registered,
-      socketAlive: isPairingSocketAlive(sessionId),
-      pairingCodeAgeSeconds: getPairingCodeAgeSeconds(sessionId),
-    });
+  res.json({
+    sessionId: meta.sessionId,
+    status: meta.status,
+    phone: meta.phone ?? progress.waId?.split('@')[0]?.split(':')[0] ?? null,
+    pairingCode: meta.pairingCode ? formatPairingCodeDisplay(meta.pairingCode) : null,
+    registeredOnDisk: progress.registered,
+    pairingAccepted: progress.pairingAccepted,
+    pairingProgress: progress.registered
+      ? 'registered'
+      : progress.pairingAccepted
+        ? 'code_accepted'
+        : 'awaiting_code',
+    waId: progress.waId,
+    socketAlive: isPairingSocketAlive(sessionId),
+    pairingCodeAgeSeconds: getPairingCodeAgeSeconds(sessionId),
+  });
 });
 
 app.post('/sessions/:id/finalize', async (req, res) => {
@@ -199,10 +207,10 @@ app.post('/sessions/:id/finalize', async (req, res) => {
     await ensurePairingFinalized(sessionId);
     const connected = await waitForConnected(sessionId, waitMs);
     const meta = getSessionMeta(sessionId);
-    const registered = await isAuthRegistered(sessionId);
+    const progress = await getPairingProgress(sessionId);
 
     logger.info(
-      { sessionId, connected, status: meta?.status, registered },
+      { sessionId, connected, status: meta?.status, progress },
       'finalize pairing result'
     );
 
@@ -211,7 +219,13 @@ app.post('/sessions/:id/finalize', async (req, res) => {
       status: meta?.status ?? 'disconnected',
       phone: meta?.phone ?? null,
       connected: connected || meta?.status === 'connected',
-      registeredOnDisk: registered,
+      registeredOnDisk: progress.registered,
+      pairingAccepted: progress.pairingAccepted,
+      pairingProgress: progress.registered
+        ? 'registered'
+        : progress.pairingAccepted
+          ? 'code_accepted'
+          : 'awaiting_code',
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Finalize failed';

@@ -307,17 +307,55 @@ async function waitUntilReadyForPairing(sock: WASocket, sessionId: string): Prom
   });
 }
 
-export async function isAuthRegistered(sessionId: string): Promise<boolean> {
+export type PairingProgress = {
+  registered: boolean;
+  pairingAccepted: boolean;
+  waId: string | null;
+  pairingCodeOnDisk: string | null;
+};
+
+export async function getPairingProgress(sessionId: string): Promise<PairingProgress> {
   if (!sessionAuthExists(sessionId)) {
-    return false;
+    return {
+      registered: false,
+      pairingAccepted: false,
+      waId: null,
+      pairingCodeOnDisk: null,
+    };
   }
 
   try {
     const { state } = await useMultiFileAuthState(sessionPath(sessionId));
-    return Boolean(state.creds.registered);
+    const creds = state.creds as {
+      registered?: boolean;
+      me?: { id?: string };
+      pairingCode?: string;
+      pairingEphemeralKeyPair?: unknown;
+    };
+
+    const registered = Boolean(creds.registered);
+    const waId = creds.me?.id ?? null;
+    const pairingAccepted =
+      Boolean(waId) || Boolean(creds.pairingEphemeralKeyPair) || Boolean(creds.pairingCode);
+
+    return {
+      registered,
+      pairingAccepted,
+      waId,
+      pairingCodeOnDisk: creds.pairingCode ?? null,
+    };
   } catch {
-    return false;
+    return {
+      registered: false,
+      pairingAccepted: false,
+      waId: null,
+      pairingCodeOnDisk: null,
+    };
   }
+}
+
+export async function isAuthRegistered(sessionId: string): Promise<boolean> {
+  return (await getPairingProgress(sessionId)).registered;
 }
 
 async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Promise<void> {
@@ -349,32 +387,61 @@ async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Prom
   }
 }
 
+function ensureSessionMeta(sessionId: string): SessionMeta {
+  let meta = sessions.get(sessionId);
+  if (meta) {
+    return meta;
+  }
+
+  meta = {
+    sessionId,
+    status: sessionAuthExists(sessionId) ? 'pending_pairing' : 'disconnected',
+    pairingCode: undefined,
+    linkPhone: undefined,
+    phone: undefined,
+    sock: undefined,
+  };
+  sessions.set(sessionId, meta);
+
+  return meta;
+}
+
 /**
- * After user enters pairing code, complete the link if auth was saved but socket dropped.
+ * After user enters pairing code, complete the link (registered:true OR me.id in creds).
  */
 export async function ensurePairingFinalized(sessionId: string): Promise<SessionMeta | undefined> {
-  const meta = sessions.get(sessionId);
-  if (!meta) {
-    return undefined;
-  }
+  const meta = ensureSessionMeta(sessionId);
 
   if (meta.status === 'connected') {
     return meta;
   }
 
-  if (meta.status !== 'pending_pairing' && meta.status !== 'starting') {
-    return meta;
+  const progress = await getPairingProgress(sessionId);
+
+  if (progress.registered) {
+    logger.info({ sessionId, waId: progress.waId }, 'creds registered — finalizing connection');
+    stopPairingKeepalive(sessionId);
+    await reconnectAfterRestart(sessionId, meta);
+    return sessions.get(sessionId);
   }
 
-  const registered = await isAuthRegistered(sessionId);
-  if (!registered) {
-    logger.debug({ sessionId, status: meta.status }, 'pairing not finalized yet — creds not registered');
-    return meta;
+  if (progress.pairingAccepted) {
+    logger.info(
+      { sessionId, waId: progress.waId, registered: progress.registered },
+      'WhatsApp accepted pairing code — completing registration (registered still false)'
+    );
+    meta.status = 'pending_pairing';
+    await maintainPairingSocketAlive(sessionId, meta);
+    await reconnectAfterRestart(sessionId, meta);
+    await waitForConnected(sessionId, 60_000);
+    return sessions.get(sessionId);
   }
 
-  logger.info({ sessionId }, 'pairing creds registered — finalizing connection');
-  await reconnectAfterRestart(sessionId, meta);
-  return sessions.get(sessionId);
+  if (meta.status === 'pending_pairing' || meta.status === 'starting') {
+    void maintainPairingSocketAlive(sessionId, meta);
+  }
+
+  return meta;
 }
 
 async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASocket> {
@@ -397,13 +464,22 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
   meta.sock = sock;
 
   sock.ev.on('creds.update', () => {
-    void saveCreds();
-    if (meta.status === 'pending_pairing' && sock.authState.creds.registered) {
-      logger.info({ sessionId }, 'creds.registered during pending_pairing — scheduling finalize');
-      setTimeout(() => {
-        void reconnectAfterRestart(sessionId, meta);
-      }, 1500);
-    }
+    void (async () => {
+      await saveCreds();
+      if (meta.status !== 'pending_pairing' && meta.status !== 'starting') {
+        return;
+      }
+
+      const progress = await getPairingProgress(sessionId);
+      if (progress.registered) {
+        logger.info({ sessionId, waId: progress.waId }, 'creds.update: registered — finalizing');
+        stopPairingKeepalive(sessionId);
+        setTimeout(() => void reconnectAfterRestart(sessionId, meta), 500);
+      } else if (progress.pairingAccepted) {
+        logger.info({ sessionId, waId: progress.waId }, 'creds.update: pairing accepted — completing');
+        setTimeout(() => void ensurePairingFinalized(sessionId), 500);
+      }
+    })();
   });
 
   sock.ev.on('connection.update', (update) => {

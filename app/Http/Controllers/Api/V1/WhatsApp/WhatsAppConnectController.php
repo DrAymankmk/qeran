@@ -95,15 +95,35 @@ class WhatsAppConnectController extends Controller
             ]);
         }
 
-        // User tapped Connect → always issue a fresh code (reusing failed codes causes WhatsApp errors)
-        if (in_array($existingConnection, ['pending_pairing', 'pending_qr', 'starting', 'disconnected'], true)) {
-            BaileysGateway::deleteSession($sessionId);
-            Log::info('WhatsApp connect: fresh pairing code requested', [
+        // Saved creds exist but socket is down — reconnect instead of issuing a new pairing code
+        if ($registeredOnDisk && $existingConnection === 'disconnected') {
+            Log::info('WhatsApp connect: reconnecting saved session (registered on disk)', [
                 'user_id' => $user->id,
-                'previous_status' => $existingConnection,
-                'had_registered_creds' => $registeredOnDisk,
+            ]);
+            BaileysGateway::startSession($sessionId);
+            $reconnectStatus = BaileysGateway::getStatus($sessionId);
+            if (($reconnectStatus['data']['status'] ?? '') === 'connected') {
+                $connectedPhone = $reconnectStatus['data']['phone'] ?? $phone;
+                $this->syncSessionRecord($user->id, $sessionId, 'connected', $connectedPhone);
+
+                return RespondActive::success(__('messages.whatsapp_connected'), [
+                    'status' => 'connected',
+                    'phone' => $connectedPhone,
+                    'session_id' => $sessionId,
+                ]);
+            }
+            Log::info('WhatsApp connect: reconnect failed — wiping for fresh pairing', [
+                'user_id' => $user->id,
             ]);
         }
+
+        // Wipe before pairing so disk pairingCode always matches the code shown in the app
+        BaileysGateway::deleteSession($sessionId);
+        Log::info('WhatsApp connect: fresh pairing code requested', [
+            'user_id' => $user->id,
+            'previous_status' => $existingConnection,
+            'had_registered_creds' => $registeredOnDisk,
+        ]);
 
         $result = BaileysGateway::startSessionWithPairing($sessionId, $phone);
 

@@ -78,7 +78,7 @@ async function fetchQrPayload(sessionId: string) {
 app.get('/health', (_req, res) => {
   res.json({
     ok: true,
-    version: '1.2.8',
+    version: '1.2.9',
     qrSetupPage: QR_SETUP_PAGE_ENABLED,
     secretConfigured: Boolean(SECRET),
     features: {
@@ -187,8 +187,13 @@ app.get('/sessions/:id/status', async (req, res) => {
   meta = ensureSessionMeta(sessionId);
   let progress = await getPairingProgress(sessionId);
 
+  const awaitingFreshCode =
+    meta.status === 'pending_pairing' && Boolean(meta.pairingCode) && !progress.pairingAccepted;
+
   const needsFinalize =
-    (progress.pairingAccepted || progress.registered) && meta.status !== 'connected';
+    !awaitingFreshCode &&
+    (progress.pairingAccepted || progress.registered) &&
+    meta.status !== 'connected';
 
   if (needsFinalize) {
     meta = (await ensurePairingFinalized(sessionId)) ?? meta;

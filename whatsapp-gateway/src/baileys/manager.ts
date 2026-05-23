@@ -426,6 +426,12 @@ export async function ensurePairingFinalized(sessionId: string): Promise<Session
       return meta;
     }
 
+    // Fresh pairing in progress — do not run registration/reconnect finalize (causes code mismatch)
+    if (meta.status === 'pending_pairing' && meta.pairingCode) {
+      void maintainPairingSocketAlive(sessionId, meta);
+      return meta;
+    }
+
     let progress = await getPairingProgress(sessionId);
 
     if (progress.registered || progress.pairingAccepted) {
@@ -677,8 +683,28 @@ async function runPairingFlow(sessionId: string, digits: string, fresh: boolean)
   meta.pairingRequestedAt = Date.now();
   startPairingKeepalive(sessionId, meta);
 
+  const progress = await getPairingProgress(sessionId);
+  const diskRaw = progress.pairingCodeOnDisk
+    ? formatPairingCodeRaw(progress.pairingCodeOnDisk)
+    : null;
+  const issuedRaw = formatPairingCodeRaw(code);
+  if (diskRaw && diskRaw !== issuedRaw) {
+    logger.error(
+      { sessionId, issued: formatPairingCodeDisplay(code), onDisk: progress.pairingCodeOnDisk },
+      'pairing code mismatch on disk — wiping and retrying once'
+    );
+    wipeSessionAuth(sessionId);
+    return runPairingFlow(sessionId, digits, true);
+  }
+
   logger.info(
-    { sessionId, status: meta.status, display: formatPairingCodeDisplay(code) },
+    {
+      sessionId,
+      status: meta.status,
+      display: formatPairingCodeDisplay(code),
+      registeredOnDisk: progress.registered,
+      diskCode: progress.pairingCodeOnDisk,
+    },
     'pairing code ready — open WhatsApp immediately and enter code'
   );
 
@@ -785,19 +811,39 @@ export function getPairingCodeAgeSeconds(sessionId: string): number | null {
 
 export async function deleteSession(sessionId: string): Promise<void> {
   stopPairingKeepalive(sessionId);
-  const meta = sessions.get(sessionId);
-  if (meta?.sock) {
+  finalizingSessions.delete(sessionId);
+
+  const inFlight = startPromises.get(sessionId);
+  if (inFlight) {
     try {
-      await meta.sock.logout();
+      await Promise.race([inFlight, sleep(5000)]);
+    } catch {
+      // pairing flow aborted by delete
+    }
+  }
+  startPromises.delete(sessionId);
+
+  const meta = sessions.get(sessionId);
+  if (meta) {
+    endSocket(meta);
+    try {
+      await Promise.race([
+        meta.sock?.logout() ?? Promise.resolve(),
+        sleep(2000),
+      ]);
     } catch {
       // ignore
     }
   }
   sessions.delete(sessionId);
-  startPromises.delete(sessionId);
 
   const dir = sessionPath(sessionId);
   if (fs.existsSync(dir)) {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+
+  if (sessionAuthExists(sessionId)) {
+    logger.warn({ sessionId }, 'session dir still present after delete — forcing remove');
     fs.rmSync(dir, { recursive: true, force: true });
   }
 

@@ -50,7 +50,7 @@ function sessionPath(sessionId: string): string {
   return path.join(sessionsDir(), safe);
 }
 
-function sessionAuthExists(sessionId: string): boolean {
+export function sessionAuthExists(sessionId: string): boolean {
   const dir = sessionPath(sessionId);
   return fs.existsSync(path.join(dir, 'creds.json'));
 }
@@ -335,8 +335,8 @@ export async function getPairingProgress(sessionId: string): Promise<PairingProg
 
     const registered = Boolean(creds.registered);
     const waId = creds.me?.id ?? null;
-    const pairingAccepted =
-      Boolean(waId) || Boolean(creds.pairingEphemeralKeyPair) || Boolean(creds.pairingCode);
+    // me.id is set only after WhatsApp accepts the pairing code — not when the code is merely issued
+    const pairingAccepted = Boolean(waId) && !registered;
 
     return {
       registered,
@@ -363,31 +363,34 @@ async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Prom
     return;
   }
 
-  if (finalizingSessions.has(sessionId)) {
-    return;
-  }
-
-  finalizingSessions.add(sessionId);
+  logger.info({ sessionId, previousStatus: meta.status }, 'reconnecting after pairing (saved auth)');
+  endSocket(meta);
+  meta.status = 'starting';
+  meta.pairingCode = undefined;
 
   try {
-    logger.info({ sessionId, previousStatus: meta.status }, 'reconnecting after pairing (saved auth)');
-    meta.status = 'starting';
-    meta.pairingCode = undefined;
-
     await createSocket(sessionId, meta);
     const ok = await waitForConnected(sessionId, 90_000);
     if (!ok) {
-      logger.warn({ sessionId }, 'reconnect after pairing did not reach connected within timeout');
+      const progress = await getPairingProgress(sessionId);
+      logger.warn(
+        { sessionId, pairingAccepted: progress.pairingAccepted, registered: progress.registered },
+        'reconnect after pairing did not reach connected within timeout'
+      );
+      if (progress.pairingAccepted && !progress.registered) {
+        meta.status = 'pending_pairing';
+      } else if (!progress.pairingAccepted) {
+        meta.status = 'disconnected';
+      }
     }
   } catch (err) {
     logger.error({ sessionId, err }, 'reconnect after pairing failed');
-    meta.status = 'disconnected';
-  } finally {
-    finalizingSessions.delete(sessionId);
+    const progress = await getPairingProgress(sessionId);
+    meta.status = progress.pairingAccepted ? 'pending_pairing' : 'disconnected';
   }
 }
 
-function ensureSessionMeta(sessionId: string): SessionMeta {
+export function ensureSessionMeta(sessionId: string): SessionMeta {
   let meta = sessions.get(sessionId);
   if (meta) {
     return meta;
@@ -410,38 +413,49 @@ function ensureSessionMeta(sessionId: string): SessionMeta {
  * After user enters pairing code, complete the link (registered:true OR me.id in creds).
  */
 export async function ensurePairingFinalized(sessionId: string): Promise<SessionMeta | undefined> {
-  const meta = ensureSessionMeta(sessionId);
-
-  if (meta.status === 'connected') {
-    return meta;
-  }
-
-  const progress = await getPairingProgress(sessionId);
-
-  if (progress.registered) {
-    logger.info({ sessionId, waId: progress.waId }, 'creds registered — finalizing connection');
-    stopPairingKeepalive(sessionId);
-    await reconnectAfterRestart(sessionId, meta);
+  if (finalizingSessions.has(sessionId)) {
     return sessions.get(sessionId);
   }
 
-  if (progress.pairingAccepted) {
-    logger.info(
-      { sessionId, waId: progress.waId, registered: progress.registered },
-      'WhatsApp accepted pairing code — completing registration (registered still false)'
-    );
-    meta.status = 'pending_pairing';
-    await maintainPairingSocketAlive(sessionId, meta);
-    await reconnectAfterRestart(sessionId, meta);
-    await waitForConnected(sessionId, 60_000);
+  finalizingSessions.add(sessionId);
+
+  try {
+    const meta = ensureSessionMeta(sessionId);
+
+    if (meta.status === 'connected') {
+      return meta;
+    }
+
+    let progress = await getPairingProgress(sessionId);
+
+    if (progress.registered || progress.pairingAccepted) {
+      stopPairingKeepalive(sessionId);
+      logger.info(
+        { sessionId, waId: progress.waId, registered: progress.registered, pairingAccepted: progress.pairingAccepted },
+        progress.registered ? 'creds registered — finalizing connection' : 'pairing code accepted — completing registration'
+      );
+
+      for (let attempt = 1; attempt <= 4; attempt++) {
+        meta.status = 'pending_pairing';
+        await reconnectAfterRestart(sessionId, meta);
+        const connected = await waitForConnected(sessionId, 45_000);
+        progress = await getPairingProgress(sessionId);
+        const current = sessions.get(sessionId);
+        if (connected || current?.status === 'connected' || progress.registered) {
+          logger.info({ sessionId, attempt, status: current?.status }, 'registration completed');
+          break;
+        }
+        logger.warn({ sessionId, attempt, waId: progress.waId }, 'registration attempt did not connect — retrying');
+        await sleep(3000);
+      }
+    } else if (meta.status === 'pending_pairing' || meta.status === 'starting') {
+      void maintainPairingSocketAlive(sessionId, meta);
+    }
+
     return sessions.get(sessionId);
+  } finally {
+    finalizingSessions.delete(sessionId);
   }
-
-  if (meta.status === 'pending_pairing' || meta.status === 'starting') {
-    void maintainPairingSocketAlive(sessionId, meta);
-  }
-
-  return meta;
 }
 
 async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASocket> {
@@ -546,11 +560,14 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
             if (meta.status === 'connected') {
               return;
             }
-            const registered = await isAuthRegistered(sessionId);
-            if (registered) {
-              logger.info({ sessionId, statusCode }, 'pairing close with saved creds — finalizing');
+            const progress = await getPairingProgress(sessionId);
+            if (progress.registered || progress.pairingAccepted) {
+              logger.info(
+                { sessionId, statusCode, waId: progress.waId, registered: progress.registered },
+                'pairing close with saved creds — finalizing'
+              );
               stopPairingKeepalive(sessionId);
-              await reconnectAfterRestart(sessionId, meta);
+              await ensurePairingFinalized(sessionId);
             } else {
               void maintainPairingSocketAlive(sessionId, meta);
             }

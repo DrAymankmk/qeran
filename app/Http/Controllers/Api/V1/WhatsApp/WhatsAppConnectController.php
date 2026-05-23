@@ -287,8 +287,27 @@ class WhatsAppConnectController extends Controller
         $user = auth()->user();
         $sessionId = BaileysGateway::sessionIdForUser((int) $user->id);
 
-        // Single gateway call: status endpoint tries finalize + up to ~10s wait (avoid 60s double-call)
+        // Single gateway call; if code was accepted on disk, run full finalize (registration retry loop)
         $result = BaileysGateway::getStatus($sessionId);
+
+        if ($result['ok']) {
+            $data = $result['data'] ?? [];
+            $pairingAccepted = (bool) ($data['pairingAccepted'] ?? false);
+            $connected = ($data['status'] ?? '') === 'connected';
+
+            if ($pairingAccepted && ! $connected) {
+                Log::info('WhatsApp status: pairing accepted on disk — finalizing registration', [
+                    'user_id' => $user->id,
+                    'wa_id' => $data['waId'] ?? null,
+                ]);
+                $finalize = BaileysGateway::finalizePairing($sessionId, false);
+                if ($finalize['ok']) {
+                    $result = ['ok' => true, 'status' => $finalize['status'] ?? 200, 'data' => $finalize['data'] ?? [], 'error' => null];
+                } else {
+                    $result = BaileysGateway::getStatus($sessionId);
+                }
+            }
+        }
 
         if (! $result['ok']) {
             return RespondActive::clientError($result['error'] ?? __('messages.whatsapp_status_failed'));

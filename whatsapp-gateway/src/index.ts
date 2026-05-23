@@ -9,11 +9,13 @@ import {
   getPairingProgress,
   getQr,
   ensurePairingFinalized,
+  ensureSessionMeta,
   formatPairingCodeDisplay,
   getSessionMeta,
   isAuthRegistered,
   isPairingSocketAlive,
   normalizePhoneDigits,
+  sessionAuthExists,
   startSession,
   startSessionWithPairing,
   waitForConnected,
@@ -76,7 +78,7 @@ async function fetchQrPayload(sessionId: string) {
 app.get('/health', (_req, res) => {
   res.json({
     ok: true,
-    version: '1.2.7',
+    version: '1.2.8',
     qrSetupPage: QR_SETUP_PAGE_ENABLED,
     secretConfigured: Boolean(SECRET),
     features: {
@@ -163,22 +165,46 @@ app.post('/sessions', async (req, res) => {
 
 app.get('/sessions/:id/status', async (req, res) => {
   const sessionId = req.params.id;
+
+  if (!getSessionMeta(sessionId) && sessionAuthExists(sessionId)) {
+    ensureSessionMeta(sessionId);
+  }
+
   let meta = getSessionMeta(sessionId);
 
-  if (!meta) {
-    res.json({ status: 'disconnected', phone: null, sessionId, registeredOnDisk: false });
+  if (!meta && !sessionAuthExists(sessionId)) {
+    res.json({
+      status: 'disconnected',
+      phone: null,
+      sessionId,
+      registeredOnDisk: false,
+      pairingAccepted: false,
+      pairingProgress: 'awaiting_code',
+    });
     return;
   }
 
-  if (meta.status === 'pending_pairing' || meta.status === 'starting') {
+  meta = ensureSessionMeta(sessionId);
+  let progress = await getPairingProgress(sessionId);
+
+  const needsFinalize =
+    (progress.pairingAccepted || progress.registered) && meta.status !== 'connected';
+
+  if (needsFinalize) {
+    meta = (await ensurePairingFinalized(sessionId)) ?? meta;
+    if (meta.status !== 'connected') {
+      await waitForConnected(sessionId, progress.pairingAccepted ? 30_000 : 10_000);
+      meta = getSessionMeta(sessionId) ?? meta;
+    }
+    progress = await getPairingProgress(sessionId);
+  } else if (meta.status === 'pending_pairing' || meta.status === 'starting') {
     meta = (await ensurePairingFinalized(sessionId)) ?? meta;
     if (meta.status === 'pending_pairing' || meta.status === 'starting') {
       await waitForConnected(sessionId, 10_000);
       meta = getSessionMeta(sessionId) ?? meta;
     }
+    progress = await getPairingProgress(sessionId);
   }
-
-  const progress = await getPairingProgress(sessionId);
 
   res.json({
     sessionId: meta.sessionId,

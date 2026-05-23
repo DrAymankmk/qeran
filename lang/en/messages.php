@@ -78,6 +78,8 @@ return [
     'whatsapp_pairing_enter_fast' => 'Open WhatsApp within 30 seconds and enter the code. Delayed entry often causes "something went wrong".',
     'whatsapp_pairing_socket_down' => 'Pairing session was interrupted. Tap Connect again to get a new code.',
     'whatsapp_pairing_finishing' => 'WhatsApp accepted the code. Finishing connection…',
+    'whatsapp_pairing_tap_link_device' => 'WhatsApp accepted the code. On the warning screen tap Link device (not Don\'t link). Keep the app open and wait.',
+    'whatsapp_pairing_step_4_scam' => 'If WhatsApp shows "This may be a scam", tap Link device to continue.',
     'whatsapp_invitations_queued' => 'Invitations queued for WhatsApp delivery.',
     'whatsapp_pairing_step_1' => 'Open WhatsApp on the same phone.',
     'whatsapp_pairing_step_2' => 'Linked devices → Link a device → Link with phone number. When WhatsApp asks for your number, enter exactly: :phone',

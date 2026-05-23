@@ -307,27 +307,8 @@ class WhatsAppConnectController extends Controller
         $user = auth()->user();
         $sessionId = BaileysGateway::sessionIdForUser((int) $user->id);
 
-        // Single gateway call; if code was accepted on disk, run full finalize (registration retry loop)
+        // Gateway keeps socket open while user taps "Link device" on WhatsApp — do not call finalize here
         $result = BaileysGateway::getStatus($sessionId);
-
-        if ($result['ok']) {
-            $data = $result['data'] ?? [];
-            $pairingAccepted = (bool) ($data['pairingAccepted'] ?? false);
-            $connected = ($data['status'] ?? '') === 'connected';
-
-            if ($pairingAccepted && ! $connected) {
-                Log::info('WhatsApp status: pairing accepted on disk — finalizing registration', [
-                    'user_id' => $user->id,
-                    'wa_id' => $data['waId'] ?? null,
-                ]);
-                $finalize = BaileysGateway::finalizePairing($sessionId, false);
-                if ($finalize['ok']) {
-                    $result = ['ok' => true, 'status' => $finalize['status'] ?? 200, 'data' => $finalize['data'] ?? [], 'error' => null];
-                } else {
-                    $result = BaileysGateway::getStatus($sessionId);
-                }
-            }
-        }
 
         if (! $result['ok']) {
             return RespondActive::clientError($result['error'] ?? __('messages.whatsapp_status_failed'));
@@ -412,7 +393,11 @@ class WhatsAppConnectController extends Controller
             return 'connected';
         }
 
-        if ($connectionStatus === 'pending_pairing' && ($registeredOnDisk || $pairingAccepted)) {
+        if ($connectionStatus === 'pending_pairing' && $pairingAccepted) {
+            return 'tap_link_device_in_whatsapp';
+        }
+
+        if ($connectionStatus === 'pending_pairing' && $registeredOnDisk) {
             return 'wait_for_connection';
         }
 
@@ -433,7 +418,11 @@ class WhatsAppConnectController extends Controller
             return __('messages.whatsapp_connected');
         }
 
-        if ($connectionStatus === 'pending_pairing' && ($registeredOnDisk || $pairingAccepted)) {
+        if ($connectionStatus === 'pending_pairing' && $pairingAccepted) {
+            return __('messages.whatsapp_pairing_tap_link_device');
+        }
+
+        if ($connectionStatus === 'pending_pairing' && $registeredOnDisk) {
             return __('messages.whatsapp_pairing_finishing');
         }
 
@@ -475,6 +464,7 @@ class WhatsAppConnectController extends Controller
             __('messages.whatsapp_pairing_step_1'),
             __('messages.whatsapp_pairing_step_2_phone', ['primary' => $primaryDigits, 'alternate' => $alternateDigits]),
             __('messages.whatsapp_pairing_step_3'),
+            __('messages.whatsapp_pairing_step_4_scam'),
         ];
     }
 

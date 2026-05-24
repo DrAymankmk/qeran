@@ -84,6 +84,8 @@ return [
     'whatsapp_contact_invitations_queued' => 'Contact invitations queued for WhatsApp delivery.',
     'invitation_contact_invalid_phone' => 'Invalid phone number format.',
     'invitation_contacts_all_invalid' => 'No valid contacts to send invitations to.',
+    'invitation_contacts_required' => 'At least one contact is required.',
+    'invitation_contacts_stored' => 'Contacts saved successfully.',
     'whatsapp_pairing_step_1' => 'Open WhatsApp on the same phone.',
     'whatsapp_pairing_step_2' => 'Linked devices → Link a device → Link with phone number. When WhatsApp asks for your number, enter exactly: :phone',
     'whatsapp_pairing_step_2_phone' => 'Linked devices → Link with phone number. When WhatsApp asks for your number, try first: :primary (if rejected, try: :alternate).',

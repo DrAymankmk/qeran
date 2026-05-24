@@ -11,6 +11,7 @@ use App\Http\Requests\Api\V1\Invitation\InvitationRequest;
 use App\Http\Requests\Api\V1\Invitation\PaymentReceiptRequest;
 use App\Http\Requests\Api\V1\Invitation\RemoveUserRequest;
 use App\Http\Requests\Api\V1\Invitation\SendNotificationToUserRequest;
+use App\Http\Requests\Api\V1\Invitation\AddContactRequest;
 use App\Http\Requests\Api\V1\Invitation\ShareInvitationRequest;
 use App\Http\Requests\Api\V1\Invitation\StoreAdminRequest;
 use App\Http\Requests\Api\V1\Invitation\StoreGuardRequest;
@@ -788,6 +789,33 @@ $invitation->delete();
         }
 
         return RespondActive::success('Action ran successfully', (UserResource::collection($invitation->users)));
+    }
+
+    public function addContact(AddContactRequest $request, Invitation $invitation)
+    {
+        $contacts = $request->input('contacts', []);
+
+        if ($error = $this->ensureContactInvitationQuota($invitation, count($contacts))) {
+            return $error;
+        }
+
+        $result = $this->persistInvitationContacts($invitation, $contacts);
+
+        if (count($result['stored']) === 0) {
+            return RespondActive::clientError(__('messages.invitation_contacts_all_invalid'), [
+                'skipped' => $result['skipped'],
+            ]);
+        }
+
+        return RespondActive::success(__('messages.invitation_contacts_stored'), [
+            'stored_count' => count($result['stored']),
+            'skipped_count' => count($result['skipped']),
+            'contacts' => collect($result['stored'])
+                ->map(fn (array $entry) => $this->formatContactLog($entry['log']))
+                ->values()
+                ->all(),
+            'skipped' => $result['skipped'],
+        ]);
     }
 
     public function updateAdminHostName(UpdateAdminHostNameRequest $request, Invitation $invitation)
@@ -1607,37 +1635,20 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
      */
     private function shareInvitationToContacts(Invitation $invitation, array $contacts)
     {
+        if ($error = $this->ensureContactInvitationQuota($invitation, count($contacts))) {
+            return $error;
+        }
+
+        $persisted = $this->persistInvitationContacts($invitation, $contacts);
         $hostId = (int) auth()->id();
-        $defaultCountryCode = (string) auth()->user()->country_code;
         $queued = [];
-        $skipped = [];
         $index = 0;
 
-        foreach ($this->normalizeShareContacts($contacts, $defaultCountryCode) as $contact) {
-            if (! $contact['valid']) {
-                $skipped[] = [
-                    'name' => $contact['name'],
-                    'phone' => $contact['phone'],
-                    'reason' => __('messages.invitation_contact_invalid_phone'),
-                ];
-
-                continue;
-            }
-
-            $guestUser = $this->resolveContactGuestUser($invitation, $contact);
-            $referenceId = $invitation->id.'-contact-'.$guestUser->id.'-'.time().'-'.$index;
-
-            $log = InvitationContactLog::query()->create([
-                'invitation_id' => $invitation->id,
-                'invited_by' => $hostId,
-                'user_id' => $guestUser->id,
-                'contact_name' => $contact['name'],
-                'country_code' => $contact['country_code'],
-                'phone' => $contact['phone'],
-                'send_status' => Constant::INVITATION_CONTACT_SEND_STATUS['pending'],
-                'seen' => Constant::SEEN_STATUS['not in the app'],
-                'reference_id' => $referenceId,
-            ]);
+        foreach ($persisted['stored'] as $entry) {
+            $log = $entry['log'];
+            $guestUser = $entry['user'];
+            $contact = $entry['contact'];
+            $referenceId = $log->reference_id ?? $invitation->id.'-contact-'.$guestUser->id.'-'.$log->id;
 
             $message = $this->buildInvitationMessage($invitation, $guestUser->id, 'invitation_sms_template');
             $dayOffset = intdiv($index, 80);
@@ -1656,22 +1667,98 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
                 now()->addDays($dayOffset)->setHour(10)->addSeconds($delaySeconds)
             );
 
-            $queued[] = $this->formatContactLog($log);
+            $queued[] = $this->formatContactLog($log->fresh());
             $index++;
         }
 
-        if ($index === 0 && count($skipped) > 0) {
+        if ($index === 0 && count($persisted['skipped']) > 0) {
             return RespondActive::clientError(__('messages.invitation_contacts_all_invalid'), [
-                'skipped' => $skipped,
+                'skipped' => $persisted['skipped'],
             ]);
         }
 
         return RespondActive::success(__('messages.whatsapp_contact_invitations_queued'), [
             'queued_count' => count($queued),
-            'skipped_count' => count($skipped),
+            'skipped_count' => count($persisted['skipped']),
             'queued' => $queued,
-            'skipped' => $skipped,
+            'skipped' => $persisted['skipped'],
         ]);
+    }
+
+    /**
+     * @param  array<int, array{name?: string, phone?: string}>  $contacts
+     * @return array{stored: list<array{log: InvitationContactLog, user: User, contact: array}>, skipped: list<array<string, string>>}
+     */
+    private function persistInvitationContacts(Invitation $invitation, array $contacts): array
+    {
+        $hostId = (int) auth()->id();
+        $defaultCountryCode = (string) auth()->user()->country_code;
+        $stored = [];
+        $skipped = [];
+
+        foreach ($this->normalizeShareContacts($contacts, $defaultCountryCode) as $contact) {
+            if (! $contact['valid']) {
+                $skipped[] = [
+                    'name' => $contact['name'],
+                    'phone' => $contact['phone'],
+                    'reason' => __('messages.invitation_contact_invalid_phone'),
+                ];
+
+                continue;
+            }
+
+            $guestUser = $this->resolveContactGuestUser($invitation, $contact);
+
+            $log = InvitationContactLog::query()->updateOrCreate(
+                [
+                    'invitation_id' => $invitation->id,
+                    'invited_by' => $hostId,
+                    'country_code' => $contact['country_code'],
+                    'phone' => $contact['phone'],
+                ],
+                [
+                    'user_id' => $guestUser->id,
+                    'contact_name' => $contact['name'],
+                    'send_status' => Constant::INVITATION_CONTACT_SEND_STATUS['pending'],
+                    'seen' => Constant::SEEN_STATUS['not in the app'],
+                    'reference_id' => $invitation->id.'-contact-'.$guestUser->id,
+                    'error_message' => null,
+                    'sent_at' => null,
+                ]
+            );
+
+            $stored[] = [
+                'log' => $log,
+                'user' => $guestUser,
+                'contact' => $contact,
+            ];
+        }
+
+        return [
+            'stored' => $stored,
+            'skipped' => $skipped,
+        ];
+    }
+
+    private function ensureContactInvitationQuota(Invitation $invitation, int $contactCount)
+    {
+        if ($contactCount <= 0) {
+            return RespondActive::clientError(__('messages.invitation_contacts_required'));
+        }
+
+        if ($invitation->user_id == auth()->id()) {
+            if ($contactCount > $invitation->totalUnPaidInvitationsCount()) {
+                return RespondActive::clientError(__('validation.exceeded_number_of_invited_users'));
+            }
+
+            if (! checkPackageCount($invitation, 'checkAllInvitationPackagesCount', $contactCount)) {
+                return RespondActive::clientError(__('validation.exceeded_number_of_invited_users'));
+            }
+        } elseif (! checkPackageCountForAdmin($invitation, $contactCount, auth()->id())) {
+            return RespondActive::clientError(__('validation.exceeded_number_of_invited_users'));
+        }
+
+        return null;
     }
 
     /**

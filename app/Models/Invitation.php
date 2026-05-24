@@ -307,6 +307,11 @@ class Invitation extends Model
 
     }
 
+    public function contactLogs()
+    {
+        return $this->hasMany(InvitationContactLog::class);
+    }
+
     public function users()
     {
         return $this->belongsToMany(User::class)

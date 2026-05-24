@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Website\V1\Invitation;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Invitations\InvitationResource;
 use App\Models\Invitation;
+use App\Models\InvitationContactLog;
 use App\Services\RespondActive;
 use Illuminate\Http\Request;
 use App\Helpers\Constant;
@@ -45,6 +46,12 @@ class InvitationsController extends Controller
         // Update seen status if not already accepted/declined
         if ($user->pivot->seen != Constant::SEEN_STATUS['accepted'] && $user->pivot->seen != Constant::SEEN_STATUS['declined']) {
             $invitation->users()->updateExistingPivot($user_id, ['seen' => Constant::SEEN_STATUS['seen']]);
+
+            InvitationContactLog::query()
+                ->where('invitation_id', $invitation->id)
+                ->where('user_id', $user_id)
+                ->when($inserted_by !== null, fn ($query) => $query->where('invited_by', $inserted_by))
+                ->update(['seen' => Constant::SEEN_STATUS['seen']]);
             // Refresh the relationship to get updated pivot data
             $invitation->load('users');
             $user = $invitation->users()->where('user_id', $user_id)->first();

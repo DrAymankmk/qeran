@@ -135,6 +135,12 @@ class Constant
         'did not attend' => 9,
     ];
 
+    const INVITATION_CONTACT_SEND_STATUS = [
+        'pending' => 0,
+        'sent' => 1,
+        'failed' => 2,
+    ];
+
     const PACKAGE_TYPE = [
         'Static Package' => 1,
         'Dynamic Package' => 2,

@@ -11,6 +11,7 @@ use App\Http\Requests\Api\V1\Invitation\InvitationRequest;
 use App\Http\Requests\Api\V1\Invitation\PaymentReceiptRequest;
 use App\Http\Requests\Api\V1\Invitation\RemoveUserRequest;
 use App\Http\Requests\Api\V1\Invitation\SendNotificationToUserRequest;
+use App\Http\Requests\Api\V1\Invitation\ShareInvitationRequest;
 use App\Http\Requests\Api\V1\Invitation\StoreAdminRequest;
 use App\Http\Requests\Api\V1\Invitation\StoreGuardRequest;
 use App\Http\Requests\Api\V1\Invitation\StoreUserRequest;
@@ -27,15 +28,18 @@ use App\Http\Resources\User\UserResource;
 use App\Models\AppSetting;
 use App\Models\Category;
 use App\Models\Invitation;
+use App\Models\InvitationContactLog;
 use App\Models\InvitationPackage;
 use App\Models\Package;
 use App\Models\User;
 use App\Services\External\Notification;
+use App\Jobs\SendBaileysInvitationContactMessage;
 use App\Jobs\SendBaileysInvitationMessage;
 use App\Services\External\BaileysGateway;
 use App\Services\External\BaileysWhatsApp;
 use App\Services\External\TwilioSMS;
 use App\Services\RespondActive;
+use App\Support\PhoneNumber;
 use App\Traits\SendsNotificationAndEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -51,7 +55,7 @@ class InvitationsController extends Controller
     public function index(GetInvitationRequest $request)
     {
         switch ($request->type) {
- 
+
             case 1:
                 return RespondActive::success('action ran successfully', CategoryResource::collection(
                     Category::whereHas('invitations', function ($query) {
@@ -214,7 +218,7 @@ class InvitationsController extends Controller
                 }
                 break;
 
- 
+
 	  // User Design , user design invitation and send to admin to approve
             case Constant::INVITATION_TYPE['User Design']:
 
@@ -1193,7 +1197,7 @@ $invitation->delete();
                             'invitation_id' => $invitation->id,
                             'error' => $e->getTraceAsString(),
                         ]);
-                    } 
+                    }
 
 	}
 
@@ -1279,7 +1283,7 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
 
     $user = User::findOrFail(auth()->id());
 
-    // send notification to admin 
+    // send notification to admin
 	try {
 		$this->sendAdminNotification(
 		notificationKey: 'payment_receipt_uploaded',
@@ -1322,10 +1326,16 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
     return RespondActive::success(__('action ran successfully'));
 }
 
-    public function shareInvitation(Invitation $invitation)
+    public function shareInvitation(ShareInvitationRequest $request, Invitation $invitation)
     {
         if ($error = $this->ensureClientWhatsAppConnected()) {
             return $error;
+        }
+
+        $contacts = $request->input('contacts', []);
+
+        if (is_array($contacts) && count($contacts) > 0) {
+            return $this->shareInvitationToContacts($invitation, $contacts);
         }
 
         $users = $invitation->users()
@@ -1341,6 +1351,20 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
         );
 
         return RespondActive::success(__('messages.whatsapp_invitations_queued'));
+    }
+
+    public function contactInvitationLogs(Invitation $invitation)
+    {
+        $logs = InvitationContactLog::query()
+            ->where('invitation_id', $invitation->id)
+            ->where('invited_by', auth()->id())
+            ->latest()
+            ->get()
+            ->map(fn (InvitationContactLog $log) => $this->formatContactLog($log));
+
+        return RespondActive::success('OK', [
+            'logs' => $logs,
+        ]);
     }
 
     public function shareSmsInvitationApp(Invitation $invitation, User $user)
@@ -1491,7 +1515,7 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
                      'paid' => Constant::PAID_STATUS['Pending Admin Payment'],
                  ]);
 
-	// send notification to admin 
+	// send notification to admin
 	try {
 		$this->sendAdminNotification(
 		notificationKey: 'extra_packages_added',
@@ -1576,6 +1600,190 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
         }
 
         return null;
+    }
+
+    /**
+     * @param  array<int, array{name?: string, phone?: string}>  $contacts
+     */
+    private function shareInvitationToContacts(Invitation $invitation, array $contacts)
+    {
+        $hostId = (int) auth()->id();
+        $defaultCountryCode = (string) auth()->user()->country_code;
+        $queued = [];
+        $skipped = [];
+        $index = 0;
+
+        foreach ($this->normalizeShareContacts($contacts, $defaultCountryCode) as $contact) {
+            if (! $contact['valid']) {
+                $skipped[] = [
+                    'name' => $contact['name'],
+                    'phone' => $contact['phone'],
+                    'reason' => __('messages.invitation_contact_invalid_phone'),
+                ];
+
+                continue;
+            }
+
+            $guestUser = $this->resolveContactGuestUser($invitation, $contact);
+            $referenceId = $invitation->id.'-contact-'.$guestUser->id.'-'.time().'-'.$index;
+
+            $log = InvitationContactLog::query()->create([
+                'invitation_id' => $invitation->id,
+                'invited_by' => $hostId,
+                'user_id' => $guestUser->id,
+                'contact_name' => $contact['name'],
+                'country_code' => $contact['country_code'],
+                'phone' => $contact['phone'],
+                'send_status' => Constant::INVITATION_CONTACT_SEND_STATUS['pending'],
+                'seen' => Constant::SEEN_STATUS['not in the app'],
+                'reference_id' => $referenceId,
+            ]);
+
+            $message = $this->buildInvitationMessage($invitation, $guestUser->id, 'invitation_sms_template');
+            $dayOffset = intdiv($index, 80);
+            $delaySeconds = ($index % 80) * 12;
+
+            SendBaileysInvitationContactMessage::dispatch(
+                contactLogId: $log->id,
+                hostUserId: $hostId,
+                invitationId: $invitation->id,
+                guestUserId: $guestUser->id,
+                countryCode: $contact['country_code'],
+                phone: $contact['phone'],
+                message: $message,
+                referenceId: $referenceId,
+            )->delay(
+                now()->addDays($dayOffset)->setHour(10)->addSeconds($delaySeconds)
+            );
+
+            $queued[] = $this->formatContactLog($log);
+            $index++;
+        }
+
+        if ($index === 0 && count($skipped) > 0) {
+            return RespondActive::clientError(__('messages.invitation_contacts_all_invalid'), [
+                'skipped' => $skipped,
+            ]);
+        }
+
+        return RespondActive::success(__('messages.whatsapp_contact_invitations_queued'), [
+            'queued_count' => count($queued),
+            'skipped_count' => count($skipped),
+            'queued' => $queued,
+            'skipped' => $skipped,
+        ]);
+    }
+
+    /**
+     * @param  array<int, array{name?: string, phone?: string}>  $contacts
+     * @return list<array{name: string, phone: string, country_code: string, e164: string, valid: bool}>
+     */
+    private function normalizeShareContacts(array $contacts, string $defaultCountryCode): array
+    {
+        $normalized = [];
+        $seenPhones = [];
+
+        foreach ($contacts as $contact) {
+            $name = trim((string) ($contact['name'] ?? ''));
+            $rawPhone = trim((string) ($contact['phone'] ?? ''));
+
+            if ($rawPhone === '') {
+                continue;
+            }
+
+            $e164 = PhoneNumber::e164ForWhatsAppPairing($defaultCountryCode, $rawPhone);
+            if (isset($seenPhones[$e164])) {
+                continue;
+            }
+            $seenPhones[$e164] = true;
+
+            $countryCode = $defaultCountryCode;
+            $ccDigits = preg_replace('/\D+/', '', $defaultCountryCode);
+            $phoneForDb = PhoneNumber::informationForStorage($countryCode, $rawPhone);
+
+            $normalized[] = [
+                'name' => $name !== '' ? $name : $phoneForDb,
+                'phone' => $phoneForDb,
+                'country_code' => $countryCode,
+                'e164' => $e164,
+                'valid' => PhoneNumber::isValidWhatsAppPairingNumber($e164, $countryCode),
+            ];
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * @param  array{name: string, phone: string, country_code: string}  $contact
+     */
+    private function resolveContactGuestUser(Invitation $invitation, array $contact): User
+    {
+        $user = User::query()
+            ->where('phone', $contact['phone'])
+            ->where('country_code', $contact['country_code'])
+            ->first();
+
+        if (! $user) {
+            $user = User::query()->create([
+                'phone' => $contact['phone'],
+                'country_code' => $contact['country_code'],
+                'register_type' => Constant::REGISTER_TYPE['Added By User'],
+                'name' => $contact['name'],
+            ]);
+        }
+
+        $pivotExists = $invitation->users()
+            ->where('users.id', $user->id)
+            ->exists();
+
+        if (! $pivotExists) {
+            $invitation->usersByRole(Constant::INVITATION_USER_ROLE['User'])->sync([
+                $user->id => [
+                    'role' => Constant::INVITATION_USER_ROLE['User'],
+                    'invitation_count' => 1,
+                    'invited_by' => auth()->id(),
+                    'seen' => Constant::SEEN_STATUS['not in the app'],
+                    'name' => $contact['name'],
+                ],
+            ], false);
+
+            $image = QrCode::format('png')
+                ->size(200)
+                ->color(0, 0, 0)
+                ->backgroundColor(255, 255, 255, 0)
+                ->style('square')
+                ->generate($invitation->id.'-'.$user->id);
+            $outputFile = 'public/qr-code/Qr-'.$invitation->id.'-'.$user->id.'.png';
+            Storage::disk('local')->put($outputFile, $image);
+        }
+
+        return $user;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatContactLog(InvitationContactLog $log): array
+    {
+        $sendStatus = match ((int) $log->send_status) {
+            Constant::INVITATION_CONTACT_SEND_STATUS['sent'] => 'sent',
+            Constant::INVITATION_CONTACT_SEND_STATUS['failed'] => 'failed',
+            default => 'pending',
+        };
+
+        return [
+            'id' => $log->id,
+            'contact_name' => $log->contact_name,
+            'phone' => $log->phone,
+            'country_code' => $log->country_code,
+            'user_id' => $log->user_id,
+            'send_status' => $sendStatus,
+            'seen' => (int) $log->seen,
+            'seen_label' => array_search((int) $log->seen, Constant::SEEN_STATUS, true) ?: 'unknown',
+            'error_message' => $log->error_message,
+            'sent_at' => $log->sent_at?->toIso8601String(),
+            'created_at' => $log->created_at?->toIso8601String(),
+        ];
     }
 
     /**

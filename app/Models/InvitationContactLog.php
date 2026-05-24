@@ -1,0 +1,53 @@
+<?php
+
+namespace App\Models;
+
+use App\Helpers\Constant;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class InvitationContactLog extends Model
+{
+    protected $fillable = [
+        'invitation_id',
+        'invited_by',
+        'user_id',
+        'contact_name',
+        'country_code',
+        'phone',
+        'send_status',
+        'seen',
+        'error_message',
+        'reference_id',
+        'sent_at',
+    ];
+
+    protected $casts = [
+        'sent_at' => 'datetime',
+    ];
+
+    public function invitation(): BelongsTo
+    {
+        return $this->belongsTo(Invitation::class);
+    }
+
+    public function invitedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'invited_by');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function isSent(): bool
+    {
+        return (int) $this->send_status === Constant::INVITATION_CONTACT_SEND_STATUS['sent'];
+    }
+
+    public function isFailed(): bool
+    {
+        return (int) $this->send_status === Constant::INVITATION_CONTACT_SEND_STATUS['failed'];
+    }
+}

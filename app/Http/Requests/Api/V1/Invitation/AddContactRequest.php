@@ -14,6 +14,29 @@ class AddContactRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $contacts = $this->input('contacts');
+
+        if (is_string($contacts)) {
+            $decoded = json_decode($contacts, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $this->merge(['contacts' => $decoded]);
+
+                return;
+            }
+        }
+
+        if (! $this->has('contacts')) {
+            $decodedBody = json_decode($this->getContent(), true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decodedBody) && isset($decodedBody['contacts'])) {
+                $this->merge(['contacts' => $decodedBody['contacts']]);
+            }
+        }
+    }
+
     public function rules(): array
     {
         return [

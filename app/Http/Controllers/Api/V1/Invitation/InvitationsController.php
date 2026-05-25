@@ -1296,11 +1296,19 @@ class InvitationsController extends Controller
 	'file_type' => Constant::FILE_TYPE['Image'],
 	'model' => $invitationPackage,
 	'saveInDatabase' => true]);
-	Mail::send('emails.payment-receipt', ['invitationPackage' => $invitationPackage, 'invitation' => $invitation], function ($message) {
-	$message->to('moderninvitation420@gmail.com', 'دفع باقة جديدة')
-		->from('info@modern-invitation.com', 'Modern Invitation')
-		->subject('دفع باقة جديدة');
-	});
+	try {
+		Mail::send('emails.payment-receipt', ['invitationPackage' => $invitationPackage, 'invitation' => $invitation], function ($message) {
+			$message->to(env('MAIL_TO_ADDRESS', 'moderninvitation420@gmail.com'), 'دفع باقة جديدة')
+				->from(config('mail.from.address', 'info@modern-invitation.com'), config('mail.from.name', 'Modern Invitation'))
+				->subject('دفع باقة جديدة');
+		});
+	} catch (\Throwable $e) {
+		Log::warning('Payment receipt email send failed', [
+			'invitation_id' => $invitation->id,
+			'package_id' => $invitationPackage->id ?? null,
+			'error' => $e->getMessage(),
+		]);
+	}
 
 	$user = User::findOrFail(auth()->id());
 

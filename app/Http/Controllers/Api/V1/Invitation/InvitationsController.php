@@ -1347,8 +1347,9 @@ class InvitationsController extends Controller
 	return RespondActive::success(__('action ran successfully'));
 	}
 
-    public function shareInvitation(ShareInvitationRequest $request, Invitation $invitation)
+    public function shareInvitation(ShareInvitationRequest $request, $invitationId)
     {
+	$invitation = Invitation::findOrFail($invitationId);
         if ($error = $this->ensureClientWhatsAppConnected()) {
             return $error;
         }

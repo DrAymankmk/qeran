@@ -141,8 +141,8 @@ Route::prefix('/v1')->group(function () {
             Route::post('/user/delete/{invitation}', 'removeUser');
             Route::get('/check/invitation', 'checkInvitation');
             Route::post('/add-contact/{invitation}', 'addContact');
-            Route::post('/share/{invitation}', 'shareInvitation');
-            Route::get('/share/{invitation}', 'shareInvitation');
+            Route::post('/share/{invitationId}', 'shareInvitation');
+          //   Route::get('/share/{invitationId}', 'shareInvitation');
             Route::get('/share/{invitation}/contact-logs', 'contactInvitationLogs');
             Route::get('/share-sms/{invitation}', 'shareInvitationSms');
             Route::post('payment/receipt/{invitation}', 'PaymentReceipt');

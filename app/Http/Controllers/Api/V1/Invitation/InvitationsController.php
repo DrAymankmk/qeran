@@ -770,14 +770,7 @@ $invitation->delete();
                     'name' => $userArray['name'],
                 ],
             ], false);
-            $image = QrCode::format('png')
-                ->size(200)
-                ->color(0, 0, 0)
-                ->backgroundColor(255, 255, 255, 0)
-                ->style('square')
-                ->generate($invitation->id.'-'.$user->id);
-            $output_file = 'public/qr-code/Qr-'.$invitation->id.'-'.$user->id.'.png';
-            Storage::disk('local')->put($output_file, $image);
+            $this->storeInvitationQrCode($invitation->id, $user->id);
             if ($invitation->paid == Constant::PAID_STATUS['Paid']) {
                 Notification::notify('users',
                     Constant::NOTIFICATIONS_TYPE['Invitations'],
@@ -1834,17 +1827,49 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
                 ],
             ], false);
 
+            $this->storeInvitationQrCode($invitation->id, $user->id);
+        }
+
+        return $user;
+    }
+
+    private function storeInvitationQrCode(int $invitationId, int $userId): void
+    {
+        $payload = $invitationId.'-'.$userId;
+        $pngPath = 'public/qr-code/Qr-'.$invitationId.'-'.$userId.'.png';
+        $svgPath = 'public/qr-code/Qr-'.$invitationId.'-'.$userId.'.svg';
+
+        try {
             $image = QrCode::format('png')
                 ->size(200)
                 ->color(0, 0, 0)
                 ->backgroundColor(255, 255, 255, 0)
                 ->style('square')
-                ->generate($invitation->id.'-'.$user->id);
-            $outputFile = 'public/qr-code/Qr-'.$invitation->id.'-'.$user->id.'.png';
-            Storage::disk('local')->put($outputFile, $image);
+                ->generate($payload);
+
+            Storage::disk('local')->put($pngPath, $image);
+
+            if (Storage::disk('local')->exists($svgPath)) {
+                Storage::disk('local')->delete($svgPath);
+            }
+
+            return;
+        } catch (\Throwable $e) {
+            Log::warning('PNG QR generation failed, falling back to SVG', [
+                'invitation_id' => $invitationId,
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
         }
 
-        return $user;
+        $svg = QrCode::format('svg')
+            ->size(200)
+            ->color(0, 0, 0)
+            ->backgroundColor(255, 255, 255, 0)
+            ->style('square')
+            ->generate($payload);
+
+        Storage::disk('local')->put($svgPath, $svg);
     }
 
     /**

@@ -266,6 +266,17 @@ class Invitation extends Model
 
     public function qr($invitation_id, $user_id = null)
     {
+        $guestId = $user_id ?: auth()->id();
+        $basePath = 'qr-code/Qr-' . $invitation_id . '-' . $guestId;
+
+        if (Storage::disk('public')->exists($basePath . '.png')) {
+            return asset('storage/' . $basePath . '.png');
+        }
+
+        if (Storage::disk('public')->exists($basePath . '.svg')) {
+            return asset('storage/' . $basePath . '.svg');
+        }
+
         if (!$user_id) {
             return asset('storage/' . 'qr-code/Qr-' . $invitation_id . '-' . auth()->id() . '.png');
         }

@@ -620,14 +620,14 @@ class InvitationsController extends Controller
     }
 
     // delete method
-public function delete($id){
+    public function delete($id){
 
-$invitation = Invitation::findOrFail($id);
-$invitation->delete();
+	$invitation = Invitation::findOrFail($id);
+	$invitation->delete();
 
-        return RespondActive::success('Invitation Deleted Successfully',[]);
+	return RespondActive::success('Invitation Deleted Successfully',[]);
 
-}
+    }
 
     public function users(GetUserRequest $request, Invitation $invitation)
     {
@@ -705,7 +705,7 @@ $invitation->delete();
 
     public function admins(Invitation $invitation)
     {
-//        dd($invitation->admins()->get()->pluck('invitedToUsers'));
+	//        dd($invitation->admins()->get()->pluck('invitedToUsers'));
 
         $data['sum_count'] = (int) $invitation->admins()->sum('invitation_count');
         $data['rest_count'] = $invitation->admins->pluck('invitedToUsers')->flatten()->count();
@@ -1270,82 +1270,82 @@ $invitation->delete();
         }
     }
 
-public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invitation)
-{
-    DB::beginTransaction();
-    $invitationPackage = InvitationPackage::query()
-        ->where('invitation_id', '=', $invitation->id)
-          //   ->where('status', '=', Constant::PAID_STATUS['Not Paid'])
-        ->first();
+	public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invitation)
+	{
+	DB::beginTransaction();
+	$invitationPackage = InvitationPackage::query()
+	->where('invitation_id', '=', $invitation->id)
+		//   ->where('status', '=', Constant::PAID_STATUS['Not Paid'])
+	->first();
 
-	//     if (! $invitationPackage) {
-	//         return RespondActive::clientError('Sorry, there are existing unpaid invitation packages.');
-	//     }
+		//     if (! $invitationPackage) {
+		//         return RespondActive::clientError('Sorry, there are existing unpaid invitation packages.');
+		//     }
 
-    $invitationPackage->update([
-        'status' => Constant::PAID_STATUS['Pending Admin Payment'],
-    ]);
+	$invitationPackage->update([
+	'status' => Constant::PAID_STATUS['Pending Admin Payment'],
+	]);
 
-    $invitation->update([
-        'paid' => Constant::PAID_STATUS['Pending Admin Payment'],
-    ]);
+	$invitation->update([
+	'paid' => Constant::PAID_STATUS['Pending Admin Payment'],
+	]);
 
-    storeImage(['value' => $request->image,
-        'folderName' => Constant::INVITATION_RECEIPT_FOLDER_NAME,
-        'file_key' => Constant::FILE_KEY['Receipt'],
-        'file_type' => Constant::FILE_TYPE['Image'],
-        'model' => $invitationPackage,
-        'saveInDatabase' => true]);
-    Mail::send('emails.payment-receipt', ['invitationPackage' => $invitationPackage, 'invitation' => $invitation], function ($message) {
-        $message->to('moderninvitation420@gmail.com', 'دفع باقة جديدة')
-                ->from('info@modern-invitation.com', 'Modern Invitation')
-                ->subject('دفع باقة جديدة');
-    });
+	storeImage(['value' => $request->image,
+	'folderName' => Constant::INVITATION_RECEIPT_FOLDER_NAME,
+	'file_key' => Constant::FILE_KEY['Receipt'],
+	'file_type' => Constant::FILE_TYPE['Image'],
+	'model' => $invitationPackage,
+	'saveInDatabase' => true]);
+	Mail::send('emails.payment-receipt', ['invitationPackage' => $invitationPackage, 'invitation' => $invitation], function ($message) {
+	$message->to('moderninvitation420@gmail.com', 'دفع باقة جديدة')
+		->from('info@modern-invitation.com', 'Modern Invitation')
+		->subject('دفع باقة جديدة');
+	});
 
-    $user = User::findOrFail(auth()->id());
+	$user = User::findOrFail(auth()->id());
 
-    // send notification to admin
-	try {
-		$this->sendAdminNotification(
-		notificationKey: 'payment_receipt_uploaded',
-		targetId: $invitation->id,
-		params: [
-			'invitation_id' => $invitation->id,
-			'invitation_name' => $invitation->event_name ?? $invitation->name,
-			'user_name' => $user->name ?? 'User',
-			'user_id' => $user->id,
+	// send notification to admin
+		try {
+			$this->sendAdminNotification(
+			notificationKey: 'payment_receipt_uploaded',
+			targetId: $invitation->id,
+			params: [
+				'invitation_id' => $invitation->id,
+				'invitation_name' => $invitation->event_name ?? $invitation->name,
+				'user_name' => $user->name ?? 'User',
+				'user_id' => $user->id,
+				'invitation_type' => $invitation->invitation_type,
+				'status' => 'Pending Admin Approval',
+				'step' => 'Choose Package',
+
+			],
+			category: Constant::NOTIFICATION_CATEGORY['Order'] ?? 1,
+			notificationType: Constant::NOTIFICATION_ORDER_TYPES['Order Modified or Canceled'] ?? 1,
+			emailSubject: 'Payment Receipt Uploaded - '.($invitation->event_name ?? $invitation->name),
+			emailView: 'emails.order.payment_receipt_uploaded',
+			emailTo: env('MAIL_TO_ADDRESS'),
+			emailData: [
+			'invitation' => $invitation,
+			'user' => $user,
 			'invitation_type' => $invitation->invitation_type,
 			'status' => 'Pending Admin Approval',
 			'step' => 'Choose Package',
+			'package' => $invitationPackage,
+			]
+		);
+		} catch (\Exception $e) {
+			DB::rollBack();
+			Log::error('Failed to send extra packages added notification: '.$e->getMessage(), [
+			'invitation_id' => $invitation->id,
+			'error' => $e->getTraceAsString(),
+			]);
+		}
 
-		],
-		category: Constant::NOTIFICATION_CATEGORY['Order'] ?? 1,
-		notificationType: Constant::NOTIFICATION_ORDER_TYPES['Order Modified or Canceled'] ?? 1,
-		emailSubject: 'Payment Receipt Uploaded - '.($invitation->event_name ?? $invitation->name),
-		emailView: 'emails.order.payment_receipt_uploaded',
-		emailTo: env('MAIL_TO_ADDRESS'),
-		emailData: [
-		'invitation' => $invitation,
-		'user' => $user,
-		'invitation_type' => $invitation->invitation_type,
-		'status' => 'Pending Admin Approval',
-		'step' => 'Choose Package',
-		'package' => $invitationPackage,
-		]
-	);
-	} catch (\Exception $e) {
-		DB::rollBack();
-		Log::error('Failed to send extra packages added notification: '.$e->getMessage(), [
-		'invitation_id' => $invitation->id,
-		'error' => $e->getTraceAsString(),
-		]);
+
+	DB::commit();
+
+	return RespondActive::success(__('action ran successfully'));
 	}
-
-
-    DB::commit();
-
-    return RespondActive::success(__('action ran successfully'));
-}
 
     public function shareInvitation(ShareInvitationRequest $request, Invitation $invitation)
     {
@@ -1353,25 +1353,18 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
             return $error;
         }
 
-        $contacts = $request->input('contacts', []);
-
-        if (is_array($contacts) && count($contacts) > 0) {
-            return $this->shareInvitationToContacts($invitation, $contacts);
-        }
-
-        $users = $invitation->users()
-            ->whereIn('seen', [Constant::SEEN_STATUS['in app'], Constant::SEEN_STATUS['not in the app']])
+        $contactLogs = InvitationContactLog::query()
+            ->where('invitation_id', $invitation->id)
             ->where('invited_by', auth()->id())
+            ->whereNotNull('user_id')
+            ->latest()
             ->get();
 
-        $this->queueInvitationMessages(
-            $invitation,
-            $users,
-            fn ($user) => $this->buildInvitationMessage($invitation, $user->id, 'invitation_sms_template'),
-            true
-        );
+        if ($contactLogs->isEmpty()) {
+            return RespondActive::clientError(__('messages.invitation_contacts_not_found'));
+        }
 
-        return RespondActive::success(__('messages.whatsapp_invitations_queued'));
+        return $this->queueStoredInvitationContactMessages($invitation, $contactLogs);
     }
 
     public function contactInvitationLogs(Invitation $invitation)
@@ -1675,6 +1668,59 @@ public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invit
             'skipped_count' => count($persisted['skipped']),
             'queued' => $queued,
             'skipped' => $persisted['skipped'],
+        ]);
+    }
+
+    /**
+     * @param  iterable<int, InvitationContactLog>  $contactLogs
+     */
+    private function queueStoredInvitationContactMessages(Invitation $invitation, iterable $contactLogs)
+    {
+        $hostId = (int) auth()->id();
+        $queued = [];
+        $index = 0;
+
+        foreach ($contactLogs as $log) {
+            if (! $log->user_id) {
+                continue;
+            }
+
+            $referenceId = $log->reference_id ?: $invitation->id.'-contact-'.$log->user_id.'-'.$log->id;
+            $message = $this->buildInvitationMessage($invitation, $log->user_id, 'invitation_sms_template');
+            $dayOffset = intdiv($index, 80);
+            $delaySeconds = ($index % 80) * 12;
+
+            $log->update([
+                'send_status' => Constant::INVITATION_CONTACT_SEND_STATUS['pending'],
+                'error_message' => null,
+                'sent_at' => null,
+                'reference_id' => $referenceId,
+            ]);
+
+            SendBaileysInvitationContactMessage::dispatch(
+                contactLogId: $log->id,
+                hostUserId: $hostId,
+                invitationId: $invitation->id,
+                guestUserId: $log->user_id,
+                countryCode: (string) $log->country_code,
+                phone: (string) $log->phone,
+                message: $message,
+                referenceId: $referenceId,
+            )->delay(
+                now()->addDays($dayOffset)->setHour(10)->addSeconds($delaySeconds)
+            );
+
+            $queued[] = $this->formatContactLog($log->fresh());
+            $index++;
+        }
+
+        if ($index === 0) {
+            return RespondActive::clientError(__('messages.invitation_contacts_not_found'));
+        }
+
+        return RespondActive::success(__('messages.whatsapp_contact_invitations_queued'), [
+            'queued_count' => count($queued),
+            'queued' => $queued,
         ]);
     }
 

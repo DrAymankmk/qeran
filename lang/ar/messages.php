@@ -84,6 +84,7 @@ return [
     'whatsapp_contact_invitations_queued' => 'تم جدولة إرسال دعوات جهات الاتصال عبر واتساب.',
     'invitation_contact_invalid_phone' => 'صيغة رقم الهاتف غير صالحة.',
     'invitation_contacts_all_invalid' => 'لا توجد جهات اتصال صالحة لإرسال الدعوات.',
+    'invitation_contacts_not_found' => 'لا توجد جهات اتصال محفوظة لهذه الدعوة.',
     'invitation_contacts_required' => 'مطلوب جهة اتصال واحدة على الأقل.',
     'invitation_contacts_stored' => 'تم حفظ جهات الاتصال بنجاح.',
     'whatsapp_pairing_step_1' => 'افتح واتساب على نفس الهاتف.',

@@ -84,6 +84,7 @@ return [
     'whatsapp_contact_invitations_queued' => 'Contact invitations queued for WhatsApp delivery.',
     'invitation_contact_invalid_phone' => 'Invalid phone number format.',
     'invitation_contacts_all_invalid' => 'No valid contacts to send invitations to.',
+    'invitation_contacts_not_found' => 'No saved contacts found for this invitation.',
     'invitation_contacts_required' => 'At least one contact is required.',
     'invitation_contacts_stored' => 'Contacts saved successfully.',
     'whatsapp_pairing_step_1' => 'Open WhatsApp on the same phone.',

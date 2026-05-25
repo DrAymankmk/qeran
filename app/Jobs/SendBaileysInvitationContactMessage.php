@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Helpers\Constant;
 use App\Models\InvitationContactLog;
+use App\Support\PhoneNumber;
 use App\Services\External\BaileysWhatsApp;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -38,9 +39,11 @@ class SendBaileysInvitationContactMessage implements ShouldQueue
             return;
         }
 
+        $targetPhone = PhoneNumber::e164ForWhatsAppPairing($this->countryCode, $this->phone);
+
         $response = BaileysWhatsApp::sendFromSession(
             'user_'.$this->hostUserId,
-            $this->countryCode.$this->phone,
+            $targetPhone,
             $this->message,
             $this->referenceId
         );
@@ -74,6 +77,7 @@ class SendBaileysInvitationContactMessage implements ShouldQueue
             'host_user_id' => $this->hostUserId,
             'invitation_id' => $this->invitationId,
             'guest_user_id' => $this->guestUserId,
+            'target_phone' => $targetPhone,
             'error' => $errorMessage,
         ]);
     }

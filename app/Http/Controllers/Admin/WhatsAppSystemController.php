@@ -17,7 +17,8 @@ class WhatsAppSystemController extends Controller
 
         return view('admin.whatsapp-system.index', [
             'configured' => $configured,
-            'gatewayUrl' => config('services.baileys.gateway_url'),
+            'gatewayUrl' => config('services.baileys.gateway_internal_url')
+                ?: config('services.baileys.gateway_url'),
             'sessionId' => BaileysGateway::systemSessionId(),
             'status' => ['ok' => true, 'data' => null, 'error' => null, 'loading' => $configured],
             'qr' => ['ok' => false, 'data' => null, 'error' => null],

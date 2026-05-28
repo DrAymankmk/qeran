@@ -229,13 +229,7 @@ app.get('/sessions/:id/status', async (req, res) => {
   const sessionId = req.params.id;
   const quick = req.query.quick === '1' || req.query.quick === 'true';
 
-  if (!getSessionMeta(sessionId) && sessionAuthExists(sessionId)) {
-    ensureSessionMeta(sessionId);
-  }
-
-  let meta = getSessionMeta(sessionId);
-
-  if (!meta && !sessionAuthExists(sessionId)) {
+  if (!getSessionMeta(sessionId) && !sessionAuthExists(sessionId)) {
     res.json({
       status: 'disconnected',
       phone: null,
@@ -247,47 +241,83 @@ app.get('/sessions/:id/status', async (req, res) => {
     return;
   }
 
-  meta = ensureSessionMeta(sessionId);
+  let meta = getSessionMeta(sessionId);
+  if (!meta) {
+    meta = ensureSessionMeta(sessionId);
+  }
+
+  if (quick) {
+    const authOnDisk = sessionAuthExists(sessionId);
+    const progress =
+      authOnDisk && meta.status !== 'connected'
+        ? await getPairingProgress(sessionId)
+        : {
+            registered: false,
+            pairingAccepted: false,
+            waId: null as string | null,
+            pairingCodeOnDisk: null as string | null,
+          };
+
+    if (meta.status !== 'connected' && !meta.sock && progress.registered && authOnDisk) {
+      meta.status = 'pending_pairing';
+    }
+
+    res.json({
+      sessionId: meta.sessionId,
+      status: meta.status,
+      phone: meta.phone ?? progress.waId?.split('@')[0]?.split(':')[0] ?? null,
+      pairingCode: meta.pairingCode ? formatPairingCodeDisplay(meta.pairingCode) : null,
+      registeredOnDisk: progress.registered,
+      pairingAccepted: progress.pairingAccepted,
+      pairingProgress: progress.registered
+        ? 'registered'
+        : progress.pairingAccepted
+          ? 'code_accepted'
+          : 'awaiting_code',
+      waId: progress.waId,
+      socketAlive: isPairingSocketAlive(sessionId),
+      pairingCodeAgeSeconds: getPairingCodeAgeSeconds(sessionId),
+      quick: true,
+    });
+    return;
+  }
+
+  if (!getSessionMeta(sessionId) && sessionAuthExists(sessionId)) {
+    ensureSessionMeta(sessionId);
+  }
+
+  meta = getSessionMeta(sessionId) ?? ensureSessionMeta(sessionId);
   let progress = await getPairingProgress(sessionId);
 
-  if (!quick) {
-    const awaitingFreshCode =
-      meta.status === 'pending_pairing' && Boolean(meta.pairingCode) && !progress.pairingAccepted;
+  const awaitingFreshCode =
+    meta.status === 'pending_pairing' && Boolean(meta.pairingCode) && !progress.pairingAccepted;
 
-    const awaitingLinkConfirmation =
-      meta.status === 'pending_pairing' &&
-      progress.pairingAccepted &&
-      !progress.registered &&
-      isPairingSocketAlive(sessionId);
+  const awaitingLinkConfirmation =
+    meta.status === 'pending_pairing' &&
+    progress.pairingAccepted &&
+    !progress.registered &&
+    isPairingSocketAlive(sessionId);
 
-    const needsFinalize =
-      !awaitingFreshCode &&
-      !awaitingLinkConfirmation &&
-      (progress.pairingAccepted || progress.registered) &&
-      meta.status !== 'connected';
+  const needsFinalize =
+    !awaitingFreshCode &&
+    !awaitingLinkConfirmation &&
+    (progress.pairingAccepted || progress.registered) &&
+    meta.status !== 'connected';
 
-    if (needsFinalize) {
-      meta = (await ensurePairingFinalized(sessionId)) ?? meta;
-      if (meta.status !== 'connected') {
-        await waitForConnected(sessionId, progress.pairingAccepted ? 30_000 : 10_000);
-        meta = getSessionMeta(sessionId) ?? meta;
-      }
-      progress = await getPairingProgress(sessionId);
-    } else if (meta.status === 'pending_pairing' || meta.status === 'starting') {
-      meta = (await ensurePairingFinalized(sessionId)) ?? meta;
-      if (meta.status === 'pending_pairing' || meta.status === 'starting') {
-        await waitForConnected(sessionId, 10_000);
-        meta = getSessionMeta(sessionId) ?? meta;
-      }
-      progress = await getPairingProgress(sessionId);
+  if (needsFinalize) {
+    meta = (await ensurePairingFinalized(sessionId)) ?? meta;
+    if (meta.status !== 'connected') {
+      await waitForConnected(sessionId, progress.pairingAccepted ? 30_000 : 10_000);
+      meta = getSessionMeta(sessionId) ?? meta;
     }
-  } else if (
-    meta.status !== 'connected' &&
-    !meta.sock &&
-    progress.registered &&
-    sessionAuthExists(sessionId)
-  ) {
-    meta.status = 'pending_pairing';
+    progress = await getPairingProgress(sessionId);
+  } else if (meta.status === 'pending_pairing' || meta.status === 'starting') {
+    meta = (await ensurePairingFinalized(sessionId)) ?? meta;
+    if (meta.status === 'pending_pairing' || meta.status === 'starting') {
+      await waitForConnected(sessionId, 10_000);
+      meta = getSessionMeta(sessionId) ?? meta;
+    }
+    progress = await getPairingProgress(sessionId);
   }
 
   res.json({

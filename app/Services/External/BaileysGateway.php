@@ -53,7 +53,7 @@ class BaileysGateway
         }
 
         try {
-            $response = Http::timeout(10)->get(self::baseUrl().'/health');
+            $response = self::http(10)->connectTimeout(3)->get(self::baseUrl().'/health');
             $json = $response->json();
 
             return ($json['features']['pairingCode'] ?? false) === true
@@ -119,8 +119,58 @@ class BaileysGateway
         }
     }
 
-    public static function getStatus(?string $sessionId = null, bool $quick = true, int $timeoutSeconds = 8): array
+    public static function health(int $timeoutSeconds = 5): array
     {
+        if (! self::isConfigured()) {
+            return [
+                'ok' => false,
+                'status' => 0,
+                'data' => null,
+                'error' => 'Baileys gateway is not configured.',
+            ];
+        }
+
+        try {
+            $response = self::http($timeoutSeconds)
+                ->connectTimeout(3)
+                ->get(self::baseUrl().'/health');
+
+            $json = $response->json();
+
+            if ($response->successful() && is_array($json) && ($json['ok'] ?? false) === true) {
+                return [
+                    'ok' => true,
+                    'status' => $response->status(),
+                    'data' => $json,
+                    'error' => null,
+                ];
+            }
+
+            return [
+                'ok' => false,
+                'status' => $response->status(),
+                'data' => is_array($json) ? $json : null,
+                'error' => __('admin.whatsapp-gateway-health-failed'),
+            ];
+        } catch (\Throwable $e) {
+            Log::warning('BaileysGateway health failed', ['url' => self::baseUrl(), 'error' => $e->getMessage()]);
+
+            return [
+                'ok' => false,
+                'status' => 0,
+                'data' => null,
+                'error' => self::friendlyError($e->getMessage()),
+            ];
+        }
+    }
+
+    public static function getStatus(?string $sessionId = null, bool $quick = true, int $timeoutSeconds = 15): array
+    {
+        $health = self::health(5);
+        if (! $health['ok']) {
+            return $health;
+        }
+
         $id = $sessionId ?? self::systemSessionId();
         $query = $quick ? '?quick=1' : '';
 
@@ -183,11 +233,17 @@ class BaileysGateway
     {
         return Http::withToken((string) config('services.baileys.gateway_secret'))
             ->acceptJson()
+            ->connectTimeout(5)
             ->timeout($timeoutSeconds);
     }
 
     protected static function baseUrl(): string
     {
+        $internal = config('services.baileys.gateway_internal_url');
+        if (is_string($internal) && $internal !== '') {
+            return rtrim($internal, '/');
+        }
+
         return rtrim((string) config('services.baileys.gateway_url'), '/');
     }
 
@@ -196,7 +252,13 @@ class BaileysGateway
         if (str_contains($message, 'cURL error 28')
             || str_contains(strtolower($message), 'timed out')
             || str_contains(strtolower($message), 'timeout')) {
-            return __('admin.whatsapp-gateway-timeout');
+            $configured = rtrim((string) config('services.baileys.gateway_url'), '/');
+            $usingPublic = str_starts_with($configured, 'https://')
+                && ! config('services.baileys.gateway_internal_url');
+
+            return $usingPublic
+                ? __('admin.whatsapp-gateway-timeout-public-url', ['url' => $configured])
+                : __('admin.whatsapp-gateway-timeout');
         }
 
         if (str_contains($message, 'Could not resolve host')

@@ -44,7 +44,10 @@ return [
     ],
 
     'baileys' => [
+        // Public URL (optional). When Laravel runs on the same server as PM2, prefer 127.0.0.1 — see gateway_internal_url.
         'gateway_url' => env('BAILEYS_GATEWAY_URL', 'http://127.0.0.1:3000'),
+        // Server-side calls use this when set (avoids HTTPS/nginx timeouts to the public hostname).
+        'gateway_internal_url' => env('BAILEYS_GATEWAY_INTERNAL_URL'),
         'gateway_secret' => env('BAILEYS_GATEWAY_SECRET'),
         'system_session' => env('BAILEYS_SYSTEM_SESSION', 'system'),
     ],

@@ -306,20 +306,48 @@ class WhatsAppConnectController extends Controller
 
         $user = auth()->user();
         $sessionId = BaileysGateway::sessionIdForUser((int) $user->id);
+        $dbSession = WhatsappSession::query()->where('session_id', $sessionId)->first();
 
         // Gateway keeps socket open while user taps "Link device" on WhatsApp — do not call finalize here
         $result = BaileysGateway::getStatus($sessionId);
 
         if (! $result['ok']) {
+            if ($this->shouldTrustStoredConnection($dbSession)) {
+                return RespondActive::success('OK', $this->buildStatusPayload(
+                    $user,
+                    $sessionId,
+                    'connected',
+                    $dbSession->phone,
+                    true,
+                    true,
+                    false,
+                    'registered',
+                    false,
+                    null,
+                    $dbSession
+                ));
+            }
+
             return RespondActive::clientError($result['error'] ?? __('messages.whatsapp_status_failed'));
         }
 
-        $data = $result['data'] ?? [];
+        $data = $this->refreshStatusAfterReconnect($sessionId, $result['data'] ?? []);
+
         $connectionStatus = $data['status'] ?? 'disconnected';
         $phone = $data['phone'] ?? null;
         $registeredOnDisk = (bool) ($data['registeredOnDisk'] ?? false);
         $pairingAccepted = (bool) ($data['pairingAccepted'] ?? false);
         $pairingProgress = (string) ($data['pairingProgress'] ?? 'awaiting_code');
+        $socketAlive = (bool) ($data['socketAlive'] ?? false);
+        $codeAge = $data['pairingCodeAgeSeconds'] ?? null;
+
+        $linked = $this->isLinkedOnWhatsApp($connectionStatus, $registeredOnDisk, $pairingAccepted);
+        $appConnected = $connectionStatus === 'connected'
+            || ($linked && ! $this->isEnteringPairingCode($connectionStatus, $registeredOnDisk, $pairingAccepted));
+
+        if ($appConnected && $connectionStatus !== 'connected') {
+            $connectionStatus = 'connected';
+        }
 
         $this->syncSessionRecord($user->id, $sessionId, $connectionStatus, $phone);
 
@@ -327,6 +355,8 @@ class WhatsAppConnectController extends Controller
             Log::info('WhatsApp status: connected', [
                 'user_id' => $user->id,
                 'phone_suffix' => $phone ? substr((string) $phone, -4) : null,
+                'socket_alive' => $socketAlive,
+                'registered_on_disk' => $registeredOnDisk,
             ]);
         } elseif ($connectionStatus === 'pending_pairing') {
             Log::info('WhatsApp status: pending_pairing', [
@@ -339,29 +369,19 @@ class WhatsAppConnectController extends Controller
             ]);
         }
 
-        $dbSession = WhatsappSession::query()->where('session_id', $sessionId)->first();
-        $linkDisplay = $dbSession?->phone
-            ? PhoneNumber::formatForWhatsAppDisplay(PhoneNumber::e164ForWhatsAppPairing($user->country_code, $dbSession->phone))
-            : PhoneNumber::formatForWhatsAppDisplay(PhoneNumber::e164ForWhatsAppPairing($user->country_code, $user->phone));
-
-        $socketAlive = (bool) ($data['socketAlive'] ?? false);
-        $codeAge = $data['pairingCodeAgeSeconds'] ?? null;
-
-        return RespondActive::success('OK', [
-            'status' => $connectionStatus,
-            'phone' => $phone,
-            'session_id' => $sessionId,
-            'connected' => $connectionStatus === 'connected',
-            'registered_on_disk' => $registeredOnDisk,
-            'pairing_accepted' => $pairingAccepted,
-            'pairing_progress' => $pairingProgress,
-            'socket_alive' => $socketAlive,
-            'pairing_code_age_seconds' => $codeAge,
-            'awaiting_user' => $connectionStatus === 'pending_pairing' && ! $registeredOnDisk && ! $pairingAccepted,
-            'action' => $this->statusAction($connectionStatus, $registeredOnDisk, $pairingAccepted),
-            'link_phone_display' => $linkDisplay,
-            'message' => $this->statusMessage($connectionStatus, $registeredOnDisk, $pairingAccepted, $socketAlive),
-        ]);
+        return RespondActive::success('OK', $this->buildStatusPayload(
+            $user,
+            $sessionId,
+            $connectionStatus,
+            $phone,
+            $appConnected,
+            $registeredOnDisk,
+            $pairingAccepted,
+            $pairingProgress,
+            $socketAlive,
+            $codeAge,
+            $dbSession
+        ));
     }
 
     public function disconnect(): JsonResponse
@@ -493,5 +513,108 @@ class WhatsAppConnectController extends Controller
                 'last_seen_at' => now(),
             ]
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function refreshStatusAfterReconnect(string $sessionId, array $data): array
+    {
+        $connectionStatus = $data['status'] ?? 'disconnected';
+        $registeredOnDisk = (bool) ($data['registeredOnDisk'] ?? false);
+        $pairingAccepted = (bool) ($data['pairingAccepted'] ?? false);
+        $socketAlive = (bool) ($data['socketAlive'] ?? false);
+
+        if (
+            $connectionStatus === 'connected'
+            || ! $registeredOnDisk
+            || $socketAlive
+            || $this->isEnteringPairingCode($connectionStatus, $registeredOnDisk, $pairingAccepted)
+        ) {
+            return $data;
+        }
+
+        $reconnectKey = 'whatsapp_status_reconnect:'.$sessionId;
+        if (Cache::has($reconnectKey)) {
+            return $data;
+        }
+
+        Cache::put($reconnectKey, 1, now()->addSeconds(8));
+
+        Log::info('WhatsApp status: reconnecting registered session', ['session_id' => $sessionId]);
+        BaileysGateway::startSession($sessionId);
+        $retry = BaileysGateway::getStatus($sessionId, true);
+
+        return $retry['ok'] ? ($retry['data'] ?? $data) : $data;
+    }
+
+    protected function isEnteringPairingCode(
+        string $connectionStatus,
+        bool $registeredOnDisk,
+        bool $pairingAccepted
+    ): bool {
+        return $connectionStatus === 'pending_pairing' && ! $registeredOnDisk && ! $pairingAccepted;
+    }
+
+    protected function isLinkedOnWhatsApp(
+        string $connectionStatus,
+        bool $registeredOnDisk,
+        bool $pairingAccepted
+    ): bool {
+        if ($connectionStatus === 'connected') {
+            return true;
+        }
+
+        return $registeredOnDisk && ! $this->isEnteringPairingCode($connectionStatus, $registeredOnDisk, $pairingAccepted);
+    }
+
+    protected function shouldTrustStoredConnection(?WhatsappSession $dbSession): bool
+    {
+        if (! $dbSession || $dbSession->status !== 'connected') {
+            return false;
+        }
+
+        $lastSeen = $dbSession->connected_at ?? $dbSession->last_seen_at;
+
+        return $lastSeen !== null && $lastSeen->greaterThan(now()->subHours(24));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function buildStatusPayload(
+        $user,
+        string $sessionId,
+        string $connectionStatus,
+        ?string $phone,
+        bool $appConnected,
+        bool $registeredOnDisk,
+        bool $pairingAccepted,
+        string $pairingProgress,
+        bool $socketAlive,
+        ?int $codeAge,
+        ?WhatsappSession $dbSession
+    ): array {
+        $linkDisplay = $dbSession?->phone
+            ? PhoneNumber::formatForWhatsAppDisplay(PhoneNumber::e164ForWhatsAppPairing($user->country_code, $dbSession->phone))
+            : PhoneNumber::formatForWhatsAppDisplay(PhoneNumber::e164ForWhatsAppPairing($user->country_code, $user->phone));
+
+        return [
+            'status' => $connectionStatus,
+            'phone' => $phone,
+            'session_id' => $sessionId,
+            'connected' => $appConnected,
+            'linked' => $this->isLinkedOnWhatsApp($connectionStatus, $registeredOnDisk, $pairingAccepted),
+            'socket_alive' => $socketAlive,
+            'registered_on_disk' => $registeredOnDisk,
+            'pairing_accepted' => $pairingAccepted,
+            'pairing_progress' => $pairingProgress,
+            'pairing_code_age_seconds' => $codeAge,
+            'awaiting_user' => $this->isEnteringPairingCode($connectionStatus, $registeredOnDisk, $pairingAccepted),
+            'action' => $this->statusAction($connectionStatus, $registeredOnDisk, $pairingAccepted),
+            'link_phone_display' => $linkDisplay,
+            'message' => $this->statusMessage($connectionStatus, $registeredOnDisk, $pairingAccepted, $socketAlive),
+        ];
     }
 }

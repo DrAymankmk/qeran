@@ -647,22 +647,32 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
         return;
       }
 
-      meta.status = 'disconnected';
       meta.pairingCode = undefined;
 
       if (loggedOut) {
+        meta.status = 'disconnected';
         return;
       }
 
-      if (meta.linkPhone) {
-        setTimeout(() => {
-          void startSessionWithPairing(sessionId, meta.linkPhone!, true);
-        }, 5000);
-      } else {
-        setTimeout(() => {
-          void startSession(sessionId);
-        }, 3000);
-      }
+      void (async () => {
+        const progress = await getPairingProgress(sessionId);
+        if (progress.registered) {
+          meta.status = 'connected';
+          logger.info({ sessionId }, 'registered session socket closed — reconnecting');
+        } else {
+          meta.status = 'disconnected';
+        }
+
+        if (meta.linkPhone) {
+          setTimeout(() => {
+            void startSessionWithPairing(sessionId, meta.linkPhone!, true);
+          }, 5000);
+        } else {
+          setTimeout(() => {
+            void startSession(sessionId);
+          }, 1500);
+        }
+      })();
     }
   });
 
@@ -863,6 +873,10 @@ export async function startSessionWithPairing(
 
 export function isPairingSocketAlive(sessionId: string): boolean {
   return Boolean(sessions.get(sessionId)?.sock);
+}
+
+export function isSessionStartInFlight(sessionId: string): boolean {
+  return startPromises.has(sessionId);
 }
 
 export function getPairingCodeAgeSeconds(sessionId: string): number | null {

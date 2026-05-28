@@ -15,6 +15,7 @@ import {
   getSessionMeta,
   isAuthRegistered,
   isPairingSocketAlive,
+  isSessionStartInFlight,
   normalizePhoneDigits,
   sessionAuthExists,
   startSession,
@@ -264,13 +265,34 @@ app.get('/sessions/:id/status', async (req, res) => {
             pairingCodeOnDisk: null as string | null,
           };
 
-    if (meta.status !== 'connected' && !meta.sock && progress.registered && authOnDisk) {
-      meta.status = 'pending_pairing';
+    const inPairingFlow =
+      meta.status === 'pending_pairing' && !progress.registered && !progress.pairingAccepted;
+
+    if (progress.registered && meta.status !== 'connected' && !meta.sock && !inPairingFlow) {
+      if (!isSessionStartInFlight(sessionId)) {
+        void startSession(sessionId).catch((err) => {
+          logger.warn({ sessionId, err }, 'background reconnect on status poll failed');
+        });
+      }
+    }
+
+    let reportStatus = meta.status;
+    if (meta.status === 'connected') {
+      reportStatus = 'connected';
+    } elseif (progress.registered && !inPairingFlow) {
+      reportStatus = 'connected';
+    } elseif (
+      meta.status !== 'connected' &&
+      !meta.sock &&
+      progress.registered &&
+      authOnDisk
+    ) {
+      reportStatus = 'pending_pairing';
     }
 
     res.json({
       sessionId: meta.sessionId,
-      status: meta.status,
+      status: reportStatus,
       phone: meta.phone ?? progress.waId?.split('@')[0]?.split(':')[0] ?? null,
       pairingCode: meta.pairingCode ? formatPairingCodeDisplay(meta.pairingCode) : null,
       registeredOnDisk: progress.registered,

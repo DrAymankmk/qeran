@@ -198,16 +198,22 @@ class BaileysGateway
     {
         $id = $sessionId ?? self::systemSessionId();
         $waitMs = max(0, min(60_000, $waitMs));
-        $timeoutSeconds = (int) min(90, max(12, (int) ceil($waitMs / 1000) + 8));
+        $timeoutSeconds = (int) min(90, max(15, (int) ceil($waitMs / 1000) + 10));
 
-        return self::request('get', "/sessions/{$id}/qr?waitMs={$waitMs}", [], $timeoutSeconds);
+        $result = self::request('get', "/sessions/{$id}/qr?waitMs={$waitMs}", [], $timeoutSeconds);
+
+        if (! $result['ok'] && is_string($result['error'] ?? null)) {
+            $result['error'] = self::friendlyError($result['error']);
+        }
+
+        return $result;
     }
 
-    public static function deleteSession(?string $sessionId = null): array
+    public static function deleteSession(?string $sessionId = null, int $timeoutSeconds = 20): array
     {
         $id = $sessionId ?? self::systemSessionId();
 
-        return self::request('delete', "/sessions/{$id}");
+        return self::request('delete', "/sessions/{$id}", [], $timeoutSeconds);
     }
 
     public static function send(

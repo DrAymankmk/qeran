@@ -9,6 +9,7 @@ import {
   getPairingProgress,
   getQr,
   ensurePairingFinalized,
+  ensureQrLinkingSession,
   ensureSessionMeta,
   formatPairingCodeDisplay,
   getSessionMeta,
@@ -113,6 +114,7 @@ async function respondWithQrSnapshot(
     return;
   }
 
+  await ensureQrLinkingSession(sessionId);
   await startSession(sessionId);
   const meta = await waitForQrOrConnected(sessionId, waitMs);
 
@@ -205,6 +207,10 @@ app.post('/sessions', async (req, res) => {
 
   try {
     const usePairing = linkMethod === 'pairing' || (phone.length > 0 && linkMethod !== 'qr');
+
+    if (!usePairing) {
+      await ensureQrLinkingSession(sessionId);
+    }
 
     const meta = usePairing
       ? await startSessionWithPairing(sessionId, phone)
@@ -419,10 +425,6 @@ app.get('/sessions/:id/qr', async (req, res) => {
   const waitMs = parseWaitMs(req.query.waitMs, 8_000);
 
   try {
-    void startSession(sessionId).catch((err) => {
-      logger.warn({ sessionId, err }, 'background startSession failed');
-    });
-
     await respondWithQrSnapshot(sessionId, waitMs, res);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to get QR';

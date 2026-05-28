@@ -873,6 +873,31 @@ export function getPairingCodeAgeSeconds(sessionId: string): number | null {
   return Math.floor((Date.now() - at) / 1000);
 }
 
+/**
+ * QR linking needs a clean auth folder. Stale pairing creds prevent QR generation.
+ */
+export async function ensureQrLinkingSession(sessionId: string): Promise<void> {
+  const meta = sessions.get(sessionId);
+  if (meta?.status === 'connected') {
+    return;
+  }
+
+  if (!sessionAuthExists(sessionId)) {
+    return;
+  }
+
+  const progress = await getPairingProgress(sessionId);
+  const blocksQr =
+    progress.registered ||
+    progress.pairingAccepted ||
+    Boolean(progress.pairingCodeOnDisk);
+
+  if (blocksQr) {
+    logger.info({ sessionId, progress }, 'wiping stale auth before QR linking');
+    await deleteSession(sessionId);
+  }
+}
+
 export async function deleteSession(sessionId: string): Promise<void> {
   stopPairingKeepalive(sessionId);
   finalizingSessions.delete(sessionId);

@@ -249,6 +249,12 @@
 			}
 
 			if (!payload || !payload.ok) {
+				if (payload?.error && attempt >= 2) {
+					renderStatusError(payload.error);
+					qrRunning = false;
+					setGenerateBusy(false);
+					return;
+				}
 				await new Promise(r => setTimeout(r, qrPollMs));
 				continue;
 			}

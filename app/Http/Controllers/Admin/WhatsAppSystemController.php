@@ -53,13 +53,23 @@ class WhatsAppSystemController extends Controller
             ], 503);
         }
 
-        $result = BaileysGateway::startSession();
+        $status = BaileysGateway::getStatus();
+        if (($status['data']['status'] ?? '') === 'connected') {
+            return response()->json([
+                'ok' => true,
+                'data' => $status['data'],
+                'error' => null,
+            ]);
+        }
+
+        BaileysGateway::deleteSession();
+        $result = BaileysGateway::startSession(null, 25);
 
         return response()->json([
             'ok' => $result['ok'],
             'data' => $result['data'],
             'error' => $result['error'],
-        ], $result['ok'] ? 200 : 502);
+        ], $result['ok'] ? 200 : 200);
     }
 
     public function qr(Request $request): JsonResponse
@@ -77,9 +87,10 @@ class WhatsAppSystemController extends Controller
         if (! $qr['ok']) {
             return response()->json([
                 'ok' => false,
+                'ready' => false,
                 'data' => $qr['data'],
                 'error' => $qr['error'] ?? __('admin.whatsapp-qr-failed'),
-            ], 502);
+            ]);
         }
 
         $data = $qr['data'] ?? [];

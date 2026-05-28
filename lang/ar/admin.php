@@ -897,6 +897,8 @@ return[
     'whatsapp-disconnected' => 'تم قطع اتصال واتساب النظام.',
     'whatsapp-disconnect-failed' => 'فشل قطع الاتصال.',
     'whatsapp-qr-generated' => 'تم إنشاء رمز QR. امسحه من واتساب خلال دقيقة.',
+    'whatsapp-qr-generating' => 'جاري إنشاء رمز QR…',
+    'whatsapp-qr-loading' => 'جاري الاتصال بالبوابة وإعداد الرمز…',
     'whatsapp-qr-not-ready' => 'رمز QR غير جاهز بعد. حاول مرة أخرى.',
     'whatsapp-qr-failed' => 'تعذر الحصول على رمز QR من البوابة.',
     'whatsapp-already-connected' => 'الجلسة متصلة بالفعل.',

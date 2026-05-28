@@ -58,9 +58,18 @@ function auth(req: Request, res: Response, next: NextFunction): void {
   next();
 }
 
-async function fetchQrPayload(sessionId: string) {
+function parseWaitMs(raw: unknown, fallback: number): number {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) {
+    return fallback;
+  }
+
+  return Math.min(60_000, Math.floor(n));
+}
+
+async function fetchQrPayload(sessionId: string, waitMs = 60_000) {
   await startSession(sessionId);
-  const meta = await waitForQrOrConnected(sessionId, 60_000);
+  const meta = await waitForQrOrConnected(sessionId, waitMs);
 
   if (meta.status === 'connected') {
     return { kind: 'connected' as const, phone: meta.phone ?? null };
@@ -73,6 +82,59 @@ async function fetchQrPayload(sessionId: string) {
 
   const qrImage = await QRCode.toDataURL(qr);
   return { kind: 'qr' as const, qr, qrImage };
+}
+
+async function respondWithQrSnapshot(
+  sessionId: string,
+  waitMs: number,
+  res: Response
+): Promise<void> {
+  const snap = getSessionMeta(sessionId);
+  if (snap?.status === 'connected') {
+    res.json({
+      status: 'connected',
+      qr: null,
+      qrImage: null,
+      phone: snap.phone ?? null,
+      ready: true,
+    });
+    return;
+  }
+
+  const immediateQr = getQr(sessionId);
+  if (immediateQr) {
+    const qrImage = await QRCode.toDataURL(immediateQr);
+    res.json({ status: 'pending_qr', qr: immediateQr, qrImage, ready: true });
+    return;
+  }
+
+  if (waitMs <= 0) {
+    res.json({ status: 'generating', qr: null, qrImage: null, ready: false });
+    return;
+  }
+
+  await startSession(sessionId);
+  const meta = await waitForQrOrConnected(sessionId, waitMs);
+
+  if (meta.status === 'connected') {
+    res.json({
+      status: 'connected',
+      qr: null,
+      qrImage: null,
+      phone: meta.phone ?? null,
+      ready: true,
+    });
+    return;
+  }
+
+  const qr = meta.qr ?? getQr(sessionId);
+  if (!qr) {
+    res.json({ status: 'generating', qr: null, qrImage: null, ready: false });
+    return;
+  }
+
+  const qrImage = await QRCode.toDataURL(qr);
+  res.json({ status: 'pending_qr', qr, qrImage, ready: true });
 }
 
 app.get('/health', (_req, res) => {
@@ -314,16 +376,14 @@ app.get('/sessions/:id/pairing-code', async (req, res) => {
 
 app.get('/sessions/:id/qr', async (req, res) => {
   const sessionId = req.params.id;
+  const waitMs = parseWaitMs(req.query.waitMs, 8_000);
 
   try {
-    const payload = await fetchQrPayload(sessionId);
+    void startSession(sessionId).catch((err) => {
+      logger.warn({ sessionId, err }, 'background startSession failed');
+    });
 
-    if (payload.kind === 'connected') {
-      res.json({ status: 'connected', qr: null, qrImage: null, phone: payload.phone });
-      return;
-    }
-
-    res.json({ status: 'pending_qr', qr: payload.qr, qrImage: payload.qrImage });
+    await respondWithQrSnapshot(sessionId, waitMs, res);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to get QR';
     logger.error({ sessionId, err }, 'qr endpoint failed');

@@ -51,13 +51,10 @@
 				</div>
 
 				<div class="d-flex flex-wrap gap-2">
-					<form method="post" action="{{ route('admin.whatsapp-system.refresh-qr') }}">
-						@csrf
-						<button type="submit" class="btn btn-primary">
-							<i class="mdi mdi-qrcode-scan me-1"></i>
-							{{ __('admin.whatsapp-generate-qr') }}
-						</button>
-					</form>
+					<button type="button" id="wa-generate-btn" class="btn btn-primary">
+						<i class="mdi mdi-qrcode-scan me-1"></i>
+						<span id="wa-generate-label">{{ __('admin.whatsapp-generate-qr') }}</span>
+					</button>
 					<form method="post" action="{{ route('admin.whatsapp-system.disconnect') }}"
 						onsubmit="return confirm(@json(__('admin.whatsapp-disconnect-confirm')));">
 						@csrf
@@ -85,54 +82,184 @@
 <script>
 (function () {
 	const statusUrl = @json(route('admin.whatsapp-system.status'));
+	const prepareUrl = @json(route('admin.whatsapp-system.prepare'));
+	const qrUrl = @json(route('admin.whatsapp-system.qr'));
+	const csrfToken = @json(csrf_token());
+	const autoGenerate = @json((bool) ($autoGenerateQr ?? false));
+	const labels = {
+		generate: @json(__('admin.whatsapp-generate-qr')),
+		generating: @json(__('admin.whatsapp-qr-generating')),
+		loading: @json(__('admin.whatsapp-qr-loading')),
+		connected: @json(__('admin.whatsapp-status-connected')),
+		pendingQr: @json(__('admin.whatsapp-status-pending-qr')),
+		connectionStatus: @json(__('admin.whatsapp-connection-status')),
+		linkedPhone: @json(__('admin.whatsapp-linked-phone')),
+		waitingScan: @json(__('admin.whatsapp-waiting-scan')),
+		qrExpires: @json(__('admin.whatsapp-qr-expires-hint')),
+		clickGenerate: @json(__('admin.whatsapp-click-generate-qr')),
+	};
 	const pollMs = 3000;
-	let timer = null;
+	const qrPollMs = 2500;
+	const maxQrAttempts = 30;
+	let statusTimer = null;
+	let qrRunning = false;
 
-	function renderStatus(payload) {
-		const box = document.getElementById('wa-status-box');
-		if (!box || !payload || !payload.ok || !payload.data) {
+	function stopStatusPoll() {
+		if (statusTimer) {
+			clearInterval(statusTimer);
+			statusTimer = null;
+		}
+	}
+
+	function setGenerateBusy(busy) {
+		const btn = document.getElementById('wa-generate-btn');
+		const label = document.getElementById('wa-generate-label');
+		if (!btn || !label) {
 			return;
 		}
-		const d = payload.data;
-		const status = d.status || 'disconnected';
-		const phone = d.phone || '—';
-		let html = '<p class="mb-2"><strong>{{ __('admin.whatsapp-connection-status') }}:</strong> ';
-		if (status === 'connected') {
-			html += '<span class="badge bg-success">{{ __('admin.whatsapp-status-connected') }}</span>';
-			html += '</p><p class="mb-0"><strong>{{ __('admin.whatsapp-linked-phone') }}:</strong> ' + phone + '</p>';
-			stopPoll();
-		} else if (status === 'pending_qr') {
-			html += '<span class="badge bg-warning text-dark">{{ __('admin.whatsapp-status-pending-qr') }}</span>';
-			html += '</p><p class="mb-0 text-muted">{{ __('admin.whatsapp-waiting-scan') }}</p>';
-			const existingQr = document.getElementById('wa-qr-image');
-			if (existingQr) {
-				html += '<div class="text-center my-3">' + existingQr.outerHTML + '</div>';
+		btn.disabled = busy;
+		label.textContent = busy ? labels.generating : labels.generate;
+	}
+
+	function renderQrImage(qrImage) {
+		return '<div class="text-center my-3">'
+			+ '<img id="wa-qr-image" src="' + qrImage + '" alt="WhatsApp QR" width="320" class="border rounded">'
+			+ '<p class="text-muted small mt-2 mb-0">' + labels.qrExpires + '</p>'
+			+ '</div>';
+	}
+
+	function renderStatusBox(connectionStatus, phone, qrImage, message) {
+		const box = document.getElementById('wa-status-box');
+		if (!box) {
+			return;
+		}
+
+		let html = '<p class="mb-2"><strong>' + labels.connectionStatus + ':</strong> ';
+		if (connectionStatus === 'connected') {
+			html += '<span class="badge bg-success">' + labels.connected + '</span></p>';
+			html += '<p class="mb-0"><strong>' + labels.linkedPhone + ':</strong> ' + (phone || '—') + '</p>';
+			stopStatusPoll();
+			setGenerateBusy(false);
+			return;
+		}
+
+		if (connectionStatus === 'pending_qr') {
+			html += '<span class="badge bg-warning text-dark">' + labels.pendingQr + '</span></p>';
+			html += '<p class="mb-2 text-muted">' + labels.waitingScan + '</p>';
+			if (qrImage) {
+				html += renderQrImage(qrImage);
 			}
 		} else {
-			html += '<span class="badge bg-secondary">' + status + '</span></p>';
+			html += '<span class="badge bg-secondary">' + connectionStatus + '</span></p>';
+			html += '<p class="mb-2 text-muted">' + (message || labels.clickGenerate) + '</p>';
+			if (qrImage) {
+				html += renderQrImage(qrImage);
+			}
 		}
+
 		box.innerHTML = html;
 	}
 
-	function poll() {
+	function pollStatus() {
 		fetch(statusUrl, {
 			headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
 		})
 			.then(r => r.json())
-			.then(renderStatus)
+			.then(payload => {
+				if (!payload || !payload.ok || !payload.data) {
+					return;
+				}
+				const d = payload.data;
+				const status = d.status || 'disconnected';
+				if (status === 'connected') {
+					const existingQr = document.getElementById('wa-qr-image');
+					renderStatusBox('connected', d.phone || null, null, null);
+				} else if (status === 'pending_qr') {
+					const existingQr = document.getElementById('wa-qr-image');
+					renderStatusBox('pending_qr', null, existingQr ? existingQr.src : null, null);
+				}
+			})
 			.catch(() => {});
 	}
 
-	function stopPoll() {
-		if (timer) {
-			clearInterval(timer);
-			timer = null;
+	function fetchQrOnce(waitMs) {
+		return fetch(qrUrl + '?waitMs=' + encodeURIComponent(waitMs), {
+			headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+		}).then(r => r.json());
+	}
+
+	async function generateQr() {
+		if (qrRunning) {
+			return;
 		}
+		qrRunning = true;
+		setGenerateBusy(true);
+		renderStatusBox('starting', null, null, labels.loading);
+
+		try {
+			await fetch(prepareUrl, {
+				method: 'POST',
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json',
+					'X-CSRF-TOKEN': csrfToken,
+					'X-Requested-With': 'XMLHttpRequest',
+				},
+				body: '{}',
+			});
+		} catch (e) {
+			/* prepare may time out while gateway still starts — keep polling */
+		}
+
+		for (let attempt = 0; attempt < maxQrAttempts; attempt++) {
+			const waitMs = attempt === 0 ? 0 : 8000;
+			let payload;
+			try {
+				payload = await fetchQrOnce(waitMs);
+			} catch (e) {
+				await new Promise(r => setTimeout(r, qrPollMs));
+				continue;
+			}
+
+			if (!payload || !payload.ok) {
+				await new Promise(r => setTimeout(r, qrPollMs));
+				continue;
+			}
+
+			const d = payload.data || {};
+			if (d.status === 'connected') {
+				renderStatusBox('connected', d.phone || null, null, null);
+				qrRunning = false;
+				setGenerateBusy(false);
+				return;
+			}
+
+			if (d.qrImage) {
+				renderStatusBox('pending_qr', null, d.qrImage, null);
+				qrRunning = false;
+				setGenerateBusy(false);
+				return;
+			}
+
+			await new Promise(r => setTimeout(r, qrPollMs));
+		}
+
+		renderStatusBox('disconnected', null, null, labels.clickGenerate);
+		qrRunning = false;
+		setGenerateBusy(false);
+	}
+
+	const generateBtn = document.getElementById('wa-generate-btn');
+	if (generateBtn) {
+		generateBtn.addEventListener('click', generateQr);
 	}
 
 	const initial = @json($status['data']['status'] ?? 'disconnected');
 	if (initial !== 'connected') {
-		timer = setInterval(poll, pollMs);
+		statusTimer = setInterval(pollStatus, pollMs);
+		if (autoGenerate) {
+			generateQr();
+		}
 	}
 })();
 </script>

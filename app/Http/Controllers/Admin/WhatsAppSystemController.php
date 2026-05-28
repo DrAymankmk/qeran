@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\External\BaileysGateway;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class WhatsAppSystemController extends Controller
@@ -14,19 +15,14 @@ class WhatsAppSystemController extends Controller
     {
         $configured = BaileysGateway::isConfigured();
         $status = $configured ? BaileysGateway::getStatus() : null;
-        $qr = null;
-
-        if ($configured && $this->shouldLoadQr($status)) {
-            BaileysGateway::startSession();
-            $qr = BaileysGateway::getQr();
-        }
 
         return view('admin.whatsapp-system.index', [
             'configured' => $configured,
             'gatewayUrl' => config('services.baileys.gateway_url'),
             'sessionId' => BaileysGateway::systemSessionId(),
             'status' => $status ?? ['ok' => false, 'data' => null, 'error' => null],
-            'qr' => $qr ?? ['ok' => false, 'data' => null, 'error' => null],
+            'qr' => ['ok' => false, 'data' => null, 'error' => null],
+            'autoGenerateQr' => session('wa_auto_generate', false),
         ]);
     }
 
@@ -48,6 +44,54 @@ class WhatsAppSystemController extends Controller
         ]);
     }
 
+    public function prepare(): JsonResponse
+    {
+        if (! BaileysGateway::isConfigured()) {
+            return response()->json([
+                'ok' => false,
+                'error' => __('admin.whatsapp-gateway-not-configured'),
+            ], 503);
+        }
+
+        $result = BaileysGateway::startSession();
+
+        return response()->json([
+            'ok' => $result['ok'],
+            'data' => $result['data'],
+            'error' => $result['error'],
+        ], $result['ok'] ? 200 : 502);
+    }
+
+    public function qr(Request $request): JsonResponse
+    {
+        if (! BaileysGateway::isConfigured()) {
+            return response()->json([
+                'ok' => false,
+                'error' => __('admin.whatsapp-gateway-not-configured'),
+            ], 503);
+        }
+
+        $waitMs = max(0, min(60_000, (int) $request->query('waitMs', 8000)));
+        $qr = BaileysGateway::getQr(null, $waitMs);
+
+        if (! $qr['ok']) {
+            return response()->json([
+                'ok' => false,
+                'data' => $qr['data'],
+                'error' => $qr['error'] ?? __('admin.whatsapp-qr-failed'),
+            ], 502);
+        }
+
+        $data = $qr['data'] ?? [];
+
+        return response()->json([
+            'ok' => true,
+            'data' => $data,
+            'ready' => ($data['ready'] ?? true) && ! empty($data['qrImage']),
+            'error' => null,
+        ]);
+    }
+
     public function refreshQr(): RedirectResponse
     {
         if (! BaileysGateway::isConfigured()) {
@@ -55,22 +99,10 @@ class WhatsAppSystemController extends Controller
         }
 
         BaileysGateway::startSession();
-        $qr = BaileysGateway::getQr();
 
-        if (! $qr['ok']) {
-            return back()->with('error', $qr['error'] ?? __('admin.whatsapp-qr-failed'));
-        }
-
-        $data = $qr['data'] ?? [];
-        if (($data['status'] ?? '') === 'connected') {
-            return back()->with('success', __('admin.whatsapp-already-connected'));
-        }
-
-        if (empty($data['qrImage'])) {
-            return back()->with('error', __('admin.whatsapp-qr-not-ready'));
-        }
-
-        return back()->with('success', __('admin.whatsapp-qr-generated'));
+        return back()
+            ->with('wa_auto_generate', true)
+            ->with('success', __('admin.whatsapp-qr-generating'));
     }
 
     public function disconnect(): RedirectResponse
@@ -86,19 +118,5 @@ class WhatsAppSystemController extends Controller
         }
 
         return back()->with('success', __('admin.whatsapp-disconnected'));
-    }
-
-    /**
-     * @param  array{ok: bool, data?: array<string, mixed>|null}|null  $status
-     */
-    protected function shouldLoadQr(?array $status): bool
-    {
-        if (! $status || ! $status['ok']) {
-            return true;
-        }
-
-        $connectionStatus = $status['data']['status'] ?? 'disconnected';
-
-        return $connectionStatus !== 'connected';
     }
 }

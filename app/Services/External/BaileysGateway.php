@@ -24,12 +24,12 @@ class BaileysGateway
         return 'user_'.$userId;
     }
 
-    public static function startSession(?string $sessionId = null): array
+    public static function startSession(?string $sessionId = null, int $timeoutSeconds = 15): array
     {
         return self::request('post', '/sessions', [
             'sessionId' => $sessionId ?? self::systemSessionId(),
             'linkMethod' => 'qr',
-        ]);
+        ], $timeoutSeconds);
     }
 
     public static function normalizeUserPhone(?string $countryCode, ?string $phone, ?string $override = null): string
@@ -119,11 +119,11 @@ class BaileysGateway
         }
     }
 
-    public static function getStatus(?string $sessionId = null): array
+    public static function getStatus(?string $sessionId = null, int $timeoutSeconds = 12): array
     {
         $id = $sessionId ?? self::systemSessionId();
 
-        return self::request('get', "/sessions/{$id}/status");
+        return self::request('get', "/sessions/{$id}/status", [], $timeoutSeconds);
     }
 
     /**
@@ -137,11 +137,13 @@ class BaileysGateway
         return self::request('post', $path, [], $timeout);
     }
 
-    public static function getQr(?string $sessionId = null): array
+    public static function getQr(?string $sessionId = null, int $waitMs = 8000): array
     {
         $id = $sessionId ?? self::systemSessionId();
+        $waitMs = max(0, min(60_000, $waitMs));
+        $timeoutSeconds = (int) min(90, max(12, (int) ceil($waitMs / 1000) + 8));
 
-        return self::request('get', "/sessions/{$id}/qr");
+        return self::request('get', "/sessions/{$id}/qr?waitMs={$waitMs}", [], $timeoutSeconds);
     }
 
     public static function deleteSession(?string $sessionId = null): array

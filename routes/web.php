@@ -208,6 +208,8 @@ Route::group(['prefix' => 'admin', 'middleware' => 'set.admin.locale'], function
         Route::controller(WhatsAppSystemController::class)->prefix('whatsapp-system')->name('admin.whatsapp-system.')->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/status', 'status')->name('status');
+            Route::post('/prepare', 'prepare')->name('prepare');
+            Route::get('/qr', 'qr')->name('qr');
             Route::post('/refresh-qr', 'refreshQr')->name('refresh-qr');
             Route::post('/disconnect', 'disconnect')->name('disconnect');
         });

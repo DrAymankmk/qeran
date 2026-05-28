@@ -92,6 +92,9 @@
 		loading: @json(__('admin.whatsapp-qr-loading')),
 		connected: @json(__('admin.whatsapp-status-connected')),
 		pendingQr: @json(__('admin.whatsapp-status-pending-qr')),
+		disconnected: @json(__('admin.whatsapp-status-disconnected')),
+		statusLoading: @json(__('admin.whatsapp-status-loading')),
+		gatewayUnreachable: @json(__('admin.whatsapp-gateway-unreachable')),
 		connectionStatus: @json(__('admin.whatsapp-connection-status')),
 		linkedPhone: @json(__('admin.whatsapp-linked-phone')),
 		waitingScan: @json(__('admin.whatsapp-waiting-scan')),
@@ -128,6 +131,22 @@
 			+ '</div>';
 	}
 
+	function escapeHtml(text) {
+		const div = document.createElement('div');
+		div.textContent = text;
+		return div.innerHTML;
+	}
+
+	function renderStatusError(errorMsg) {
+		const box = document.getElementById('wa-status-box');
+		if (!box) {
+			return;
+		}
+		box.innerHTML = '<p class="mb-2"><strong>' + labels.connectionStatus + ':</strong> '
+			+ '<span class="badge bg-danger">' + labels.gatewayUnreachable + '</span></p>'
+			+ '<p class="text-danger mb-0 small">' + escapeHtml(errorMsg || labels.gatewayUnreachable) + '</p>';
+	}
+
 	function renderStatusBox(connectionStatus, phone, qrImage, message) {
 		const box = document.getElementById('wa-status-box');
 		if (!box) {
@@ -137,21 +156,19 @@
 		let html = '<p class="mb-2"><strong>' + labels.connectionStatus + ':</strong> ';
 		if (connectionStatus === 'connected') {
 			html += '<span class="badge bg-success">' + labels.connected + '</span></p>';
-			html += '<p class="mb-0"><strong>' + labels.linkedPhone + ':</strong> ' + (phone || '—') + '</p>';
+			html += '<p class="mb-0"><strong>' + labels.linkedPhone + ':</strong> ' + escapeHtml(phone || '—') + '</p>';
 			stopStatusPoll();
 			setGenerateBusy(false);
-			return;
-		}
-
-		if (connectionStatus === 'pending_qr') {
+		} else if (connectionStatus === 'pending_qr') {
 			html += '<span class="badge bg-warning text-dark">' + labels.pendingQr + '</span></p>';
 			html += '<p class="mb-2 text-muted">' + labels.waitingScan + '</p>';
 			if (qrImage) {
 				html += renderQrImage(qrImage);
 			}
 		} else {
-			html += '<span class="badge bg-secondary">' + connectionStatus + '</span></p>';
-			html += '<p class="mb-2 text-muted">' + (message || labels.clickGenerate) + '</p>';
+			const badgeLabel = connectionStatus === 'disconnected' ? labels.disconnected : connectionStatus;
+			html += '<span class="badge bg-secondary">' + escapeHtml(badgeLabel) + '</span></p>';
+			html += '<p class="mb-2 text-muted">' + escapeHtml(message || labels.clickGenerate) + '</p>';
 			if (qrImage) {
 				html += renderQrImage(qrImage);
 			}
@@ -160,26 +177,36 @@
 		box.innerHTML = html;
 	}
 
+	function applyStatusPayload(payload) {
+		if (!payload || !payload.ok) {
+			renderStatusError(payload?.error || labels.gatewayUnreachable);
+			return;
+		}
+		const d = payload.data || {};
+		const status = d.status || 'disconnected';
+		const existingQr = document.getElementById('wa-qr-image');
+		renderStatusBox(status, d.phone || null, existingQr ? existingQr.src : null, null);
+		if (status === 'connected') {
+			stopStatusPoll();
+		}
+	}
+
 	function pollStatus() {
 		fetch(statusUrl, {
 			headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
 		})
 			.then(r => r.json())
-			.then(payload => {
-				if (!payload || !payload.ok || !payload.data) {
-					return;
-				}
-				const d = payload.data;
-				const status = d.status || 'disconnected';
-				if (status === 'connected') {
-					const existingQr = document.getElementById('wa-qr-image');
-					renderStatusBox('connected', d.phone || null, null, null);
-				} else if (status === 'pending_qr') {
-					const existingQr = document.getElementById('wa-qr-image');
-					renderStatusBox('pending_qr', null, existingQr ? existingQr.src : null, null);
-				}
-			})
-			.catch(() => {});
+			.then(applyStatusPayload)
+			.catch(() => renderStatusError(labels.gatewayUnreachable));
+	}
+
+	function loadStatus() {
+		return fetch(statusUrl, {
+			headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+		})
+			.then(r => r.json())
+			.then(applyStatusPayload)
+			.catch(() => renderStatusError(labels.gatewayUnreachable));
 	}
 
 	function fetchQrOnce(waitMs) {
@@ -254,13 +281,12 @@
 		generateBtn.addEventListener('click', generateQr);
 	}
 
-	const initial = @json($status['data']['status'] ?? 'disconnected');
-	if (initial !== 'connected') {
+	loadStatus().then(function () {
 		statusTimer = setInterval(pollStatus, pollMs);
 		if (autoGenerate) {
 			generateQr();
 		}
-	}
+	});
 })();
 </script>
 @endif

@@ -119,11 +119,18 @@ class BaileysGateway
         }
     }
 
-    public static function getStatus(?string $sessionId = null, int $timeoutSeconds = 12): array
+    public static function getStatus(?string $sessionId = null, bool $quick = true, int $timeoutSeconds = 8): array
     {
         $id = $sessionId ?? self::systemSessionId();
+        $query = $quick ? '?quick=1' : '';
 
-        return self::request('get', "/sessions/{$id}/status", [], $timeoutSeconds);
+        $result = self::request('get', "/sessions/{$id}/status{$query}", [], $timeoutSeconds);
+
+        if (! $result['ok'] && is_string($result['error'] ?? null)) {
+            $result['error'] = self::friendlyError($result['error']);
+        }
+
+        return $result;
     }
 
     /**
@@ -182,6 +189,22 @@ class BaileysGateway
     protected static function baseUrl(): string
     {
         return rtrim((string) config('services.baileys.gateway_url'), '/');
+    }
+
+    protected static function friendlyError(string $message): string
+    {
+        if (str_contains($message, 'cURL error 28')
+            || str_contains(strtolower($message), 'timed out')
+            || str_contains(strtolower($message), 'timeout')) {
+            return __('admin.whatsapp-gateway-timeout');
+        }
+
+        if (str_contains($message, 'Could not resolve host')
+            || str_contains($message, 'Connection refused')) {
+            return __('admin.whatsapp-gateway-unreachable-hint', ['url' => self::baseUrl()]);
+        }
+
+        return $message;
     }
 
     /**

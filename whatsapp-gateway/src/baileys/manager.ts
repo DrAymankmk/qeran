@@ -466,9 +466,12 @@ export async function ensurePairingFinalized(sessionId: string): Promise<Session
       return meta;
     }
 
+    if (progress.pairingAccepted && !meta.pairingAcceptedAt) {
+      meta.pairingAcceptedAt = Date.now();
+    }
+
     const needsRecovery =
-      progress.registered ||
-      (progress.pairingAccepted && !meta.sock && Boolean(meta.pairingAcceptedAt));
+      progress.registered || (progress.pairingAccepted && !meta.sock);
 
     if (needsRecovery) {
       stopPairingKeepalive(sessionId);

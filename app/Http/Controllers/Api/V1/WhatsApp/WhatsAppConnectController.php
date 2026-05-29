@@ -332,6 +332,7 @@ class WhatsAppConnectController extends Controller
         }
 
         $data = $this->refreshStatusAfterReconnect($sessionId, $result['data'] ?? []);
+        $data = $this->refreshStatusAfterPairingAccepted($sessionId, $data);
 
         $connectionStatus = $data['status'] ?? 'disconnected';
         $phone = $data['phone'] ?? null;
@@ -528,9 +529,9 @@ class WhatsAppConnectController extends Controller
 
         if (
             $connectionStatus === 'connected'
-            || ! $registeredOnDisk
             || $socketAlive
             || $this->isEnteringPairingCode($connectionStatus, $registeredOnDisk, $pairingAccepted)
+            || ! $registeredOnDisk
         ) {
             return $data;
         }
@@ -549,6 +550,46 @@ class WhatsAppConnectController extends Controller
         return $retry['ok'] ? ($retry['data'] ?? $data) : $data;
     }
 
+    /**
+     * Code accepted on phone (me.id set) but registered:false — complete link via gateway finalize.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function refreshStatusAfterPairingAccepted(string $sessionId, array $data): array
+    {
+        $connectionStatus = $data['status'] ?? 'disconnected';
+        $registeredOnDisk = (bool) ($data['registeredOnDisk'] ?? false);
+        $pairingAccepted = (bool) ($data['pairingAccepted'] ?? false);
+        $socketAlive = (bool) ($data['socketAlive'] ?? false);
+
+        if (
+            $connectionStatus === 'connected'
+            || $registeredOnDisk
+            || ! $pairingAccepted
+            || $socketAlive
+        ) {
+            return $data;
+        }
+
+        $finalizeKey = 'whatsapp_finalize_pairing:'.$sessionId;
+        if (Cache::has($finalizeKey)) {
+            return $data;
+        }
+
+        Cache::put($finalizeKey, 1, now()->addSeconds(12));
+
+        Log::info('WhatsApp status: finalizing link after pairing code accepted', [
+            'session_id' => $sessionId,
+            'wa_id' => $data['waId'] ?? null,
+        ]);
+
+        BaileysGateway::finalizePairing($sessionId, true);
+        $retry = BaileysGateway::getStatus($sessionId, true);
+
+        return $retry['ok'] ? ($retry['data'] ?? $data) : $data;
+    }
+
     protected function isEnteringPairingCode(
         string $connectionStatus,
         bool $registeredOnDisk,
@@ -562,11 +603,11 @@ class WhatsAppConnectController extends Controller
         bool $registeredOnDisk,
         bool $pairingAccepted
     ): bool {
-        if ($connectionStatus === 'connected') {
+        if ($connectionStatus === 'connected' || $registeredOnDisk) {
             return true;
         }
 
-        return $registeredOnDisk && ! $this->isEnteringPairingCode($connectionStatus, $registeredOnDisk, $pairingAccepted);
+        return false;
     }
 
     protected function shouldTrustStoredConnection(?WhatsappSession $dbSession): bool

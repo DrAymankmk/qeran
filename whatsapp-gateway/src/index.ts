@@ -13,6 +13,7 @@ import {
   ensureSessionMeta,
   formatPairingCodeDisplay,
   getSessionMeta,
+  type SessionStatus,
   isAuthRegistered,
   isPairingSocketAlive,
   isSessionStartInFlight,
@@ -276,18 +277,15 @@ app.get('/sessions/:id/status', async (req, res) => {
       }
     }
 
-    let reportStatus = meta.status;
-    if (meta.status === 'connected') {
+    if (progress.pairingAccepted && !progress.registered && !meta.sock) {
+      void ensurePairingFinalized(sessionId).catch((err) => {
+        logger.warn({ sessionId, err }, 'background finalize after pairing accepted failed');
+      });
+    }
+
+    let reportStatus: SessionStatus = meta.status;
+    if (meta.status === 'connected' || (progress.registered && !inPairingFlow)) {
       reportStatus = 'connected';
-    } elseif (progress.registered && !inPairingFlow) {
-      reportStatus = 'connected';
-    } elseif (
-      meta.status !== 'connected' &&
-      !meta.sock &&
-      progress.registered &&
-      authOnDisk
-    ) {
-      reportStatus = 'pending_pairing';
     }
 
     res.json({

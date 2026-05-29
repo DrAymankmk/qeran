@@ -333,6 +333,7 @@ class WhatsAppConnectController extends Controller
 
         $data = $this->refreshStatusAfterReconnect($sessionId, $result['data'] ?? []);
         $data = $this->refreshStatusAfterPairingAccepted($sessionId, $data);
+        $data = $this->normalizeConnectedStatusFields($data);
 
         $connectionStatus = $data['status'] ?? 'disconnected';
         $phone = $data['phone'] ?? null;
@@ -588,6 +589,29 @@ class WhatsAppConnectController extends Controller
         $retry = BaileysGateway::getStatus($sessionId, true);
 
         return $retry['ok'] ? ($retry['data'] ?? $data) : $data;
+    }
+
+    /**
+     * Align pairing metadata when the live session is connected (quick status used to skip disk read).
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function normalizeConnectedStatusFields(array $data): array
+    {
+        $connectionStatus = $data['status'] ?? 'disconnected';
+        $socketAlive = (bool) ($data['socketAlive'] ?? false);
+
+        if ($connectionStatus !== 'connected' || ! $socketAlive) {
+            return $data;
+        }
+
+        $data['registeredOnDisk'] = true;
+        $data['pairingAccepted'] = false;
+        $data['pairingProgress'] = 'registered';
+        $data['pairingCodeAgeSeconds'] = null;
+
+        return $data;
     }
 
     protected function isEnteringPairingCode(

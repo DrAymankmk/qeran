@@ -256,15 +256,14 @@ app.get('/sessions/:id/status', async (req, res) => {
 
   if (quick) {
     const authOnDisk = sessionAuthExists(sessionId);
-    const progress =
-      authOnDisk && meta.status !== 'connected'
-        ? await getPairingProgress(sessionId)
-        : {
-            registered: false,
-            pairingAccepted: false,
-            waId: null as string | null,
-            pairingCodeOnDisk: null as string | null,
-          };
+    const progress = authOnDisk
+      ? await getPairingProgress(sessionId)
+      : {
+          registered: false,
+          pairingAccepted: false,
+          waId: null as string | null,
+          pairingCodeOnDisk: null as string | null,
+        };
 
     const inPairingFlow =
       meta.status === 'pending_pairing' && !progress.registered && !progress.pairingAccepted;
@@ -288,21 +287,32 @@ app.get('/sessions/:id/status', async (req, res) => {
       reportStatus = 'connected';
     }
 
+    const liveConnected = reportStatus === 'connected' && isPairingSocketAlive(sessionId);
+    const registeredOnDisk = progress.registered || liveConnected;
+    const pairingAccepted = liveConnected ? false : progress.pairingAccepted;
+    const pairingProgress = liveConnected
+      ? 'registered'
+      : progress.registered
+        ? 'registered'
+        : progress.pairingAccepted
+          ? 'code_accepted'
+          : 'awaiting_code';
+    const pairingCodeAgeSeconds =
+      meta.status === 'pending_pairing' && meta.pairingCode
+        ? getPairingCodeAgeSeconds(sessionId)
+        : null;
+
     res.json({
       sessionId: meta.sessionId,
       status: reportStatus,
       phone: meta.phone ?? progress.waId?.split('@')[0]?.split(':')[0] ?? null,
       pairingCode: meta.pairingCode ? formatPairingCodeDisplay(meta.pairingCode) : null,
-      registeredOnDisk: progress.registered,
-      pairingAccepted: progress.pairingAccepted,
-      pairingProgress: progress.registered
-        ? 'registered'
-        : progress.pairingAccepted
-          ? 'code_accepted'
-          : 'awaiting_code',
+      registeredOnDisk,
+      pairingAccepted,
+      pairingProgress,
       waId: progress.waId,
       socketAlive: isPairingSocketAlive(sessionId),
-      pairingCodeAgeSeconds: getPairingCodeAgeSeconds(sessionId),
+      pairingCodeAgeSeconds,
       quick: true,
     });
     return;

@@ -1959,6 +1959,7 @@ class InvitationsController extends Controller
             'error_message' => $log->error_message,
             'sent_at' => $log->sent_at?->toIso8601String(),
             'created_at' => $log->created_at?->toIso8601String(),
+	  'deleted_at' => $log->deleted_at?->toIso8601String() ?? null,
         ];
     }
 

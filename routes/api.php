@@ -141,6 +141,7 @@ Route::prefix('/v1')->group(function () {
             Route::post('/user/delete/{invitation}', 'removeUser');
             Route::get('/check/invitation', 'checkInvitation');
             Route::post('/add-contact/{invitation}', 'addContact');
+	  Route::delete('/delete-contact/{id}', 'deleteContact');
             Route::post('/share/{invitationId}', 'shareInvitation');
           //   Route::get('/share/{invitationId}', 'shareInvitation');
             Route::get('/share/{invitation}/contact-logs', 'contactInvitationLogs');

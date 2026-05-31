@@ -811,6 +811,14 @@ class InvitationsController extends Controller
         ]);
     }
 
+	public function deleteContact($id)
+	{
+	$contact = InvitationContactLog::findOrFail($id);
+	$contact->delete();
+
+	return RespondActive::success('Contact deleted successfully');
+	}
+
     public function updateAdminHostName(UpdateAdminHostNameRequest $request, Invitation $invitation)
     {
         $admin = $invitation->usersByRole(Constant::INVITATION_USER_ROLE['Admin'])->where('user_id', auth()->id())->first();
@@ -1382,6 +1390,7 @@ class InvitationsController extends Controller
             ->where('invitation_id', $invitation->id)
             ->where('invited_by', auth()->id())
             ->latest()
+	  ->withTrashed()
             ->get()
             ->map(fn (InvitationContactLog $log) => $this->formatContactLog($log));
 

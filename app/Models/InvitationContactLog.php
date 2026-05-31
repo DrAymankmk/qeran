@@ -5,9 +5,11 @@ namespace App\Models;
 use App\Helpers\Constant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class InvitationContactLog extends Model
 {
+	use SoftDeletes;
     protected $fillable = [
         'invitation_id',
         'invited_by',

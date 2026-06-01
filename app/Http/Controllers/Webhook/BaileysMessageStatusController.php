@@ -20,9 +20,18 @@ class BaileysMessageStatusController extends Controller
         if ($secret === '' || ! hash_equals($secret, (string) $token)) {
             Log::warning('Baileys receipt webhook: unauthorized', [
                 'has_token' => $token !== null && $token !== '',
+                'laravel_secret_configured' => $secret !== '',
             ]);
 
             return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        if ($request->header('X-Baileys-Receipt-Probe') === '1') {
+            return response()->json([
+                'ok' => true,
+                'probe' => true,
+                'message' => 'Gateway can reach Laravel receipt webhook',
+            ]);
         }
 
         $validated = $request->validate([

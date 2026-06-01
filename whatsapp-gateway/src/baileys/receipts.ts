@@ -111,17 +111,57 @@ function normalizeMessageId(id: string): string {
   return id.trim();
 }
 
+/** Host header must be hostname only (not https://domain). */
+export function normalizeWebhookHost(raw: string | undefined | null): string | null {
+  if (!raw) {
+    return null;
+  }
+
+  let host = raw.trim();
+  if (!host) {
+    return null;
+  }
+
+  host = host.replace(/^https?:\/\//i, '');
+  host = host.split('/')[0] ?? '';
+  if (host.includes(':')) {
+    host = host.split(':')[0] ?? host;
+  }
+
+  return host || null;
+}
+
+function hostFromUrl(url: string): string | null {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return null;
+  }
+}
+
+function loopbackReceiptUrl(): string {
+  const port = process.env.LARAVEL_RECEIPT_LOOPBACK_PORT?.trim() || '80';
+  return `http://127.0.0.1:${port}/api/v1/webhooks/baileys-message-status`;
+}
+
+export type ReceiptWebhookMode = 'explicit' | 'internal' | 'loopback-auto' | 'public' | 'none';
+
 export function receiptWebhookConfig(): {
   url: string | null;
   hasSecret: boolean;
   hostHeader: string | null;
+  mode: ReceiptWebhookMode;
 } {
+  const hasSecret = Boolean(webhookSecret());
+
   const explicit = process.env.LARAVEL_RECEIPT_WEBHOOK_URL?.trim();
   if (explicit) {
     return {
       url: explicit,
-      hasSecret: Boolean(webhookSecret()),
-      hostHeader: process.env.LARAVEL_WEBHOOK_HOST?.trim() || null,
+      hasSecret,
+      hostHeader:
+        normalizeWebhookHost(process.env.LARAVEL_WEBHOOK_HOST) ?? hostFromUrl(explicit),
+      mode: 'explicit',
     };
   }
 
@@ -129,21 +169,40 @@ export function receiptWebhookConfig(): {
   if (internal) {
     return {
       url: internal,
-      hasSecret: Boolean(webhookSecret()),
-      hostHeader: process.env.LARAVEL_WEBHOOK_HOST?.trim() || null,
+      hasSecret,
+      hostHeader:
+        normalizeWebhookHost(process.env.LARAVEL_WEBHOOK_HOST) ??
+        hostFromUrl(process.env.LARAVEL_APP_URL ?? '') ??
+        hostFromUrl(internal),
+      mode: 'internal',
     };
   }
 
   const appUrl = process.env.LARAVEL_APP_URL?.trim();
-  if (!appUrl) {
-    return { url: null, hasSecret: Boolean(webhookSecret()), hostHeader: null };
+  const preferPublic = process.env.LARAVEL_RECEIPT_USE_PUBLIC_URL === 'true';
+
+  if (appUrl && !preferPublic) {
+    const host = normalizeWebhookHost(process.env.LARAVEL_WEBHOOK_HOST) ?? hostFromUrl(appUrl);
+    if (host) {
+      return {
+        url: loopbackReceiptUrl(),
+        hasSecret,
+        hostHeader: host,
+        mode: 'loopback-auto',
+      };
+    }
   }
 
-  return {
-    url: `${appUrl.replace(/\/$/, '')}/api/v1/webhooks/baileys-message-status`,
-    hasSecret: Boolean(webhookSecret()),
-    hostHeader: process.env.LARAVEL_WEBHOOK_HOST?.trim() || null,
-  };
+  if (appUrl) {
+    return {
+      url: `${appUrl.replace(/\/$/, '')}/api/v1/webhooks/baileys-message-status`,
+      hasSecret,
+      hostHeader: normalizeWebhookHost(process.env.LARAVEL_WEBHOOK_HOST),
+      mode: 'public',
+    };
+  }
+
+  return { url: null, hasSecret, hostHeader: null, mode: 'none' };
 }
 
 function webhookUrl(): string | null {
@@ -153,6 +212,69 @@ function webhookUrl(): string | null {
 function webhookSecret(): string | null {
   const secret = process.env.BAILEYS_GATEWAY_SECRET?.trim();
   return secret || null;
+}
+
+function buildWebhookHeaders(secret: string, hostHeader: string | null): Record<string, string> {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${secret}`,
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  };
+  if (hostHeader) {
+    headers.Host = hostHeader;
+  }
+  return headers;
+}
+
+/** Call from GET /health/receipt-probe to verify gateway → Laravel connectivity. */
+export async function probeReceiptWebhook(): Promise<{
+  ok: boolean;
+  httpStatus: number | null;
+  error: string | null;
+  config: ReturnType<typeof receiptWebhookConfig>;
+  laravelBody: unknown;
+}> {
+  const config = receiptWebhookConfig();
+  const secret = webhookSecret();
+
+  if (!config.url || !secret) {
+    return {
+      ok: false,
+      httpStatus: null,
+      error: 'Receipt webhook not configured (need LARAVEL_APP_URL + BAILEYS_GATEWAY_SECRET on gateway .env)',
+      config,
+      laravelBody: null,
+    };
+  }
+
+  const headers = buildWebhookHeaders(secret, config.hostHeader);
+  headers['X-Baileys-Receipt-Probe'] = '1';
+
+  try {
+    const response = await axios.post(
+      config.url,
+      {},
+      { headers, timeout: 10_000, validateStatus: () => true }
+    );
+
+    const ok = response.status >= 200 && response.status < 300;
+    return {
+      ok,
+      httpStatus: response.status,
+      error: ok ? null : `Laravel returned HTTP ${response.status}`,
+      config,
+      laravelBody: response.data,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return {
+      ok: false,
+      httpStatus: null,
+      error: message,
+      config,
+      laravelBody: null,
+    };
+  }
 }
 
 async function postReceiptToLaravel(payload: {
@@ -181,14 +303,7 @@ async function postReceiptToLaravel(payload: {
   }
 
   const { hostHeader } = receiptWebhookConfig();
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${secret}`,
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
-  };
-  if (hostHeader) {
-    headers.Host = hostHeader;
-  }
+  const headers = buildWebhookHeaders(secret, hostHeader);
 
   try {
     const response = await axios.post(
@@ -359,28 +474,31 @@ export function getLastReceiptAck(sessionId: string, messageId: string): string 
 }
 
 export function logReceiptStartupConfig(): void {
-  const { url, hasSecret } = receiptWebhookConfig();
+  const { url, hasSecret, hostHeader, mode } = receiptWebhookConfig();
   if (!url || !hasSecret) {
     logger.warn(
       {
         hasUrl: Boolean(url),
         hasSecret,
-        hint: 'Set LARAVEL_APP_URL (or LARAVEL_RECEIPT_INTERNAL_URL) and BAILEYS_GATEWAY_SECRET on the gateway process',
+        mode,
+        hint:
+          'Put LARAVEL_APP_URL + BAILEYS_GATEWAY_SECRET in whatsapp-gateway/.env (not only Laravel). Secret must be non-empty and match Laravel.',
       },
       'receipt: webhooks DISABLED — delivered_at/read_at will stay null in Laravel'
     );
     return;
   }
 
-  let host = url;
-  try {
-    host = new URL(url).host;
-  } catch {
-    /* keep raw */
-  }
-
   logger.info(
-    { webhookHost: host, internal: Boolean(process.env.LARAVEL_RECEIPT_INTERNAL_URL?.trim()) },
+    {
+      mode,
+      postUrl: url,
+      hostHeader: hostHeader ?? '(default)',
+      note:
+        mode === 'loopback-auto'
+          ? 'Using 127.0.0.1 + Host header — receipt env vars on Laravel .env are ignored'
+          : undefined,
+    },
     'receipt: webhooks enabled'
   );
 }

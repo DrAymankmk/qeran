@@ -31,7 +31,7 @@ import {
   waitForQrOrConnected,
 } from './baileys/manager.js';
 import { sendText } from './baileys/send.js';
-import { receiptWebhookConfig } from './baileys/receipts.js';
+import { probeReceiptWebhook, receiptWebhookConfig } from './baileys/receipts.js';
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
 const app = express();
@@ -151,13 +151,16 @@ app.get('/health', (_req, res) => {
   const receipt = receiptWebhookConfig();
   res.json({
     ok: true,
-    version: '1.3.0',
+    version: '1.4.0',
     qrSetupPage: QR_SETUP_PAGE_ENABLED,
     secretConfigured: Boolean(SECRET),
     receiptWebhooks: {
       configured: Boolean(receipt.url && receipt.hasSecret),
       hasUrl: Boolean(receipt.url),
       hasSecret: receipt.hasSecret,
+      mode: receipt.mode,
+      postUrl: receipt.url,
+      hostHeader: receipt.hostHeader,
     },
     features: {
       pairingCode: true,
@@ -165,6 +168,11 @@ app.get('/health', (_req, res) => {
       deliveryReadReceipts: Boolean(receipt.url && receipt.hasSecret),
     },
   });
+});
+
+app.get('/health/receipt-probe', auth, async (_req, res) => {
+  const result = await probeReceiptWebhook();
+  res.status(result.ok ? 200 : 503).json(result);
 });
 
 /** Browser-friendly QR page for initial setup (token in query string). */

@@ -277,7 +277,7 @@
 		}
 
 		for (let attempt = 0; attempt < maxQrAttempts; attempt++) {
-			const waitMs = attempt === 0 ? 0 : 8000;
+			const waitMs = attempt === 0 ? 3000 : 20000;
 			let payload;
 			try {
 				payload = await fetchQrOnce(waitMs);

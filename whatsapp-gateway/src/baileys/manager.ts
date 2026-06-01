@@ -32,6 +32,8 @@ export interface SessionMeta {
   pairingRequestedAt?: number;
   /** Set when WhatsApp accepts the code (me.id saved) — user may still need to tap "Link device". */
   pairingAcceptedAt?: number;
+  /** When the current QR string was issued (do not wipe session while user may be scanning). */
+  qrGeneratedAt?: number;
 }
 
 const sessions = new Map<string, SessionMeta>();
@@ -43,6 +45,23 @@ const abortedSessions = new Set<string>();
 
 export function isSessionAborted(sessionId: string): boolean {
   return abortedSessions.has(sessionId);
+}
+
+export function isLinkingInProgress(sessionId: string): boolean {
+  const meta = sessions.get(sessionId);
+  if (!meta) {
+    return false;
+  }
+
+  if (meta.status === 'pending_qr' || meta.status === 'starting' || meta.status === 'pending_pairing') {
+    return true;
+  }
+
+  if (meta.qr && meta.qrGeneratedAt && Date.now() - meta.qrGeneratedAt < 120_000) {
+    return true;
+  }
+
+  return false;
 }
 
 export function clearSessionAbort(sessionId: string): void {
@@ -634,6 +653,7 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
 
     if (qr) {
       meta.qr = qr;
+      meta.qrGeneratedAt = Date.now();
       if (meta.status !== 'pending_pairing') {
         meta.status = 'pending_qr';
       }
@@ -667,13 +687,6 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
 
       meta.sock = undefined;
 
-      if (loggedOut) {
-        meta.status = 'disconnected';
-        meta.pairingCode = undefined;
-        meta.qr = undefined;
-        return;
-      }
-
       if (restartRequired && (wasPairing || wasQrLinking)) {
         stopPairingKeepalive(sessionId);
         logger.info(
@@ -681,6 +694,28 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
           'restartRequired after scan/code — reconnecting to complete link'
         );
         void reconnectAfterRestart(sessionId, meta);
+        return;
+      }
+
+      if (wasQrLinking) {
+        logger.info(
+          { sessionId, statusCode, loggedOut, restartRequired },
+          'QR link interrupted — reconnecting (401 during scan is normal)'
+        );
+        void reconnectAfterRestart(sessionId, meta);
+        return;
+      }
+
+      if (loggedOut && wasPairing) {
+        logger.info({ sessionId, statusCode }, 'loggedOut during pairing — reconnecting');
+        void reconnectAfterRestart(sessionId, meta);
+        return;
+      }
+
+      if (loggedOut) {
+        meta.status = 'disconnected';
+        meta.pairingCode = undefined;
+        meta.qr = undefined;
         return;
       }
 
@@ -708,12 +743,6 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
           })();
         }, 1500);
 
-        return;
-      }
-
-      if (wasQrLinking) {
-        logger.info({ sessionId, statusCode }, 'QR linking socket closed — reconnecting (do not issue new QR yet)');
-        void reconnectAfterRestart(sessionId, meta);
         return;
       }
 
@@ -965,6 +994,11 @@ export async function ensureQrLinkingSession(sessionId: string): Promise<void> {
     return;
   }
 
+  if (isLinkingInProgress(sessionId)) {
+    logger.info({ sessionId, status: meta?.status }, 'QR/pairing in progress — not wiping session');
+    return;
+  }
+
   if (!sessionAuthExists(sessionId)) {
     return;
   }
@@ -981,7 +1015,12 @@ export async function ensureQrLinkingSession(sessionId: string): Promise<void> {
   }
 }
 
-export async function deleteSession(sessionId: string): Promise<void> {
+export async function deleteSession(sessionId: string, force = true): Promise<void> {
+  if (!force && isLinkingInProgress(sessionId)) {
+    logger.warn({ sessionId }, 'deleteSession skipped — link in progress (use force=true)');
+    return;
+  }
+
   abortSession(sessionId);
   stopPairingKeepalive(sessionId);
   finalizingSessions.delete(sessionId);

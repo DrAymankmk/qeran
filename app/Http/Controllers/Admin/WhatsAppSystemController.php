@@ -85,7 +85,7 @@ class WhatsAppSystemController extends Controller
             ], 503);
         }
 
-        $waitMs = max(0, min(60_000, (int) $request->query('waitMs', 8000)));
+        $waitMs = max(0, min(60_000, (int) $request->query('waitMs', 25_000)));
         $qr = BaileysGateway::getQr(null, $waitMs);
 
         if (! $qr['ok']) {

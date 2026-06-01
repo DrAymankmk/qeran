@@ -19,6 +19,7 @@ import {
   isLinkedOnWhatsApp,
   isPairingSocketAlive,
   isSessionAborted,
+  isLinkingInProgress,
   isSessionStartInFlight,
   normalizePhoneDigits,
   sessionAuthExists,
@@ -246,8 +247,23 @@ app.get('/sessions/:id/status', async (req, res) => {
   }
 
   if (!sessionAuthExists(sessionId)) {
-    if (getSessionMeta(sessionId)) {
+    const staleMeta = getSessionMeta(sessionId);
+    if (staleMeta && !isLinkingInProgress(sessionId)) {
       await deleteSession(sessionId);
+    }
+    if (staleMeta && isLinkingInProgress(sessionId)) {
+      res.json({
+        sessionId,
+        status: staleMeta.status,
+        phone: staleMeta.phone ?? null,
+        registeredOnDisk: false,
+        pairingAccepted: false,
+        pairingProgress: 'awaiting_code',
+        linkedOnWhatsApp: false,
+        socketAlive: isPairingSocketAlive(sessionId),
+        linking: true,
+      });
+      return;
     }
     res.json(disconnectedStatusPayload(sessionId));
     return;

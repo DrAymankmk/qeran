@@ -103,8 +103,10 @@
 	};
 	const pollMs = 3000;
 	const qrPollMs = 2500;
+	const qrRefreshMs = 45000;
 	const maxQrAttempts = 30;
 	let statusTimer = null;
+	let qrRefreshTimer = null;
 	let qrRunning = false;
 
 	function stopStatusPoll() {
@@ -112,6 +114,33 @@
 			clearInterval(statusTimer);
 			statusTimer = null;
 		}
+	}
+
+	function stopQrRefresh() {
+		if (qrRefreshTimer) {
+			clearInterval(qrRefreshTimer);
+			qrRefreshTimer = null;
+		}
+	}
+
+	function startQrRefresh() {
+		stopQrRefresh();
+		qrRefreshTimer = setInterval(async function () {
+			try {
+				const payload = await fetchQrOnce(8000);
+				if (payload?.ok && payload.data?.status === 'connected') {
+					renderStatusBox('connected', payload.data.phone || null, null, null);
+					stopQrRefresh();
+					stopStatusPoll();
+					return;
+				}
+				if (payload?.ok && payload.data?.qrImage) {
+					renderStatusBox('pending_qr', null, payload.data.qrImage, null);
+				}
+			} catch (e) {
+				/* ignore — status poll will surface errors */
+			}
+		}, qrRefreshMs);
 	}
 
 	function setGenerateBusy(busy) {

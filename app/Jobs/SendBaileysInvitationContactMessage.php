@@ -52,6 +52,7 @@ class SendBaileysInvitationContactMessage implements ShouldQueue
             $log->update([
                 'send_status' => Constant::INVITATION_CONTACT_SEND_STATUS['sent'],
                 'sent_at' => now(),
+                'whatsapp_message_id' => $response->id ?? null,
                 'error_message' => null,
             ]);
 

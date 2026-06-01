@@ -43,6 +43,23 @@
 - Messages queued: ~12s apart, ~80/day (ban safety)
 - Sent from **client number** via `user_{id}` session
 
+### Delivery / read receipts (contact invitations)
+
+1. Job sends with `referenceId` → gateway stores `idMessage` + `referenceId`
+2. Baileys `messages.update` → gateway POSTs to Laravel  
+   `POST /api/v1/webhooks/baileys-message-status` (Bearer `BAILEYS_GATEWAY_SECRET`)
+3. `invitation_contact_logs`: `delivered_at`, `read_at`, `whatsapp_status` via  
+   `GET /api/v1/invitations/share/{invitation}/contact-logs`
+
+Gateway `.env`:
+
+```env
+LARAVEL_APP_URL=https://your-qeran-domain.com
+# or full URL:
+# LARAVEL_RECEIPT_WEBHOOK_URL=https://your-qeran-domain.com/api/v1/webhooks/baileys-message-status
+BAILEYS_GATEWAY_SECRET=same-as-laravel
+```
+
 ## Deploy checklist
 
 **Gateway** (`/www/wwwroot/whatsapp-gateway`):

@@ -271,6 +271,8 @@ app.get('/sessions/:id/status', async (req, res) => {
 
     const inPairingFlow =
       meta.status === 'pending_pairing' && !progress.registered && !progress.pairingAccepted;
+    const inQrFlow =
+      meta.status === 'pending_qr' || Boolean(meta.qr ?? getQr(sessionId));
 
     const socketAlive = isPairingSocketAlive(sessionId);
 
@@ -279,7 +281,8 @@ app.get('/sessions/:id/status', async (req, res) => {
       progress.registered &&
       !socketAlive &&
       meta.status !== 'connected' &&
-      !inPairingFlow
+      !inPairingFlow &&
+      !inQrFlow
     ) {
       if (!isSessionStartInFlight(sessionId)) {
         void startSession(sessionId).catch((err) => {
@@ -502,7 +505,8 @@ app.post('/send', async (req, res) => {
   }
 
   try {
-    const result = await sendText(sessionId, to, message);
+    const referenceId = String(req.body?.referenceId ?? '').trim() || undefined;
+    const result = await sendText(sessionId, to, message, referenceId);
     res.json({
       sent: result.sent,
       idMessage: result.idMessage ?? null,

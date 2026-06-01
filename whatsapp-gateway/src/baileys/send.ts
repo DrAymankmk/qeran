@@ -1,9 +1,11 @@
 import { getSessionMeta, getSocket, startSession } from './manager.js';
+import { registerOutboundMessage } from './receipts.js';
 
 export async function sendText(
   sessionId: string,
   to: string,
-  message: string
+  message: string,
+  referenceId?: string
 ): Promise<{ idMessage?: string; sent: boolean }> {
   let meta = getSessionMeta(sessionId);
 
@@ -31,9 +33,12 @@ export async function sendText(
 
   const jid = `${digits}@s.whatsapp.net`;
   const result = await sock.sendMessage(jid, { text: message });
+  const idMessage = result?.key?.id ?? undefined;
+
+  registerOutboundMessage(sessionId, idMessage, referenceId, digits);
 
   return {
-    idMessage: result?.key?.id ?? undefined,
+    idMessage,
     sent: true,
   };
 }

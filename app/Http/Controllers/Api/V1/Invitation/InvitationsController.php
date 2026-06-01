@@ -1948,6 +1948,17 @@ class InvitationsController extends Controller
             default => 'pending',
         };
 
+        $whatsappStatus = 'pending';
+        if ($log->read_at) {
+            $whatsappStatus = 'read';
+        } elseif ($log->delivered_at) {
+            $whatsappStatus = 'delivered';
+        } elseif ($sendStatus === 'sent') {
+            $whatsappStatus = 'sent';
+        } elseif ($sendStatus === 'failed') {
+            $whatsappStatus = 'failed';
+        }
+
         return [
             'id' => $log->id,
             'contact_name' => $log->contact_name,
@@ -1955,12 +1966,17 @@ class InvitationsController extends Controller
             'country_code' => $log->country_code,
             'user_id' => $log->user_id,
             'send_status' => $sendStatus,
+            'whatsapp_status' => $whatsappStatus,
+            'whatsapp_delivered' => $log->delivered_at !== null,
+            'whatsapp_read' => $log->read_at !== null,
             'seen' => (int) $log->seen,
             'seen_label' => array_search((int) $log->seen, Constant::SEEN_STATUS, true) ?: 'unknown',
             'error_message' => $log->error_message,
             'sent_at' => $log->sent_at?->toIso8601String(),
+            'delivered_at' => $log->delivered_at?->toIso8601String(),
+            'read_at' => $log->read_at?->toIso8601String(),
             'created_at' => $log->created_at?->toIso8601String(),
-	  'deleted_at' => $log->deleted_at?->toIso8601String() ?? null,
+            'deleted_at' => $log->deleted_at?->toIso8601String() ?? null,
         ];
     }
 

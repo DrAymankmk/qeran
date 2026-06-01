@@ -6,6 +6,7 @@ import makeWASocket, {
   type ConnectionState,
   type WASocket,
 } from '@whiskeysockets/baileys';
+import { attachMessageReceiptListener } from './receipts.js';
 import { Boom } from '@hapi/boom';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -574,7 +575,7 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
     auth: state,
     logger: pino({ level: 'silent' }),
     printQRInTerminal: false,
-    browser: Browsers.ubuntu('Chrome'),
+    browser: Browsers.macOS('Chrome'),
     markOnlineOnConnect: false,
     syncFullHistory: false,
     connectTimeoutMs: 60_000,
@@ -582,6 +583,7 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
   });
 
   meta.sock = sock;
+  attachMessageReceiptListener(sock, sessionId);
 
   sock.ev.on('creds.update', () => {
     void (async () => {
@@ -617,6 +619,10 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
       logger.info({ sessionId }, 'isNewLogin during pairing — will reconnect on restartRequired close');
     }
 
+    if (isNewLogin && meta.status === 'pending_qr') {
+      logger.info({ sessionId }, 'isNewLogin during QR scan — will reconnect on restartRequired close');
+    }
+
     if (qr) {
       meta.qr = qr;
       if (meta.status !== 'pending_pairing') {
@@ -643,13 +649,53 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
       const loggedOut = statusCode === DisconnectReason.loggedOut;
       const restartRequired = statusCode === DisconnectReason.restartRequired;
       const wasPairing = meta.status === 'pending_pairing';
+      const wasQrLinking = meta.status === 'pending_qr' || Boolean(meta.qr);
 
       logger.warn(
-        { sessionId, statusCode, loggedOut, restartRequired, wasPairing, status: meta.status },
+        { sessionId, statusCode, loggedOut, restartRequired, wasPairing, wasQrLinking, status: meta.status },
         'connection closed'
       );
 
       meta.sock = undefined;
+
+      if (wasQrLinking && !wasPairing) {
+        if (loggedOut) {
+          meta.status = 'disconnected';
+          meta.qr = undefined;
+          return;
+        }
+
+        if (restartRequired || isNewLogin) {
+          meta.qr = undefined;
+          logger.info({ sessionId }, 'restartRequired after QR scan — reconnecting to complete link');
+          void reconnectAfterRestart(sessionId, meta);
+          return;
+        }
+
+        setTimeout(() => {
+          void (async () => {
+            if (meta.status === 'connected') {
+              return;
+            }
+            const progress = await getPairingProgress(sessionId);
+            if (progress.registered) {
+              meta.qr = undefined;
+              await reconnectAfterRestart(sessionId, meta);
+              return;
+            }
+            if (meta.status === 'pending_qr' && !meta.sock) {
+              try {
+                logger.info({ sessionId }, 'transient close during QR — restoring socket (same QR)');
+                await createSocket(sessionId, meta);
+              } catch (err) {
+                logger.warn({ sessionId, err }, 'QR socket restore failed');
+              }
+            }
+          })();
+        }, 1500);
+
+        return;
+      }
 
       if (wasPairing) {
         if (loggedOut) {
@@ -704,18 +750,16 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
         if (progress.registered) {
           meta.status = 'connected';
           logger.info({ sessionId }, 'registered session socket closed — reconnecting');
-        } else {
-          meta.status = 'disconnected';
+          await reconnectAfterRestart(sessionId, meta);
+          return;
         }
+
+        meta.status = 'disconnected';
 
         if (meta.linkPhone) {
           setTimeout(() => {
             void startSessionWithPairing(sessionId, meta.linkPhone!, true);
           }, 5000);
-        } else {
-          setTimeout(() => {
-            void startSession(sessionId);
-          }, 1500);
         }
       })();
     }

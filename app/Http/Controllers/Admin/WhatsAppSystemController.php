@@ -62,8 +62,8 @@ class WhatsAppSystemController extends Controller
             ]);
         }
 
-        BaileysGateway::deleteSession();
-        $result = BaileysGateway::startSession(null, 25);
+        BaileysGateway::deleteSession(null, 35);
+        $result = BaileysGateway::startSession(null, 45);
 
         return response()->json([
             'ok' => $result['ok'],

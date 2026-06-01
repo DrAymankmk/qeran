@@ -71,6 +71,7 @@ Route::prefix('/v1')->group(function () {
     Route::get('app-settings/show', [AppSettings::class, 'show']);
     Route::get('app-settings/by-category', [AppSettings::class, 'byCategory']);
     Route::post('whatsapp-webhook', [WhatsAppController::class, 'handle']);
+    Route::post('webhooks/baileys-message-status', [\App\Http\Controllers\Webhook\BaileysMessageStatusController::class, 'handle']);
 
     Route::prefix('auth')->controller(AuthController::class)->group(function () {
         Route::post('store', 'store');

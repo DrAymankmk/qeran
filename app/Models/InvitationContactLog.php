@@ -21,11 +21,16 @@ class InvitationContactLog extends Model
         'seen',
         'error_message',
         'reference_id',
+        'whatsapp_message_id',
         'sent_at',
+        'delivered_at',
+        'read_at',
     ];
 
     protected $casts = [
         'sent_at' => 'datetime',
+        'delivered_at' => 'datetime',
+        'read_at' => 'datetime',
     ];
 
     public function invitation(): BelongsTo

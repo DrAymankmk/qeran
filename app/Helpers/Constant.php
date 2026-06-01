@@ -136,7 +136,7 @@ class Constant
     ];
 
     const INVITATION_CONTACT_SEND_STATUS = [
-        'not sent' => 0,
+        'not_sent' => 0,
         'pending' => 1,
         'sent' => 2,
         'failed' => 3,

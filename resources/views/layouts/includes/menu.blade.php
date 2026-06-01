@@ -254,6 +254,12 @@
 							{{ __('admin.menu-whatsapp-system') }}
 						</a>
 					</li>
+					<li @if(Route::is('admin.whatsapp-clients.*')) class="mm-active" @endif>
+						<a href="{{ route('admin.whatsapp-clients.index') }}">
+							<i class="bx bx-right-arrow-alt"></i>
+							{{ __('admin.menu-whatsapp-clients') }}
+						</a>
+					</li>
 				</ul>
 			</li>
 			@endcan

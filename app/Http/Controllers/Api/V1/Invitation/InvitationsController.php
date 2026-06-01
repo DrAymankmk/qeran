@@ -1777,7 +1777,7 @@ class InvitationsController extends Controller
                 [
                     'user_id' => $guestUser->id,
                     'contact_name' => $contact['name'],
-                    'send_status' => Constant::INVITATION_CONTACT_SEND_STATUS['pending'],
+                    'send_status' => Constant::INVITATION_CONTACT_SEND_STATUS['not_sent'],
                     'seen' => Constant::SEEN_STATUS['not in the app'],
                     'reference_id' => $invitation->id.'-contact-'.$guestUser->id,
                     'error_message' => null,

@@ -49,12 +49,34 @@ class SendBaileysInvitationContactMessage implements ShouldQueue
         );
 
         if (isset($response->sent) && $response->sent === 'true') {
+            $messageId = is_string($response->id ?? null) ? $response->id : null;
+
             $log->update([
                 'send_status' => Constant::INVITATION_CONTACT_SEND_STATUS['sent'],
                 'sent_at' => now(),
-                'whatsapp_message_id' => $response->id ?? null,
+                'whatsapp_message_id' => $messageId,
                 'error_message' => null,
             ]);
+
+            Log::info('Baileys contact invitation sent — awaiting delivery/read webhooks', [
+                'contact_log_id' => $this->contactLogId,
+                'reference_id' => $this->referenceId,
+                'whatsapp_message_id' => $messageId,
+                'host_session' => 'user_'.$this->hostUserId,
+            ]);
+
+            if (! $messageId) {
+                Log::warning('Baileys send ok but no idMessage from gateway — delivered_at/read_at cannot be matched', [
+                    'contact_log_id' => $this->contactLogId,
+                    'reference_id' => $this->referenceId,
+                ]);
+            }
+
+            if ($this->referenceId === '') {
+                Log::warning('Baileys send without reference_id — receipt webhook matching is weaker', [
+                    'contact_log_id' => $this->contactLogId,
+                ]);
+            }
 
             DB::table('invitation_user')
                 ->where('invitation_id', $this->invitationId)

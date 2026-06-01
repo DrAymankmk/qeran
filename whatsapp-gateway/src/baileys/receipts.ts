@@ -7,6 +7,9 @@ const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
 
 const RECEIPT_DEBUG = process.env.RECEIPT_DEBUG === '1' || process.env.RECEIPT_DEBUG === 'true';
 
+/** Last known ack per outbound message (for GET /receipts/debug). */
+const lastAckByKey = new Map<string, string>();
+
 type OutboundMeta = {
   referenceId: string;
   to: string;
@@ -51,7 +54,7 @@ export function registerOutboundMessage(
     messageId,
   };
 
-  outboundByMessageKey.set(mapKey(sessionId, messageId), meta);
+  outboundByMessageKey.set(mapKey(sessionId, normalizeMessageId(messageId)), meta);
 
   logger.info(
     { sessionId, messageId, referenceId: referenceId ?? null, toSuffix: to.slice(-4) },
@@ -70,34 +73,81 @@ function statusLabelFromCode(code: number): 'delivered' | 'read' | null {
   return null;
 }
 
+const STATUS_BY_NAME: Record<string, number> = {
+  ERROR: WAMessageStatus.ERROR,
+  PENDING: WAMessageStatus.PENDING,
+  SERVER_ACK: WAMessageStatus.SERVER_ACK,
+  DELIVERY_ACK: WAMessageStatus.DELIVERY_ACK,
+  READ: WAMessageStatus.READ,
+  PLAYED: WAMessageStatus.PLAYED,
+};
+
 function parseStatusCode(status: unknown): number | null {
   if (typeof status === 'number' && !Number.isNaN(status)) {
     return status;
   }
   if (typeof status === 'string') {
-    const named = (WAMessageStatus as Record<string, number>)[status];
+    const named = STATUS_BY_NAME[status] ?? STATUS_BY_NAME[status.toUpperCase()];
     if (typeof named === 'number') {
       return named;
     }
     const parsed = Number(status);
     return Number.isNaN(parsed) ? null : parsed;
   }
+  if (status !== null && typeof status === 'object') {
+    const obj = status as Record<string, unknown>;
+    if (typeof obj.low === 'number') {
+      return obj.low;
+    }
+    if (typeof obj.value === 'number') {
+      return obj.value;
+    }
+  }
 
   return null;
 }
 
-function webhookUrl(): string | null {
+function normalizeMessageId(id: string): string {
+  return id.trim();
+}
+
+export function receiptWebhookConfig(): {
+  url: string | null;
+  hasSecret: boolean;
+  hostHeader: string | null;
+} {
   const explicit = process.env.LARAVEL_RECEIPT_WEBHOOK_URL?.trim();
   if (explicit) {
-    return explicit;
+    return {
+      url: explicit,
+      hasSecret: Boolean(webhookSecret()),
+      hostHeader: process.env.LARAVEL_WEBHOOK_HOST?.trim() || null,
+    };
+  }
+
+  const internal = process.env.LARAVEL_RECEIPT_INTERNAL_URL?.trim();
+  if (internal) {
+    return {
+      url: internal,
+      hasSecret: Boolean(webhookSecret()),
+      hostHeader: process.env.LARAVEL_WEBHOOK_HOST?.trim() || null,
+    };
   }
 
   const appUrl = process.env.LARAVEL_APP_URL?.trim();
   if (!appUrl) {
-    return null;
+    return { url: null, hasSecret: Boolean(webhookSecret()), hostHeader: null };
   }
 
-  return `${appUrl.replace(/\/$/, '')}/api/v1/webhooks/baileys-message-status`;
+  return {
+    url: `${appUrl.replace(/\/$/, '')}/api/v1/webhooks/baileys-message-status`,
+    hasSecret: Boolean(webhookSecret()),
+    hostHeader: process.env.LARAVEL_WEBHOOK_HOST?.trim() || null,
+  };
+}
+
+function webhookUrl(): string | null {
+  return receiptWebhookConfig().url;
 }
 
 function webhookSecret(): string | null {
@@ -130,23 +180,29 @@ async function postReceiptToLaravel(payload: {
     return;
   }
 
+  const { hostHeader } = receiptWebhookConfig();
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${secret}`,
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  };
+  if (hostHeader) {
+    headers.Host = hostHeader;
+  }
+
   try {
     const response = await axios.post(
       url,
       {
         sessionId: payload.sessionId,
-        messageId: payload.messageId,
+        messageId: normalizeMessageId(payload.messageId),
         referenceId: payload.referenceId || undefined,
         to: payload.to,
         status: payload.status,
         source: payload.source,
       },
       {
-        headers: {
-          Authorization: `Bearer ${secret}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
+        headers,
         timeout: 10_000,
         validateStatus: () => true,
       }
@@ -193,18 +249,26 @@ function emitReceipt(
   label: 'delivered' | 'read',
   source: 'messages.update' | 'message-receipt.update'
 ): void {
-  const meta = resolveMeta(sessionId, messageId);
+  const normalizedId = normalizeMessageId(messageId);
+  const meta = resolveMeta(sessionId, normalizedId) ?? resolveMeta(sessionId, messageId);
 
-  if (!meta && !RECEIPT_DEBUG) {
-    logger.debug(
-      { sessionId, messageId, label, source },
-      'receipt: no in-memory meta (gateway may have restarted) — webhook uses whatsapp_message_id in DB'
+  lastAckByKey.set(mapKey(sessionId, normalizedId), label);
+
+  if (!meta) {
+    logger.info(
+      { sessionId, messageId: normalizedId, label, source },
+      'receipt: WhatsApp ack received — posting webhook (match by whatsapp_message_id in Laravel)'
+    );
+  } else {
+    logger.info(
+      { sessionId, messageId: normalizedId, label, source, referenceId: meta.referenceId || null },
+      'receipt: WhatsApp ack received — posting webhook'
     );
   }
 
   void postReceiptToLaravel({
     sessionId,
-    messageId,
+    messageId: normalizedId,
     referenceId: meta?.referenceId ?? '',
     to: meta?.to ?? '',
     status: label,
@@ -290,6 +354,37 @@ function handleMessageReceiptUpdate(sessionId: string, updates: ReceiptRow[]): v
   }
 }
 
+export function getLastReceiptAck(sessionId: string, messageId: string): string | null {
+  return lastAckByKey.get(mapKey(sessionId, normalizeMessageId(messageId))) ?? null;
+}
+
+export function logReceiptStartupConfig(): void {
+  const { url, hasSecret } = receiptWebhookConfig();
+  if (!url || !hasSecret) {
+    logger.warn(
+      {
+        hasUrl: Boolean(url),
+        hasSecret,
+        hint: 'Set LARAVEL_APP_URL (or LARAVEL_RECEIPT_INTERNAL_URL) and BAILEYS_GATEWAY_SECRET on the gateway process',
+      },
+      'receipt: webhooks DISABLED — delivered_at/read_at will stay null in Laravel'
+    );
+    return;
+  }
+
+  let host = url;
+  try {
+    host = new URL(url).host;
+  } catch {
+    /* keep raw */
+  }
+
+  logger.info(
+    { webhookHost: host, internal: Boolean(process.env.LARAVEL_RECEIPT_INTERNAL_URL?.trim()) },
+    'receipt: webhooks enabled'
+  );
+}
+
 export function attachMessageReceiptListener(sock: WASocket, sessionId: string): void {
   sock.ev.on('messages.update', (updates) => {
     handleMessageUpdate(sessionId, updates);
@@ -301,3 +396,5 @@ export function attachMessageReceiptListener(sock: WASocket, sessionId: string):
 
   logger.info({ sessionId }, 'receipt: listeners attached (messages.update + message-receipt.update)');
 }
+
+logReceiptStartupConfig();

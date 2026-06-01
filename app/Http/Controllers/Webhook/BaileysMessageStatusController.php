@@ -42,19 +42,21 @@ class BaileysMessageStatusController extends Controller
             'source' => $validated['source'] ?? null,
         ]);
 
-        $log = $this->findContactLog($validated['messageId'], $validated['referenceId'] ?? null);
+        $messageId = trim($validated['messageId']);
+        $log = $this->findContactLog($messageId, $validated['referenceId'] ?? null);
 
         if (! $log) {
             Log::warning('Baileys receipt webhook: no invitation_contact_log row', [
-                'message_id' => $validated['messageId'],
+                'message_id' => $messageId,
                 'reference_id' => $validated['referenceId'] ?? null,
+                'hint' => 'Ensure invitation was sent via Baileys and whatsapp_message_id is stored on the log row',
             ]);
 
             return response()->json(['ok' => true, 'ignored' => true, 'reason' => 'log_not_found']);
         }
 
         $updates = [
-            'whatsapp_message_id' => $validated['messageId'],
+            'whatsapp_message_id' => $messageId,
         ];
 
         $applied = [];
@@ -108,7 +110,7 @@ class BaileysMessageStatusController extends Controller
             'contact_log_id' => $log->id,
             'status' => $validated['status'],
             'applied' => $applied,
-            'message_id' => $validated['messageId'],
+            'message_id' => $messageId,
         ]);
 
         return response()->json([

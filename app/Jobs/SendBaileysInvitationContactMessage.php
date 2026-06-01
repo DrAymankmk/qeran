@@ -41,6 +41,10 @@ class SendBaileysInvitationContactMessage implements ShouldQueue
 
         $targetPhone = PhoneNumber::e164ForWhatsAppPairing($this->countryCode, $this->phone);
 
+        if ($this->referenceId !== '') {
+            $log->update(['reference_id' => $this->referenceId]);
+        }
+
         $response = BaileysWhatsApp::sendFromSession(
             'user_'.$this->hostUserId,
             $targetPhone,

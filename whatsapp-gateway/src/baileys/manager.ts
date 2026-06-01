@@ -34,6 +34,9 @@ export interface SessionMeta {
   pairingAcceptedAt?: number;
   /** When the current QR string was issued (do not wipe session while user may be scanning). */
   qrGeneratedAt?: number;
+  /** Failed reconnect attempts after pairing/QR interrupt (stops infinite 401 loops). */
+  reconnectFailures?: number;
+  lastReconnectAt?: number;
 }
 
 const sessions = new Map<string, SessionMeta>();
@@ -42,6 +45,12 @@ const finalizingSessions = new Set<string>();
 const pairingKeepaliveTimers = new Map<string, ReturnType<typeof setInterval>>();
 /** Blocks pairing keepalive/reconnect until the user starts a new link (POST /sessions). */
 const abortedSessions = new Set<string>();
+
+const SYSTEM_SESSION_ID = (process.env.BAILEYS_SYSTEM_SESSION ?? 'system').trim();
+
+export function isSystemSession(sessionId: string): boolean {
+  return sessionId === SYSTEM_SESSION_ID;
+}
 
 export function isSessionAborted(sessionId: string): boolean {
   return abortedSessions.has(sessionId);
@@ -447,30 +456,85 @@ async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Prom
     return;
   }
 
-  logger.info({ sessionId, previousStatus: meta.status }, 'reconnecting after pairing (saved auth)');
+  if (isSessionAborted(sessionId)) {
+    return;
+  }
+
+  const now = Date.now();
+  if (meta.lastReconnectAt && now - meta.lastReconnectAt < 2500) {
+    return;
+  }
+  meta.lastReconnectAt = now;
+
+  const progressBefore = await getPairingProgress(sessionId);
+
+  if (isSystemSession(sessionId) && progressBefore.pairingAccepted && !progressBefore.registered) {
+    const wasQr = meta.status === 'pending_qr' || meta.status === 'starting';
+    if (!wasQr) {
+      logger.error(
+        { sessionId, progress: progressBefore },
+        'system session has pairing-code creds — wiping (admin OTP must use QR only)'
+      );
+      wipeSessionAuth(sessionId);
+      meta.status = 'disconnected';
+      return;
+    }
+  }
+
+  logger.info(
+    { sessionId, previousStatus: meta.status, pairingAccepted: progressBefore.pairingAccepted },
+    'reconnecting after link interrupt (saved auth)'
+  );
   endSocket(meta);
-  meta.status = 'starting';
+  meta.status = meta.status === 'pending_qr' ? 'pending_qr' : 'starting';
   meta.pairingCode = undefined;
 
   try {
     await createSocket(sessionId, meta);
-    const ok = await waitForConnected(sessionId, 90_000);
+    const ok = await waitForConnected(sessionId, isSystemSession(sessionId) ? 120_000 : 90_000);
     if (!ok) {
       const progress = await getPairingProgress(sessionId);
+      meta.reconnectFailures = (meta.reconnectFailures ?? 0) + 1;
+
       logger.warn(
-        { sessionId, pairingAccepted: progress.pairingAccepted, registered: progress.registered },
-        'reconnect after pairing did not reach connected within timeout'
+        {
+          sessionId,
+          pairingAccepted: progress.pairingAccepted,
+          registered: progress.registered,
+          failures: meta.reconnectFailures,
+        },
+        'reconnect after link did not reach connected within timeout'
       );
+
+      if (meta.reconnectFailures >= 4) {
+        logger.error({ sessionId, failures: meta.reconnectFailures }, 'too many reconnect failures — wiping session');
+        wipeSessionAuth(sessionId);
+        meta.status = 'disconnected';
+        meta.reconnectFailures = 0;
+        return;
+      }
+
       if (progress.pairingAccepted && !progress.registered) {
-        meta.status = 'pending_pairing';
-      } else if (!progress.pairingAccepted) {
+        meta.status = isSystemSession(sessionId) ? 'pending_qr' : 'pending_pairing';
+      } else {
         meta.status = 'disconnected';
       }
+    } else {
+      meta.reconnectFailures = 0;
     }
   } catch (err) {
-    logger.error({ sessionId, err }, 'reconnect after pairing failed');
+    logger.error({ sessionId, err }, 'reconnect after link failed');
     const progress = await getPairingProgress(sessionId);
-    meta.status = progress.pairingAccepted ? 'pending_pairing' : 'disconnected';
+    meta.reconnectFailures = (meta.reconnectFailures ?? 0) + 1;
+    if (meta.reconnectFailures >= 4) {
+      wipeSessionAuth(sessionId);
+      meta.status = 'disconnected';
+      meta.reconnectFailures = 0;
+    } else if (progress.pairingAccepted && !progress.registered) {
+      meta.status = isSystemSession(sessionId) ? 'pending_qr' : 'pending_pairing';
+    } else {
+      meta.status = 'disconnected';
+    }
   }
 }
 
@@ -482,7 +546,15 @@ export function ensureSessionMeta(sessionId: string): SessionMeta {
 
   meta = {
     sessionId,
-    status: sessionAuthExists(sessionId) ? 'pending_pairing' : 'disconnected',
+    status: (() => {
+      if (!sessionAuthExists(sessionId)) {
+        return 'disconnected' as const;
+      }
+      if (isSystemSession(sessionId)) {
+        return 'starting' as const;
+      }
+      return 'pending_pairing' as const;
+    })(),
     pairingCode: undefined,
     linkPhone: undefined,
     phone: undefined,
@@ -610,6 +682,7 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
     browser: browserConfigForSession(sessionId, meta),
     markOnlineOnConnect: false,
     syncFullHistory: false,
+    emitOwnEvents: true,
     connectTimeoutMs: 60_000,
     defaultQueryTimeoutMs: 60_000,
   });
@@ -707,6 +780,15 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
       }
 
       if (loggedOut && wasPairing) {
+        if (isSystemSession(sessionId)) {
+          logger.warn(
+            { sessionId, statusCode },
+            'system session: logged out during pairing state — wiping (use QR in admin only)'
+          );
+          wipeSessionAuth(sessionId);
+          meta.status = 'disconnected';
+          return;
+        }
         logger.info({ sessionId, statusCode }, 'loggedOut during pairing — reconnecting');
         void reconnectAfterRestart(sessionId, meta);
         return;
@@ -881,6 +963,7 @@ async function runPairingFlow(sessionId: string, digits: string, fresh: boolean)
 
 export async function startSession(sessionId: string): Promise<SessionMeta> {
   clearSessionAbort(sessionId);
+  await ensureQrLinkingSession(sessionId);
 
   const existing = sessions.get(sessionId);
   if (existing?.status === 'connected') {
@@ -932,6 +1015,12 @@ export async function startSessionWithPairing(
   phone: string,
   fresh = true
 ): Promise<SessionMeta> {
+  if (isSystemSession(sessionId)) {
+    throw new Error(
+      `Session "${sessionId}" is the platform OTP number — use QR linking in admin (never pairing code).`
+    );
+  }
+
   clearSessionAbort(sessionId);
 
   const digits = normalizePhoneDigits(phone);
@@ -994,16 +1083,40 @@ export async function ensureQrLinkingSession(sessionId: string): Promise<void> {
     return;
   }
 
-  if (isLinkingInProgress(sessionId)) {
-    logger.info({ sessionId, status: meta?.status }, 'QR/pairing in progress — not wiping session');
-    return;
-  }
-
   if (!sessionAuthExists(sessionId)) {
     return;
   }
 
   const progress = await getPairingProgress(sessionId);
+
+  if (isSystemSession(sessionId)) {
+    if (progress.registered) {
+      return;
+    }
+
+    const hasPairingCode = Boolean(progress.pairingCodeOnDisk);
+    const midQrScan =
+      progress.pairingAccepted && !hasPairingCode && isLinkingInProgress(sessionId);
+
+    if (midQrScan) {
+      return;
+    }
+
+    if (hasPairingCode || progress.pairingAccepted || !isLinkingInProgress(sessionId)) {
+      logger.warn(
+        { sessionId, progress, hasPairingCode },
+        'system session: removing incomplete auth (OTP number must link via QR only)'
+      );
+      wipeSessionAuth(sessionId);
+    }
+    return;
+  }
+
+  if (isLinkingInProgress(sessionId) && progress.pairingAccepted && !progress.registered) {
+    logger.info({ sessionId, status: meta?.status }, 'QR/pairing in progress — not wiping session');
+    return;
+  }
+
   const blocksQr =
     progress.registered ||
     progress.pairingAccepted ||
@@ -1011,7 +1124,7 @@ export async function ensureQrLinkingSession(sessionId: string): Promise<void> {
 
   if (blocksQr) {
     logger.info({ sessionId, progress }, 'wiping stale auth before QR linking');
-    await deleteSession(sessionId);
+    wipeSessionAuth(sessionId);
   }
 }
 

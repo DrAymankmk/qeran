@@ -21,6 +21,7 @@ import {
   isSessionAborted,
   isLinkingInProgress,
   isSessionStartInFlight,
+  isSystemSession,
   normalizePhoneDigits,
   sessionAuthExists,
   startSession,
@@ -30,6 +31,7 @@ import {
   waitForQrOrConnected,
 } from './baileys/manager.js';
 import { sendText } from './baileys/send.js';
+import { receiptWebhookConfig } from './baileys/receipts.js';
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
 const app = express();
@@ -146,14 +148,21 @@ async function respondWithQrSnapshot(
 }
 
 app.get('/health', (_req, res) => {
+  const receipt = receiptWebhookConfig();
   res.json({
     ok: true,
     version: '1.3.0',
     qrSetupPage: QR_SETUP_PAGE_ENABLED,
     secretConfigured: Boolean(SECRET),
+    receiptWebhooks: {
+      configured: Boolean(receipt.url && receipt.hasSecret),
+      hasUrl: Boolean(receipt.url),
+      hasSecret: receipt.hasSecret,
+    },
     features: {
       pairingCode: true,
       qrPage: QR_SETUP_PAGE_ENABLED,
+      deliveryReadReceipts: Boolean(receipt.url && receipt.hasSecret),
     },
   });
 });
@@ -306,12 +315,26 @@ app.get('/sessions/:id/status', async (req, res) => {
 
     if (
       !isSessionAborted(sessionId) &&
+      !isSystemSession(sessionId) &&
       progress.pairingAccepted &&
       !progress.registered &&
       !meta.sock
     ) {
       void ensurePairingFinalized(sessionId).catch((err) => {
         logger.warn({ sessionId, err }, 'background finalize after pairing accepted failed');
+      });
+    }
+
+    if (
+      isSystemSession(sessionId) &&
+      !isSessionAborted(sessionId) &&
+      progress.pairingAccepted &&
+      !progress.registered &&
+      !meta.sock &&
+      !isSessionStartInFlight(sessionId)
+    ) {
+      void startSession(sessionId).catch((err) => {
+        logger.warn({ sessionId, err }, 'system session: reconnect after QR scan step failed');
       });
     }
 

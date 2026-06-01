@@ -1653,7 +1653,11 @@ class InvitationsController extends Controller
             $log = $entry['log'];
             $guestUser = $entry['user'];
             $contact = $entry['contact'];
-            $referenceId = $log->reference_id ?? $invitation->id.'-contact-'.$guestUser->id.'-'.$log->id;
+            $referenceId = $log->reference_id ?: $invitation->id.'-contact-'.$guestUser->id.'-'.$log->id;
+
+            $log->update([
+                'reference_id' => $referenceId,
+            ]);
 
             $message = $this->buildInvitationMessage($invitation, $guestUser->id, 'invitation_sms_template');
             $dayOffset = intdiv($index, 80);

@@ -546,6 +546,19 @@ export async function ensurePairingFinalized(sessionId: string): Promise<Session
   }
 }
 
+/** WhatsApp is picky about browser fingerprints for QR / linked devices. */
+function browserConfigForSession(sessionId: string, meta: SessionMeta): [string, string, string] {
+  if (meta.status === 'pending_pairing' || meta.linkPhone) {
+    return Browsers.ubuntu('Chrome');
+  }
+
+  if (sessionId === 'system' || meta.status === 'pending_qr' || meta.status === 'starting') {
+    return Browsers.macOS('Desktop');
+  }
+
+  return Browsers.macOS('Desktop');
+}
+
 async function resolveSocketVersion(): Promise<[number, number, number]> {
   const raw = process.env.BAILEYS_VERSION?.trim();
   if (raw) {
@@ -575,7 +588,7 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
     auth: state,
     logger: pino({ level: 'silent' }),
     printQRInTerminal: false,
-    browser: Browsers.macOS('Chrome'),
+    browser: browserConfigForSession(sessionId, meta),
     markOnlineOnConnect: false,
     syncFullHistory: false,
     connectTimeoutMs: 60_000,
@@ -615,12 +628,8 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
     const { connection, lastDisconnect, qr, isNewLogin } = update;
     const statusCode = (lastDisconnect?.error as Boom | undefined)?.output?.statusCode;
 
-    if (isNewLogin && meta.status === 'pending_pairing') {
-      logger.info({ sessionId }, 'isNewLogin during pairing — will reconnect on restartRequired close');
-    }
-
-    if (isNewLogin && meta.status === 'pending_qr') {
-      logger.info({ sessionId }, 'isNewLogin during QR scan — will reconnect on restartRequired close');
+    if (isNewLogin && (meta.status === 'pending_pairing' || meta.status === 'pending_qr')) {
+      logger.info({ sessionId, status: meta.status }, 'isNewLogin — will reconnect on restartRequired close');
     }
 
     if (qr) {
@@ -649,7 +658,7 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
       const loggedOut = statusCode === DisconnectReason.loggedOut;
       const restartRequired = statusCode === DisconnectReason.restartRequired;
       const wasPairing = meta.status === 'pending_pairing';
-      const wasQrLinking = meta.status === 'pending_qr' || Boolean(meta.qr);
+      const wasQrLinking = meta.status === 'pending_qr' || meta.status === 'starting';
 
       logger.warn(
         { sessionId, statusCode, loggedOut, restartRequired, wasPairing, wasQrLinking, status: meta.status },
@@ -658,60 +667,24 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
 
       meta.sock = undefined;
 
-      if (wasQrLinking && !wasPairing) {
-        if (loggedOut) {
-          meta.status = 'disconnected';
-          meta.qr = undefined;
-          return;
-        }
+      if (loggedOut) {
+        meta.status = 'disconnected';
+        meta.pairingCode = undefined;
+        meta.qr = undefined;
+        return;
+      }
 
-        if (restartRequired || isNewLogin) {
-          meta.qr = undefined;
-          logger.info({ sessionId }, 'restartRequired after QR scan — reconnecting to complete link');
-          void reconnectAfterRestart(sessionId, meta);
-          return;
-        }
-
-        setTimeout(() => {
-          void (async () => {
-            if (meta.status === 'connected') {
-              return;
-            }
-            const progress = await getPairingProgress(sessionId);
-            if (progress.registered) {
-              meta.qr = undefined;
-              await reconnectAfterRestart(sessionId, meta);
-              return;
-            }
-            if (meta.status === 'pending_qr' && !meta.sock) {
-              try {
-                logger.info({ sessionId }, 'transient close during QR — restoring socket (same QR)');
-                await createSocket(sessionId, meta);
-              } catch (err) {
-                logger.warn({ sessionId, err }, 'QR socket restore failed');
-              }
-            }
-          })();
-        }, 1500);
-
+      if (restartRequired && (wasPairing || wasQrLinking)) {
+        stopPairingKeepalive(sessionId);
+        logger.info(
+          { sessionId, wasPairing, wasQrLinking },
+          'restartRequired after scan/code — reconnecting to complete link'
+        );
+        void reconnectAfterRestart(sessionId, meta);
         return;
       }
 
       if (wasPairing) {
-        if (loggedOut) {
-          meta.status = 'disconnected';
-          meta.pairingCode = undefined;
-          return;
-        }
-
-        if (restartRequired) {
-          stopPairingKeepalive(sessionId);
-          logger.info({ sessionId }, 'restartRequired after pairing — reconnecting to complete link');
-          void reconnectAfterRestart(sessionId, meta);
-          return;
-        }
-
-        // Socket must stay alive while user opens WhatsApp, enters code, and confirms Link device
         void maintainPairingSocketAlive(sessionId, meta);
 
         setTimeout(() => {
@@ -738,19 +711,22 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
         return;
       }
 
-      meta.pairingCode = undefined;
-
-      if (loggedOut) {
-        meta.status = 'disconnected';
+      if (wasQrLinking) {
+        logger.info({ sessionId, statusCode }, 'QR linking socket closed — reconnecting (do not issue new QR yet)');
+        void reconnectAfterRestart(sessionId, meta);
         return;
       }
+
+      meta.pairingCode = undefined;
 
       void (async () => {
         const progress = await getPairingProgress(sessionId);
         if (progress.registered) {
           meta.status = 'connected';
           logger.info({ sessionId }, 'registered session socket closed — reconnecting');
-          await reconnectAfterRestart(sessionId, meta);
+          if (!meta.sock) {
+            await reconnectAfterRestart(sessionId, meta);
+          }
           return;
         }
 

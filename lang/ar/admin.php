@@ -942,7 +942,12 @@ return[
     'whatsapp-scan-instructions-title' => 'خطوات الربط',
     'whatsapp-scan-step-1' => 'استخدم هاتف رقم قِرَان الرسمي (ليس رقم عميل).',
     'whatsapp-scan-step-2' => 'افتح واتساب → الأجهزة المرتبطة → ربط جهاز.',
-    'whatsapp-scan-step-3' => 'امسح رمز QR المعروض أعلاه.',
+    'whatsapp-scan-step-3' => 'امسح رمز QR المعروض أعلاه خلال 60 ثانية (لا تُحدّث الصفحة أثناء المسح).',
+    'whatsapp-qr-troubleshoot-title' => 'إذا ظهر «تعذر ربط الجهاز»:',
+    'whatsapp-qr-troubleshoot-1' => 'اضغط «قطع الاتصال» ثم «إنشاء رمز QR جديد» وامسح الرمز الجديد فوراً.',
+    'whatsapp-qr-troubleshoot-2' => 'استخدم هاتف رقم قِرَان الرسمي فقط (ليس رقم عميل).',
+    'whatsapp-qr-troubleshoot-3' => 'من واتساب: الأجهزة المرتبطة — احذف أجهزة Qeran/Chrome القديمة ثم أعد المحاولة.',
+    'whatsapp-qr-troubleshoot-4' => 'بعد تحديث البوابة على السيرفر: npm run build && pm2 restart whatsapp-gateway',
 
     'quick-filter' => 'الفلتر السريع',
     'today' => 'اليوم',

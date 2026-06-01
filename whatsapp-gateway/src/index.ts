@@ -271,8 +271,6 @@ app.get('/sessions/:id/status', async (req, res) => {
 
     const inPairingFlow =
       meta.status === 'pending_pairing' && !progress.registered && !progress.pairingAccepted;
-    const inQrFlow =
-      meta.status === 'pending_qr' || Boolean(meta.qr ?? getQr(sessionId));
 
     const socketAlive = isPairingSocketAlive(sessionId);
 
@@ -281,8 +279,7 @@ app.get('/sessions/:id/status', async (req, res) => {
       progress.registered &&
       !socketAlive &&
       meta.status !== 'connected' &&
-      !inPairingFlow &&
-      !inQrFlow
+      !inPairingFlow
     ) {
       if (!isSessionStartInFlight(sessionId)) {
         void startSession(sessionId).catch((err) => {

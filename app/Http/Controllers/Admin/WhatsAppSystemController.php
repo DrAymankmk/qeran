@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\External\BaileysGateway;
+use App\Services\WhatsApp\UserWhatsAppSessionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class WhatsAppSystemController extends Controller
@@ -62,8 +64,10 @@ class WhatsAppSystemController extends Controller
             ]);
         }
 
-        BaileysGateway::deleteSession(null, 35);
-        $result = BaileysGateway::startSession(null, 45);
+        $sessionId = BaileysGateway::systemSessionId();
+        BaileysGateway::deleteSession($sessionId, 35);
+        Cache::forget(UserWhatsAppSessionService::disconnectCacheKey($sessionId));
+        $result = BaileysGateway::startSession($sessionId, 45);
 
         return response()->json([
             'ok' => $result['ok'],

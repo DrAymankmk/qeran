@@ -803,4 +803,13 @@ return[
     'whatsapp-client-disconnect-confirm' => 'Disconnect WhatsApp for client :name? This removes the linked device from their phone.',
     'whatsapp-client-disconnected' => 'Client WhatsApp session disconnected.',
     'whatsapp-client-not-found' => 'Client not found.',
+
+    'whatsapp-scan-step-1' => 'Use the official Qeran business phone (not a client number).',
+    'whatsapp-scan-step-2' => 'WhatsApp → Linked devices → Link a device.',
+    'whatsapp-scan-step-3' => 'Scan the QR above within 60 seconds (do not refresh the page while scanning).',
+    'whatsapp-qr-troubleshoot-title' => 'If you see “Couldn’t link device”:',
+    'whatsapp-qr-troubleshoot-1' => 'Click Disconnect, then Generate new QR, and scan the new code immediately.',
+    'whatsapp-qr-troubleshoot-2' => 'Use only the Qeran business SIM/account on that phone.',
+    'whatsapp-qr-troubleshoot-3' => 'On the phone: Linked devices — remove old Qeran/Chrome entries, then try again.',
+    'whatsapp-qr-troubleshoot-4' => 'After deploying gateway fixes: npm run build && pm2 restart whatsapp-gateway',
 ];

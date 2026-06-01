@@ -67,11 +67,20 @@
 
 				<hr>
 				<h6>{{ __('admin.whatsapp-scan-instructions-title') }}</h6>
-				<ol class="text-muted mb-0">
+				<ol class="text-muted mb-2">
 					<li>{{ __('admin.whatsapp-scan-step-1') }}</li>
 					<li>{{ __('admin.whatsapp-scan-step-2') }}</li>
 					<li>{{ __('admin.whatsapp-scan-step-3') }}</li>
 				</ol>
+				<div class="alert alert-info small mb-0">
+					<strong>{{ __('admin.whatsapp-qr-troubleshoot-title') }}</strong>
+					<ul class="mb-0 ps-3">
+						<li>{{ __('admin.whatsapp-qr-troubleshoot-1') }}</li>
+						<li>{{ __('admin.whatsapp-qr-troubleshoot-2') }}</li>
+						<li>{{ __('admin.whatsapp-qr-troubleshoot-3') }}</li>
+						<li>{{ __('admin.whatsapp-qr-troubleshoot-4') }}</li>
+					</ul>
+				</div>
 				@endif
 			</div>
 		</div>
@@ -103,7 +112,7 @@
 	};
 	const pollMs = 3000;
 	const qrPollMs = 2500;
-	const qrRefreshMs = 45000;
+	const qrRefreshMs = 0;
 	const maxQrAttempts = 30;
 	let statusTimer = null;
 	let qrRefreshTimer = null;

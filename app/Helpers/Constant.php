@@ -136,9 +136,10 @@ class Constant
     ];
 
     const INVITATION_CONTACT_SEND_STATUS = [
-        'pending' => 0,
-        'sent' => 1,
-        'failed' => 2,
+        'not sent' => 0,
+        'pending' => 1,
+        'sent' => 2,
+        'failed' => 3,
     ];
 
     const PACKAGE_TYPE = [

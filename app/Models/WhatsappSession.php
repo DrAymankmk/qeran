@@ -13,11 +13,13 @@ class WhatsappSession extends Model
         'status',
         'phone',
         'connected_at',
+        'disconnected_at',
         'last_seen_at',
     ];
 
     protected $casts = [
         'connected_at' => 'datetime',
+        'disconnected_at' => 'datetime',
         'last_seen_at' => 'datetime',
     ];
 

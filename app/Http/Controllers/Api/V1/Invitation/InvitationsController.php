@@ -1626,8 +1626,9 @@ class InvitationsController extends Controller
 
         $status = BaileysGateway::getStatus($this->clientSessionId());
         $connectionStatus = $status['data']['status'] ?? 'disconnected';
+        $socketAlive = (bool) ($status['data']['socketAlive'] ?? false);
 
-        if (! $status['ok'] || $connectionStatus !== 'connected') {
+        if (! $status['ok'] || $connectionStatus !== 'connected' || ! $socketAlive) {
             return RespondActive::clientError(__('messages.whatsapp_not_connected'));
         }
 

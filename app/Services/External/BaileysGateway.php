@@ -209,7 +209,7 @@ class BaileysGateway
         return $result;
     }
 
-    public static function deleteSession(?string $sessionId = null, int $timeoutSeconds = 20): array
+    public static function deleteSession(?string $sessionId = null, int $timeoutSeconds = 35): array
     {
         $id = $sessionId ?? self::systemSessionId();
 

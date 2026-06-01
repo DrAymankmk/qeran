@@ -37,6 +37,44 @@ const sessions = new Map<string, SessionMeta>();
 const startPromises = new Map<string, Promise<SessionMeta>>();
 const finalizingSessions = new Set<string>();
 const pairingKeepaliveTimers = new Map<string, ReturnType<typeof setInterval>>();
+/** Blocks pairing keepalive/reconnect until the user starts a new link (POST /sessions). */
+const abortedSessions = new Set<string>();
+
+export function isSessionAborted(sessionId: string): boolean {
+  return abortedSessions.has(sessionId);
+}
+
+export function clearSessionAbort(sessionId: string): void {
+  abortedSessions.delete(sessionId);
+}
+
+export function abortSession(sessionId: string): void {
+  abortedSessions.add(sessionId);
+}
+
+export function isLinkedOnWhatsApp(
+  status: SessionStatus,
+  socketAlive: boolean,
+  registered: boolean
+): boolean {
+  return status === 'connected' && socketAlive && registered;
+}
+
+export function disconnectedStatusPayload(sessionId: string): Record<string, unknown> {
+  return {
+    sessionId,
+    status: 'disconnected' as SessionStatus,
+    phone: null,
+    pairingCode: null,
+    registeredOnDisk: false,
+    pairingAccepted: false,
+    pairingProgress: 'awaiting_code',
+    linkedOnWhatsApp: false,
+    waId: null,
+    socketAlive: false,
+    pairingCodeAgeSeconds: null,
+  };
+}
 
 const PAIRING_READY_DELAY_MS = Number(process.env.PAIRING_READY_DELAY_MS ?? 3000);
 const PAIRING_KEEPALIVE_MS = Number(process.env.PAIRING_KEEPALIVE_MS ?? 15_000);
@@ -160,6 +198,10 @@ function startPairingKeepalive(sessionId: string, meta: SessionMeta): void {
  * on WhatsApp's confirmation screen — reconnecting early breaks the link.
  */
 async function maintainPairingSocketAlive(sessionId: string, meta: SessionMeta): Promise<void> {
+  if (isSessionAborted(sessionId)) {
+    return;
+  }
+
   if (meta.status !== 'pending_pairing') {
     return;
   }
@@ -789,6 +831,8 @@ async function runPairingFlow(sessionId: string, digits: string, fresh: boolean)
 }
 
 export async function startSession(sessionId: string): Promise<SessionMeta> {
+  clearSessionAbort(sessionId);
+
   const existing = sessions.get(sessionId);
   if (existing?.status === 'connected') {
     return existing;
@@ -839,6 +883,8 @@ export async function startSessionWithPairing(
   phone: string,
   fresh = true
 ): Promise<SessionMeta> {
+  clearSessionAbort(sessionId);
+
   const digits = normalizePhoneDigits(phone);
   if (!digits || digits.length < 10) {
     throw new Error(`Invalid phone number for pairing (E.164 required): ${digits || 'empty'}`);
@@ -916,13 +962,14 @@ export async function ensureQrLinkingSession(sessionId: string): Promise<void> {
 }
 
 export async function deleteSession(sessionId: string): Promise<void> {
+  abortSession(sessionId);
   stopPairingKeepalive(sessionId);
   finalizingSessions.delete(sessionId);
 
   const inFlight = startPromises.get(sessionId);
   if (inFlight) {
     try {
-      await Promise.race([inFlight, sleep(5000)]);
+      await Promise.race([inFlight, sleep(8000)]);
     } catch {
       // pairing flow aborted by delete
     }
@@ -930,16 +977,22 @@ export async function deleteSession(sessionId: string): Promise<void> {
   startPromises.delete(sessionId);
 
   const meta = sessions.get(sessionId);
+  const sock = meta?.sock;
+  if (sock) {
+    try {
+      await Promise.race([sock.logout(), sleep(8000)]);
+      logger.info({ sessionId }, 'WhatsApp logout sent — device should unlink from Linked devices');
+    } catch (err) {
+      logger.warn({ sessionId, err }, 'WhatsApp logout failed — wiping local session anyway');
+    }
+  }
+
   if (meta) {
     endSocket(meta);
-    try {
-      await Promise.race([
-        meta.sock?.logout() ?? Promise.resolve(),
-        sleep(2000),
-      ]);
-    } catch {
-      // ignore
-    }
+    meta.status = 'disconnected';
+    meta.pairingCode = undefined;
+    meta.phone = undefined;
+    meta.linkPhone = undefined;
   }
   sessions.delete(sessionId);
 

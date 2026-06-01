@@ -4,6 +4,7 @@ import QRCode from 'qrcode';
 import pino from 'pino';
 import {
   deleteSession,
+  disconnectedStatusPayload,
   getPairingCode,
   getPairingCodeAgeSeconds,
   getPairingProgress,
@@ -15,7 +16,9 @@ import {
   getSessionMeta,
   type SessionStatus,
   isAuthRegistered,
+  isLinkedOnWhatsApp,
   isPairingSocketAlive,
+  isSessionAborted,
   isSessionStartInFlight,
   normalizePhoneDigits,
   sessionAuthExists,
@@ -237,15 +240,16 @@ app.get('/sessions/:id/status', async (req, res) => {
   const sessionId = req.params.id;
   const quick = req.query.quick === '1' || req.query.quick === 'true';
 
-  if (!getSessionMeta(sessionId) && !sessionAuthExists(sessionId)) {
-    res.json({
-      status: 'disconnected',
-      phone: null,
-      sessionId,
-      registeredOnDisk: false,
-      pairingAccepted: false,
-      pairingProgress: 'awaiting_code',
-    });
+  if (isSessionAborted(sessionId)) {
+    res.json(disconnectedStatusPayload(sessionId));
+    return;
+  }
+
+  if (!sessionAuthExists(sessionId)) {
+    if (getSessionMeta(sessionId)) {
+      await deleteSession(sessionId);
+    }
+    res.json(disconnectedStatusPayload(sessionId));
     return;
   }
 
@@ -268,7 +272,15 @@ app.get('/sessions/:id/status', async (req, res) => {
     const inPairingFlow =
       meta.status === 'pending_pairing' && !progress.registered && !progress.pairingAccepted;
 
-    if (progress.registered && meta.status !== 'connected' && !meta.sock && !inPairingFlow) {
+    const socketAlive = isPairingSocketAlive(sessionId);
+
+    if (
+      !isSessionAborted(sessionId) &&
+      progress.registered &&
+      !socketAlive &&
+      meta.status !== 'connected' &&
+      !inPairingFlow
+    ) {
       if (!isSessionStartInFlight(sessionId)) {
         void startSession(sessionId).catch((err) => {
           logger.warn({ sessionId, err }, 'background reconnect on status poll failed');
@@ -276,19 +288,28 @@ app.get('/sessions/:id/status', async (req, res) => {
       }
     }
 
-    if (progress.pairingAccepted && !progress.registered && !meta.sock) {
+    if (
+      !isSessionAborted(sessionId) &&
+      progress.pairingAccepted &&
+      !progress.registered &&
+      !meta.sock
+    ) {
       void ensurePairingFinalized(sessionId).catch((err) => {
         logger.warn({ sessionId, err }, 'background finalize after pairing accepted failed');
       });
     }
 
     let reportStatus: SessionStatus = meta.status;
-    if (meta.status === 'connected' || (progress.registered && !inPairingFlow)) {
+    if (socketAlive && (meta.status === 'connected' || (progress.registered && !inPairingFlow))) {
       reportStatus = 'connected';
+    } else if (meta.status === 'connected' && !socketAlive) {
+      reportStatus = 'disconnected';
+    } else if (progress.registered && !inPairingFlow && !socketAlive) {
+      reportStatus = 'disconnected';
     }
 
-    const liveConnected = reportStatus === 'connected' && isPairingSocketAlive(sessionId);
-    const registeredOnDisk = progress.registered || liveConnected;
+    const liveConnected = reportStatus === 'connected' && socketAlive;
+    const registeredOnDisk = progress.registered;
     const pairingAccepted = liveConnected ? false : progress.pairingAccepted;
     const pairingProgress = liveConnected
       ? 'registered'
@@ -302,6 +323,8 @@ app.get('/sessions/:id/status', async (req, res) => {
         ? getPairingCodeAgeSeconds(sessionId)
         : null;
 
+    const linkedOnWhatsApp = isLinkedOnWhatsApp(reportStatus, socketAlive, progress.registered);
+
     res.json({
       sessionId: meta.sessionId,
       status: reportStatus,
@@ -310,8 +333,9 @@ app.get('/sessions/:id/status', async (req, res) => {
       registeredOnDisk,
       pairingAccepted,
       pairingProgress,
+      linkedOnWhatsApp,
       waId: progress.waId,
-      socketAlive: isPairingSocketAlive(sessionId),
+      socketAlive,
       pairingCodeAgeSeconds,
       quick: true,
     });
@@ -356,6 +380,9 @@ app.get('/sessions/:id/status', async (req, res) => {
     progress = await getPairingProgress(sessionId);
   }
 
+  const fullSocketAlive = isPairingSocketAlive(sessionId);
+  const linkedOnWhatsApp = isLinkedOnWhatsApp(meta.status, fullSocketAlive, progress.registered);
+
   res.json({
     sessionId: meta.sessionId,
     status: meta.status,
@@ -368,8 +395,9 @@ app.get('/sessions/:id/status', async (req, res) => {
       : progress.pairingAccepted
         ? 'code_accepted'
         : 'awaiting_code',
+    linkedOnWhatsApp,
     waId: progress.waId,
-    socketAlive: isPairingSocketAlive(sessionId),
+    socketAlive: fullSocketAlive,
     pairingCodeAgeSeconds: getPairingCodeAgeSeconds(sessionId),
   });
 });
@@ -488,8 +516,13 @@ app.post('/send', async (req, res) => {
 });
 
 app.delete('/sessions/:id', async (req, res) => {
-  await deleteSession(req.params.id);
-  res.json({ deleted: true, sessionId: req.params.id });
+  const sessionId = req.params.id;
+  await deleteSession(sessionId);
+  res.json({
+    deleted: true,
+    sessionId,
+    ...disconnectedStatusPayload(sessionId),
+  });
 });
 
 app.listen(PORT, HOST, () => {

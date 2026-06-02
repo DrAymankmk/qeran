@@ -183,6 +183,14 @@ class AuthController extends Controller
 
     public function register(RegisterRequest $request)
     {
+        Log::info('OTP register: request received', [
+            'phone'        => (string) $request->phone,
+            'country_code' => (string) $request->country_code,
+            'name'         => (string) $request->name,
+            'has_image'    => (bool) $request->image,
+            'ip'           => $request->ip(),
+        ]);
+
         if (User::where('phone', $request->phone)
             ->where('password', '!=', null)
             ->first()) {
@@ -253,6 +261,15 @@ class AuthController extends Controller
         $objective = (int) ($request->type ?? Constant::VERIFICATION_OBJECTIVE['Verify']);
         $phone = (string) $request->phone;
         $countryCode = (string) $request->country_code;
+
+        Log::info('OTP sendCode: request received', [
+            'phone'        => $phone,
+            'country_code' => $countryCode,
+            'type'         => $request->type,
+            'objective'    => $objective,
+            'objective_label' => $objective === (int) Constant::VERIFICATION_OBJECTIVE['Reset'] ? 'Reset' : 'Verify',
+            'ip'           => $request->ip(),
+        ]);
 
         $user = $this->resolveUserForSendCode($request, $objective);
 
@@ -355,6 +372,17 @@ class AuthController extends Controller
         $requestedObjective = (int) ($request->type ?? Constant::VERIFICATION_OBJECTIVE['Verify']);
         $code = trim((string) $request->code);
 
+        Log::info('OTP verifyCode: request received', [
+            'phone'              => (string) $request->phone,
+            'country_code'       => (string) $request->country_code,
+            'type'               => $request->type,
+            'requested_objective' => $requestedObjective,
+            'objective_label'    => $requestedObjective === (int) Constant::VERIFICATION_OBJECTIVE['Reset'] ? 'Reset' : 'Verify',
+            'code_length'        => strlen($code),
+            'code_digits_only'   => ctype_digit($code),
+            'ip'                 => $request->ip(),
+        ]);
+
         $check = VerificationCode::findActive(
             (string) $request->phone,
             (string) $request->country_code,
@@ -362,18 +390,34 @@ class AuthController extends Controller
             $requestedObjective
         );
 
-        if (! $check) {
+        if ($check) {
+            Log::info('OTP verifyCode: exact match found', [
+                'verification_id'  => $check->id,
+                'stored_objective' => (int) $check->objective,
+                'stored_info'      => substr((string) $check->information, -4),
+                'requested_objective' => $requestedObjective,
+            ]);
+        } else {
             $check = VerificationCode::findActiveForAnyObjective(
                 (string) $request->phone,
                 (string) $request->country_code,
                 $code
             );
 
-            if ($check && (int) $check->objective !== $requestedObjective) {
-                Log::info('OTP verify: matched code using stored objective', [
-                    'requested_type' => $requestedObjective,
-                    'stored_objective' => (int) $check->objective,
-                    'verification_id' => $check->id,
+            if ($check) {
+                Log::info('OTP verifyCode: matched using stored objective (type mismatch tolerated)', [
+                    'verification_id'    => $check->id,
+                    'requested_type'     => $requestedObjective,
+                    'stored_objective'   => (int) $check->objective,
+                    'stored_info_suffix' => substr((string) $check->information, -4),
+                ]);
+            } else {
+                Log::warning('OTP verifyCode: no active matching code found', [
+                    'requested_objective' => $requestedObjective,
+                    'phone_variants'      => VerificationCode::phoneVariants(
+                        (string) $request->phone,
+                        (string) $request->country_code
+                    ),
                 ]);
             }
         }

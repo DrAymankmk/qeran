@@ -7,14 +7,14 @@
 	function openEnvelope() {
 		if (isOpen) return;
 
-		// For templates 2-5 (modal-style), skip envelope animation
-		if (templateNumber > 1) {
+		// Templates 2–5 are modal-style; 1 and 16 use envelope animation
+		const modalTemplates = [2, 3, 4, 5];
+		if (modalTemplates.indexOf(templateNumber) !== -1) {
 			isOpen = true;
 			const modalWrapper = document.querySelector(
 				'.template2-modal-wrapper, .template3-modal-wrapper, .template4-modal-wrapper, .template5-modal-wrapper'
 			);
 			if (modalWrapper) {
-				// Modal is already visible with animation, just hide the open button
 				const openButton = document.querySelector(".open-button");
 				if (openButton) {
 					openButton.style.display = "none";
@@ -24,10 +24,14 @@
 			return;
 		}
 
-		// Template 1 uses envelope animation
+		// Template 1 / 16 use envelope animation
 		isOpen = true;
 
-		isOpen = true;
+		const inviteAudio = document.getElementById('inviteOpeningAudio');
+		if (inviteAudio) {
+			inviteAudio.volume = 0.55;
+			inviteAudio.play().catch(function () {});
+		}
 
 		// Enhanced device detection
 		const isMobile = window.innerWidth <= 768;
@@ -73,7 +77,7 @@
 			}, "-=0.4")
 
 			// Stage 2: Open flap (works with all template flaps)
-			.to(".flap, .template1-flap, .template2-flap, .template3-flap, .template4-flap, .template5-flap",
+			.to(".flap, .template1-flap, .template16-flap, .template2-flap, .template3-flap, .template4-flap, .template5-flap",
 				0.8, {
 					rotationX: 180,
 					zIndex: 1,
@@ -278,7 +282,7 @@
 			}, "-=0.4")
 
 			// Stage 4: Close the flap (works with all template flaps)
-			.to(".flap, .template1-flap, .template2-flap, .template3-flap, .template4-flap, .template5-flap",
+			.to(".flap, .template1-flap, .template16-flap, .template2-flap, .template3-flap, .template4-flap, .template5-flap",
 				0.6, {
 					rotationX: 0,
 					zIndex: 4,
@@ -386,22 +390,20 @@
 		const initialView = "{{ $initialView }}";
 		console.log("initialView", initialView);
 
-		// For templates 2-5 (modal-style), they show immediately with CSS animations
-		// Template 1 uses envelope animation and needs the open button
-		if (templateNumber > 1) {
+		// Templates 2–5 show immediately; 1 and 16 use envelope + open button
+		const modalTemplates = [2, 3, 4, 5];
+		if (modalTemplates.indexOf(templateNumber) !== -1) {
 			const modalWrapper = document.querySelector(
 				'.template2-modal-wrapper, .template3-modal-wrapper, .template4-modal-wrapper, .template5-modal-wrapper'
 			);
 			if (modalWrapper) {
 				isOpen = true;
-				// Hide open button if it exists for modal templates
 				const openButton = document.querySelector(".open-button");
 				if (openButton) {
 					openButton.style.display = "none";
 				}
 			}
 		}
-		// Template 1 keeps the envelope design with open button visible
 
 		if (initialView === "success") {
 			currentView = "success";

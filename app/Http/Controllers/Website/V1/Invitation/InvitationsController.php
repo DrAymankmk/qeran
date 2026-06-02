@@ -59,7 +59,7 @@ class InvitationsController extends Controller
 
         // Validate template number (default to 1 if invalid)
         $template = (int) $template;
-        if ($template < 1 || $template > 20) {
+        if ($template < 1 || $template > 21) {
             $template = 1;
         }
 

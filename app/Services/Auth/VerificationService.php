@@ -7,6 +7,7 @@ use App\Models\VerificationCode;
 use App\Services\Auth\Exceptions\VerificationOtpDeliveryException;
 use App\Services\External\BaileysGateway;
 use App\Services\External\BaileysWhatsApp;
+use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ActivationMail;
@@ -40,16 +41,23 @@ class VerificationService
 
         $activation_code = (string) rand(1000, 9999);
 
+        $normalizedInformation = (string) $information;
+        $normalizedCountryCode = (string) $country_code;
+
         if ($information_type == Constant::VERIFICATION_INFORMATION_TYPE['Phone']) {
+            $normalizedInformation = PhoneNumber::informationForStorage(
+                $normalizedCountryCode,
+                (string) $information
+            );
             self::deliverPhoneOtp(
                 (int) $user_id,
-                (string) $country_code,
-                (string) $information,
+                $normalizedCountryCode,
+                $normalizedInformation,
                 $activation_code,
                 (int) $objective
             );
         } else {
-            self::deliverEmailOtp((string) $information, $activation_code, (int) $user_id, (int) $objective);
+            self::deliverEmailOtp($normalizedInformation, $activation_code, (int) $user_id, (int) $objective);
         }
 
         VerificationCode::updateOrInsert(
@@ -57,8 +65,8 @@ class VerificationService
                 'user_id' => $user_id,
                 'objective' => $objective,
                 'information_type' => $information_type,
-                'information' => $information,
-                'country_code' => $country_code,
+                'information' => $normalizedInformation,
+                'country_code' => $normalizedCountryCode,
             ],
             [
                 'code' => $activation_code,

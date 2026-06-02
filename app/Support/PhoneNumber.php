@@ -100,8 +100,9 @@ class PhoneNumber
      */
     public static function variants(?string $countryCode, string $phone): array
     {
-        $e164 = self::e164ForWhatsAppPairing($countryCode, $phone);
-        $digits = preg_replace('/\D+/', '', $phone);
+        $raw = trim($phone);
+        $e164 = self::e164ForWhatsAppPairing($countryCode, $raw);
+        $digits = preg_replace('/\D+/', '', $raw);
         $cc = preg_replace('/\D+/', '', (string) $countryCode);
 
         $local = $digits;
@@ -117,17 +118,21 @@ class PhoneNumber
         $localWithZero = str_starts_with($local, '0') ? $local : '0'.$localNoZero;
 
         $variants = [
-            $phone,
+            $raw,
             $digits,
             $local,
             $localNoZero,
             $localWithZero,
             $e164,
+            $raw !== '' ? '+'.$digits : null,
+            $e164 !== '' ? '+'.$e164 : null,
         ];
 
         if ($cc !== '') {
             $variants[] = $cc.$local;
             $variants[] = $cc.$localNoZero;
+            $variants[] = '+'.$cc.$local;
+            $variants[] = '+'.$cc.$localNoZero;
         }
 
         return array_values(array_unique(array_filter($variants)));

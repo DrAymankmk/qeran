@@ -1949,10 +1949,11 @@ class InvitationsController extends Controller
         $sendStatus = match ((int) $log->send_status) {
             Constant::INVITATION_CONTACT_SEND_STATUS['sent'] => 'sent',
             Constant::INVITATION_CONTACT_SEND_STATUS['failed'] => 'failed',
-            default => 'pending',
+            Constant::INVITATION_CONTACT_SEND_STATUS['pending'] => 'pending',
+            default => 'not_sent',
         };
 
-        $whatsappStatus = 'pending';
+        $whatsappStatus = 'not_sent';
         if ($log->read_at) {
             $whatsappStatus = 'read';
         } elseif ($log->delivered_at) {
@@ -1961,6 +1962,8 @@ class InvitationsController extends Controller
             $whatsappStatus = 'sent';
         } elseif ($sendStatus === 'failed') {
             $whatsappStatus = 'failed';
+        } elseif ($sendStatus === 'pending') {
+            $whatsappStatus = 'pending';
         }
 
         return [

@@ -323,6 +323,11 @@ class Invitation extends Model
         return $this->hasMany(InvitationContactLog::class);
     }
 
+    public function builderSetting()
+    {
+        return $this->hasOne(InvitationBuilderSetting::class);
+    }
+
     public function users()
     {
         return $this->belongsToMany(User::class)

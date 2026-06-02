@@ -10,14 +10,17 @@ use App\Services\RespondActive;
 use Illuminate\Http\Request;
 use App\Helpers\Constant;
 use App\Models\Category;
+use App\Services\Invitation\InvitationBuilderService;
 
 class InvitationsController extends Controller
 {
-
+    public function __construct(
+        protected InvitationBuilderService $invitationBuilder
+    ) {}
 
     public function show($invitation_code,$user_id , $inserted_by = null, $template = 1)
     {
-        $invitation=Invitation::where('code',$invitation_code)->first();
+        $invitation=Invitation::with('builderSetting')->where('code',$invitation_code)->first();
 
         // Determine host name based on who inserted the user (owner vs admin)
         $host_name = $invitation->host_name;
@@ -63,6 +66,19 @@ class InvitationsController extends Controller
             $template = 1;
         }
 
+        $builderConfig = null;
+        $builderPreview = request()->boolean('builder') || request()->query('builder') === '1';
+        $builderRow = $invitation->builderSetting;
+        $useBuilder = $builderRow && ($builderRow->isPublished() || $builderPreview);
+
+        if ($useBuilder) {
+            $builderConfig = $this->invitationBuilder->resolve($invitation, $template);
+            $template = (int) $builderConfig['template'];
+            if ($template < 1 || $template > 21) {
+                $template = 1;
+            }
+        }
+
         // Pass routes for the accept/decline actions
         $routes = [
             'accept' => route('user.invitation.accept', ['invitation_code' => $invitation->code, 'user_id' => $user_id]),
@@ -77,7 +93,7 @@ class InvitationsController extends Controller
             $initialView = 'decline';
         }
 
-        return view('invitation', compact('invitation', 'user', 'routes', 'category', 'host_name', 'initialView', 'template'));
+        return view('invitation', compact('invitation', 'user', 'routes', 'category', 'host_name', 'initialView', 'template', 'builderConfig'));
     }
 
     public function accept($invitation_code, $user_id)

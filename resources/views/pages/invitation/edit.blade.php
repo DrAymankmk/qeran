@@ -16,7 +16,10 @@
 		<div class="page-title-box d-sm-flex align-items-center justify-content-between">
 			<h4 class="mb-sm-0 font-size-18">{{__('admin.invitations')}}</h4>
 
-			<div class="page-title-right">
+			<div class="page-title-right d-flex align-items-center gap-2">
+				<a href="{{ route('admin.invitation-builder.edit', $invitation) }}" class="btn btn-primary btn-sm">
+					{{ __('admin.invitation-builder') }}
+				</a>
 				<ol class="breadcrumb m-0">
 					<li class="breadcrumb-item"><a
 							href="{{route('admin.dashboard')}}">{{__('admin.Dashboard')}}</a>

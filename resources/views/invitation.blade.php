@@ -1939,6 +1939,7 @@
 		}
 	}
 	</style>
+	@include('invitation.partials.builder-theme')
 </head>
 
 <body>

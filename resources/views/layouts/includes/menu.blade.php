@@ -73,7 +73,7 @@
 				@endcan
 				@can('view-invitations')
 				<li @if(Route::is('invitation.index') || Route::is('invitation.create') ||
-					Route::is('invitation.edit') || Route::is('invitations.details'))
+					Route::is('invitation.edit') || Route::is('invitations.details') || Route::is('admin.invitation-builder.edit'))
 					class="mm-active" @endif>
 					<a href="{{route('invitation.index')}}" class="waves-effect">
 						<i class="bx bx-file"></i>

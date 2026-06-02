@@ -39,8 +39,6 @@ class VerificationService
             );
         }
 
-        $activation_code = (string) rand(1000, 9999);
-
         $normalizedInformation = (string) $information;
         $normalizedCountryCode = (string) $country_code;
 
@@ -49,6 +47,17 @@ class VerificationService
                 $normalizedCountryCode,
                 (string) $information
             );
+        }
+
+        $activation_code = self::resolveOtpCode(
+            (int) $user_id,
+            (int) $objective,
+            (int) $information_type,
+            $normalizedInformation,
+            $normalizedCountryCode
+        );
+
+        if ($information_type == Constant::VERIFICATION_INFORMATION_TYPE['Phone']) {
             self::deliverPhoneOtp(
                 (int) $user_id,
                 $normalizedCountryCode,
@@ -73,8 +82,43 @@ class VerificationService
                 'used' => Constant::VERIFICATION_USED['Not used'],
                 'expired_at' => now()->addHour()->toDateTimeString(),
                 'created_at' => now(),
+                'updated_at' => now(),
             ]
         );
+    }
+
+    /**
+     * Reuse currently active code to prevent accidental "wrong_code" after repeated send calls.
+     */
+    protected static function resolveOtpCode(
+        int $userId,
+        int $objective,
+        int $informationType,
+        string $information,
+        string $countryCode
+    ): string {
+        $existing = VerificationCode::query()
+            ->where('user_id', $userId)
+            ->where('objective', $objective)
+            ->where('information_type', $informationType)
+            ->where('information', $information)
+            ->where('country_code', $countryCode)
+            ->where('used', Constant::VERIFICATION_USED['Not used'])
+            ->where('expired_at', '>', now())
+            ->latest('id')
+            ->first();
+
+        if ($existing && is_string($existing->code) && trim($existing->code) !== '') {
+            Log::info('OTP: reusing active code', [
+                'user_id' => $userId,
+                'objective' => $objective,
+                'verification_id' => $existing->id,
+            ]);
+
+            return trim($existing->code);
+        }
+
+        return (string) rand(1000, 9999);
     }
 
     /**

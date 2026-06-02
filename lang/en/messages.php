@@ -111,6 +111,8 @@ return [
     'otp_verify_expired' => 'This verification code has expired. Request a new one.',
     'otp_verify_already_used' => 'This verification code was already used. Request a new one.',
     'otp_verify_wrong_type' => 'Invalid verification request type.',
+    'otp_verify_wrong_type_reset' => 'This code is for password reset. Send type=2 when verifying.',
+    'otp_verify_wrong_type_verify' => 'This code is for account verification. Send type=1 when verifying.',
     'otp_verify_no_record' => 'No verification code found for this number. Request a new code.',
     'otp_verify_user_not_found' => 'User account not found for this phone number.',
     'otp_verify_user_mismatch' => 'This code does not belong to your account.',

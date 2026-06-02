@@ -352,22 +352,38 @@ class AuthController extends Controller
 
     public function verifyCode(VerifyUserConfirmationCodeRequest $request)
     {
-        $objective = (int) ($request->type ?? Constant::VERIFICATION_OBJECTIVE['Verify']);
+        $requestedObjective = (int) ($request->type ?? Constant::VERIFICATION_OBJECTIVE['Verify']);
         $code = trim((string) $request->code);
 
         $check = VerificationCode::findActive(
             (string) $request->phone,
             (string) $request->country_code,
             $code,
-            $objective
+            $requestedObjective
         );
+
+        if (! $check) {
+            $check = VerificationCode::findActiveForAnyObjective(
+                (string) $request->phone,
+                (string) $request->country_code,
+                $code
+            );
+
+            if ($check && (int) $check->objective !== $requestedObjective) {
+                Log::info('OTP verify: matched code using stored objective', [
+                    'requested_type' => $requestedObjective,
+                    'stored_objective' => (int) $check->objective,
+                    'verification_id' => $check->id,
+                ]);
+            }
+        }
 
         if (! $check) {
             $reason = VerificationCode::failureReason(
                 (string) $request->phone,
                 (string) $request->country_code,
                 $code,
-                $objective
+                $requestedObjective
             );
 
             VerificationCode::logVerificationFailure(
@@ -375,14 +391,16 @@ class AuthController extends Controller
                 (string) $request->phone,
                 (string) $request->country_code,
                 $code,
-                $objective,
+                $requestedObjective,
                 auth('sanctum')->id()
             );
 
             return RespondActive::clientError($this->verifyCodeFailureMessage($reason));
         }
 
-        $user = $this->resolveUserForVerifyCode($request);
+        $objective = (int) $check->objective;
+
+        $user = $this->resolveUserForVerifyCode($request, $objective);
 
         if (! $user) {
             Log::warning('OTP verify: user not found after valid code', [
@@ -441,9 +459,11 @@ class AuthController extends Controller
         return RespondActive::success(__('messages.otp_verify_success'), new UserResource($user));
     }
 
-    protected function resolveUserForVerifyCode(VerifyUserConfirmationCodeRequest $request): ?User
-    {
-        $objective = (int) ($request->type ?? Constant::VERIFICATION_OBJECTIVE['Verify']);
+    protected function resolveUserForVerifyCode(
+        VerifyUserConfirmationCodeRequest $request,
+        ?int $objective = null
+    ): ?User {
+        $objective = $objective ?? (int) ($request->type ?? Constant::VERIFICATION_OBJECTIVE['Verify']);
         $phone = (string) $request->phone;
         $countryCode = (string) $request->country_code;
 
@@ -471,6 +491,8 @@ class AuthController extends Controller
             'expired' => __('messages.otp_verify_expired'),
             'already_used' => __('messages.otp_verify_already_used'),
             'wrong_type' => __('messages.otp_verify_wrong_type'),
+            'wrong_type_need_reset' => __('messages.otp_verify_wrong_type_reset'),
+            'wrong_type_need_verify' => __('messages.otp_verify_wrong_type_verify'),
             'no_record' => __('messages.otp_verify_no_record'),
             default => __('messages.otp_verify_invalid'),
         };

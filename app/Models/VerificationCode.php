@@ -62,6 +62,33 @@ class VerificationCode extends Model
     }
 
     /**
+     * Find active code for this phone regardless of objective (register vs reset).
+     */
+    public static function findActiveForAnyObjective(
+        string $phone,
+        ?string $countryCode,
+        string $code
+    ): ?self {
+        $code = trim($code);
+
+        foreach (self::phoneVariants($phone, $countryCode) as $variant) {
+            $record = self::query()
+                ->where('information', $variant)
+                ->where('code', $code)
+                ->where('used', Constant::VERIFICATION_USED['Not used'])
+                ->where('expired_at', '>', now())
+                ->orderByDesc('id')
+                ->first();
+
+            if ($record) {
+                return $record;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Why verification failed (for logging and API messages).
      */
     public static function failureReason(
@@ -87,7 +114,9 @@ class VerificationCode extends Model
                 ->first();
 
             if ($anyObjective && (int) $anyObjective->objective !== $objective) {
-                return 'wrong_type';
+                return (int) $anyObjective->objective === (int) Constant::VERIFICATION_OBJECTIVE['Reset']
+                    ? 'wrong_type_need_reset'
+                    : 'wrong_type_need_verify';
             }
 
             return 'no_record';

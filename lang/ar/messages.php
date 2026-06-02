@@ -111,6 +111,8 @@ return [
     'otp_verify_expired' => 'انتهت صلاحية رمز التحقق. اطلب رمزاً جديداً.',
     'otp_verify_already_used' => 'تم استخدام هذا الرمز مسبقاً. اطلب رمزاً جديداً.',
     'otp_verify_wrong_type' => 'نوع طلب التحقق غير صالح.',
+    'otp_verify_wrong_type_reset' => 'هذا الرمز لإعادة تعيين كلمة المرور. أرسل type=2 عند التحقق.',
+    'otp_verify_wrong_type_verify' => 'هذا الرمز لتفعيل الحساب. أرسل type=1 عند التحقق.',
     'otp_verify_no_record' => 'لا يوجد رمز تحقق لهذا الرقم. اطلب رمزاً جديداً.',
     'otp_verify_user_not_found' => 'لم يتم العثور على حساب لهذا الرقم.',
     'otp_verify_user_mismatch' => 'هذا الرمز لا يخص حسابك.',

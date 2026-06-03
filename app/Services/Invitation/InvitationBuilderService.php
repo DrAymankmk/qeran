@@ -2,9 +2,11 @@
 
 namespace App\Services\Invitation;
 
+use App\Helpers\Constant;
 use App\Models\Invitation;
 use App\Models\InvitationBuilderSetting;
-use Illuminate\Support\Arr;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 
 class InvitationBuilderService
 {
@@ -61,6 +63,61 @@ class InvitationBuilderService
         ];
     }
 
+    /**
+     * Merge unsaved form values with stored settings (for live preview).
+     */
+    public function resolveFromDraft(Invitation $invitation, array $data): array
+    {
+        $base = $this->resolve($invitation);
+
+        $template = (int) ($data['theme_template'] ?? $base['template']);
+        if ($template < 1 || $template > 21) {
+            $template = $base['template'];
+        }
+
+        $bool = function (string $key) use ($data, $base): bool {
+            if (! array_key_exists($key, $data)) {
+                return (bool) $base[$key];
+            }
+
+            return filter_var($data[$key], FILTER_VALIDATE_BOOLEAN);
+        };
+
+        $welcomeEnabled = $bool('welcome_enabled');
+        $introEnabled = $bool('intro_video_enabled');
+        $openingType = $data['opening_type'] ?? $base['opening_type'];
+        if ($welcomeEnabled) {
+            $openingType = 'welcome';
+        }
+        if ($introEnabled) {
+            $openingType = 'intro_video';
+        }
+
+        return [
+            'enabled' => true,
+            'published' => true,
+            'template' => $template,
+            'event_category' => $data['event_category'] ?? $base['event_category'],
+            'theme_mode' => $data['theme_mode'] ?? $base['theme_mode'],
+            'opening_type' => $openingType,
+            'primary_color' => $data['primary_color'] ?? $base['primary_color'],
+            'secondary_color' => $data['secondary_color'] ?? $base['secondary_color'],
+            'background_color' => $data['background_color'] ?? $base['background_color'],
+            'text_color' => $data['text_color'] ?? $base['text_color'],
+            'font_family' => $data['font_family'] ?? $base['font_family'],
+            'custom_css' => array_key_exists('custom_css', $data) ? (string) $data['custom_css'] : $base['custom_css'],
+            'welcome_title' => $data['welcome_title'] ?? $base['welcome_title'],
+            'welcome_subtitle' => $data['welcome_subtitle'] ?? $base['welcome_subtitle'],
+            'welcome_enabled' => $welcomeEnabled,
+            'music_enabled' => $bool('music_enabled'),
+            'animated_theme' => $bool('animated_theme'),
+            'video_background' => $bool('video_background'),
+            'intro_video_enabled' => $introEnabled,
+            'logo_url' => $data['logo_url'] ?? $base['logo_url'],
+            'background_media_url' => $data['background_media_url'] ?? $base['background_media_url'],
+        ];
+    }
+
     public function upsert(Invitation $invitation, array $data): InvitationBuilderSetting
     {
         $settings = [
@@ -108,14 +165,93 @@ class InvitationBuilderService
         );
     }
 
-    public function previewUrl(Invitation $invitation, int $userId = 0, ?int $insertedBy = null): string
+    /**
+     * Guest user_id + invited_by for a working preview link.
+     */
+    public function resolvePreviewGuestIds(Invitation $invitation): array
     {
+        $invitation->loadMissing('users');
+        $guest = $invitation->users()->orderBy('invitation_user.id')->first();
+
+        if ($guest) {
+            return [
+                'user_id' => (int) $guest->id,
+                'inserted_by' => (int) ($guest->pivot->invited_by ?? $invitation->user_id),
+            ];
+        }
+
+        return [
+            'user_id' => (int) $invitation->user_id,
+            'inserted_by' => (int) $invitation->user_id,
+        ];
+    }
+
+    /**
+     * Resolve the guest row for the public invitation page.
+     */
+    public function resolveGuestForShow(Invitation $invitation, int $userId, ?int $insertedBy, bool $builderPreview): ?User
+    {
+        if ($insertedBy !== null) {
+            $guest = $invitation->users()
+                ->where('invitation_user.user_id', $userId)
+                ->where('invitation_user.invited_by', $insertedBy)
+                ->first();
+
+            if ($guest) {
+                return $guest;
+            }
+        }
+
+        $guest = $invitation->users()
+            ->where('invitation_user.user_id', $userId)
+            ->first();
+
+        if ($guest) {
+            return $guest;
+        }
+
+        if (! $builderPreview) {
+            return null;
+        }
+
+        $anyGuest = $invitation->users()->orderBy('invitation_user.id')->first();
+        if ($anyGuest) {
+            return $anyGuest;
+        }
+
+        return $this->syntheticPreviewUser($invitation);
+    }
+
+    protected function syntheticPreviewUser(Invitation $invitation): User
+    {
+        $user = User::query()->find($invitation->user_id) ?? new User([
+            'name' => __('admin.invitation-builder-preview-guest'),
+        ]);
+
+        if (! $user->id) {
+            $user->id = $invitation->user_id;
+        }
+
+        $user->setRelation('pivot', new Pivot([
+            'name' => __('admin.invitation-builder-preview-guest'),
+            'invitation_count' => 1,
+            'seen' => Constant::SEEN_STATUS['in app'],
+            'invited_by' => $invitation->user_id,
+        ], 'invitation_user'));
+
+        return $user;
+    }
+
+    public function previewUrl(Invitation $invitation): string
+    {
+        $invitation->loadMissing('users');
         $template = (int) ($invitation->builderSetting?->theme_template ?? config('invitation_builder.defaults.theme_template', 16));
+        $ids = $this->resolvePreviewGuestIds($invitation);
 
         $url = route('user.invitation.show', [
             'invitation_code' => $invitation->code,
-            'user_id' => $userId > 0 ? $userId : ($invitation->user_id ?? 1),
-            'inserted_by' => $insertedBy ?? $invitation->user_id ?? 0,
+            'user_id' => $ids['user_id'],
+            'inserted_by' => $ids['inserted_by'],
             'template' => $template,
         ]);
 

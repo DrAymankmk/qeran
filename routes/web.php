@@ -278,6 +278,7 @@ Route::group(['prefix' => 'admin', 'middleware' => 'set.admin.locale'], function
         Route::delete('invitation/{invitation}/hub-file/{hubFile}', [InvitationsController::class, 'destroyHubFile'])->name('invitation.hub-file.destroy');
         Route::post('invitation/{invitation}/hub-file/{hubFile}/replace', [InvitationsController::class, 'replaceHubFile'])->name('invitation.hub-file.replace');
         Route::get('invitation/{invitation}/builder', [InvitationBuilderController::class, 'edit'])->name('admin.invitation-builder.edit');
+        Route::post('invitation/{invitation}/builder/preview', [InvitationBuilderController::class, 'preview'])->name('admin.invitation-builder.preview');
         Route::put('invitation/{invitation}/builder', [InvitationBuilderController::class, 'update'])->name('admin.invitation-builder.update');
         Route::resource('invitation', InvitationsController::class);
         Route::resource('users', UsersController::class);

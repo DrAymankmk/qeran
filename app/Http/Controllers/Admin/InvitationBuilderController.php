@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\InvitationBuilderPreviewRequest;
 use App\Http\Requests\Admin\InvitationBuilderRequest;
 use App\Models\Invitation;
 use App\Services\Invitation\InvitationBuilderService;
-use Illuminate\Http\Request;
 
 class InvitationBuilderController extends Controller
 {
@@ -20,8 +20,42 @@ class InvitationBuilderController extends Controller
         $catalog = $this->builder->catalog();
         $config = $this->builder->resolve($invitation);
         $previewUrl = $this->builder->previewUrl($invitation);
+        $previewPostUrl = route('admin.invitation-builder.preview', $invitation);
 
-        return view('admin.invitation-builder.edit', compact('invitation', 'catalog', 'config', 'previewUrl'));
+        return view('admin.invitation-builder.edit', compact(
+            'invitation',
+            'catalog',
+            'config',
+            'previewUrl',
+            'previewPostUrl'
+        ));
+    }
+
+    public function preview(InvitationBuilderPreviewRequest $request, Invitation $invitation)
+    {
+        $builderConfig = $this->builder->resolveFromDraft($invitation, $request->validated());
+        $template = (int) $builderConfig['template'];
+        $host_name = $invitation->host_name;
+
+        if ($template < 1 || $template > 21) {
+            $template = 1;
+        }
+
+        $view = 'invitation.templates.template'.$template;
+        if (! view()->exists($view)) {
+            $template = 1;
+            $view = 'invitation.templates.template1';
+        }
+
+        return response()
+            ->view('admin.invitation-builder.preview-frame', compact(
+                'invitation',
+                'builderConfig',
+                'template',
+                'host_name',
+                'view'
+            ))
+            ->header('X-Frame-Options', 'SAMEORIGIN');
     }
 
     public function update(InvitationBuilderRequest $request, Invitation $invitation)

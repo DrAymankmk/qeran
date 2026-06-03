@@ -42,7 +42,7 @@
 </head>
 <body>
 	<span class="ib-preview-badge">{{ __('admin.invitation-builder-live-preview') }}</span>
-	<div class="ib-preview-shell">
+	<div class="ib-preview-shell" style="flex-direction: column;">
 		@include($view)
 	</div>
 	@include('admin.invitation-builder.preview-scripts')

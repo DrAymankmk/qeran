@@ -1,49 +1,51 @@
 @extends('layouts.app')
 @section('extra-css')
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Amiri&family=Tajawal&family=Great+Vibes&display=swap" rel="stylesheet">
 <style>
 .ib-builder-layout { align-items: flex-start; }
-.ib-preview-sticky {
-	position: sticky;
-	top: 88px;
-	z-index: 10;
-}
+.ib-preview-sticky { position: sticky; top: 88px; z-index: 10; }
 .ib-preview-device {
 	background: linear-gradient(145deg, #1e1e2e, #2a2a40);
-	border-radius: 16px;
-	padding: 14px;
-	margin: 0 auto;
-	transition: max-width 0.25s ease;
+	border-radius: 16px; padding: 14px; margin: 0 auto; transition: max-width 0.25s ease;
 }
-.ib-preview-device.is-mobile {
-	max-width: 390px;
-	box-shadow: 0 0 0 3px #333, 0 0 0 6px #1a1a1a;
-	border-radius: 28px;
-}
-.ib-preview-device.is-desktop {
-	max-width: 100%;
-}
-.ib-preview-device iframe {
-	width: 100%;
-	border: 0;
-	display: block;
-	background: #0f0f18;
-	border-radius: 8px;
-}
+.ib-preview-device.is-mobile { max-width: 390px; box-shadow: 0 0 0 3px #333, 0 0 0 6px #1a1a1a; border-radius: 28px; }
+.ib-preview-device.is-desktop { max-width: 100%; }
+.ib-preview-device iframe { width: 100%; border: 0; display: block; background: #0f0f18; border-radius: 8px; }
 .ib-preview-device.is-desktop iframe { height: min(72vh, 680px); }
 .ib-preview-device.is-mobile iframe { height: min(68vh, 640px); border-radius: 12px; }
 .ib-preview-loading {
-	position: absolute;
-	inset: 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: rgba(255,255,255,0.85);
-	border-radius: 12px;
-	z-index: 2;
+	position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+	background: rgba(255,255,255,0.85); border-radius: 12px; z-index: 2;
 }
 .ib-preview-loading.d-none { display: none !important; }
+.ib-builder-tabs .nav-link { font-weight: 600; border-radius: 8px 8px 0 0; }
+.ib-builder-tabs .nav-link.active { background: #fff; border-bottom-color: #fff; }
+.ib-tab-pane { min-height: 320px; }
+.ib-theme-card {
+	border-radius: 12px; overflow: hidden; background: #fff;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform 0.15s, box-shadow 0.15s;
+}
+.ib-theme-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+.ib-theme-card.is-active { outline: 3px solid var(--bs-primary); outline-offset: 2px; }
+.ib-theme-preview { height: 72px; }
+.ib-envelope-swatch {
+	display: flex; flex-direction: column; align-items: center; gap: 4px;
+	cursor: pointer; padding: 6px; border-radius: 8px; border: 2px solid transparent;
+}
+.ib-envelope-swatch span:first-of-type {
+	width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.15);
+}
+.ib-envelope-swatch.is-active { border-color: var(--bs-primary); background: rgba(13,110,253,0.08); }
+.ib-envelope-swatch small { font-size: 10px; max-width: 64px; text-align: center; }
+.ib-seal-option { cursor: pointer; }
+.ib-block-item { cursor: grab; }
+.ib-block-item.dragging { opacity: 0.5; }
+.ib-drag-handle { user-select: none; }
+.cursor-grab { cursor: grab; }
+#ibThemeGrid { max-height: 420px; overflow-y: auto; }
 </style>
 @endsection
+
 @section('content')
 <div class="row">
 	<div class="col-12">
@@ -53,9 +55,7 @@
 				<a href="{{ $previewUrl }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
 					{{ __('admin.invitation-builder-preview-tab') }}
 				</a>
-				<a href="{{ route('invitation.edit', $invitation) }}" class="btn btn-secondary btn-sm">
-					{{ __('admin.back') }}
-				</a>
+				<a href="{{ route('invitation.edit', $invitation) }}" class="btn btn-secondary btn-sm">{{ __('admin.back') }}</a>
 			</div>
 		</div>
 	</div>
@@ -68,125 +68,52 @@
 <form method="post" action="{{ route('admin.invitation-builder.update', $invitation) }}" id="invitationBuilderForm">
 	@csrf
 	@method('PUT')
+	<input type="hidden" name="opening_type" value="envelope">
 
 	<div class="row ib-builder-layout">
 		<div class="col-xl-7 col-lg-12">
-			<div class="row">
-				<div class="col-lg-6">
-					<div class="card mb-3">
-						<div class="card-header bg-primary text-white">{{ __('admin.invitation-builder-types') }}</div>
-						<div class="card-body">
-							<label class="form-label">{{ __('admin.invitation-builder-event-type') }}</label>
-							<select name="event_category" class="form-select ib-preview-field">
-								@foreach($catalog['event_types'] as $key => $type)
-								<option value="{{ $key }}" @selected($config['event_category'] === $key)>
-									{{ $type['icon'] ?? '' }} {{ $type['label_ar'] ?? $key }}
-								</option>
-								@endforeach
-							</select>
+			<div class="card mb-3">
+				<div class="card-body p-0">
+					<ul class="nav nav-tabs nav-justified ib-builder-tabs px-2 pt-2" role="tablist">
+						<li class="nav-item">
+							<button class="nav-link active" data-bs-toggle="tab" data-bs-target="#ibTabThemes" type="button">
+								<i class="mdi mdi-palette-outline me-1"></i>{{ __('admin.ib-tab-themes') }}
+							</button>
+						</li>
+						<li class="nav-item">
+							<button class="nav-link" data-bs-toggle="tab" data-bs-target="#ibTabEnvelope" type="button">
+								<i class="mdi mdi-email-outline me-1"></i>{{ __('admin.ib-tab-envelope') }}
+							</button>
+						</li>
+						<li class="nav-item">
+							<button class="nav-link" data-bs-toggle="tab" data-bs-target="#ibTabDetails" type="button">
+								<i class="mdi mdi-text-box-outline me-1"></i>{{ __('admin.ib-tab-details') }}
+							</button>
+						</li>
+						<li class="nav-item">
+							<button class="nav-link" data-bs-toggle="tab" data-bs-target="#ibTabBlocks" type="button">
+								<i class="mdi mdi-view-grid-plus-outline me-1"></i>{{ __('admin.ib-tab-blocks') }}
+							</button>
+						</li>
+					</ul>
+					<div class="tab-content p-4 border-top">
+						<div class="tab-pane fade show active ib-tab-pane" id="ibTabThemes">
+							@include('admin.invitation-builder.partials.tab-themes')
 						</div>
-					</div>
-
-					<div class="card mb-3">
-						<div class="card-header">{{ __('admin.invitation-builder-theme') }}</div>
-						<div class="card-body">
-							<label class="form-label">{{ __('admin.invitation-builder-template') }}</label>
-							<select name="theme_template" class="form-select mb-2 ib-preview-field">
-								@foreach($catalog['templates'] as $id => $tpl)
-								<option value="{{ $id }}" @selected((int)$config['template'] === (int)$id)>
-									#{{ $id }} — {{ $tpl['name'] }}
-									@if(!empty($tpl['wooow_style'])) (Wooow) @endif
-								</option>
-								@endforeach
-								@for($i = 1; $i <= 21; $i++)
-									@if(!isset($catalog['templates'][$i]))
-									<option value="{{ $i }}" @selected((int)$config['template'] === $i)>#{{ $i }}</option>
-									@endif
-								@endfor
-							</select>
-							<label class="form-label">{{ __('admin.invitation-builder-theme-mode') }}</label>
-							<select name="theme_mode" class="form-select ib-preview-field">
-								@foreach($catalog['theme_modes'] as $key => $mode)
-								<option value="{{ $key }}" @selected($config['theme_mode'] === $key)>{{ $mode['label_ar'] }}</option>
-								@endforeach
-							</select>
-							<div class="form-check mt-2">
-								<input class="form-check-input ib-preview-field" type="checkbox" name="animated_theme" value="1" id="animated_theme" @checked($config['animated_theme'])>
-								<label class="form-check-label" for="animated_theme">{{ __('admin.invitation-builder-animated') }}</label>
-							</div>
+						<div class="tab-pane fade ib-tab-pane" id="ibTabEnvelope">
+							@include('admin.invitation-builder.partials.tab-envelope')
 						</div>
-					</div>
-				</div>
-
-				<div class="col-lg-6">
-					<div class="card mb-3">
-						<div class="card-header">{{ __('admin.invitation-builder-opening') }}</div>
-						<div class="card-body">
-							<label class="form-label">{{ __('admin.invitation-builder-opening-type') }}</label>
-							<select name="opening_type" class="form-select mb-2 ib-preview-field">
-								@foreach($catalog['opening_types'] as $key => $op)
-								<option value="{{ $key }}" @selected($config['opening_type'] === $key)>{{ $op['label_ar'] }}</option>
-								@endforeach
-							</select>
-							<div class="form-check">
-								<input class="form-check-input ib-preview-field" type="checkbox" name="welcome_enabled" value="1" id="welcome_enabled" @checked($config['welcome_enabled'])>
-								<label class="form-check-label" for="welcome_enabled">{{ __('admin.invitation-builder-welcome-screen') }}</label>
-							</div>
-							<div class="form-check">
-								<input class="form-check-input ib-preview-field" type="checkbox" name="music_enabled" value="1" id="music_enabled" @checked($config['music_enabled'])>
-								<label class="form-check-label" for="music_enabled">{{ __('admin.invitation-builder-music') }}</label>
-							</div>
-							<div class="form-check">
-								<input class="form-check-input ib-preview-field" type="checkbox" name="intro_video_enabled" value="1" id="intro_video_enabled" @checked($config['intro_video_enabled'])>
-								<label class="form-check-label" for="intro_video_enabled">{{ __('admin.invitation-builder-intro-video') }}</label>
-							</div>
-							<hr>
-							<label class="form-label">{{ __('admin.invitation-builder-welcome-title') }}</label>
-							<input type="text" name="welcome_title" class="form-control mb-2 ib-preview-field" value="{{ old('welcome_title', $config['welcome_title']) }}">
-							<label class="form-label">{{ __('admin.invitation-builder-welcome-subtitle') }}</label>
-							<input type="text" name="welcome_subtitle" class="form-control ib-preview-field" value="{{ old('welcome_subtitle', $config['welcome_subtitle']) }}">
+						<div class="tab-pane fade ib-tab-pane" id="ibTabDetails">
+							@include('admin.invitation-builder.partials.tab-details')
 						</div>
-					</div>
-
-					<div class="card mb-3">
-						<div class="card-header">{{ __('admin.invitation-builder-visual') }}</div>
-						<div class="card-body">
-							<div class="row g-2">
-								<div class="col-6">
-									<label class="form-label">{{ __('admin.invitation-builder-primary-color') }}</label>
-									<input type="color" name="primary_color" class="form-control form-control-color w-100 ib-preview-field" value="{{ old('primary_color', $config['primary_color']) }}">
-								</div>
-								<div class="col-6">
-									<label class="form-label">{{ __('admin.invitation-builder-secondary-color') }}</label>
-									<input type="color" name="secondary_color" class="form-control form-control-color w-100 ib-preview-field" value="{{ old('secondary_color', $config['secondary_color']) }}">
-								</div>
-								<div class="col-6">
-									<label class="form-label">{{ __('admin.invitation-builder-bg-color') }}</label>
-									<input type="color" name="background_color" class="form-control form-control-color w-100 ib-preview-field" value="{{ old('background_color', $config['background_color']) }}">
-								</div>
-								<div class="col-6">
-									<label class="form-label">{{ __('admin.invitation-builder-text-color') }}</label>
-									<input type="color" name="text_color" class="form-control form-control-color w-100 ib-preview-field" value="{{ old('text_color', $config['text_color']) }}">
-								</div>
-							</div>
-							<label class="form-label mt-2">{{ __('admin.invitation-builder-font') }}</label>
-							<input type="text" name="font_family" class="form-control mb-2 ib-preview-field" value="{{ old('font_family', $config['font_family']) }}" placeholder="Cairo">
-							<label class="form-label">{{ __('admin.invitation-builder-logo-url') }}</label>
-							<input type="url" name="logo_url" class="form-control mb-2 ib-preview-field" value="{{ old('logo_url', $config['logo_url']) }}" placeholder="https://">
-							<label class="form-label">{{ __('admin.invitation-builder-bg-media-url') }}</label>
-							<input type="url" name="background_media_url" class="form-control mb-2 ib-preview-field" value="{{ old('background_media_url', $config['background_media_url']) }}">
-							<div class="form-check">
-								<input class="form-check-input ib-preview-field" type="checkbox" name="video_background" value="1" id="video_background" @checked($config['video_background'])>
-								<label class="form-check-label" for="video_background">{{ __('admin.invitation-builder-video-bg') }}</label>
-							</div>
-							<label class="form-label mt-2">{{ __('admin.invitation-builder-custom-css') }}</label>
-							<textarea name="custom_css" class="form-control ib-preview-field" rows="3" placeholder=".front { }">{{ old('custom_css', $config['custom_css']) }}</textarea>
+						<div class="tab-pane fade ib-tab-pane" id="ibTabBlocks">
+							@include('admin.invitation-builder.partials.tab-blocks')
 						</div>
 					</div>
 				</div>
 			</div>
 
-			<div class="card mb-3">
+			<div class="card">
 				<div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
 					<div>
 						<div class="form-check">
@@ -195,7 +122,7 @@
 						</div>
 						<small class="text-muted">{{ __('admin.invitation-builder-publish-hint') }}</small>
 					</div>
-					<button type="submit" class="btn btn-success">{{ __('admin.save') }}</button>
+					<button type="submit" class="btn btn-success btn-lg">{{ __('admin.save') }}</button>
 				</div>
 			</div>
 		</div>
@@ -207,21 +134,15 @@
 						<strong>{{ __('admin.invitation-builder-live-preview') }}</strong>
 						<small class="text-muted d-block">{{ __('admin.invitation-builder-live-preview-hint') }}</small>
 					</div>
-					<div class="btn-group btn-group-sm" role="group">
-						<button type="button" class="btn btn-outline-secondary active" data-ib-device="desktop" title="{{ __('admin.invitation-builder-preview-desktop') }}">
-							<i class="mdi mdi-monitor"></i>
-						</button>
-						<button type="button" class="btn btn-outline-secondary" data-ib-device="mobile" title="{{ __('admin.invitation-builder-preview-mobile') }}">
-							<i class="mdi mdi-cellphone"></i>
-						</button>
-						<button type="button" class="btn btn-outline-primary" id="ibPreviewRefresh" title="{{ __('admin.invitation-builder-preview-refresh') }}">
-							<i class="mdi mdi-refresh"></i>
-						</button>
+					<div class="btn-group btn-group-sm">
+						<button type="button" class="btn btn-outline-secondary active" data-ib-device="desktop"><i class="mdi mdi-monitor"></i></button>
+						<button type="button" class="btn btn-outline-secondary" data-ib-device="mobile"><i class="mdi mdi-cellphone"></i></button>
+						<button type="button" class="btn btn-outline-primary" id="ibPreviewRefresh"><i class="mdi mdi-refresh"></i></button>
 					</div>
 				</div>
 				<div class="card-body position-relative p-3">
 					<div id="ibPreviewLoading" class="ib-preview-loading">
-						<div class="spinner-border text-primary" role="status"></div>
+						<div class="spinner-border text-primary"></div>
 					</div>
 					<div id="ibPreviewDevice" class="ib-preview-device is-desktop">
 						<iframe id="ibPreviewFrame" title="{{ __('admin.invitation-builder-live-preview') }}"></iframe>
@@ -231,100 +152,8 @@
 		</div>
 	</div>
 </form>
-
-<div class="card mt-1">
-	<div class="card-header">{{ __('admin.invitation-builder-features-list') }}</div>
-	<div class="card-body">
-		<div class="row">
-			@foreach($catalog['features'] as $key => $feature)
-			<div class="col-md-4 col-6 mb-2">
-				<span class="badge bg-light text-dark border">✓ {{ $feature['label_ar'] }}</span>
-			</div>
-			@endforeach
-		</div>
-		<p class="text-muted small mt-2 mb-0">{{ __('admin.invitation-builder-features-note') }}</p>
-	</div>
-</div>
 @endsection
 
 @section('extra-js')
-<script>
-(function () {
-	const form = document.getElementById('invitationBuilderForm');
-	const iframe = document.getElementById('ibPreviewFrame');
-	const loading = document.getElementById('ibPreviewLoading');
-	const deviceWrap = document.getElementById('ibPreviewDevice');
-	const previewUrl = @json($previewPostUrl);
-	const csrf = @json(csrf_token());
-	let debounceTimer = null;
-	let previewSeq = 0;
-
-	function setLoading(show) {
-		loading.classList.toggle('d-none', !show);
-	}
-
-	function refreshPreview() {
-		const seq = ++previewSeq;
-		setLoading(true);
-
-		const body = new FormData(form);
-		body.delete('_method');
-		body.delete('publish');
-
-		fetch(previewUrl, {
-			method: 'POST',
-			body: body,
-			headers: {
-				'X-CSRF-TOKEN': csrf,
-				'Accept': 'text/html',
-			},
-			credentials: 'same-origin',
-		})
-			.then(function (res) {
-				if (!res.ok) throw new Error('Preview failed');
-				return res.text();
-			})
-			.then(function (html) {
-				if (seq !== previewSeq) return;
-				iframe.srcdoc = html;
-			})
-			.catch(function () {
-				if (seq !== previewSeq) return;
-				iframe.srcdoc = '<body style="font-family:sans-serif;padding:24px;color:#c00;text-align:center;">' + @json(__('admin.invitation-builder-preview-error')) + '</body>';
-			})
-			.finally(function () {
-				if (seq === previewSeq) setLoading(false);
-			});
-	}
-
-	function schedulePreview() {
-		clearTimeout(debounceTimer);
-		debounceTimer = setTimeout(refreshPreview, 450);
-	}
-
-	form.querySelectorAll('.ib-preview-field').forEach(function (el) {
-		el.addEventListener('input', schedulePreview);
-		el.addEventListener('change', schedulePreview);
-	});
-
-	document.getElementById('ibPreviewRefresh').addEventListener('click', function () {
-		clearTimeout(debounceTimer);
-		refreshPreview();
-	});
-
-	document.querySelectorAll('[data-ib-device]').forEach(function (btn) {
-		btn.addEventListener('click', function () {
-			document.querySelectorAll('[data-ib-device]').forEach(function (b) {
-				b.classList.remove('active');
-			});
-			btn.classList.add('active');
-			const mode = btn.getAttribute('data-ib-device');
-			deviceWrap.classList.toggle('is-mobile', mode === 'mobile');
-			deviceWrap.classList.toggle('is-desktop', mode === 'desktop');
-		});
-	});
-
-	refreshPreview();
-})();
-</script>
+@include('admin.invitation-builder.partials.builder-scripts')
 @endsection

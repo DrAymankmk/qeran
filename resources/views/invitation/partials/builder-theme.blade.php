@@ -2,14 +2,33 @@
 @php
 	$bc = $builderConfig;
 	$isLight = ($bc['theme_mode'] ?? 'dark') === 'light';
+	$envelopeHex = config('invitation_builder.envelope_colors.'.$bc['envelope_color'].'.hex', '#f5f0e6');
+	$headlineFont = $bc['headline_font'] ?? $bc['font_family'] ?? 'Cairo';
 @endphp
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Amiri&family=Tajawal&family=Great+Vibes&family=Lora&family=Montserrat&display=swap');
 :root {
 	--ib-primary: {{ $bc['primary_color'] }};
 	--ib-secondary: {{ $bc['secondary_color'] }};
 	--ib-bg: {{ $bc['background_color'] }};
 	--ib-text: {{ $bc['text_color'] }};
 	--ib-font: '{{ $bc['font_family'] }}', 'Cairo', sans-serif;
+	--ib-headline-font: '{{ $headlineFont }}', 'Playfair Display', serif;
+	--ib-envelope: {{ $envelopeHex }};
+	--ib-block-accent: {{ $bc['block_accent_color'] ?? $bc['primary_color'] }};
+}
+.ib-builder-headline {
+	font-family: var(--ib-headline-font);
+	color: var(--ib-text);
+}
+.ib-builder-date-pos-{{ $bc['date_position'] ?? 'center' }} { text-align: {{ $bc['date_position'] === 'top' ? 'left' : ($bc['date_position'] === 'bottom' ? 'right' : 'center') }}; }
+.template16-envelope, .template1-envelope {
+	background: linear-gradient(145deg, var(--ib-envelope), color-mix(in srgb, var(--ib-envelope) 80%, #000)) !important;
+}
+.template16-wax-seal {
+	@if(($bc['seal_style'] ?? '') === 'floral_emboss')
+	background: radial-gradient(circle, var(--ib-secondary), color-mix(in srgb, var(--ib-primary) 60%, #5a3d45)) !important;
+	@endif
 }
 body.invitation-builder-active {
 	background: var(--ib-bg) !important;
@@ -150,4 +169,5 @@ function invitationBuilderDismissWelcome() {
 document.body.classList.add('invitation-builder-active');
 @if($isLight) document.body.classList.add('theme-light'); @endif
 </script>
+@include('invitation.partials.builder-blocks-preview')
 @endif

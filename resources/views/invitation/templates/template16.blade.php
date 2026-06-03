@@ -3,7 +3,9 @@
     $hasAudio = ! empty($audioUrls['mp3']) || ! empty($audioUrls['ogg']);
 
     $initials = '';
-    if (! empty($invitation->groom) && ! empty($invitation->bride)) {
+    if (! empty($builderConfig['envelope_initials'] ?? null)) {
+        $initials = $builderConfig['envelope_initials'];
+    } elseif (! empty($invitation->groom) && ! empty($invitation->bride)) {
         $initials = mb_substr(trim($invitation->groom), 0, 1).' & '.mb_substr(trim($invitation->bride), 0, 1);
     } elseif (! empty($host_name)) {
         $parts = preg_split('/\s+/u', trim($host_name), -1, PREG_SPLIT_NO_EMPTY);

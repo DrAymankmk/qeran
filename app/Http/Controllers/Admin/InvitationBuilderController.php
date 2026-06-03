@@ -33,7 +33,10 @@ class InvitationBuilderController extends Controller
 
     public function preview(InvitationBuilderPreviewRequest $request, Invitation $invitation)
     {
-        $builderConfig = $this->builder->resolveFromDraft($invitation, $request->validated());
+        $builderConfig = $this->builder->resolveFromDraft($invitation, array_merge(
+            $request->validated(),
+            ['blocks' => $request->input('blocks', [])]
+        ));
         $template = (int) $builderConfig['template'];
         $host_name = $invitation->host_name;
 

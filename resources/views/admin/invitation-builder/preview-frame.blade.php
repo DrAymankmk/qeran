@@ -10,16 +10,17 @@
 		* { margin: 0; padding: 0; box-sizing: border-box; }
 		body {
 			min-height: 100vh;
-			background: linear-gradient(135deg, #121223 0%, #1a1a3a 50%, #2d2d5f 100%);
+			background: {{ !empty($useBuilderWedding) ? '#faf7f2' : 'linear-gradient(135deg, #121223 0%, #1a1a3a 50%, #2d2d5f 100%)' }};
 			font-family: "Cairo", sans-serif;
 			overflow-x: hidden;
 		}
 		.ib-preview-shell {
 			min-height: 100vh;
 			display: flex;
-			align-items: center;
-			justify-content: center;
-			padding: 16px 8px 32px;
+			align-items: {{ !empty($useBuilderWedding) ? 'stretch' : 'center' }};
+			justify-content: {{ !empty($useBuilderWedding) ? 'stretch' : 'center' }};
+			padding: {{ !empty($useBuilderWedding) ? '0' : '16px 8px 32px' }};
+			width: 100%;
 		}
 		.ib-preview-badge {
 			position: fixed;
@@ -45,6 +46,8 @@
 	<div class="ib-preview-shell" style="flex-direction: column;">
 		@include($view)
 	</div>
+	@if(empty($useBuilderWedding))
 	@include('admin.invitation-builder.preview-scripts')
+	@endif
 </body>
 </html>

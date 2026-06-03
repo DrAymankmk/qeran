@@ -39,6 +39,13 @@
 		outline: none;
 	}
 
+	body.invitation-builder-wedding-page {
+		background: var(--ib-bg, #faf7f2) !important;
+		perspective: none;
+	}
+	body.invitation-builder-wedding-page .container {
+		display: none;
+	}
 	body {
 		background: linear-gradient(135deg,
 				#121223 0%,
@@ -1942,16 +1949,19 @@
 	@include('invitation.partials.builder-theme')
 </head>
 
-<body>
-	<div class="container">
-		@php
-		$template = $template ?? 1; // Default to template 1
-		// Validate template number
-		if ($template < 1 || $template> 21) {
+<body class="@if(!empty($builderConfig) && ($builderConfig['renderer'] ?? '') === 'builder-wedding') invitation-builder-wedding-page @endif">
+	@php
+		$useBuilderWedding = !empty($builderConfig) && ($builderConfig['renderer'] ?? '') === 'builder-wedding';
+		$template = $template ?? 1;
+		if (!$useBuilderWedding && ($template < 1 || $template > 21)) {
 			$template = 1;
-			}
-			@endphp
+		}
+	@endphp
 
+	@if($useBuilderWedding)
+		@include($builderView ?? 'invitation.templates.builder-wedding')
+	@else
+	<div class="container">
 			@include('invitation.templates.template' . $template)
 
 			<!-- Success View -->
@@ -2143,8 +2153,11 @@
 				</p>
 			</div>
 	</div>
+	@endif
 
+	@if(!$useBuilderWedding)
 	@include('pages.scripts.invitations-scripts')
+	@endif
 </body>
 
 </html>

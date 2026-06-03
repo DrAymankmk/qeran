@@ -169,5 +169,7 @@ function invitationBuilderDismissWelcome() {
 document.body.classList.add('invitation-builder-active');
 @if($isLight) document.body.classList.add('theme-light'); @endif
 </script>
+@if(($bc['renderer'] ?? '') !== 'builder-wedding')
 @include('invitation.partials.builder-blocks-preview')
+@endif
 @endif

@@ -41,12 +41,32 @@ class InvitationBuilderService
         return $themes[$slug] ?? null;
     }
 
+    public function resolveRenderer(?string $slug): string
+    {
+        $theme = $this->themeDefinition($slug);
+
+        return $theme['renderer'] ?? config('invitation_builder.defaults.renderer', 'builder-wedding');
+    }
+
+    public function resolveViewName(?string $slug): string
+    {
+        $renderer = $this->resolveRenderer($slug);
+        $view = 'invitation.templates.'.$renderer;
+
+        return view()->exists($view) ? $view : 'invitation.templates.builder-wedding';
+    }
+
+    /** @deprecated Legacy numeric templates; builder uses renderer views. */
     public function resolveTemplateFromThemeSlug(?string $slug): int
     {
         $theme = $this->themeDefinition($slug);
-        $template = (int) ($theme['renderer_template'] ?? config('invitation_builder.defaults.theme_template', 16));
+        if (! empty($theme['renderer'])) {
+            return 0;
+        }
 
-        return ($template >= 1 && $template <= 21) ? $template : 16;
+        $template = (int) ($theme['renderer_template'] ?? 0);
+
+        return ($template >= 1 && $template <= 21) ? $template : 0;
     }
 
     public function resolve(Invitation $invitation, ?int $urlTemplateOverride = null): array
@@ -61,11 +81,13 @@ class InvitationBuilderService
         $themeSlug = $json['theme_slug'] ?? $defaults['theme_slug'] ?? 'romantic-blush';
         $themeDef = $this->themeDefinition($themeSlug);
 
-        $template = $urlTemplateOverride
-            ?? (int) ($row?->theme_template ?? $this->resolveTemplateFromThemeSlug($themeSlug));
-
-        if ($template < 1 || $template > 21) {
-            $template = $this->resolveTemplateFromThemeSlug($themeSlug);
+        $renderer = $this->resolveRenderer($themeSlug);
+        $viewName = $this->resolveViewName($themeSlug);
+        $template = (int) ($row?->theme_template ?? 0);
+        if ($renderer === 'builder-wedding') {
+            $template = 0;
+        } elseif ($template < 1 || $template > 21) {
+            $template = $this->resolveTemplateFromThemeSlug($themeSlug) ?: 1;
         }
 
         $blocks = $this->normalizeBlocks($json['blocks'] ?? $defaults['blocks'] ?? []);
@@ -74,6 +96,8 @@ class InvitationBuilderService
             'enabled' => $row !== null,
             'published' => $row?->isPublished() ?? false,
             'template' => $template,
+            'renderer' => $renderer,
+            'view' => $viewName,
             'theme_slug' => $themeSlug,
             'theme_name' => $themeDef['name_ar'] ?? $themeSlug,
             'event_category' => $row?->event_category ?? $defaults['event_category'] ?? 'wedding',
@@ -108,7 +132,9 @@ class InvitationBuilderService
 
         $themeSlug = $data['theme_slug'] ?? $base['theme_slug'];
         $themeDef = $this->themeDefinition($themeSlug);
-        $template = $this->resolveTemplateFromThemeSlug($themeSlug);
+        $renderer = $this->resolveRenderer($themeSlug);
+        $viewName = $this->resolveViewName($themeSlug);
+        $template = $renderer === 'builder-wedding' ? 0 : $this->resolveTemplateFromThemeSlug($themeSlug);
 
         $bool = function (string $key) use ($data, $base): bool {
             if (! array_key_exists($key, $data)) {
@@ -150,6 +176,8 @@ class InvitationBuilderService
             'enabled' => true,
             'published' => true,
             'template' => $template,
+            'renderer' => $renderer,
+            'view' => $viewName,
             'theme_slug' => $themeSlug,
             'theme_name' => $themeDef['name_ar'] ?? $themeSlug,
             'event_category' => $data['event_category'] ?? $base['event_category'],
@@ -181,8 +209,9 @@ class InvitationBuilderService
 
     public function upsert(Invitation $invitation, array $data): InvitationBuilderSetting
     {
-        $themeSlug = $data['theme_slug'] ?? config('invitation_builder.defaults.theme_slug', 'romantic-blush');
-        $template = $this->resolveTemplateFromThemeSlug($themeSlug);
+        $themeSlug = $data['theme_slug'] ?? config('invitation_builder.defaults.theme_slug', 'elegant-wedding');
+        $renderer = $this->resolveRenderer($themeSlug);
+        $template = $renderer === 'builder-wedding' ? 0 : $this->resolveTemplateFromThemeSlug($themeSlug);
 
         $settings = [
             'theme_slug' => $themeSlug,
@@ -352,15 +381,16 @@ class InvitationBuilderService
         $json = is_array($invitation->builderSetting?->settings)
             ? $invitation->builderSetting->settings
             : [];
-        $template = (int) ($invitation->builderSetting?->theme_template
-            ?? $this->resolveTemplateFromThemeSlug($json['theme_slug'] ?? null));
+        $themeSlug = $json['theme_slug'] ?? config('invitation_builder.defaults.theme_slug', 'elegant-wedding');
+        $renderer = $this->resolveRenderer($themeSlug);
+        $template = $renderer === 'builder-wedding' ? 0 : (int) ($invitation->builderSetting?->theme_template ?? 1);
         $ids = $this->resolvePreviewGuestIds($invitation);
 
         $url = route('user.invitation.show', [
             'invitation_code' => $invitation->code,
             'user_id' => $ids['user_id'],
             'inserted_by' => $ids['inserted_by'],
-            'template' => $template,
+            'template' => $template > 0 ? $template : 1,
         ]);
 
         return $url.(str_contains($url, '?') ? '&' : '?').'builder=1';

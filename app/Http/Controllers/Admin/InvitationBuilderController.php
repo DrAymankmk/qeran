@@ -37,18 +37,16 @@ class InvitationBuilderController extends Controller
             $request->validated(),
             ['blocks' => $request->input('blocks', [])]
         ));
-        $template = (int) $builderConfig['template'];
         $host_name = $invitation->host_name;
+        $category = \App\Models\Category::find($invitation->category_id);
+        $user = new \App\Models\User(['name' => __('admin.invitation-builder-preview-guest')]);
+        $user->id = $invitation->user_id;
+        $routes = ['accept' => '#', 'decline' => '#'];
+        $initialView = 'envelope';
 
-        if ($template < 1 || $template > 21) {
-            $template = 1;
-        }
-
-        $view = 'invitation.templates.template'.$template;
-        if (! view()->exists($view)) {
-            $template = 1;
-            $view = 'invitation.templates.template1';
-        }
+        $view = $builderConfig['view'] ?? $this->builder->resolveViewName($builderConfig['theme_slug'] ?? null);
+        $template = (int) ($builderConfig['template'] ?? 0);
+        $useBuilderWedding = ($builderConfig['renderer'] ?? '') === 'builder-wedding';
 
         return response()
             ->view('admin.invitation-builder.preview-frame', compact(
@@ -56,7 +54,12 @@ class InvitationBuilderController extends Controller
                 'builderConfig',
                 'template',
                 'host_name',
-                'view'
+                'view',
+                'category',
+                'user',
+                'routes',
+                'initialView',
+                'useBuilderWedding'
             ))
             ->header('X-Frame-Options', 'SAMEORIGIN');
     }

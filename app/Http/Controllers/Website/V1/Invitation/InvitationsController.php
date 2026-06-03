@@ -78,10 +78,12 @@ class InvitationsController extends Controller
         $builderRow = $invitation->builderSetting;
         $useBuilder = $builderRow && ($builderRow->isPublished() || $builderPreview);
 
+        $builderView = null;
         if ($useBuilder) {
             $builderConfig = $this->invitationBuilder->resolve($invitation, $template);
+            $builderView = $builderConfig['view'] ?? null;
             $template = (int) $builderConfig['template'];
-            if ($template < 1 || $template > 21) {
+            if (($builderConfig['renderer'] ?? '') !== 'builder-wedding' && ($template < 1 || $template > 21)) {
                 $template = 1;
             }
         }
@@ -107,7 +109,8 @@ class InvitationsController extends Controller
             'initialView',
             'template',
             'builderConfig',
-            'builderPreview'
+            'builderPreview',
+            'builderView'
         ));
     }
 

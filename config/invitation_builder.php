@@ -8,8 +8,9 @@ return [
 
     'defaults' => [
         'event_category' => 'wedding',
-        'theme_slug' => 'romantic-blush',
-        'theme_template' => 16,
+        'theme_slug' => 'elegant-wedding',
+        'renderer' => 'builder-wedding',
+        'theme_template' => 0,
         'theme_mode' => 'dark',
         'opening_type' => 'envelope',
         'primary_color' => '#c9a962',
@@ -42,9 +43,20 @@ return [
 
     /**
      * Animated themes (add more here — shown in builder tab 1).
-     * renderer_template: internal blade used until per-theme views exist.
+     * renderer: blade view name under invitation.templates.* (not legacy template 16).
      */
     'animated_themes' => [
+        'elegant-wedding' => [
+            'name_ar' => 'دعوة زفاف أنيقة',
+            'name_en' => 'Elegant Wedding',
+            'category' => 'elegant',
+            'preview' => 'linear-gradient(135deg, #faf7f2 0%, #e8dcc8 50%, #c8a97a 100%)',
+            'primary_color' => '#c8a97a',
+            'secondary_color' => '#e8b4b8',
+            'background_color' => '#faf7f2',
+            'text_color' => '#2c2416',
+            'renderer' => 'builder-wedding',
+        ],
         'romantic-blush' => [
             'name_ar' => 'رومانسي وردي',
             'name_en' => 'Romantic Blush',
@@ -54,7 +66,7 @@ return [
             'secondary_color' => '#e8b4b8',
             'background_color' => '#2d1f28',
             'text_color' => '#faf6f0',
-            'renderer_template' => 16,
+            'renderer' => 'builder-wedding',
         ],
         'tropical-paradise' => [
             'name_ar' => 'جنة استوائية',
@@ -65,7 +77,7 @@ return [
             'secondary_color' => '#fbbf24',
             'background_color' => '#0f2922',
             'text_color' => '#ecfdf5',
-            'renderer_template' => 16,
+            'renderer' => 'builder-wedding',
         ],
         'fairy-tale-castle' => [
             'name_ar' => 'قلعة خرافية',
@@ -76,7 +88,7 @@ return [
             'secondary_color' => '#fce7f3',
             'background_color' => '#1e1b4b',
             'text_color' => '#f5f3ff',
-            'renderer_template' => 16,
+            'renderer' => 'builder-wedding',
         ],
         'elegant-minimal' => [
             'name_ar' => 'أناقة بسيطة',
@@ -87,7 +99,7 @@ return [
             'secondary_color' => '#737373',
             'background_color' => '#fafafa',
             'text_color' => '#171717',
-            'renderer_template' => 16,
+            'renderer' => 'builder-wedding',
         ],
         'golden-gatsby' => [
             'name_ar' => 'ذهبي غاتسبي',
@@ -98,7 +110,7 @@ return [
             'secondary_color' => '#fde047',
             'background_color' => '#1c1917',
             'text_color' => '#fef3c7',
-            'renderer_template' => 16,
+            'renderer' => 'builder-wedding',
         ],
         'garden-party' => [
             'name_ar' => 'حفلة الحديقة',
@@ -109,7 +121,7 @@ return [
             'secondary_color' => '#fda4af',
             'background_color' => '#14532d',
             'text_color' => '#f0fdf4',
-            'renderer_template' => 16,
+            'renderer' => 'builder-wedding',
         ],
         'ocean-breeze' => [
             'name_ar' => 'نسيم المحيط',
@@ -120,7 +132,7 @@ return [
             'secondary_color' => '#7dd3fc',
             'background_color' => '#0c4a6e',
             'text_color' => '#f0f9ff',
-            'renderer_template' => 16,
+            'renderer' => 'builder-wedding',
         ],
         'desert-sunset' => [
             'name_ar' => 'غروب الصحراء',
@@ -131,7 +143,7 @@ return [
             'secondary_color' => '#fcd34d',
             'background_color' => '#431407',
             'text_color' => '#fff7ed',
-            'renderer_template' => 16,
+            'renderer' => 'builder-wedding',
         ],
         'midnight-velvet' => [
             'name_ar' => 'مخمل ليلي',
@@ -142,7 +154,7 @@ return [
             'secondary_color' => '#c084fc',
             'background_color' => '#0f0a1a',
             'text_color' => '#ede9fe',
-            'renderer_template' => 16,
+            'renderer' => 'builder-wedding',
         ],
         'cherry-blossom' => [
             'name_ar' => 'زهر الكرز',
@@ -153,7 +165,7 @@ return [
             'secondary_color' => '#fbcfe8',
             'background_color' => '#500724',
             'text_color' => '#fdf2f8',
-            'renderer_template' => 16,
+            'renderer' => 'builder-wedding',
         ],
         'modern-geo' => [
             'name_ar' => 'هندسي عصري',
@@ -164,7 +176,7 @@ return [
             'secondary_color' => '#a1a1aa',
             'background_color' => '#09090b',
             'text_color' => '#fafafa',
-            'renderer_template' => 16,
+            'renderer' => 'builder-wedding',
         ],
         'lavender-fields' => [
             'name_ar' => 'حقول الخزامى',
@@ -175,7 +187,7 @@ return [
             'secondary_color' => '#ddd6fe',
             'background_color' => '#2e1065',
             'text_color' => '#f5f3ff',
-            'renderer_template' => 16,
+            'renderer' => 'builder-wedding',
         ],
     ],
 

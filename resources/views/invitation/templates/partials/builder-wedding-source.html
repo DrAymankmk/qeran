@@ -1,0 +1,1178 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .wi-root {
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    background: #faf7f2;
+    color: #2c2416;
+    overflow-x: hidden;
+  }
+
+  /* ── Hero ── */
+  .wi-hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 24px;
+    background: #faf7f2;
+    position: relative;
+  }
+  .wi-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 40%, rgba(212,185,150,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .wi-corner { position: absolute; opacity: 0.25; }
+  .wi-corner.tl { top: 20px; left: 20px; }
+  .wi-corner.tr { top: 20px; right: 20px; transform: scaleX(-1); }
+  .wi-corner.bl { bottom: 20px; left: 20px; transform: scaleY(-1); }
+  .wi-corner.br { bottom: 20px; right: 20px; transform: scale(-1); }
+
+  .wi-date-badge {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    letter-spacing: 0.35em;
+    font-size: 11px;
+    color: #8a7155;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .wi-names {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(54px, 10vw, 86px);
+    line-height: 1.05;
+    color: #2c2416;
+    letter-spacing: -0.01em;
+    margin-bottom: 18px;
+  }
+  .wi-names em { font-style: italic; color: #6b4f2e; }
+  .wi-ampersand {
+    display: block;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 1em;
+    color: #b89060;
+    line-height: 0.9;
+  }
+  .wi-subtitle {
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #8a7155;
+    font-weight: 300;
+    margin-bottom: 36px;
+  }
+  .wi-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 0 auto 36px;
+    width: 220px;
+  }
+  .wi-divider::before, .wi-divider::after {
+    content: '';
+    flex: 1;
+    height: 0.5px;
+    background: #c8a97a;
+  }
+  .wi-divider-diamond {
+    width: 7px; height: 7px;
+    background: #c8a97a;
+    transform: rotate(45deg);
+    flex-shrink: 0;
+  }
+  .wi-hero-detail {
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    color: #6b5740;
+    line-height: 2;
+  }
+  .wi-scroll-hint {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: #b89060;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    animation: scrollBob 2s ease-in-out infinite;
+  }
+  @keyframes scrollBob {
+    0%,100% { transform: translateX(-50%) translateY(0); opacity:0.6; }
+    50% { transform: translateX(-50%) translateY(6px); opacity:1; }
+  }
+
+  /* ── Sections shared ── */
+  .wi-section {
+    padding: 80px 24px;
+    text-align: center;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  .wi-section-label {
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: #b89060;
+    margin-bottom: 16px;
+  }
+  .wi-section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(30px, 5vw, 42px);
+    font-weight: 300;
+    color: #2c2416;
+    margin-bottom: 10px;
+    font-style: italic;
+  }
+  .wi-section-body {
+    font-size: 14px;
+    line-height: 1.9;
+    color: #5a4735;
+    font-weight: 300;
+  }
+
+  /* ── Countdown ── */
+  .wi-countdown-bar {
+    background: #2c2416;
+    color: #e8dcc8;
+    padding: 40px 24px;
+    text-align: center;
+  }
+  .wi-countdown-label {
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: #b89060;
+    margin-bottom: 24px;
+  }
+  .wi-countdown-grid {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .wi-count-block {
+    background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(200,169,122,0.3);
+    border-radius: 4px;
+    padding: 14px 20px;
+    min-width: 72px;
+  }
+  .wi-count-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 38px;
+    font-weight: 300;
+    color: #c8a97a;
+    line-height: 1;
+    display: block;
+  }
+  .wi-count-unit {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #8a7a65;
+    display: block;
+    margin-top: 6px;
+  }
+
+  /* ── Our Story ── */
+  .wi-story-bg { background: #f4ede2; }
+  .wi-timeline {
+    margin: 40px auto 0;
+    max-width: 500px;
+    text-align: left;
+    position: relative;
+  }
+  .wi-timeline::before {
+    content: '';
+    position: absolute;
+    left: 18px;
+    top: 8px;
+    bottom: 8px;
+    width: 0.5px;
+    background: #c8a97a;
+  }
+  .wi-tl-item {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 36px;
+    position: relative;
+  }
+  .wi-tl-dot {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 0.5px solid #c8a97a;
+    background: #f4ede2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+  }
+  .wi-tl-dot-inner {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #c8a97a;
+  }
+  .wi-tl-year {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: #b89060;
+    margin-bottom: 4px;
+  }
+  .wi-tl-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #5a4735;
+    font-weight: 300;
+  }
+
+  /* ── Event Details ── */
+  .wi-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px;
+    background: #d4b896;
+    border: 0.5px solid #d4b896;
+    margin: 40px 0 0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .wi-detail-card {
+    background: #faf7f2;
+    padding: 32px 20px;
+    text-align: center;
+  }
+  .wi-detail-icon {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 16px;
+    opacity: 0.55;
+  }
+  .wi-detail-heading {
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: #b89060;
+    margin-bottom: 10px;
+  }
+  .wi-detail-main {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: #2c2416;
+    line-height: 1.3;
+    margin-bottom: 6px;
+  }
+  .wi-detail-sub {
+    font-size: 12px;
+    color: #8a7155;
+    line-height: 1.6;
+  }
+
+  /* ── Photo Gallery ── */
+  .wi-gallery-bg { background: #2c2416; }
+  .wi-gallery-bg .wi-section-label { color: #8a7a65; }
+  .wi-gallery-bg .wi-section-title { color: #e8dcc8; }
+  .wi-gallery {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-top: 32px;
+  }
+  .wi-photo {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .wi-photo-inner {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    font-family: 'Jost', sans-serif;
+  }
+  .wi-photo-inner svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+  /* ── Schedule ── */
+  .wi-schedule {
+    margin: 40px 0 0;
+    border-top: 0.5px solid #d4b896;
+  }
+  .wi-schedule-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 0;
+    border-bottom: 0.5px solid rgba(212,184,150,0.4);
+  }
+  .wi-sch-time {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    color: #b89060;
+    min-width: 80px;
+    text-align: right;
+    font-style: italic;
+  }
+  .wi-sch-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #c8a97a;
+    flex-shrink: 0;
+  }
+  .wi-sch-info { text-align: left; }
+  .wi-sch-title { font-size: 15px; color: #2c2416; font-weight: 300; }
+  .wi-sch-place { font-size: 12px; color: #8a7155; margin-top: 2px; }
+
+  /* ── Venue / Map ── */
+  .wi-venue-bg { background: #f4ede2; }
+  .wi-map-placeholder {
+    margin: 32px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 0.5px solid #d4b896;
+    background: #e8dcc8;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .wi-map-grid {
+    position: absolute;
+    inset: 0;
+    opacity: 0.3;
+  }
+  .wi-map-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-style: italic;
+    color: #6b4f2e;
+    z-index: 1;
+    text-align: center;
+  }
+  .wi-venue-btn {
+    display: inline-block;
+    border: 0.5px solid #2c2416;
+    color: #2c2416;
+    font-family: 'Jost', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    padding: 12px 28px;
+    text-decoration: none;
+    border-radius: 2px;
+    cursor: pointer;
+    background: transparent;
+    transition: background 0.2s, color 0.2s;
+  }
+  .wi-venue-btn:hover { background: #2c2416; color: #faf7f2; }
+
+  /* ── Accommodation ── */
+  .wi-hotel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-top: 32px;
+    text-align: left;
+  }
+  .wi-hotel-card {
+    border: 0.5px solid #d4b896;
+    border-radius: 6px;
+    padding: 22px 18px;
+    background: #faf7f2;
+  }
+  .wi-hotel-stars { color: #c8a97a; font-size: 11px; margin-bottom: 10px; letter-spacing: 2px; }
+  .wi-hotel-name { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 400; color: #2c2416; margin-bottom: 6px; }
+  .wi-hotel-dist { font-size: 11px; color: #8a7155; }
+
+  /* ── Dress Code ── */
+  .wi-dress-bg { background: #2c2416; }
+  .wi-dress-bg .wi-section-title { color: #e8dcc8; }
+  .wi-dress-bg .wi-section-label { color: #8a7a65; }
+  .wi-dress-bg .wi-section-body { color: #a0907a; }
+  .wi-palette {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 32px 0 20px;
+    flex-wrap: wrap;
+  }
+  .wi-swatch {
+    text-align: center;
+  }
+  .wi-swatch-circle {
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    margin: 0 auto 8px;
+    border: 0.5px solid rgba(255,255,255,0.1);
+  }
+  .wi-swatch-name { font-size: 10px; letter-spacing: 0.15em; color: #8a7a65; }
+
+  /* ── Gift Registry ── */
+  .wi-gift-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+    margin-top: 32px;
+  }
+  .wi-gift-card {
+    border: 0.5px solid #d4b896;
+    border-radius: 6px;
+    padding: 28px 18px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    background: #faf7f2;
+  }
+  .wi-gift-card:hover { border-color: #8a7155; }
+  .wi-gift-icon { font-size: 28px; margin-bottom: 14px; }
+  .wi-gift-name { font-size: 14px; color: #2c2416; font-weight: 300; margin-bottom: 4px; }
+  .wi-gift-sub { font-size: 11px; color: #8a7155; }
+
+  /* ── RSVP ── */
+  .wi-rsvp-bg { background: #6b4f2e; }
+  .wi-rsvp-bg .wi-section-label { color: #c8a97a; }
+  .wi-rsvp-bg .wi-section-title { color: #f5ede0; }
+  .wi-rsvp-bg .wi-section-body { color: #c8a97a; }
+  .wi-rsvp-form { margin-top: 36px; text-align: left; }
+  .wi-field {
+    margin-bottom: 18px;
+  }
+  .wi-field label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #c8a97a;
+    margin-bottom: 8px;
+  }
+  .wi-field input, .wi-field select, .wi-field textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.08);
+    border: 0.5px solid rgba(200,169,122,0.4);
+    border-radius: 3px;
+    padding: 12px 14px;
+    font-family: 'Jost', sans-serif;
+    font-size: 13px;
+    font-weight: 300;
+    color: #f5ede0;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .wi-field select option { background: #6b4f2e; color: #f5ede0; }
+  .wi-field input::placeholder, .wi-field textarea::placeholder { color: rgba(200,169,122,0.4); }
+  .wi-field input:focus, .wi-field select:focus, .wi-field textarea:focus {
+    border-color: rgba(200,169,122,0.85);
+  }
+  .wi-rsvp-toggle {
+    display: flex;
+    gap: 0;
+    border: 0.5px solid rgba(200,169,122,0.4);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .wi-rsvp-opt {
+    flex: 1;
+    padding: 11px;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(200,169,122,0.6);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    user-select: none;
+  }
+  .wi-rsvp-opt.active {
+    background: rgba(200,169,122,0.2);
+    color: #f5ede0;
+  }
+  .wi-rsvp-submit {
+    width: 100%;
+    background: #c8a97a;
+    color: #2c2416;
+    border: none;
+    border-radius: 3px;
+    padding: 14px;
+    font-family: 'Jost', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-weight: 400;
+    margin-top: 8px;
+  }
+  .wi-rsvp-submit:hover { background: #b89060; }
+
+  /* ── Guestbook ── */
+  .wi-guestbook-bg { background: #f4ede2; }
+  .wi-message-list {
+    margin-top: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .wi-message-card {
+    background: #faf7f2;
+    border: 0.5px solid #d4b896;
+    border-radius: 6px;
+    padding: 20px 22px;
+    text-align: left;
+  }
+  .wi-msg-author {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    font-style: italic;
+    color: #2c2416;
+    margin-bottom: 8px;
+  }
+  .wi-msg-text {
+    font-size: 13px;
+    line-height: 1.8;
+    color: #5a4735;
+    font-weight: 300;
+  }
+
+  /* ── Music Wishlist ── */
+  .wi-song-list {
+    margin-top: 32px;
+    border: 0.5px solid #d4b896;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .wi-song-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    border-bottom: 0.5px solid rgba(212,184,150,0.4);
+    background: #faf7f2;
+  }
+  .wi-song-row:last-child { border-bottom: none; }
+  .wi-song-num { font-size: 11px; color: #c8a97a; min-width: 22px; }
+  .wi-song-info { flex: 1; text-align: left; }
+  .wi-song-title { font-size: 14px; color: #2c2416; }
+  .wi-song-artist { font-size: 11px; color: #8a7155; margin-top: 2px; }
+  .wi-song-heart { color: #c8a97a; font-size: 14px; }
+
+  /* ── Thank you footer ── */
+  .wi-footer {
+    background: #2c2416;
+    padding: 70px 24px 50px;
+    text-align: center;
+  }
+  .wi-footer-names {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 42px;
+    font-weight: 300;
+    color: #c8a97a;
+    margin-bottom: 16px;
+    line-height: 1.1;
+  }
+  .wi-footer-msg {
+    font-size: 13px;
+    color: #8a7a65;
+    letter-spacing: 0.15em;
+    line-height: 2;
+  }
+  .wi-footer-date {
+    margin-top: 36px;
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: #554535;
+  }
+
+  /* ── Animations ── */
+  .wi-fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.9s ease forwards;
+  }
+  .wi-fade-in.d1 { animation-delay: 0.1s; }
+  .wi-fade-in.d2 { animation-delay: 0.3s; }
+  .wi-fade-in.d3 { animation-delay: 0.5s; }
+  .wi-fade-in.d4 { animation-delay: 0.7s; }
+  .wi-fade-in.d5 { animation-delay: 0.9s; }
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<div class="wi-root">
+
+  <!-- ① Hero -->
+  <section class="wi-hero">
+    <svg class="wi-corner tl" width="60" height="60" viewBox="0 0 60 60" fill="none">
+      <path d="M4 56 L4 4 L56 4" stroke="#c8a97a" stroke-width="0.8" fill="none"/>
+      <path d="M10 50 L10 10 L50 10" stroke="#c8a97a" stroke-width="0.4" fill="none"/>
+      <circle cx="4" cy="4" r="2.5" fill="#c8a97a"/>
+    </svg>
+    <svg class="wi-corner tr" width="60" height="60" viewBox="0 0 60 60" fill="none">
+      <path d="M4 56 L4 4 L56 4" stroke="#c8a97a" stroke-width="0.8" fill="none"/>
+      <path d="M10 50 L10 10 L50 10" stroke="#c8a97a" stroke-width="0.4" fill="none"/>
+      <circle cx="4" cy="4" r="2.5" fill="#c8a97a"/>
+    </svg>
+    <svg class="wi-corner bl" width="60" height="60" viewBox="0 0 60 60" fill="none">
+      <path d="M4 56 L4 4 L56 4" stroke="#c8a97a" stroke-width="0.8" fill="none"/>
+      <path d="M10 50 L10 10 L50 10" stroke="#c8a97a" stroke-width="0.4" fill="none"/>
+      <circle cx="4" cy="4" r="2.5" fill="#c8a97a"/>
+    </svg>
+    <svg class="wi-corner br" width="60" height="60" viewBox="0 0 60 60" fill="none">
+      <path d="M4 56 L4 4 L56 4" stroke="#c8a97a" stroke-width="0.8" fill="none"/>
+      <path d="M10 50 L10 10 L50 10" stroke="#c8a97a" stroke-width="0.4" fill="none"/>
+      <circle cx="4" cy="4" r="2.5" fill="#c8a97a"/>
+    </svg>
+
+    <p class="wi-date-badge wi-fade-in d1">Together at last · September 14, 2025</p>
+
+    <h1 class="wi-names wi-fade-in d2">
+      Layla<br>
+      <span class="wi-ampersand">&</span><br>
+      Adam
+    </h1>
+
+    <p class="wi-subtitle wi-fade-in d3">are getting married</p>
+
+    <div class="wi-divider wi-fade-in d4">
+      <div class="wi-divider-diamond"></div>
+    </div>
+
+    <div class="wi-hero-detail wi-fade-in d5">
+      14 September 2025<br>
+      Château des Roses · Tuscany, Italy
+    </div>
+
+    <div class="wi-scroll-hint">
+      <svg width="14" height="22" viewBox="0 0 14 22" fill="none">
+        <rect x="1" y="1" width="12" height="20" rx="6" stroke="#c8a97a" stroke-width="0.8"/>
+        <circle cx="7" cy="7" r="1.5" fill="#c8a97a">
+          <animate attributeName="cy" values="7;14;7" dur="1.8s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="1;0;1" dur="1.8s" repeatCount="indefinite"/>
+        </circle>
+      </svg>
+      scroll
+    </div>
+  </section>
+
+  <!-- ② Countdown -->
+  <div class="wi-countdown-bar">
+    <p class="wi-countdown-label">Counting down the days</p>
+    <div class="wi-countdown-grid">
+      <div class="wi-count-block">
+        <span class="wi-count-num" id="cd-days">—</span>
+        <span class="wi-count-unit">days</span>
+      </div>
+      <div class="wi-count-block">
+        <span class="wi-count-num" id="cd-hours">—</span>
+        <span class="wi-count-unit">hours</span>
+      </div>
+      <div class="wi-count-block">
+        <span class="wi-count-num" id="cd-mins">—</span>
+        <span class="wi-count-unit">minutes</span>
+      </div>
+      <div class="wi-count-block">
+        <span class="wi-count-num" id="cd-secs">—</span>
+        <span class="wi-count-unit">seconds</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ Our Story -->
+  <div class="wi-story-bg">
+    <section class="wi-section">
+      <p class="wi-section-label">How it began</p>
+      <h2 class="wi-section-title">Our Story</h2>
+      <p class="wi-section-body">What started as a chance encounter at a rooftop party in Cairo turned into late nights, long walks, and a love neither of us expected. Three years, two continents, and countless cups of coffee later — here we are.</p>
+
+      <div class="wi-timeline">
+        <div class="wi-tl-item">
+          <div class="wi-tl-dot"><div class="wi-tl-dot-inner"></div></div>
+          <div>
+            <p class="wi-tl-year">Summer 2022</p>
+            <p class="wi-tl-text">We met at a rooftop gathering. Adam spilled his drink. Layla laughed. The rest is history.</p>
+          </div>
+        </div>
+        <div class="wi-tl-item">
+          <div class="wi-tl-dot"><div class="wi-tl-dot-inner"></div></div>
+          <div>
+            <p class="wi-tl-year">Spring 2023</p>
+            <p class="wi-tl-text">Our first trip together — a spontaneous weekend in Florence that neither of us wanted to end.</p>
+          </div>
+        </div>
+        <div class="wi-tl-item">
+          <div class="wi-tl-dot"><div class="wi-tl-dot-inner"></div></div>
+          <div>
+            <p class="wi-tl-year">December 2024</p>
+            <p class="wi-tl-text">Under the stars at the same rooftop where we first met, Adam got down on one knee.</p>
+          </div>
+        </div>
+        <div class="wi-tl-item">
+          <div class="wi-tl-dot"><div class="wi-tl-dot-inner"></div></div>
+          <div>
+            <p class="wi-tl-year">September 2025</p>
+            <p class="wi-tl-text">We say "I do" surrounded by everyone we love — and we'd love for you to be there.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ④ Event Details -->
+  <section class="wi-section">
+    <p class="wi-section-label">All the details</p>
+    <h2 class="wi-section-title">The Wedding</h2>
+    <div class="wi-details-grid">
+      <div class="wi-detail-card">
+        <svg class="wi-detail-icon" viewBox="0 0 40 40" fill="none">
+          <rect x="5" y="9" width="30" height="26" rx="3" stroke="#c8a97a" stroke-width="0.8"/>
+          <line x1="5" y1="17" x2="35" y2="17" stroke="#c8a97a" stroke-width="0.6"/>
+          <line x1="14" y1="5" x2="14" y2="13" stroke="#c8a97a" stroke-width="0.8"/>
+          <line x1="26" y1="5" x2="26" y2="13" stroke="#c8a97a" stroke-width="0.8"/>
+          <rect x="12" y="22" width="6" height="5" rx="1" fill="#c8a97a" opacity="0.5"/>
+        </svg>
+        <p class="wi-detail-heading">Date</p>
+        <p class="wi-detail-main">14 September<br>2025</p>
+        <p class="wi-detail-sub">Sunday</p>
+      </div>
+      <div class="wi-detail-card">
+        <svg class="wi-detail-icon" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="13" stroke="#c8a97a" stroke-width="0.8"/>
+          <line x1="20" y1="20" x2="20" y2="10" stroke="#c8a97a" stroke-width="0.8" stroke-linecap="round"/>
+          <line x1="20" y1="20" x2="27" y2="24" stroke="#c8a97a" stroke-width="0.8" stroke-linecap="round"/>
+          <circle cx="20" cy="20" r="1.5" fill="#c8a97a"/>
+        </svg>
+        <p class="wi-detail-heading">Ceremony</p>
+        <p class="wi-detail-main">4:30 PM</p>
+        <p class="wi-detail-sub">Doors open 4:00 PM</p>
+      </div>
+      <div class="wi-detail-card">
+        <svg class="wi-detail-icon" viewBox="0 0 40 40" fill="none">
+          <path d="M20 6 C12 6 7 13 7 20 C7 30 20 36 20 36 C20 36 33 30 33 20 C33 13 28 6 20 6Z" stroke="#c8a97a" stroke-width="0.8"/>
+          <circle cx="20" cy="20" r="4" stroke="#c8a97a" stroke-width="0.6"/>
+        </svg>
+        <p class="wi-detail-heading">Venue</p>
+        <p class="wi-detail-main">Château<br>des Roses</p>
+        <p class="wi-detail-sub">Tuscany, Italy</p>
+      </div>
+      <div class="wi-detail-card">
+        <svg class="wi-detail-icon" viewBox="0 0 40 40" fill="none">
+          <path d="M8 28 Q12 16 20 14 Q28 16 32 28" stroke="#c8a97a" stroke-width="0.8" fill="none"/>
+          <circle cx="14" cy="18" r="2" stroke="#c8a97a" stroke-width="0.6"/>
+          <circle cx="26" cy="18" r="2" stroke="#c8a97a" stroke-width="0.6"/>
+          <path d="M14 28 Q17 32 20 28 Q23 32 26 28" stroke="#c8a97a" stroke-width="0.6" fill="none"/>
+        </svg>
+        <p class="wi-detail-heading">Reception</p>
+        <p class="wi-detail-main">7:00 PM</p>
+        <p class="wi-detail-sub">Dinner & dancing till late</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑤ Photo Gallery -->
+  <div class="wi-gallery-bg">
+    <section class="wi-section">
+      <p class="wi-section-label">Our moments</p>
+      <h2 class="wi-section-title">The Gallery</h2>
+      <div class="wi-gallery">
+        <div class="wi-photo" style="grid-column:span 2; aspect-ratio:2/1;">
+          <div class="wi-photo-inner" style="background:#3d3020;">
+            <svg viewBox="0 0 200 100" fill="none" preserveAspectRatio="xMidYMid slice">
+              <path d="M0 70 Q50 40 100 60 Q150 80 200 50 L200 100 L0 100Z" fill="#c8a97a" opacity="0.15"/>
+              <circle cx="80" cy="38" r="14" stroke="#c8a97a" stroke-width="0.5" fill="none" opacity="0.5"/>
+              <circle cx="120" cy="42" r="12" stroke="#c8a97a" stroke-width="0.5" fill="none" opacity="0.5"/>
+              <path d="M70 50 Q100 30 130 52" stroke="#c8a97a" stroke-width="0.5" fill="none" opacity="0.3"/>
+            </svg>
+            <span style="position:relative;z-index:1;">engagement</span>
+          </div>
+        </div>
+        <div class="wi-photo">
+          <div class="wi-photo-inner" style="background:#2e2618;">
+            <svg viewBox="0 0 100 100" fill="none" preserveAspectRatio="xMidYMid slice">
+              <circle cx="50" cy="35" r="18" stroke="#c8a97a" stroke-width="0.5" fill="none" opacity="0.4"/>
+              <path d="M20 80 Q35 60 50 68 Q65 60 80 80" stroke="#c8a97a" stroke-width="0.5" fill="none" opacity="0.4"/>
+            </svg>
+            <span style="position:relative;z-index:1;">portraits</span>
+          </div>
+        </div>
+        <div class="wi-photo">
+          <div class="wi-photo-inner" style="background:#352a1a;">
+            <svg viewBox="0 0 100 100" fill="none" preserveAspectRatio="xMidYMid slice">
+              <rect x="25" y="20" width="50" height="60" rx="2" stroke="#c8a97a" stroke-width="0.5" fill="none" opacity="0.4"/>
+              <circle cx="50" cy="45" r="10" stroke="#c8a97a" stroke-width="0.5" fill="none" opacity="0.3"/>
+            </svg>
+            <span style="position:relative;z-index:1;">travel</span>
+          </div>
+        </div>
+        <div class="wi-photo">
+          <div class="wi-photo-inner" style="background:#3a2e18;">
+            <svg viewBox="0 0 100 100" fill="none" preserveAspectRatio="xMidYMid slice">
+              <path d="M50 20 L55 38 L74 38 L60 49 L65 67 L50 56 L35 67 L40 49 L26 38 L45 38Z" stroke="#c8a97a" stroke-width="0.5" fill="none" opacity="0.4"/>
+            </svg>
+            <span style="position:relative;z-index:1;">special</span>
+          </div>
+        </div>
+        <div class="wi-photo" style="grid-column:span 2; aspect-ratio:2/1;">
+          <div class="wi-photo-inner" style="background:#2a2012;">
+            <svg viewBox="0 0 200 100" fill="none" preserveAspectRatio="xMidYMid slice">
+              <path d="M0 50 Q100 20 200 50" stroke="#c8a97a" stroke-width="0.5" fill="none" opacity="0.3"/>
+              <path d="M0 60 Q100 30 200 60" stroke="#c8a97a" stroke-width="0.3" fill="none" opacity="0.2"/>
+              <circle cx="50" cy="42" r="8" stroke="#c8a97a" stroke-width="0.5" fill="none" opacity="0.3"/>
+              <circle cx="150" cy="44" r="8" stroke="#c8a97a" stroke-width="0.5" fill="none" opacity="0.3"/>
+            </svg>
+            <span style="position:relative;z-index:1;">the proposal</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ⑥ Schedule -->
+  <section class="wi-section">
+    <p class="wi-section-label">Day of celebration</p>
+    <h2 class="wi-section-title">Schedule</h2>
+    <div class="wi-schedule">
+      <div class="wi-schedule-row">
+        <span class="wi-sch-time">4:00 PM</span>
+        <div class="wi-sch-dot"></div>
+        <div class="wi-sch-info">
+          <p class="wi-sch-title">Guests Arrive</p>
+          <p class="wi-sch-place">Main entrance, Château des Roses</p>
+        </div>
+      </div>
+      <div class="wi-schedule-row">
+        <span class="wi-sch-time">4:30 PM</span>
+        <div class="wi-sch-dot"></div>
+        <div class="wi-sch-info">
+          <p class="wi-sch-title">Ceremony</p>
+          <p class="wi-sch-place">The Rose Garden</p>
+        </div>
+      </div>
+      <div class="wi-schedule-row">
+        <span class="wi-sch-time">5:30 PM</span>
+        <div class="wi-sch-dot"></div>
+        <div class="wi-sch-info">
+          <p class="wi-sch-title">Cocktail Hour</p>
+          <p class="wi-sch-place">Terrace & gardens</p>
+        </div>
+      </div>
+      <div class="wi-schedule-row">
+        <span class="wi-sch-time">7:00 PM</span>
+        <div class="wi-sch-dot"></div>
+        <div class="wi-sch-info">
+          <p class="wi-sch-title">Wedding Dinner</p>
+          <p class="wi-sch-place">Grand Ballroom</p>
+        </div>
+      </div>
+      <div class="wi-schedule-row">
+        <span class="wi-sch-time">9:00 PM</span>
+        <div class="wi-sch-dot"></div>
+        <div class="wi-sch-info">
+          <p class="wi-sch-title">First Dance & Speeches</p>
+          <p class="wi-sch-place">Grand Ballroom</p>
+        </div>
+      </div>
+      <div class="wi-schedule-row">
+        <span class="wi-sch-time">9:30 PM</span>
+        <div class="wi-sch-dot"></div>
+        <div class="wi-sch-info">
+          <p class="wi-sch-title">Party & Dancing</p>
+          <p class="wi-sch-place">Until midnight</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑦ Venue -->
+  <div class="wi-venue-bg">
+    <section class="wi-section">
+      <p class="wi-section-label">Where to find us</p>
+      <h2 class="wi-section-title">The Venue</h2>
+      <p class="wi-section-body">Nestled among rolling Tuscan hills, Château des Roses is a restored 16th-century estate surrounded by olive groves, vineyards, and — of course — roses.</p>
+      <div class="wi-map-placeholder">
+        <svg class="wi-map-grid" viewBox="0 0 600 220" preserveAspectRatio="xMidYMid slice">
+          <defs><pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M30 0L0 0 0 30" fill="none" stroke="#c8a97a" stroke-width="0.4"/></pattern></defs>
+          <rect width="600" height="220" fill="url(#grid)"/>
+          <rect x="220" y="70" width="160" height="80" rx="4" fill="#d4b896" opacity="0.6"/>
+          <path d="M300 150 L300 180" stroke="#8a7155" stroke-width="1.5"/>
+          <circle cx="300" cy="185" r="5" fill="#8a7155"/>
+          <circle cx="300" cy="64" r="9" fill="#6b4f2e"/>
+          <text x="300" y="69" text-anchor="middle" font-size="10" fill="#f5ede0" font-family="Jost">♥</text>
+        </svg>
+        <div class="wi-map-label">Château des Roses<br><span style="font-size:13px;font-family:Jost,sans-serif;font-weight:300;color:#8a7155;font-style:normal;">Via delle Rose 12, Chianti, Tuscany</span></div>
+      </div>
+      <div style="margin-top:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <button class="wi-venue-btn">Get Directions</button>
+        <button class="wi-venue-btn">View on Map</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ⑧ Accommodation -->
+  <section class="wi-section">
+    <p class="wi-section-label">Places to stay</p>
+    <h2 class="wi-section-title">Accommodation</h2>
+    <p class="wi-section-body">We've arranged special rates at nearby hotels. Please mention our wedding when booking.</p>
+    <div class="wi-hotel-grid">
+      <div class="wi-hotel-card">
+        <div class="wi-hotel-stars">★★★★★</div>
+        <p class="wi-hotel-name">Villa Serena</p>
+        <p class="wi-hotel-dist">0.8 km from venue · Block rate available</p>
+      </div>
+      <div class="wi-hotel-card">
+        <div class="wi-hotel-stars">★★★★</div>
+        <p class="wi-hotel-name">Osteria del Sole</p>
+        <p class="wi-hotel-dist">2.1 km from venue · Use code LAYLA25</p>
+      </div>
+      <div class="wi-hotel-card">
+        <div class="wi-hotel-stars">★★★</div>
+        <p class="wi-hotel-name">Agriturismo Rosso</p>
+        <p class="wi-hotel-dist">3.5 km · Budget-friendly option</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑨ Dress Code -->
+  <div class="wi-dress-bg">
+    <section class="wi-section">
+      <p class="wi-section-label">What to wear</p>
+      <h2 class="wi-section-title">Dress Code</h2>
+      <p class="wi-section-body">Black tie optional. We want you to feel glamorous and comfortable. Please avoid white and ivory — those are Layla's colours.</p>
+      <div class="wi-palette">
+        <div class="wi-swatch"><div class="wi-swatch-circle" style="background:#1a1a2e;"></div><p class="wi-swatch-name">Navy</p></div>
+        <div class="wi-swatch"><div class="wi-swatch-circle" style="background:#4a3728;"></div><p class="wi-swatch-name">Chocolate</p></div>
+        <div class="wi-swatch"><div class="wi-swatch-circle" style="background:#6b4f2e;"></div><p class="wi-swatch-name">Caramel</p></div>
+        <div class="wi-swatch"><div class="wi-swatch-circle" style="background:#3d5a3e;"></div><p class="wi-swatch-name">Forest</p></div>
+        <div class="wi-swatch"><div class="wi-swatch-circle" style="background:#7a3040;"></div><p class="wi-swatch-name">Burgundy</p></div>
+        <div class="wi-swatch"><div class="wi-swatch-circle" style="background:#808080;"></div><p class="wi-swatch-name">Silver</p></div>
+        <div class="wi-swatch" style="position:relative;">
+          <div class="wi-swatch-circle" style="background:#f5f0e8; position:relative; overflow:hidden;">
+            <svg viewBox="0 0 50 50" style="position:absolute;inset:0;width:100%;height:100%">
+              <line x1="0" y1="0" x2="50" y2="50" stroke="#c8a97a" stroke-width="1.5"/>
+              <line x1="50" y1="0" x2="0" y2="50" stroke="#c8a97a" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <p class="wi-swatch-name">Avoid white</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ⑩ Gift Registry -->
+  <section class="wi-section">
+    <p class="wi-section-label">If you wish to give</p>
+    <h2 class="wi-section-title">Gift Registry</h2>
+    <p class="wi-section-body">Your presence is truly the greatest gift. For those who'd like to celebrate further, we've created a few options.</p>
+    <div class="wi-gift-grid">
+      <div class="wi-gift-card">
+        <div class="wi-gift-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M16 6C16 6 10 2 7 6C4 10 8 14 16 20C24 14 28 10 25 6C22 2 16 6 16 6Z" stroke="#c8a97a" stroke-width="0.8" fill="none"/></svg>
+        </div>
+        <p class="wi-gift-name">Honeymoon Fund</p>
+        <p class="wi-gift-sub">Help us explore Japan & Bali</p>
+      </div>
+      <div class="wi-gift-card">
+        <div class="wi-gift-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="6" y="10" width="20" height="16" rx="2" stroke="#c8a97a" stroke-width="0.8"/><path d="M6 14h20M12 10V7M20 10V7" stroke="#c8a97a" stroke-width="0.8" fill="none"/></svg>
+        </div>
+        <p class="wi-gift-name">Our First Home</p>
+        <p class="wi-gift-sub">Contribution to our nest</p>
+      </div>
+      <div class="wi-gift-card">
+        <div class="wi-gift-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="10" stroke="#c8a97a" stroke-width="0.8"/><path d="M12 16h8M16 12v8" stroke="#c8a97a" stroke-width="0.8"/></svg>
+        </div>
+        <p class="wi-gift-name">Charity Donation</p>
+        <p class="wi-gift-sub">In our name to UNICEF</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑪ RSVP -->
+  <div class="wi-rsvp-bg">
+    <section class="wi-section">
+      <p class="wi-section-label">Reply by August 1st</p>
+      <h2 class="wi-section-title">Will you join us?</h2>
+      <p class="wi-section-body">We can't wait to celebrate with you. Please RSVP by August 1, 2025.</p>
+      <div class="wi-rsvp-form">
+        <div class="wi-rsvp-toggle" id="rsvpToggle">
+          <div class="wi-rsvp-opt active" onclick="setRsvp('yes',this)">Joyfully accepts</div>
+          <div class="wi-rsvp-opt" onclick="setRsvp('no',this)" style="border-left:0.5px solid rgba(200,169,122,0.3)">Regretfully declines</div>
+        </div>
+        <div class="wi-field"><label>Full Name</label><input type="text" placeholder="Your name"></div>
+        <div class="wi-field"><label>Email</label><input type="email" placeholder="your@email.com"></div>
+        <div class="wi-field"><label>Number of Guests</label>
+          <select>
+            <option>Just me</option>
+            <option>2 guests</option>
+            <option>3 guests</option>
+            <option>4 guests</option>
+          </select>
+        </div>
+        <div class="wi-field" id="mealField"><label>Meal Preference</label>
+          <select>
+            <option>Standard (includes meat)</option>
+            <option>Vegetarian</option>
+            <option>Vegan</option>
+            <option>Gluten-free</option>
+          </select>
+        </div>
+        <div class="wi-field"><label>Dietary restrictions or notes</label><textarea rows="3" placeholder="Any allergies or special requests…"></textarea></div>
+        <button class="wi-rsvp-submit" onclick="submitRsvp()">Send my RSVP</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ⑫ Guestbook -->
+  <div class="wi-guestbook-bg">
+    <section class="wi-section">
+      <p class="wi-section-label">Warm wishes</p>
+      <h2 class="wi-section-title">Guestbook</h2>
+      <p class="wi-section-body">Leave us a message, a memory, or a piece of advice for the road ahead.</p>
+      <div class="wi-message-list">
+        <div class="wi-message-card">
+          <p class="wi-msg-author">Sarah & Michael</p>
+          <p class="wi-msg-text">We've watched you two grow together and couldn't be more overjoyed. Wishing you a lifetime of adventure and laughter!</p>
+        </div>
+        <div class="wi-message-card">
+          <p class="wi-msg-author">Nour Hassan</p>
+          <p class="wi-msg-text">Layla, you found your person. Adam, you are incredibly lucky. May your home always be full of warmth, good food, and great music.</p>
+        </div>
+        <div class="wi-message-card">
+          <p class="wi-msg-author">The Rossi Family</p>
+          <p class="wi-msg-text">Tuscany is honoured to host your love story. Auguri a tutti e due!</p>
+        </div>
+      </div>
+      <div style="margin-top:24px;">
+        <button class="wi-venue-btn" style="color:#2c2416;border-color:#2c2416;" onclick="sendPrompt('I want to leave a guestbook message for Layla and Adam')">Leave a Message ↗</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ⑬ Music Wishlist -->
+  <section class="wi-section">
+    <p class="wi-section-label">The soundtrack</p>
+    <h2 class="wi-section-title">Music Wishlist</h2>
+    <p class="wi-section-body">Help us build the perfect playlist. These are a few of our favourites — what would you add?</p>
+    <div class="wi-song-list">
+      <div class="wi-song-row">
+        <span class="wi-song-num">01</span>
+        <div class="wi-song-info">
+          <p class="wi-song-title">Can't Help Falling in Love</p>
+          <p class="wi-song-artist">Elvis Presley</p>
+        </div>
+        <span class="wi-song-heart">♥</span>
+      </div>
+      <div class="wi-song-row">
+        <span class="wi-song-num">02</span>
+        <div class="wi-song-info">
+          <p class="wi-song-title">At Last</p>
+          <p class="wi-song-artist">Etta James</p>
+        </div>
+        <span class="wi-song-heart">♥</span>
+      </div>
+      <div class="wi-song-row">
+        <span class="wi-song-num">03</span>
+        <div class="wi-song-info">
+          <p class="wi-song-title">Thinking Out Loud</p>
+          <p class="wi-song-artist">Ed Sheeran</p>
+        </div>
+        <span class="wi-song-heart">♥</span>
+      </div>
+      <div class="wi-song-row">
+        <span class="wi-song-num">04</span>
+        <div class="wi-song-info">
+          <p class="wi-song-title">La Vie en Rose</p>
+          <p class="wi-song-artist">Édith Piaf</p>
+        </div>
+        <span class="wi-song-heart">♥</span>
+      </div>
+    </div>
+    <div style="margin-top:20px;">
+      <button class="wi-venue-btn" onclick="sendPrompt('I want to suggest a song for Layla and Adam\'s wedding playlist')">Suggest a Song ↗</button>
+    </div>
+  </section>
+
+  <!-- ⑭ Thank You Footer -->
+  <footer class="wi-footer">
+    <div class="wi-divider" style="margin: 0 auto 36px; width:180px;">
+      <div class="wi-divider-diamond"></div>
+    </div>
+    <p class="wi-footer-names">Layla & Adam</p>
+    <p class="wi-footer-msg">
+      Thank you for being part of our love story.<br>
+      We can't wait to celebrate with you.
+    </p>
+    <p class="wi-footer-date">14 · 09 · 2025 · Tuscany, Italy</p>
+  </footer>
+
+</div>
+
+<script>
+function setRsvp(val, el) {
+  document.querySelectorAll('.wi-rsvp-opt').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  const meal = document.getElementById('mealField');
+  if(meal) meal.style.display = val==='yes' ? '' : 'none';
+}
+
+function submitRsvp() {
+  const btn = document.querySelector('.wi-rsvp-submit');
+  btn.textContent = 'RSVP Received — Thank you! ♥';
+  btn.style.background = '#8a7155';
+  btn.disabled = true;
+}
+
+function countdown() {
+  const target = new Date('2025-09-14T16:30:00');
+  const now = new Date();
+  const diff = target - now;
+  if(diff <= 0) {
+    document.getElementById('cd-days').textContent = '0';
+    document.getElementById('cd-hours').textContent = '0';
+    document.getElementById('cd-mins').textContent = '0';
+    document.getElementById('cd-secs').textContent = '0';
+    return;
+  }
+  const d = Math.floor(diff/86400000);
+  const h = Math.floor((diff%86400000)/3600000);
+  const m = Math.floor((diff%3600000)/60000);
+  const s = Math.floor((diff%60000)/1000);
+  document.getElementById('cd-days').textContent = String(d).padStart(2,'0');
+  document.getElementById('cd-hours').textContent = String(h).padStart(2,'0');
+  document.getElementById('cd-mins').textContent = String(m).padStart(2,'0');
+  document.getElementById('cd-secs').textContent = String(s).padStart(2,'0');
+}
+countdown();
+setInterval(countdown, 1000);
+</script>

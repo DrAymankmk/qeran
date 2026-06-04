@@ -33,7 +33,7 @@ return [
         'date_position' => 'center',
         'block_accent_color' => '#c9a962',
         'block_floral_border' => true,
-        'blocks' => ['countdown', 'event_details', 'venue', 'rsvp'],
+        'blocks' => ['countdown', 'event_details', 'venue'],
         'venue_name' => '',
         'venue_location' => '',
         'ceremony_note' => '',

@@ -1,0 +1,328 @@
+<?php
+
+namespace App\Services\Invitation;
+
+use App\Models\Category;
+use App\Models\Invitation;
+use Carbon\Carbon;
+
+class WeddingInvitationPresenter
+{
+    public static function from(Invitation $invitation, array $bc, ?string $hostName = null, ?Category $category = null): array
+    {
+        $locale = app()->getLocale() ?: 'ar';
+
+        $name1 = $invitation->bride ?: ($invitation->groom ?: strtok((string) ($bc['opening_headline'] ?? $invitation->event_name), '&'));
+        $name2 = ($invitation->bride && $invitation->groom)
+            ? $invitation->groom
+            : ($hostName ?? $invitation->host_name ?? '');
+
+        if ($name2 === '' && str_contains((string) $name1, '&')) {
+            $parts = array_map('trim', explode('&', (string) $name1));
+            $name1 = $parts[0] ?? $name1;
+            $name2 = $parts[1] ?? '';
+        }
+
+        $initials = trim((string) ($bc['envelope_initials'] ?? ''));
+        if ($initials === '' && $invitation->groom && $invitation->bride) {
+            $initials = mb_substr(trim($invitation->groom), 0, 1).' & '.mb_substr(trim($invitation->bride), 0, 1);
+        } elseif ($initials === '' && $name1 && $name2) {
+            $initials = mb_substr($name1, 0, 1).' & '.mb_substr($name2, 0, 1);
+        }
+
+        $eventDate = self::firstNonEmpty(
+            $bc['event_date'] ?? null,
+            $invitation->date
+        );
+        $eventTime = self::firstNonEmpty(
+            $bc['event_time'] ?? null,
+            $invitation->time
+        );
+
+        $dateCarbon = self::parseFlexibleDate($eventDate);
+        $timeCarbon = self::parseFlexibleTime($eventTime, $dateCarbon);
+
+        $envelopeHex = config('invitation_builder.envelope_colors.'.$bc['envelope_color'].'.hex', '#f5f0e6');
+
+        $heroVideoUrl = '';
+        if (! empty($bc['video_background'])) {
+            $heroVideoUrl = trim((string) ($bc['opening_video_url'] ?? $bc['background_media_url'] ?? ''));
+        }
+        if ($heroVideoUrl === '') {
+            $themeDef = app(InvitationBuilderService::class)->themeDefinition($bc['theme_slug'] ?? null);
+            $heroVideoUrl = trim((string) ($themeDef['opening_video_url'] ?? ''));
+        }
+
+        $envelopeImageUrl = app(InvitationBuilderService::class)->resolveEnvelopeImageUrl(
+            (string) ($bc['envelope_image_ref'] ?? ''),
+            $invitation,
+            $bc
+        );
+
+        $countdownIso = '2026-12-31T12:00:00';
+        if ($dateCarbon) {
+            try {
+                $countdownIso = Carbon::parse(
+                    $dateCarbon->format('Y-m-d').' '.($timeCarbon ? $timeCarbon->format('H:i') : '12:00')
+                )->toIso8601String();
+            } catch (\Throwable) {
+                $countdownIso = $dateCarbon->copy()->endOfDay()->toIso8601String();
+            }
+        }
+
+        $venueName = trim((string) ($bc['venue_name'] ?? $invitation->event_name ?? ''));
+        $venueLocation = trim((string) ($bc['venue_location'] ?? ''));
+        $invitationAddress = trim((string) ($invitation->address ?? ''));
+
+        if ($venueLocation === '') {
+            $venueLocation = $invitationAddress;
+        }
+
+        $mapQuery = self::resolveMapQuery($invitation, $venueLocation, $venueName);
+        $mapUrl = self::buildMapLink($mapQuery);
+        $mapEmbedUrl = self::buildMapEmbedUrl($mapQuery, $locale);
+
+        $venueAddressLine = $venueLocation;
+        if ($invitationAddress !== '' && $invitationAddress !== $venueLocation) {
+            $venueAddressLine = trim($venueLocation."\n".$invitationAddress);
+        }
+
+        return [
+            'bc' => $bc,
+            'blocks' => $bc['blocks'] ?? ['countdown', 'event_details', 'venue', 'rsvp'],
+            'wiName1' => $name1,
+            'wiName2' => $name2,
+            'wiNamesFooter' => trim($name1.' & '.$name2, ' &'),
+            'wiInitials' => $initials,
+            'wiHostLabel' => $hostName ?? $invitation->host_name ?? '',
+            'wiSubtitle' => $category?->getTranslation('ar')?->name ?? 'نتشرف بدعوتكم لحضور حفل الزفاف',
+            'wiHeadline' => $bc['opening_headline'] ?? $invitation->event_name,
+            'wiDateBadge' => $dateCarbon ? $dateCarbon->locale($locale)->translatedFormat('j F Y') : '',
+            'wiDateMain' => $dateCarbon ? $dateCarbon->locale($locale)->translatedFormat('j F').'<br>'.$dateCarbon->format('Y') : '',
+            'wiDayName' => $dateCarbon ? $dateCarbon->locale($locale)->translatedFormat('l') : '',
+            'wiHeroDetail' => trim(
+                ($dateCarbon ? $dateCarbon->locale($locale)->translatedFormat('j F Y') : '')
+                .($timeCarbon ? ' · '.$timeCarbon->format('h:i A') : '')
+                .($invitation->address ? '<br>'.$invitation->address : '')
+            ),
+            'wiCeremonyTime' => $timeCarbon ? $timeCarbon->format('h:i A') : '—',
+            'wiCeremonyNote' => $bc['ceremony_note'] ?? ($invitation->description ? mb_substr(strip_tags($invitation->description), 0, 80) : ''),
+            'wiReceptionTime' => ! empty($bc['reception_time'])
+                ? (strlen((string) $bc['reception_time']) <= 8
+                    ? Carbon::parse($bc['reception_time'])->format('h:i A')
+                    : $bc['reception_time'])
+                : '',
+            'wiReceptionNote' => $bc['reception_note'] ?? '',
+            'wiVenueName' => $venueName !== '' ? $venueName : '—',
+            'wiVenueLocation' => $venueLocation,
+            'wiVenueAddressLine' => $venueAddressLine,
+            'wiVenueTitle' => $bc['venue_section_title'] ?? ($venueName !== '' ? $venueName : ($invitation->event_name ?: 'موقع الحفل')),
+            'wiVenueLabel' => $bc['venue_section_label'] ?? 'موقع الحفل',
+            'wiVenueDescription' => trim((string) ($bc['venue_description'] ?? '')),
+            'wiHasMap' => $mapQuery !== null,
+            'wiMapEmbedUrl' => $mapEmbedUrl,
+            'wiDetailsTitle' => $bc['details_section_title'] ?? ($invitation->event_name ?: 'تفاصيل الحفل'),
+            'wiDetailsLabel' => $bc['details_section_label'] ?? 'جميع التفاصيل',
+            'wiCountdownIso' => $countdownIso,
+            'wiMapUrl' => $mapUrl,
+            'wiEnvelopeHex' => $envelopeHex,
+            'wiEnvelopeShape' => app(InvitationBuilderService::class)->normalizeEnvelopeShape($bc['envelope_shape'] ?? null),
+            'wiEnvelopeImageUrl' => $envelopeImageUrl,
+            'wiEnvelopeHasImage' => $envelopeImageUrl !== '',
+            'wiSealStyle' => $bc['seal_style'] ?? 'wax_classic',
+            ...self::sealViewVars($bc['seal_style'] ?? 'wax_classic', $bc['seal_color'] ?? null),
+            'wiDatePosition' => $bc['date_position'] ?? 'center',
+            'wiHeroVideoUrl' => $heroVideoUrl,
+            'wiHeroHasVideo' => $heroVideoUrl !== '',
+            'showEnvelope' => ($bc['opening_type'] ?? 'envelope') === 'envelope',
+        ];
+    }
+
+    public static function hasBlock(array $blocks, string $key): bool
+    {
+        return in_array($key, $blocks, true);
+    }
+
+    public static function replaceBetweenMarkers(
+        string $html,
+        string $startNeedle,
+        string $endMarker,
+        string $insert
+    ): string {
+        $start = strpos($html, $startNeedle);
+        if ($start === false) {
+            return $html;
+        }
+
+        $end = strpos($html, $endMarker, $start);
+        if ($end === false) {
+            return $html;
+        }
+
+        return substr($html, 0, $start).$insert."\n\n  ".substr($html, $end);
+    }
+
+    protected static function firstNonEmpty(mixed ...$values): ?string
+    {
+        foreach ($values as $value) {
+            $text = trim((string) ($value ?? ''));
+            if ($text !== '') {
+                return $text;
+            }
+        }
+
+        return null;
+    }
+
+    protected static function parseFlexibleDate(?string $value): ?Carbon
+    {
+        $value = trim((string) ($value ?? ''));
+        if ($value === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    protected static function resolveMapQuery(Invitation $invitation, string $venueLocation, string $venueName): ?string
+    {
+        $lat = $invitation->latitude;
+        $lng = $invitation->longitude;
+
+        if ($lat !== null && $lat !== '' && $lng !== null && $lng !== '' && is_numeric($lat) && is_numeric($lng)) {
+            return ((float) $lat).','.((float) $lng);
+        }
+
+        if ($venueLocation !== '') {
+            return $venueLocation;
+        }
+
+        if ($venueName !== '') {
+            return $venueName;
+        }
+
+        return null;
+    }
+
+    protected static function buildMapLink(?string $query): string
+    {
+        if ($query === null || $query === '') {
+            return '#';
+        }
+
+        if (preg_match('/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/', $query)) {
+            return 'https://www.google.com/maps?q='.urlencode($query);
+        }
+
+        return 'https://www.google.com/maps/search/?api=1&query='.urlencode($query);
+    }
+
+    protected static function buildMapEmbedUrl(?string $query, string $locale): string
+    {
+        if ($query === null || $query === '') {
+            return '';
+        }
+
+        $lang = str_starts_with($locale, 'ar') ? 'ar' : 'en';
+
+        return 'https://www.google.com/maps?q='.urlencode($query).'&hl='.$lang.'&z=15&output=embed';
+    }
+
+    protected static function parseFlexibleTime(?string $value, ?Carbon $dateCarbon): ?Carbon
+    {
+        $value = trim((string) ($value ?? ''));
+        if ($value === '') {
+            return null;
+        }
+
+        try {
+            if (preg_match('/^\d{1,2}:\d{2}(:\d{2})?$/', $value) && $dateCarbon) {
+                return Carbon::parse($dateCarbon->format('Y-m-d').' '.$value);
+            }
+
+            return Carbon::parse($value);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    public static function defaultSealColorForStyle(?string $slug): string
+    {
+        $def = config('invitation_builder.seal_styles.'.($slug ?: 'wax_classic'), []);
+        if (! is_array($def)) {
+            $def = [];
+        }
+
+        $color = trim((string) ($def['default_color'] ?? ''));
+        if ($color !== '' && self::normalizeSealHex($color) !== null) {
+            return self::normalizeSealHex($color);
+        }
+
+        $palette = (string) ($def['palette'] ?? 'crimson');
+
+        return config('invitation_builder.seal_palette_colors.'.$palette, '#a31830');
+    }
+
+    public static function normalizeSealHex(?string $hex): ?string
+    {
+        $hex = trim((string) ($hex ?? ''));
+        if ($hex === '') {
+            return null;
+        }
+        if (preg_match('/^#?([0-9A-Fa-f]{6})$/', $hex, $m)) {
+            return '#'.strtolower($m[1]);
+        }
+
+        return null;
+    }
+
+    public static function resolveSealColor(?string $styleSlug, ?string $customColor): string
+    {
+        $normalized = self::normalizeSealHex($customColor);
+        if ($normalized !== null) {
+            return $normalized;
+        }
+
+        return self::defaultSealColorForStyle($styleSlug);
+    }
+
+    public static function sealInlineStyle(?string $hex): string
+    {
+        $hex = self::normalizeSealHex($hex);
+        if ($hex === null) {
+            return '';
+        }
+
+        return implode(' ', [
+            '--s-mid: '.$hex.';',
+            '--s-lo: color-mix(in srgb, '.$hex.' 58%, #000);',
+            '--s-hi: color-mix(in srgb, '.$hex.' 38%, #fff);',
+            '--s-drip: color-mix(in srgb, '.$hex.' 72%, #000);',
+            '--s-ink: color-mix(in srgb, '.$hex.' 18%, #fff);',
+        ]);
+    }
+
+    /** @return array{wiSealShape: string, wiSealPalette: string, wiSealRing: bool, wiSealDrip: bool, wiSealColor: string, wiSealInlineStyle: string} */
+    public static function sealViewVars(?string $slug, ?string $customColor = null): array
+    {
+        $def = config('invitation_builder.seal_styles.'.($slug ?: 'wax_classic'), []);
+        if (! is_array($def)) {
+            $def = [];
+        }
+
+        $color = self::resolveSealColor($slug, $customColor);
+
+        return [
+            'wiSealShape' => (string) ($def['shape'] ?? 'wax-round'),
+            'wiSealPalette' => (string) ($def['palette'] ?? 'crimson'),
+            'wiSealRing' => (bool) ($def['ring'] ?? true),
+            'wiSealDrip' => (bool) ($def['drip'] ?? true),
+            'wiSealColor' => $color,
+            'wiSealInlineStyle' => self::sealInlineStyle($color),
+        ];
+    }
+}

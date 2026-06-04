@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" role="img" aria-label="Burgundy wax envelope">
+  <defs>
+    <filter id="sh"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-opacity="0.28"/></filter>
+    <linearGradient id="p" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b3a48"/><stop offset="100%" stop-color="#722f37"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="520" rx="12" fill="#4a2028"/>
+  <g filter="url(#sh)">
+    <path d="M32 108 L32 468 L368 468 L368 108 L200 268 Z" fill="url(#p)" stroke="#a05060" stroke-width="1.2"/>
+    <path d="M32 108 L200 48 L368 108 L200 268 Z" fill="#9b3545" stroke="#c87888" stroke-width="0.8"/>
+  </g>
+</svg>

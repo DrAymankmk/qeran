@@ -4,25 +4,136 @@
 	const iframe = document.getElementById('ibPreviewFrame');
 	const loading = document.getElementById('ibPreviewLoading');
 	const deviceWrap = document.getElementById('ibPreviewDevice');
-	const previewUrl = @json($previewPostUrl);
+	const previewPostUrl = @json($previewPostUrl);
 	const csrf = @json(csrf_token());
 	const blockCatalog = @json($catalog['information_blocks']);
 	let debounceTimer = null;
 	let previewSeq = 0;
+	let previewReady = false;
 
 	function setLoading(show) {
 		loading.classList.toggle('d-none', !show);
 	}
 
-	function refreshPreview() {
-		const seq = ++previewSeq;
-		setLoading(true);
-		const body = new FormData(form);
-		body.delete('_method');
-		body.delete('publish');
-		body.delete('text_color_visible');
+	function getPreviewDoc() {
+		try {
+			return iframe.contentDocument || iframe.contentWindow.document;
+		} catch (e) {
+			return null;
+		}
+	}
 
-		fetch(previewUrl, {
+	function getPreviewWin() {
+		try {
+			return iframe.contentWindow;
+		} catch (e) {
+			return null;
+		}
+	}
+
+	function isStyleRelevant(text) {
+		return /(--ib-|--wi-|\.wi-|\.ib-builder|invitation-builder-active|wi-env-seal|wi-envelope)/.test(text || '');
+	}
+
+	function applyPreviewStyles(targetDoc, parsedDoc) {
+		targetDoc.querySelectorAll('[data-ib-preview-style]').forEach(function (node) {
+			node.remove();
+		});
+		parsedDoc.querySelectorAll('style').forEach(function (style) {
+			if (!isStyleRelevant(style.textContent)) return;
+			var el = targetDoc.createElement('style');
+			el.setAttribute('data-ib-preview-style', '1');
+			el.textContent = style.textContent;
+			targetDoc.head.appendChild(el);
+		});
+		if (parsedDoc.body) {
+			targetDoc.body.className = parsedDoc.body.className;
+		}
+	}
+
+	function replaceNodeFromParsed(targetDoc, selector, parsedDoc) {
+		var oldNode = targetDoc.querySelector(selector);
+		var newNode = parsedDoc.querySelector(selector);
+		if (oldNode && newNode) {
+			oldNode.replaceWith(targetDoc.importNode(newNode, true));
+			return true;
+		}
+		if (!oldNode && newNode) {
+			var shell = targetDoc.querySelector('.ib-preview-shell');
+			var main = targetDoc.getElementById('wiMainContent');
+			var imported = targetDoc.importNode(newNode, true);
+			if (selector === '#wiEnvelopeGate' && main) {
+				main.parentNode.insertBefore(imported, main);
+			} else if (shell) {
+				shell.appendChild(imported);
+			} else {
+				targetDoc.body.appendChild(imported);
+			}
+			return true;
+		}
+		if (oldNode && !newNode) {
+			oldNode.remove();
+		}
+		return false;
+	}
+
+	function softPatchPreview(html) {
+		var doc = getPreviewDoc();
+		var win = getPreviewWin();
+		if (!doc || !doc.getElementById('wiMainContent') || !win) {
+			return false;
+		}
+
+		deviceWrap.classList.add('is-live-updating');
+
+		var state = win.ibCapturePreviewState ? win.ibCapturePreviewState() : null;
+		var parsed = new DOMParser().parseFromString(html, 'text/html');
+
+		applyPreviewStyles(doc, parsed);
+		replaceNodeFromParsed(doc, '#wiEnvelopeGate', parsed);
+		replaceNodeFromParsed(doc, '#wiMainContent', parsed);
+		replaceNodeFromParsed(doc, '#wiStatusAccepted', parsed);
+		replaceNodeFromParsed(doc, '#wiStatusDeclined', parsed);
+
+		var newAudio = parsed.getElementById('inviteOpeningAudio');
+		var oldAudio = doc.getElementById('inviteOpeningAudio');
+		if (oldAudio && !newAudio) {
+			oldAudio.remove();
+		} else if (newAudio) {
+			if (oldAudio) oldAudio.replaceWith(doc.importNode(newAudio, true));
+			else doc.body.appendChild(doc.importNode(newAudio, true));
+		}
+
+		if (win.ibRestorePreviewState) win.ibRestorePreviewState(state);
+		if (win.ibAfterPreviewPatch) win.ibAfterPreviewPatch();
+
+		requestAnimationFrame(function () {
+			deviceWrap.classList.remove('is-live-updating');
+		});
+
+		return true;
+	}
+
+	function fullLoadPreview(html, seq) {
+		previewReady = false;
+		iframe.srcdoc = html;
+		iframe.onload = function () {
+			if (seq !== previewSeq) return;
+			previewReady = true;
+			var win = getPreviewWin();
+			if (win && win.ibAfterPreviewPatch) win.ibAfterPreviewPatch();
+			setLoading(false);
+		};
+	}
+
+	function refreshPreview(forceFull) {
+		const seq = ++previewSeq;
+		const soft = previewReady && !forceFull;
+		if (!soft) setLoading(true);
+
+		const body = buildPreviewFormData();
+
+		fetch(previewPostUrl, {
 			method: 'POST',
 			body: body,
 			headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'text/html' },
@@ -34,20 +145,23 @@
 			})
 			.then(function (html) {
 				if (seq !== previewSeq) return;
-				iframe.srcdoc = html;
+				if (!soft || !softPatchPreview(html)) {
+					fullLoadPreview(html, seq);
+					return;
+				}
+				setLoading(false);
 			})
 			.catch(function () {
 				if (seq !== previewSeq) return;
+				previewReady = false;
 				iframe.srcdoc = '<body style="font-family:sans-serif;padding:24px;color:#c00;text-align:center;">' + @json(__('admin.invitation-builder-preview-error')) + '</body>';
-			})
-			.finally(function () {
-				if (seq === previewSeq) setLoading(false);
+				setLoading(false);
 			});
 	}
 
 	function schedulePreview() {
 		clearTimeout(debounceTimer);
-		debounceTimer = setTimeout(refreshPreview, 450);
+		debounceTimer = setTimeout(function () { refreshPreview(false); }, 280);
 	}
 
 	form.querySelectorAll('.ib-preview-field').forEach(function (el) {
@@ -57,8 +171,49 @@
 
 	document.getElementById('ibPreviewRefresh').addEventListener('click', function () {
 		clearTimeout(debounceTimer);
-		refreshPreview();
+		refreshPreview(true);
 	});
+
+	function buildPreviewFormData() {
+		const body = new FormData(form);
+		body.delete('_method');
+		body.delete('publish');
+		body.delete('text_color_visible');
+		return body;
+	}
+
+	function openPreviewInNewTab() {
+		const body = buildPreviewFormData();
+		const tempForm = document.createElement('form');
+		tempForm.method = 'POST';
+		tempForm.action = previewPostUrl;
+		tempForm.target = '_blank';
+		tempForm.rel = 'noopener';
+		tempForm.style.display = 'none';
+
+		const tokenInput = document.createElement('input');
+		tokenInput.type = 'hidden';
+		tokenInput.name = '_token';
+		tokenInput.value = csrf;
+		tempForm.appendChild(tokenInput);
+
+		body.forEach(function (value, key) {
+			const input = document.createElement('input');
+			input.type = 'hidden';
+			input.name = key;
+			input.value = typeof value === 'string' ? value : '';
+			tempForm.appendChild(input);
+		});
+
+		document.body.appendChild(tempForm);
+		tempForm.submit();
+		tempForm.remove();
+	}
+
+	var openTabBtn = document.getElementById('ibOpenPreviewTab');
+	if (openTabBtn) {
+		openTabBtn.addEventListener('click', openPreviewInNewTab);
+	}
 
 	document.querySelectorAll('[data-ib-device]').forEach(function (btn) {
 		btn.addEventListener('click', function () {
@@ -69,6 +224,29 @@
 			deviceWrap.classList.toggle('is-desktop', mode === 'desktop');
 		});
 	});
+
+	function syncThemeMedia(url, isVideo) {
+		var hiddenUrl = document.getElementById('background_media_url');
+		var hiddenVideo = document.getElementById('video_background_hidden');
+		var customUrl = document.getElementById('background_media_url_custom');
+		var videoCb = document.getElementById('video_background');
+		if (hiddenUrl) hiddenUrl.value = url || '';
+		if (hiddenVideo) hiddenVideo.value = isVideo ? '1' : '0';
+		if (customUrl) customUrl.value = url || '';
+		if (videoCb) videoCb.checked = !!isVideo;
+	}
+
+	function updateThemePreviewVideos() {
+		document.querySelectorAll('.ib-theme-preview-vid').forEach(function (vid) {
+			var card = vid.closest('.ib-theme-card');
+			if (card && card.classList.contains('is-active')) {
+				vid.play().catch(function () {});
+			} else {
+				vid.pause();
+				try { vid.currentTime = 0; } catch (e) {}
+			}
+		});
+	}
 
 	/* Theme picker */
 	document.querySelectorAll('.ib-theme-card').forEach(function (card) {
@@ -82,19 +260,52 @@
 			document.getElementById('text_color').value = card.dataset.text;
 			const sync = document.querySelector('.ib-color-sync[data-target="text_color"]');
 			if (sync) sync.value = card.dataset.text;
+			if (card.dataset.video) {
+				syncThemeMedia(card.dataset.video, true);
+			}
+			updateThemePreviewVideos();
 			schedulePreview();
 		});
 	});
 
-	const catFilter = document.getElementById('ibThemeCategoryFilter');
-	if (catFilter) {
-		catFilter.addEventListener('change', function () {
-			const val = catFilter.value;
-			document.querySelectorAll('.ib-theme-card-wrap').forEach(function (wrap) {
-				wrap.style.display = !val || wrap.dataset.category === val ? '' : 'none';
-			});
+	updateThemePreviewVideos();
+
+	var customBg = document.getElementById('background_media_url_custom');
+	var videoBgCb = document.getElementById('video_background');
+	if (customBg) {
+		customBg.addEventListener('input', function () {
+			syncThemeMedia(customBg.value, videoBgCb ? videoBgCb.checked : false);
+			schedulePreview();
 		});
 	}
+	if (videoBgCb) {
+		videoBgCb.addEventListener('change', function () {
+			syncThemeMedia(customBg ? customBg.value : '', videoBgCb.checked);
+			schedulePreview();
+		});
+	}
+
+	document.querySelectorAll('.ib-envelope-shape-card').forEach(function (card) {
+		card.addEventListener('click', function () {
+			document.querySelectorAll('.ib-envelope-shape-card').forEach(function (c) { c.classList.remove('is-active'); });
+			card.classList.add('is-active');
+			var radio = card.querySelector('input[type="radio"]');
+			if (radio) radio.checked = true;
+			schedulePreview();
+		});
+	});
+
+	var envRefInput = document.getElementById('envelope_image_ref');
+	document.querySelectorAll('.ib-env-image-card').forEach(function (card) {
+		card.addEventListener('click', function () {
+			document.querySelectorAll('.ib-env-image-card').forEach(function (c) { c.classList.remove('is-active'); });
+			card.classList.add('is-active');
+			if (envRefInput) {
+				envRefInput.value = card.getAttribute('data-envelope-ref') || '';
+			}
+			schedulePreview();
+		});
+	});
 
 	/* Envelope swatches */
 	document.querySelectorAll('.ib-envelope-swatch').forEach(function (sw) {
@@ -106,11 +317,51 @@
 		});
 	});
 
+	function syncSealColor(hex) {
+		var hidden = document.getElementById('seal_color');
+		var picker = document.getElementById('seal_color_picker');
+		if (!hex) return;
+		if (hidden) hidden.value = hex;
+		if (picker) picker.value = hex;
+		document.querySelectorAll('.ib-seal-color-swatch').forEach(function (sw) {
+			sw.classList.toggle('is-active', (sw.getAttribute('data-seal-color') || '').toLowerCase() === hex.toLowerCase());
+		});
+	}
+
+	function applySealColorToMiniPreviews(hex) {
+		if (!hex) return;
+		var style = '--s-mid: ' + hex + '; --s-lo: color-mix(in srgb, ' + hex + ' 58%, #000); --s-hi: color-mix(in srgb, ' + hex + ' 38%, #fff); --s-drip: color-mix(in srgb, ' + hex + ' 72%, #000); --s-ink: color-mix(in srgb, ' + hex + ' 18%, #fff);';
+		var active = document.querySelector('.ib-seal-option.border-primary .wi-env-seal.ib-seal-mini');
+		if (active) active.setAttribute('style', style);
+	}
+
 	document.querySelectorAll('.ib-seal-option').forEach(function (opt) {
 		opt.addEventListener('click', function () {
 			document.querySelectorAll('.ib-seal-option').forEach(function (o) { o.classList.remove('border-primary'); });
 			opt.classList.add('border-primary');
 			opt.querySelector('input').checked = true;
+			var defaultColor = opt.getAttribute('data-seal-color');
+			if (defaultColor) {
+				syncSealColor(defaultColor);
+			}
+			schedulePreview();
+		});
+	});
+
+	var sealColorPicker = document.getElementById('seal_color_picker');
+	if (sealColorPicker) {
+		sealColorPicker.addEventListener('input', function () {
+			syncSealColor(sealColorPicker.value);
+			applySealColorToMiniPreviews(sealColorPicker.value);
+			schedulePreview();
+		});
+	}
+
+	document.querySelectorAll('.ib-seal-color-swatch').forEach(function (sw) {
+		sw.addEventListener('click', function () {
+			var hex = sw.getAttribute('data-seal-color');
+			syncSealColor(hex);
+			applySealColorToMiniPreviews(hex);
 			schedulePreview();
 		});
 	});
@@ -202,6 +453,6 @@
 
 	document.querySelectorAll('.ib-block-add').forEach(bindBlockAdd);
 
-	refreshPreview();
+	refreshPreview(true);
 })();
 </script>

@@ -1,46 +1,17 @@
 @php
+    use App\Services\Invitation\WeddingInvitationPresenter;
+
     $bc = $builderConfig ?? [];
-    $blocks = $bc['blocks'] ?? ['countdown', 'venue', 'rsvp'];
-    $has = fn (string $b) => in_array($b, $blocks, true);
+    $blocks = $bc['blocks'] ?? ['countdown', 'event_details', 'venue', 'rsvp'];
+    $has = fn (string $b) => WeddingInvitationPresenter::hasBlock($blocks, $b);
 
-    $wiName1 = $invitation->bride ?: ($invitation->groom ?: strtok($bc['opening_headline'] ?? $invitation->event_name, '&'));
-    $wiName2 = ($invitation->bride && $invitation->groom)
-        ? $invitation->groom
-        : ($invitation->host_name ?: '');
-
-    if ($wiName2 === '' && str_contains($wiName1, '&')) {
-        $parts = array_map('trim', explode('&', $wiName1));
-        $wiName1 = $parts[0] ?? $wiName1;
-        $wiName2 = $parts[1] ?? '';
-    }
-
-    $eventDate = $bc['event_date'] ?? $invitation->date;
-    $eventTime = $bc['event_time'] ?? $invitation->time;
-    $dateBadge = $eventDate
-        ? \Carbon\Carbon::parse($eventDate)->locale(app()->getLocale())->translatedFormat('j F Y')
-        : '';
-    $dateHero = $eventDate
-        ? \Carbon\Carbon::parse($eventDate)->locale(app()->getLocale())->translatedFormat('j F Y')
-        : '';
-    $timeHero = $eventTime
-        ? \Carbon\Carbon::parse($eventTime)->format('h:i A')
-        : '';
-    $venueLine = $invitation->address ?: ($invitation->event_name ?? '');
-    $headline = $bc['opening_headline'] ?? $invitation->event_name;
-    $hostLabel = $host_name ?? $invitation->host_name ?? '';
-
-    $countdownIso = '2026-12-31T12:00:00';
-    if ($eventDate) {
-        try {
-            $countdownIso = \Carbon\Carbon::parse(trim($eventDate.' '.($eventTime ?: '12:00')))->toIso8601String();
-        } catch (\Throwable $e) {
-            $countdownIso = \Carbon\Carbon::parse($eventDate)->endOfDay()->toIso8601String();
-        }
-    }
-
-    $mapUrl = ($invitation->latitude && $invitation->longitude)
-        ? 'https://www.google.com/maps?q='.$invitation->latitude.','.$invitation->longitude
-        : ($invitation->address ? 'https://www.google.com/maps/search/?api=1&query='.urlencode($invitation->address) : '#');
+    $present = WeddingInvitationPresenter::from(
+        $invitation,
+        $bc,
+        $host_name ?? null,
+        $category ?? null
+    );
+    extract($present, EXTR_SKIP);
 
     $bodyPath = resource_path('views/invitation/templates/partials/builder-wedding-body.html');
     $bodyHtml = file_exists($bodyPath) ? file_get_contents($bodyPath) : '';
@@ -48,10 +19,10 @@
     $sectionMarkers = [
         '<!-- ② Countdown -->' => 'countdown',
         '<!-- ③ Our Story -->' => 'our_story',
-        '<!-- ④ Event Details -->' => 'venue',
+        '<!-- ④ Event Details' => 'event_details',
         '<!-- ⑤ Photo Gallery -->' => 'gallery',
         '<!-- ⑥ Schedule -->' => 'timeline',
-        '<!-- ⑦ Venue -->' => 'venue',
+        '<!-- ⑦ Venue' => 'venue',
         '<!-- ⑧ Accommodation -->' => 'accommodation',
         '<!-- ⑨ Dress Code -->' => 'dress_code',
         '<!-- ⑩ Gift Registry -->' => 'gift_list',
@@ -59,6 +30,39 @@
         '<!-- ⑫ Guestbook -->' => 'wishes',
         '<!-- ⑬ Music Wishlist -->' => 'wishes',
     ];
+
+    $viewData = array_merge($present, [
+        'invitation' => $invitation,
+        'builderConfig' => $bc,
+        'category' => $category ?? null,
+        'host_name' => $host_name ?? null,
+        'routes' => $routes ?? ['accept' => '#', 'decline' => '#'],
+        'initialView' => $initialView ?? 'envelope',
+    ]);
+
+    $heroHtml = view('invitation.templates.partials.builder-wedding-section-hero', $viewData)->render();
+    $bodyHtml = WeddingInvitationPresenter::replaceBetweenMarkers(
+        $bodyHtml,
+        '<!-- ① Hero -->',
+        '<!-- ② Countdown -->',
+        $heroHtml
+    );
+
+    $detailsHtml = view('invitation.templates.partials.builder-wedding-section-details', $viewData)->render();
+    $bodyHtml = WeddingInvitationPresenter::replaceBetweenMarkers(
+        $bodyHtml,
+        '<!-- ④ Event Details',
+        '<!-- ⑤ Photo Gallery -->',
+        $detailsHtml
+    );
+
+    $venueHtml = view('invitation.templates.partials.builder-wedding-section-venue', $viewData)->render();
+    $bodyHtml = WeddingInvitationPresenter::replaceBetweenMarkers(
+        $bodyHtml,
+        '<!-- ⑦ Venue',
+        '<!-- ⑧ Accommodation -->',
+        $venueHtml
+    );
 
     foreach ($sectionMarkers as $marker => $blockKey) {
         if ($has($blockKey)) {
@@ -85,28 +89,27 @@
         $bodyHtml = substr($bodyHtml, 0, $pos).substr($bodyHtml, $nextPos);
     }
 
-    $replacements = [
-        'Together at last · September 14, 2025' => e($hostLabel ? $hostLabel.' · '.$dateBadge : $dateBadge),
-        "Layla<br>\n      <span class=\"wi-ampersand\">&</span><br>\n      Adam" => e($wiName1)."<br><span class=\"wi-ampersand\">&</span><br>".e($wiName2 ?: $wiName1),
-        'are getting married' => e($category?->getTranslation('ar')?->name ?? 'نتشرف بدعوتكم لحضور حفل الزفاف'),
-        "14 September 2025<br>\n      Château des Roses · Tuscany, Italy" => e($dateHero.($timeHero ? ' · '.$timeHero : '')).'<br>'.e($venueLine),
-        'Layla & Adam' => e(trim($wiName1.' & '.$wiName2, ' &')),
-        "14 · 09 · 2025 · Tuscany, Italy" => e($dateBadge.($venueLine ? ' · '.$venueLine : '')),
-        "new Date('2025-09-14T16:30:00')" => "new Date('".$countdownIso."')",
-        'onclick="submitRsvp()"' => 'type="button" onclick="wiSubmitRsvpAccept()"',
-        'Joyfully accepts' => 'أوافق بحب',
-        'Regretfully declines' => 'أعتذر',
-        'Send my RSVP' => 'تأكيد الحضور',
-        'Counting down the days' => 'العد التنازلي',
-        'scroll' => 'مرر',
-    ];
+    $bodyHtml = str_replace(
+        ['Counting down the days', "new Date('2025-09-14T16:30:00')", 'onclick="submitRsvp()"'],
+        ['العد التنازلي', "new Date('".$wiCountdownIso."')", 'type="button" onclick="wiSubmitRsvpAccept()"'],
+        $bodyHtml
+    );
 
-    $bodyHtml = str_replace(array_keys($replacements), array_values($replacements), $bodyHtml);
+    $bodyHtml = str_replace(
+        ['Joyfully accepts', 'Regretfully declines', 'Send my RSVP'],
+        ['أوافق بحب', 'أعتذر', 'تأكيد الحضور'],
+        $bodyHtml
+    );
+
+    if ($wiNamesFooter) {
+        $bodyHtml = preg_replace('/<p class="wi-footer-names">.*?<\/p>/s', '<p class="wi-footer-names">'.e($wiNamesFooter).'</p>', $bodyHtml, 1);
+    }
+
+    $gateMain = $showEnvelope && ! in_array($initialView ?? '', ['success', 'decline'], true);
 @endphp
 
 <style>
 @include('invitation.templates.partials.builder-wedding-styles')
-/* Builder theme overrides */
 :root {
   --wi-gold: var(--ib-primary, #c8a97a);
   --wi-accent: var(--ib-secondary, #e8b4b8);
@@ -116,14 +119,75 @@
 .wi-root { background: var(--wi-bg) !important; color: var(--wi-text) !important; }
 .wi-names, .wi-section-title, .wi-detail-main, .wi-footer-names { font-family: var(--ib-headline-font, 'Cormorant Garamond'), serif; }
 .wi-countdown-bar { background: color-mix(in srgb, var(--wi-text) 92%, #000) !important; }
-.wi-count-num, .wi-divider-diamond, .wi-divider::before, .wi-divider::after { color: var(--wi-gold); }
 .wi-count-num { color: var(--wi-gold) !important; }
-.wi-corner path, .wi-corner circle { stroke: var(--wi-gold); fill: var(--wi-gold); }
+.wi-corner { color: var(--wi-gold); }
+.wi-detail-icon { color: var(--wi-gold); }
+.wi-divider-diamond, .wi-divider::before, .wi-divider::after { background: var(--wi-gold); }
+.wi-section-label, .wi-date-badge, .wi-subtitle, .wi-detail-heading { color: color-mix(in srgb, var(--wi-gold) 85%, var(--wi-text)); }
 .wi-rsvp-submit { background: var(--wi-gold) !important; }
-.wi-section-label, .wi-date-badge, .wi-subtitle { color: color-mix(in srgb, var(--wi-gold) 85%, var(--wi-text)); }
-@if(!empty($bc['block_floral_border']))
-.ib-block-card, .wi-detail-card, .wi-hotel-card { border-color: color-mix(in srgb, var(--ib-block-accent, var(--wi-gold)) 50%, transparent) !important; }
-@endif
+.wi-hero { overflow: hidden; }
+.wi-hero-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.wi-hero-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.wi-hero-video-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--wi-bg, #1a1520) 35%, transparent) 0%,
+    color-mix(in srgb, var(--wi-bg, #1a1520) 55%, transparent) 45%,
+    color-mix(in srgb, var(--wi-bg, #1a1520) 75%, transparent) 100%
+  );
+}
+.wi-hero-has-video > :not(.wi-hero-media) {
+  position: relative;
+  z-index: 1;
+}
+.wi-hero-has-video .wi-corner { opacity: 0.45; color: var(--wi-gold); }
+.wi-hero-has-video .wi-date-badge,
+.wi-hero-has-video .wi-subtitle,
+.wi-hero-has-video .wi-hero-detail {
+  color: color-mix(in srgb, var(--wi-text) 92%, #fff);
+}
+.wi-hero-has-video .wi-names { color: var(--wi-text); text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35); }
+.wi-hero-has-video .wi-ampersand { color: var(--wi-gold); }
+.wi-hero-has-video .wi-scroll-hint { color: color-mix(in srgb, var(--wi-text) 80%, #fff); }
+.wi-hero.wi-date-pos-top .wi-hero-detail { order: -1; margin-bottom: 20px; }
+.wi-hero.wi-date-pos-bottom .wi-hero-detail { margin-top: 12px; }
+.wi-detail-card { border-color: color-mix(in srgb, var(--ib-block-accent, var(--wi-gold)) 35%, transparent); }
+.wi-map-embed {
+  margin: 24px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--wi-gold) 35%, transparent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+.wi-map-embed iframe {
+  display: block;
+  width: 100%;
+  height: min(240px, 42vw);
+  min-height: 200px;
+  border: 0;
+}
+.wi-map-placeholder { color: var(--wi-gold); }
+.wi-map-label .wi-map-address { font-size: 13px; font-weight: 400; opacity: 0.85; }
+.wi-venue-address-line {
+  text-align: center;
+  margin-top: 16px;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+.wi-venue-actions { margin-top: 24px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+a.wi-venue-btn { text-decoration: none; display: inline-block; }
 .wi-builder-status-overlay {
   position: fixed; inset: 0; z-index: 10001; display: none;
   align-items: center; justify-content: center; background: rgba(44,36,22,0.92);
@@ -132,7 +196,21 @@
 .wi-builder-status-overlay.active { display: flex; }
 </style>
 
+@if(!empty($bc['music_enabled']))
+@php $audioUrls = $invitation->getAudioUrls(); @endphp
+@if(!empty($audioUrls['mp3']) || !empty($audioUrls['ogg']))
+<audio id="inviteOpeningAudio" preload="auto" style="display:none;">
+  @if(!empty($audioUrls['ogg']))<source src="{{ $audioUrls['ogg'] }}" type="audio/ogg">@endif
+  @if(!empty($audioUrls['mp3']))<source src="{{ $audioUrls['mp3'] }}" type="audio/mpeg">@endif
+</audio>
+@endif
+@endif
+
+@include('invitation.templates.partials.builder-wedding-envelope', $viewData)
+
+<div id="wiMainContent" class="wi-main-content @if($gateMain) is-gated @endif" data-wi-countdown="{{ $wiCountdownIso }}">
 {!! $bodyHtml !!}
+</div>
 
 <div id="wiStatusAccepted" class="wi-builder-status-overlay @if(($initialView ?? '') === 'success') active @endif">
   <div>
@@ -149,76 +227,4 @@
   </div>
 </div>
 
-<script>
-function wiSubmitRsvpAccept() {
-  if (typeof acceptInvitation === 'function') {
-    acceptInvitation();
-    return;
-  }
-  var btn = document.querySelector('.wi-rsvp-submit');
-  if (btn) {
-    btn.textContent = 'جاري الإرسال…';
-    btn.disabled = true;
-  }
-  fetch(@json($routes['accept'] ?? ''), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': @json(csrf_token()) },
-  })
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      if (data.success) {
-        document.getElementById('wiStatusAccepted')?.classList.add('active');
-      } else {
-        alert(data.message || 'حدث خطأ');
-        if (btn) { btn.disabled = false; btn.textContent = 'تأكيد الحضور'; }
-      }
-    })
-    .catch(function () {
-      alert('حدث خطأ');
-      if (btn) { btn.disabled = false; btn.textContent = 'تأكيد الحضور'; }
-    });
-}
-
-function setRsvp(val, el) {
-  document.querySelectorAll('.wi-rsvp-opt').forEach(function (o) { o.classList.remove('active'); });
-  if (el) el.classList.add('active');
-  var meal = document.getElementById('mealField');
-  if (meal) meal.style.display = val === 'yes' ? '' : 'none';
-  if (val === 'no') {
-    if (typeof declineInvitation === 'function') {
-      declineInvitation();
-    } else {
-      fetch(@json($routes['decline'] ?? ''), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': @json(csrf_token()) },
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-          if (data.success) document.getElementById('wiStatusDeclined')?.classList.add('active');
-        });
-    }
-  }
-}
-
-function countdown() {
-  var target = new Date(@json($countdownIso));
-  var now = new Date();
-  var diff = target - now;
-  var els = ['cd-days','cd-hours','cd-mins','cd-secs'];
-  if (diff <= 0) {
-    els.forEach(function (id) { var el = document.getElementById(id); if (el) el.textContent = '00'; });
-    return;
-  }
-  var d = Math.floor(diff / 86400000);
-  var h = Math.floor((diff % 86400000) / 3600000);
-  var m = Math.floor((diff % 3600000) / 60000);
-  var s = Math.floor((diff % 60000) / 1000);
-  var map = { 'cd-days': d, 'cd-hours': h, 'cd-mins': m, 'cd-secs': s };
-  Object.keys(map).forEach(function (id) {
-    var el = document.getElementById(id);
-    if (el) el.textContent = String(map[id]).padStart(2, '0');
-  });
-}
-countdown();
-setInterval(countdown, 1000);
-</script>
+@include('invitation.templates.partials.builder-wedding-scripts', $viewData)

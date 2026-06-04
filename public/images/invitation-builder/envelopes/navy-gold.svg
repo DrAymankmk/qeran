@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" role="img" aria-label="Navy gold envelope">
+  <defs>
+    <filter id="sh" x="-8%" y="-8%" width="116%" height="116%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+    <linearGradient id="paper" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a4568"/>
+      <stop offset="100%" stop-color="#1e3a5f"/>
+    </linearGradient>
+    <linearGradient id="flap" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#3d5a80"/>
+      <stop offset="100%" stop-color="#1a3050"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d4af37"/>
+      <stop offset="50%" stop-color="#fde047"/>
+      <stop offset="100%" stop-color="#d4af37"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="520" rx="12" fill="#152535"/>
+  <g filter="url(#sh)">
+    <path d="M32 108 L32 468 Q32 488 52 488 L348 488 Q368 488 368 468 L368 108 L200 268 Z" fill="url(#paper)" stroke="#d4af37" stroke-width="1.5"/>
+    <path d="M40 112 L360 112" fill="none" stroke="url(#gold)" stroke-width="2" opacity="0.7"/>
+    <path d="M32 108 L200 48 L368 108 L200 268 Z" fill="url(#flap)" stroke="#d4af37" stroke-width="1.2"/>
+  </g>
+</svg>

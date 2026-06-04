@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" role="img" aria-label="Classic cream envelope">
+  <defs>
+    <filter id="sh" x="-8%" y="-8%" width="116%" height="116%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#3d3020" flood-opacity="0.22"/>
+    </filter>
+    <linearGradient id="paper" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fffef8"/>
+      <stop offset="45%" stop-color="#f5f0e6"/>
+      <stop offset="100%" stop-color="#e0d4bc"/>
+    </linearGradient>
+    <linearGradient id="flap" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#faf6ee"/>
+      <stop offset="100%" stop-color="#ddd0b8"/>
+    </linearGradient>
+    <linearGradient id="liner" x1="50%" y1="100%" x2="50%" y2="0%">
+      <stop offset="0%" stop-color="#c8a97a" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#f5f0e6" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="520" rx="12" fill="#ebe6dc"/>
+  <g filter="url(#sh)">
+    <path d="M32 108 L32 468 Q32 488 52 488 L348 488 Q368 488 368 468 L368 108 L200 268 Z" fill="url(#paper)" stroke="#c4b49a" stroke-width="1.2"/>
+    <path d="M52 128 L200 248 L348 128 L200 88 Z" fill="url(#liner)" opacity="0.9"/>
+    <path d="M32 108 L200 48 L368 108 L200 268 Z" fill="url(#flap)" stroke="#c4b49a" stroke-width="1.2"/>
+    <path d="M32 108 L200 268 L368 108" fill="none" stroke="#d4c4a8" stroke-width="0.8" opacity="0.6"/>
+  </g>
+</svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" role="img" aria-label="Peacock elegant envelope">
+  <defs>
+    <filter id="sh"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-opacity="0.3"/></filter>
+    <linearGradient id="p" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a5c5c"/><stop offset="100%" stop-color="#0d3d3d"/>
+    </linearGradient>
+    <linearGradient id="acc" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#14b8a6"/><stop offset="100%" stop-color="#5eead4"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="520" rx="12" fill="#0a2828"/>
+  <g filter="url(#sh)">
+    <path d="M32 108 L32 468 L368 468 L368 108 L200 268 Z" fill="url(#p)" stroke="#2dd4bf" stroke-width="1"/>
+    <path d="M32 108 L200 48 L368 108 L200 268 Z" fill="#1e4a4a" stroke="#2dd4bf" stroke-width="0.8"/>
+    <path d="M48 118 L352 118" stroke="url(#acc)" stroke-width="1.5" fill="none" opacity="0.8"/>
+  </g>
+</svg>

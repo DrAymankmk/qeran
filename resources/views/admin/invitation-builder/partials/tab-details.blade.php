@@ -21,6 +21,45 @@
 		<label class="form-label">{{ __('admin.ib-event-time') }}</label>
 		<input type="time" name="event_time" class="form-control ib-preview-field" value="{{ old('event_time', $config['event_time'] ? \Illuminate\Support\Carbon::parse($config['event_time'])->format('H:i') : '') }}">
 	</div>
+
+	<div class="col-12"><hr class="my-1"><h6 class="text-muted">{{ __('admin.ib-details-cards-section') }}</h6></div>
+
+	<div class="col-md-6">
+		<label class="form-label">{{ __('admin.ib-details-section-label') }}</label>
+		<input type="text" name="details_section_label" class="form-control ib-preview-field" value="{{ old('details_section_label', $config['details_section_label']) }}" placeholder="جميع التفاصيل">
+	</div>
+	<div class="col-md-6">
+		<label class="form-label">{{ __('admin.ib-details-section-title') }}</label>
+		<input type="text" name="details_section_title" class="form-control ib-preview-field" value="{{ old('details_section_title', $config['details_section_title']) }}" placeholder="{{ $invitation->event_name }}">
+	</div>
+	<div class="col-md-6">
+		<label class="form-label">{{ __('admin.ib-venue-name') }}</label>
+		<input type="text" name="venue_name" class="form-control ib-preview-field" value="{{ old('venue_name', $config['venue_name']) }}" placeholder="{{ $invitation->event_name }}">
+	</div>
+	<div class="col-md-6">
+		<label class="form-label">{{ __('admin.ib-venue-location') }}</label>
+		<input type="text" name="venue_location" class="form-control ib-preview-field" value="{{ old('venue_location', $config['venue_location']) }}" placeholder="{{ $invitation->address }}">
+		@if($invitation->address || ($invitation->latitude && $invitation->longitude))
+		<small class="text-muted d-block mt-1">
+			{{ __('admin.ib-venue-location-hint') }}
+			@if($invitation->address)<br>{{ __('admin.ib-invitation-address') }}: {{ $invitation->address }}@endif
+			@if($invitation->latitude && $invitation->longitude)<br>{{ __('admin.ib-invitation-coords') }}: {{ $invitation->latitude }}, {{ $invitation->longitude }}@endif
+		</small>
+		@endif
+	</div>
+	<div class="col-md-6">
+		<label class="form-label">{{ __('admin.ib-ceremony-note') }}</label>
+		<input type="text" name="ceremony_note" class="form-control ib-preview-field" value="{{ old('ceremony_note', $config['ceremony_note']) }}" placeholder="{{ __('admin.ib-ceremony-note-placeholder') }}">
+	</div>
+	<div class="col-md-3">
+		<label class="form-label">{{ __('admin.ib-reception-time') }}</label>
+		<input type="time" name="reception_time" class="form-control ib-preview-field" value="{{ old('reception_time', $config['reception_time'] ? \Illuminate\Support\Carbon::parse($config['reception_time'])->format('H:i') : '') }}">
+	</div>
+	<div class="col-md-3">
+		<label class="form-label">{{ __('admin.ib-reception-note') }}</label>
+		<input type="text" name="reception_note" class="form-control ib-preview-field" value="{{ old('reception_note', $config['reception_note']) }}">
+	</div>
+
 	<div class="col-md-6">
 		<label class="form-label">{{ __('admin.ib-headline-font') }}</label>
 		<select name="headline_font" class="form-select ib-preview-field">
@@ -40,6 +79,7 @@
 	<div class="col-md-6">
 		<label class="form-label">{{ __('admin.invitation-builder-text-color') }}</label>
 		<input type="color" name="text_color_visible" class="form-control form-control-color w-100 ib-color-sync" data-target="text_color" value="{{ old('text_color', $config['text_color']) }}">
+		<input type="hidden" name="text_color" id="text_color" value="{{ old('text_color', $config['text_color']) }}" class="ib-preview-field">
 	</div>
 	<div class="col-md-6">
 		<label class="form-label">{{ __('admin.ib-date-position') }}</label>

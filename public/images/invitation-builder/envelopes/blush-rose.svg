@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" role="img" aria-label="Blush rose envelope">
+  <defs>
+    <filter id="sh" x="-8%" y="-8%" width="116%" height="116%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#5c3040" flood-opacity="0.2"/>
+    </filter>
+    <linearGradient id="paper" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff5f7"/>
+      <stop offset="50%" stop-color="#f8e8ee"/>
+      <stop offset="100%" stop-color="#e8c8d0"/>
+    </linearGradient>
+    <linearGradient id="flap" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#fce8ec"/>
+      <stop offset="100%" stop-color="#e8b4b8"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="520" rx="12" fill="#f0dce0"/>
+  <g filter="url(#sh)">
+    <path d="M32 108 L32 468 Q32 488 52 488 L348 488 Q368 488 368 468 L368 108 L200 268 Z" fill="url(#paper)" stroke="#d4a0a8" stroke-width="1.2"/>
+    <path d="M52 128 L200 248 L348 128 L200 88 Z" fill="#f4d4dc" opacity="0.85"/>
+    <path d="M32 108 L200 48 L368 108 L200 268 Z" fill="url(#flap)" stroke="#d4a0a8" stroke-width="1.2"/>
+  </g>
+</svg>

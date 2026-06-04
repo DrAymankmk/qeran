@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" role="img" aria-label="Parchment vintage envelope">
+  <defs>
+    <filter id="sh"><feDropShadow dx="2" dy="6" stdDeviation="10" flood-color="#4a3820" flood-opacity="0.25"/></filter>
+    <filter id="tex"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="n"/><feColorMatrix in="n" type="saturate" values="0"/><feBlend in="SourceGraphic" in2="n" mode="multiply" opacity="0.12"/></filter>
+  </defs>
+  <rect width="400" height="520" rx="14" fill="#c4b090"/>
+  <g filter="url(#sh)">
+    <path d="M34 104 L34 472 L366 472 L366 104 L200 266 Z" fill="#e8d8b8" stroke="#a89068" stroke-width="1.2" filter="url(#tex)"/>
+    <path d="M34 104 L200 44 L366 104 L200 266 Z" fill="#ddd0a8" stroke="#a89068" stroke-width="1"/>
+    <path d="M54 124 L200 240 L346 124" fill="none" stroke="#8b7355" stroke-width="0.6" opacity="0.5"/>
+  </g>
+</svg>

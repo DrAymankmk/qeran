@@ -4,8 +4,12 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<title>{{ $invitation->event_name }} — {{ __('admin.invitation-builder-live-preview') }}</title>
+	@if(empty($useBuilderWedding))
 	<script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.19.0/TweenMax.min.js"></script>
+	@endif
+	<link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
+	<link href="https://fonts.bunny.net/css?family=cairo:400,600,700|playfair-display:400,700|cormorant-garamond:400,600|great-vibes:400" rel="stylesheet">
 	<style>
 		* { margin: 0; padding: 0; box-sizing: border-box; }
 		body {
@@ -36,17 +40,19 @@
 			pointer-events: none;
 		}
 	</style>
-	@include('invitation.partials.builder-theme')
 	@if(empty($builderConfig['music_enabled']))
 	<style>#inviteOpeningAudio { display: none !important; }</style>
 	@endif
 </head>
 <body>
+	@include('invitation.partials.builder-theme')
 	<span class="ib-preview-badge">{{ __('admin.invitation-builder-live-preview') }}</span>
 	<div class="ib-preview-shell" style="flex-direction: column;">
 		@include($view)
 	</div>
-	@if(empty($useBuilderWedding))
+	@if(!empty($useBuilderWedding))
+	@include('admin.invitation-builder.partials.preview-wedding-bridge')
+	@else
 	@include('admin.invitation-builder.preview-scripts')
 	@endif
 </body>

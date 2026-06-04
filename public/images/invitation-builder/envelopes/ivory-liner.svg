@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" role="img" aria-label="Ivory liner envelope">
+  <defs>
+    <filter id="sh"><feDropShadow dx="0" dy="8" stdDeviation="11" flood-opacity="0.18"/></filter>
+    <linearGradient id="p" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fffff8"/><stop offset="100%" stop-color="#f0ead8"/>
+    </linearGradient>
+    <linearGradient id="lin" x1="50%" y1="100%" x2="50%" y2="0%">
+      <stop offset="0%" stop-color="#d4af37" stop-opacity="0.5"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="520" rx="12" fill="#e8e4d8"/>
+  <g filter="url(#sh)">
+    <path d="M36 112 L36 472 L364 472 L364 112 L200 272 Z" fill="url(#p)" stroke="#d8d0c0" stroke-width="1"/>
+    <path d="M56 132 L200 252 L344 132 L200 92 Z" fill="url(#lin)"/>
+    <path d="M36 112 L200 52 L364 112 L200 272 Z" fill="#faf8f2" stroke="#d8d0c0" stroke-width="1"/>
+    <path d="M56 132 L200 252 L344 132" fill="none" stroke="#d4af37" stroke-width="0.6" opacity="0.5"/>
+  </g>
+</svg>

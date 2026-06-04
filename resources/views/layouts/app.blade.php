@@ -92,13 +92,22 @@
 @yield('add-product-js')
 {{--    @if(app()->getLocale()=='ar')--}}
 <script>
-    $('.datatable.dt-responsive').DataTable({
-        language: {
-            url: '{{asset('admin_assets/ar.json')}}'
-        },
-        "bPaginate": false,
+    $(function () {
+        if (!$.fn.DataTable) {
+            return;
+        }
+        $('.datatable.dt-responsive').each(function () {
+            if ($.fn.dataTable.isDataTable(this)) {
+                return;
+            }
+            $(this).DataTable({
+                language: {
+                    url: '{{ asset('admin_assets/ar.json') }}'
+                },
+                bPaginate: false,
+            });
+        });
     });
-
 </script>
 @if(Session::has('success'))
 

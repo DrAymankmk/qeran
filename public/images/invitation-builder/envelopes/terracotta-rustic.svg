@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" role="img" aria-label="Terracotta rustic envelope">
+  <defs>
+    <filter id="sh"><feDropShadow dx="0" dy="8" stdDeviation="11" flood-color="#4a2818" flood-opacity="0.22"/></filter>
+    <linearGradient id="p" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5e6d8"/><stop offset="100%" stop-color="#c67b5c"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="520" rx="12" fill="#d4b8a0"/>
+  <g filter="url(#sh)">
+    <path d="M32 108 L32 468 L368 468 L368 108 L200 268 Z" fill="url(#p)" stroke="#a85a3a" stroke-width="1.2"/>
+    <path d="M32 108 L200 48 L368 108 L200 268 Z" fill="#d4956a" stroke="#a85a3a" stroke-width="1"/>
+    <path d="M70 190 Q200 150 330 190" fill="none" stroke="#8b4528" stroke-width="0.7" opacity="0.35"/>
+  </g>
+</svg>

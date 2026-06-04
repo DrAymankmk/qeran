@@ -3,6 +3,7 @@
 namespace App\Services\Invitation;
 
 use App\Helpers\Constant;
+use App\Models\HubFile;
 use App\Models\Invitation;
 use App\Models\InvitationBuilderSetting;
 use App\Models\User;
@@ -20,6 +21,7 @@ class InvitationBuilderService
             'animated_themes' => $themes,
             'animated_themes_count' => count($themes),
             'envelope_colors' => config('invitation_builder.envelope_colors', []),
+            'envelope_shapes' => config('invitation_builder.envelope_shapes', []),
             'seal_styles' => config('invitation_builder.seal_styles', []),
             'fonts' => config('invitation_builder.fonts', []),
             'date_positions' => config('invitation_builder.date_positions', []),
@@ -38,7 +40,81 @@ class InvitationBuilderService
 
         $themes = config('invitation_builder.animated_themes', []);
 
-        return $themes[$slug] ?? null;
+        if (isset($themes[$slug])) {
+            return $themes[$slug];
+        }
+
+        $alias = config('invitation_builder.theme_slug_aliases.'.$slug);
+
+        return $alias ? ($themes[$alias] ?? null) : null;
+    }
+
+    public function normalizeEnvelopeShape(?string $shape): string
+    {
+        $shape = trim((string) ($shape ?? ''));
+        $shapes = config('invitation_builder.envelope_shapes', []);
+
+        if ($shape !== '' && isset($shapes[$shape])) {
+            return $shape;
+        }
+
+        return config('invitation_builder.defaults.envelope_shape', 'classic');
+    }
+
+    public function normalizeThemeSlug(?string $slug): string
+    {
+        $slug = trim((string) ($slug ?? ''));
+        $themes = config('invitation_builder.animated_themes', []);
+
+        if ($slug !== '' && isset($themes[$slug])) {
+            return $slug;
+        }
+
+        $alias = config('invitation_builder.theme_slug_aliases.'.$slug);
+
+        if ($alias && isset($themes[$alias])) {
+            return $alias;
+        }
+
+        return config('invitation_builder.defaults.theme_slug', 'opening-gold-bloom');
+    }
+
+    protected function themeOpeningVideoUrl(?array $themeDef): ?string
+    {
+        $url = trim((string) ($themeDef['opening_video_url'] ?? ''));
+
+        return $url !== '' ? $url : null;
+    }
+
+    /**
+     * @return array{background_media_url: ?string, video_background: bool, opening_video_url: ?string}
+     */
+    protected function resolveThemeMedia(?array $themeDef, array $json, bool $videoFlag): array
+    {
+        $opening = $this->themeOpeningVideoUrl($themeDef);
+        $custom = trim((string) ($json['background_media_url'] ?? ''));
+
+        if ($opening !== null && ($custom === '' || $custom === $opening)) {
+            return [
+                'background_media_url' => $opening,
+                'video_background' => true,
+                'opening_video_url' => $opening,
+            ];
+        }
+
+        if ($custom !== '' && ($videoFlag || $opening !== null)) {
+            return [
+                'background_media_url' => $custom,
+                'video_background' => $videoFlag || $custom === $opening,
+                'opening_video_url' => $opening,
+            ];
+        }
+
+        return [
+            'background_media_url' => $custom !== '' ? $custom : null,
+            'video_background' => $videoFlag,
+            'opening_video_url' => $opening,
+        ];
     }
 
     public function resolveRenderer(?string $slug): string
@@ -78,8 +154,13 @@ class InvitationBuilderService
 
         $json = is_array($row?->settings) ? $row->settings : [];
 
-        $themeSlug = $json['theme_slug'] ?? $defaults['theme_slug'] ?? 'romantic-blush';
+        $themeSlug = $this->normalizeThemeSlug($json['theme_slug'] ?? $defaults['theme_slug'] ?? null);
         $themeDef = $this->themeDefinition($themeSlug);
+        $themeMedia = $this->resolveThemeMedia(
+            $themeDef,
+            $json,
+            (bool) ($json['video_background'] ?? false)
+        );
 
         $renderer = $this->resolveRenderer($themeSlug);
         $viewName = $this->resolveViewName($themeSlug);
@@ -107,14 +188,22 @@ class InvitationBuilderService
             'welcome_subtitle' => $json['welcome_subtitle'] ?? ($invitation->host_name ?? ''),
             'welcome_enabled' => (bool) ($json['welcome_enabled'] ?? ($row?->opening_type === 'welcome')),
             'music_enabled' => (bool) ($json['music_enabled'] ?? $defaults['music_enabled'] ?? true),
-            'video_background' => (bool) ($json['video_background'] ?? false),
+            'video_background' => $themeMedia['video_background'],
             'intro_video_enabled' => (bool) ($json['intro_video_enabled'] ?? ($row?->opening_type === 'intro_video')),
             'logo_url' => $json['logo_url'] ?? null,
-            'background_media_url' => $json['background_media_url'] ?? null,
+            'background_media_url' => $themeMedia['background_media_url'],
+            'opening_video_url' => $themeMedia['opening_video_url'],
             'custom_css' => $json['custom_css'] ?? '',
             'envelope_color' => $json['envelope_color'] ?? $defaults['envelope_color'] ?? 'cream',
+            'envelope_shape' => $this->normalizeEnvelopeShape($json['envelope_shape'] ?? $defaults['envelope_shape'] ?? null),
             'seal_style' => $json['seal_style'] ?? $defaults['seal_style'] ?? 'wax_classic',
+            'seal_color' => WeddingInvitationPresenter::resolveSealColor(
+                $json['seal_style'] ?? $defaults['seal_style'] ?? 'wax_classic',
+                $json['seal_color'] ?? $defaults['seal_color'] ?? null
+            ),
             'envelope_initials' => $json['envelope_initials'] ?? $defaults['envelope_initials'] ?? '',
+            'envelope_image_url' => $json['envelope_image_url'] ?? $defaults['envelope_image_url'] ?? '',
+            'envelope_image_ref' => $json['envelope_image_ref'] ?? $defaults['envelope_image_ref'] ?? '',
             'opening_headline' => $json['opening_headline'] ?? $invitation->event_name,
             'event_date' => $json['event_date'] ?? $invitation->date,
             'event_time' => $json['event_time'] ?? $invitation->time,
@@ -123,6 +212,13 @@ class InvitationBuilderService
             'block_accent_color' => $json['block_accent_color'] ?? $defaults['block_accent_color'] ?? '#c9a962',
             'block_floral_border' => (bool) ($json['block_floral_border'] ?? $defaults['block_floral_border'] ?? true),
             'blocks' => $blocks,
+            'venue_name' => $json['venue_name'] ?? $invitation->event_name ?? '',
+            'venue_location' => $json['venue_location'] ?? $invitation->address ?? '',
+            'ceremony_note' => $json['ceremony_note'] ?? '',
+            'reception_time' => $json['reception_time'] ?? '',
+            'reception_note' => $json['reception_note'] ?? '',
+            'details_section_title' => $json['details_section_title'] ?? $invitation->event_name ?? '',
+            'details_section_label' => $json['details_section_label'] ?? $defaults['details_section_label'] ?? 'جميع التفاصيل',
         ]);
     }
 
@@ -130,7 +226,7 @@ class InvitationBuilderService
     {
         $base = $this->resolve($invitation);
 
-        $themeSlug = $data['theme_slug'] ?? $base['theme_slug'];
+        $themeSlug = $this->normalizeThemeSlug($data['theme_slug'] ?? $base['theme_slug']);
         $themeDef = $this->themeDefinition($themeSlug);
         $renderer = $this->resolveRenderer($themeSlug);
         $viewName = $this->resolveViewName($themeSlug);
@@ -146,12 +242,13 @@ class InvitationBuilderService
 
         $welcomeEnabled = $bool('welcome_enabled');
         $introEnabled = $bool('intro_video_enabled');
-        $openingType = $data['opening_type'] ?? $base['opening_type'];
-        if ($welcomeEnabled) {
-            $openingType = 'welcome';
-        }
+        $openingType = ! empty($data['opening_type'])
+            ? (string) $data['opening_type']
+            : ($base['opening_type'] ?? 'envelope');
         if ($introEnabled) {
             $openingType = 'intro_video';
+        } elseif ($welcomeEnabled && $openingType !== 'envelope') {
+            $openingType = 'welcome';
         }
 
         $colors = $this->colorDefaults($themeDef, $data, []);
@@ -190,26 +287,47 @@ class InvitationBuilderService
             'welcome_subtitle' => $data['welcome_subtitle'] ?? $base['welcome_subtitle'],
             'welcome_enabled' => $welcomeEnabled,
             'music_enabled' => $bool('music_enabled'),
-            'video_background' => $bool('video_background'),
+            ...$this->resolveThemeMedia(
+                $themeDef,
+                [
+                    'background_media_url' => $data['background_media_url'] ?? $base['background_media_url'],
+                    'video_background' => array_key_exists('video_background', $data)
+                        ? $data['video_background']
+                        : $base['video_background'],
+                ],
+                $bool('video_background')
+            ),
             'intro_video_enabled' => $introEnabled,
             'logo_url' => $data['logo_url'] ?? $base['logo_url'],
-            'background_media_url' => $data['background_media_url'] ?? $base['background_media_url'],
             'envelope_color' => $data['envelope_color'] ?? $base['envelope_color'],
+            'envelope_shape' => $this->normalizeEnvelopeShape($data['envelope_shape'] ?? $base['envelope_shape']),
             'seal_style' => $data['seal_style'] ?? $base['seal_style'],
-            'envelope_initials' => $data['envelope_initials'] ?? $base['envelope_initials'],
-            'opening_headline' => $data['opening_headline'] ?? $base['opening_headline'],
-            'event_date' => $data['event_date'] ?? $base['event_date'],
-            'event_time' => $data['event_time'] ?? $base['event_time'],
+            'seal_color' => WeddingInvitationPresenter::resolveSealColor(
+                $data['seal_style'] ?? $base['seal_style'],
+                $data['seal_color'] ?? $base['seal_color'] ?? null
+            ),
+            'envelope_initials' => $this->draftString($data, $base, 'envelope_initials'),
+            'envelope_image_ref' => $this->draftString($data, $base, 'envelope_image_ref'),
+            'opening_headline' => $this->draftString($data, $base, 'opening_headline'),
+            'event_date' => $this->draftString($data, $base, 'event_date'),
+            'event_time' => $this->draftString($data, $base, 'event_time'),
             'date_position' => $data['date_position'] ?? $base['date_position'],
             'block_accent_color' => $data['block_accent_color'] ?? $base['block_accent_color'],
             'block_floral_border' => $bool('block_floral_border'),
             'blocks' => $blocks,
+            'venue_name' => $this->draftString($data, $base, 'venue_name'),
+            'venue_location' => $this->draftString($data, $base, 'venue_location'),
+            'ceremony_note' => $this->draftString($data, $base, 'ceremony_note'),
+            'reception_time' => $this->draftString($data, $base, 'reception_time'),
+            'reception_note' => $this->draftString($data, $base, 'reception_note'),
+            'details_section_title' => $this->draftString($data, $base, 'details_section_title'),
+            'details_section_label' => $this->draftString($data, $base, 'details_section_label'),
         ]);
     }
 
     public function upsert(Invitation $invitation, array $data): InvitationBuilderSetting
     {
-        $themeSlug = $data['theme_slug'] ?? config('invitation_builder.defaults.theme_slug', 'elegant-wedding');
+        $themeSlug = $this->normalizeThemeSlug($data['theme_slug'] ?? null);
         $renderer = $this->resolveRenderer($themeSlug);
         $template = $renderer === 'builder-wedding' ? 0 : $this->resolveTemplateFromThemeSlug($themeSlug);
 
@@ -231,8 +349,12 @@ class InvitationBuilderService
             'logo_url' => $data['logo_url'] ?? null,
             'background_media_url' => $data['background_media_url'] ?? null,
             'envelope_color' => $data['envelope_color'] ?? null,
+            'envelope_shape' => $this->normalizeEnvelopeShape($data['envelope_shape'] ?? null),
             'seal_style' => $data['seal_style'] ?? null,
+            'seal_color' => WeddingInvitationPresenter::normalizeSealHex($data['seal_color'] ?? null)
+                ?? WeddingInvitationPresenter::defaultSealColorForStyle($data['seal_style'] ?? null),
             'envelope_initials' => $data['envelope_initials'] ?? null,
+            'envelope_image_ref' => $data['envelope_image_ref'] ?? null,
             'opening_headline' => $data['opening_headline'] ?? null,
             'event_date' => $data['event_date'] ?? null,
             'event_time' => $data['event_time'] ?? null,
@@ -240,14 +362,22 @@ class InvitationBuilderService
             'block_accent_color' => $data['block_accent_color'] ?? null,
             'block_floral_border' => filter_var($data['block_floral_border'] ?? true, FILTER_VALIDATE_BOOLEAN),
             'blocks' => isset($data['blocks']) ? $this->normalizeBlocks($data['blocks']) : null,
+            'venue_name' => $data['venue_name'] ?? null,
+            'venue_location' => $data['venue_location'] ?? null,
+            'ceremony_note' => $data['ceremony_note'] ?? null,
+            'reception_time' => $data['reception_time'] ?? null,
+            'reception_note' => $data['reception_note'] ?? null,
+            'details_section_title' => $data['details_section_title'] ?? null,
+            'details_section_label' => $data['details_section_label'] ?? null,
         ];
 
-        $openingType = $data['opening_type'] ?? 'envelope';
-        if ($settings['welcome_enabled']) {
-            $openingType = 'welcome';
-        }
+        $openingType = ! empty($data['opening_type'])
+            ? (string) $data['opening_type']
+            : 'envelope';
         if ($settings['intro_video_enabled']) {
             $openingType = 'intro_video';
+        } elseif ($settings['welcome_enabled'] && $openingType !== 'envelope') {
+            $openingType = 'welcome';
         }
 
         $existing = $invitation->builderSetting;
@@ -277,6 +407,152 @@ class InvitationBuilderService
         );
     }
 
+    /**
+     * @return list<array{id: string, url: string, label: string, group: string}>
+     */
+    public function envelopeImageChoices(Invitation $invitation): array
+    {
+        $choices = [];
+        $seenIds = [];
+        $seenUrls = [];
+
+        $add = function (string $id, string $url, string $label, string $group) use (&$choices, &$seenIds, &$seenUrls): void {
+            if ($url === '' || isset($seenIds[$id]) || isset($seenUrls[$url])) {
+                return;
+            }
+            $seenIds[$id] = true;
+            $seenUrls[$url] = true;
+            $choices[] = [
+                'id' => $id,
+                'url' => $url,
+                'label' => $label,
+                'group' => $group,
+            ];
+        };
+
+        foreach (config('invitation_builder.envelope_images', []) as $key => $meta) {
+            $path = (string) ($meta['path'] ?? '');
+            if ($path === '') {
+                continue;
+            }
+            $add(
+                'stock:'.$key,
+                asset($path),
+                (string) ($meta['label_ar'] ?? $key),
+                'stock'
+            );
+        }
+
+        $dir = public_path('images/invitation-builder/envelopes');
+        if (is_dir($dir)) {
+            $files = glob($dir.'/*.{jpg,jpeg,png,webp,gif,svg}', GLOB_BRACE) ?: [];
+            foreach ($files as $file) {
+                $basename = basename($file);
+                $add(
+                    'stock:'.$basename,
+                    asset('images/invitation-builder/envelopes/'.$basename),
+                    pathinfo($basename, PATHINFO_FILENAME),
+                    'stock'
+                );
+            }
+        }
+
+        $invitation->loadMissing('hubFiles');
+        foreach ($invitation->hubFiles as $file) {
+            if (! $file instanceof HubFile || (int) $file->file_type !== Constant::FILE_TYPE['Image']) {
+                continue;
+            }
+            try {
+                $url = (string) ($file->get_path() ?? '');
+            } catch (\Throwable) {
+                continue;
+            }
+            $label = trim((string) ($file->original_name ?? ''));
+            if ($label === '') {
+                $label = __('admin.ib-envelope-invitation-image', ['id' => $file->id]);
+            }
+            $add('hub:'.$file->id, $url, $label, 'invitation');
+        }
+
+        return $choices;
+    }
+
+    public function resolveEnvelopeImageUrl(string $ref, Invitation $invitation, array $bc = []): string
+    {
+        $ref = trim($ref);
+
+        if ($ref === '' || $ref === 'none') {
+            $legacy = trim((string) ($bc['envelope_image_url'] ?? ''));
+            if ($legacy === '') {
+                return '';
+            }
+
+            return preg_match('#^https?://#i', $legacy)
+                ? $legacy
+                : asset(ltrim($legacy, '/'));
+        }
+
+        if (str_starts_with($ref, 'hub:')) {
+            $id = (int) substr($ref, 4);
+            if ($id < 1) {
+                return '';
+            }
+
+            $file = $invitation->hubFiles()
+                ->where('id', $id)
+                ->where('file_type', Constant::FILE_TYPE['Image'])
+                ->first();
+
+            return $file ? (string) ($file->get_path() ?? '') : '';
+        }
+
+        if (str_starts_with($ref, 'stock:')) {
+            $key = substr($ref, 6);
+            if ($key === '') {
+                return '';
+            }
+
+            $publicFile = public_path('images/invitation-builder/envelopes/'.$key);
+            if (is_file($publicFile)) {
+                return asset('images/invitation-builder/envelopes/'.$key);
+            }
+
+            $item = config('invitation_builder.envelope_images.'.$key);
+            if (is_array($item) && ! empty($item['path'])) {
+                return asset($item['path']);
+            }
+        }
+
+        return '';
+    }
+
+    public function guessEnvelopeImageRef(string $url, Invitation $invitation): string
+    {
+        $url = trim($url);
+        if ($url === '') {
+            return '';
+        }
+
+        foreach ($this->envelopeImageChoices($invitation) as $choice) {
+            if ($choice['url'] === $url) {
+                return $choice['id'];
+            }
+        }
+
+        return '';
+    }
+
+    protected function draftString(array $data, array $base, string $key): string
+    {
+        if (! array_key_exists($key, $data)) {
+            return (string) ($base[$key] ?? '');
+        }
+
+        $value = trim((string) $data[$key]);
+
+        return $value !== '' ? $value : (string) ($base[$key] ?? '');
+    }
+
     public function normalizeBlocks(mixed $blocks): array
     {
         $catalog = array_keys(config('invitation_builder.information_blocks', []));
@@ -290,7 +566,7 @@ class InvitationBuilderService
             }
         }
 
-        return $normalized !== [] ? $normalized : (config('invitation_builder.defaults.blocks') ?? ['countdown', 'venue', 'rsvp']);
+        return $normalized !== [] ? $normalized : (config('invitation_builder.defaults.blocks') ?? ['countdown', 'event_details', 'venue', 'rsvp']);
     }
 
     protected function colorDefaults(?array $themeDef, array $json, array $defaults): array

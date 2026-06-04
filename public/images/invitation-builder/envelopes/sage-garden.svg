@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" role="img" aria-label="Sage garden envelope">
+  <defs>
+    <filter id="sh"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#2a3d28" flood-opacity="0.2"/></filter>
+    <linearGradient id="p" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e8efe4"/><stop offset="100%" stop-color="#9caf88"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="520" rx="12" fill="#d8e4d0"/>
+  <g filter="url(#sh)">
+    <path d="M32 108 L32 468 L368 468 L368 108 L200 268 Z" fill="url(#p)" stroke="#6b8058" stroke-width="1.2"/>
+    <path d="M52 130 L200 250 L348 130 L200 90 Z" fill="#c5d4b8" opacity="0.7"/>
+    <path d="M32 108 L200 48 L368 108 L200 268 Z" fill="#b8c9a8" stroke="#6b8058" stroke-width="1"/>
+    <path d="M80 200 Q200 160 320 200" fill="none" stroke="#5a7048" stroke-width="0.8" opacity="0.4"/>
+  </g>
+</svg>

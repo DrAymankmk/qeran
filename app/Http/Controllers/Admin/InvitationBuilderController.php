@@ -16,17 +16,23 @@ class InvitationBuilderController extends Controller
 
     public function edit(Invitation $invitation)
     {
-        $invitation->load('builderSetting');
+        $invitation->load(['builderSetting', 'hubFiles']);
         $catalog = $this->builder->catalog();
         $config = $this->builder->resolve($invitation);
-        $previewUrl = $this->builder->previewUrl($invitation);
+        $envelopeImageChoices = $this->builder->envelopeImageChoices($invitation);
         $previewPostUrl = route('admin.invitation-builder.preview', $invitation);
+
+        $envelopeImageRef = $config['envelope_image_ref'] ?? '';
+        if ($envelopeImageRef === '' && ! empty($config['envelope_image_url'])) {
+            $envelopeImageRef = $this->builder->guessEnvelopeImageRef($config['envelope_image_url'], $invitation);
+        }
 
         return view('admin.invitation-builder.edit', compact(
             'invitation',
             'catalog',
             'config',
-            'previewUrl',
+            'envelopeImageChoices',
+            'envelopeImageRef',
             'previewPostUrl'
         ));
     }
@@ -43,10 +49,10 @@ class InvitationBuilderController extends Controller
         $user->id = $invitation->user_id;
         $routes = ['accept' => '#', 'decline' => '#'];
         $initialView = 'envelope';
+        $useBuilderWedding = ($builderConfig['renderer'] ?? '') === 'builder-wedding';
 
         $view = $builderConfig['view'] ?? $this->builder->resolveViewName($builderConfig['theme_slug'] ?? null);
         $template = (int) ($builderConfig['template'] ?? 0);
-        $useBuilderWedding = ($builderConfig['renderer'] ?? '') === 'builder-wedding';
 
         return response()
             ->view('admin.invitation-builder.preview-frame', compact(

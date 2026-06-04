@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" role="img" aria-label="Lilac dream envelope">
+  <defs>
+    <filter id="sh"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#4a3058" flood-opacity="0.2"/></filter>
+    <linearGradient id="p" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5f0ff"/><stop offset="100%" stop-color="#ddd6fe"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="520" rx="12" fill="#e8e0f4"/>
+  <g filter="url(#sh)">
+    <path d="M32 108 L32 468 L368 468 L368 108 L200 268 Z" fill="url(#p)" stroke="#a78bfa" stroke-width="1.2"/>
+    <path d="M52 128 L200 248 L348 128 L200 88 Z" fill="#ede9fe" opacity="0.9"/>
+    <path d="M32 108 L200 48 L368 108 L200 268 Z" fill="#e9d5ff" stroke="#a78bfa" stroke-width="1"/>
+  </g>
+</svg>

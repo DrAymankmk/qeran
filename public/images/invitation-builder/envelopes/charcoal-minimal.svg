@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" role="img" aria-label="Charcoal minimal envelope">
+  <defs>
+    <filter id="sh"><feDropShadow dx="0" dy="12" stdDeviation="16" flood-opacity="0.4"/></filter>
+  </defs>
+  <rect width="400" height="520" rx="8" fill="#2a2a2e"/>
+  <g filter="url(#sh)">
+    <path d="M40 120 L40 460 L360 460 L360 120 L200 275 Z" fill="#3d4248" stroke="#5a6068" stroke-width="1"/>
+    <path d="M40 120 L200 70 L360 120 L200 275 Z" fill="#4a5058" stroke="#6a7078" stroke-width="0.8"/>
+    <path d="M40 120 L200 275 L360 120" fill="none" stroke="#fff" stroke-width="0.5" opacity="0.15"/>
+  </g>
+</svg>

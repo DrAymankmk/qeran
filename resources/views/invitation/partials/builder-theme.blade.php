@@ -6,7 +6,7 @@
 	$headlineFont = $bc['headline_font'] ?? $bc['font_family'] ?? 'Cairo';
 @endphp
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Amiri&family=Tajawal&family=Great+Vibes&family=Lora&family=Montserrat&display=swap');
+@import url('https://fonts.bunny.net/css?family=cairo:400,600,700|playfair-display:400,700|amiri:400|tajawal:400|great-vibes:400|lora:400|montserrat:400|cormorant-garamond:400,600');
 :root {
 	--ib-primary: {{ $bc['primary_color'] }};
 	--ib-secondary: {{ $bc['secondary_color'] }};
@@ -105,15 +105,20 @@ body.invitation-builder-active.theme-light {
 {!! $bc['custom_css'] ?? '' !!}
 </style>
 
-@if(!empty($bc['background_media_url']) && !empty($bc['video_background']))
+@php
+	$heroUsesOpeningVideo = ($bc['renderer'] ?? '') === 'builder-wedding'
+		&& ! empty($bc['video_background'])
+		&& ! empty($bc['opening_video_url'] ?? $bc['background_media_url']);
+@endphp
+@if(!$heroUsesOpeningVideo && !empty($bc['background_media_url']) && !empty($bc['video_background']))
 <video class="invitation-builder-bg-media" autoplay muted loop playsinline src="{{ $bc['background_media_url'] }}"></video>
 <div class="invitation-builder-bg-overlay"></div>
-@elseif(!empty($bc['background_media_url']))
+@elseif(!$heroUsesOpeningVideo && !empty($bc['background_media_url']))
 <div class="invitation-builder-bg-media" style="background:url('{{ $bc['background_media_url'] }}') center/cover no-repeat;"></div>
 <div class="invitation-builder-bg-overlay"></div>
 @endif
 
-@if(!empty($bc['intro_video_enabled']) && !empty($bc['background_media_url']) && !empty($bc['video_background']))
+@if(($bc['renderer'] ?? '') !== 'builder-wedding' && !empty($bc['intro_video_enabled']) && !empty($bc['background_media_url']) && !empty($bc['video_background']))
 <div id="invitationBuilderIntro" class="invitation-builder-welcome">
 	<video class="invitation-builder-intro-video" playsinline src="{{ $bc['background_media_url'] }}"></video>
 	<div class="invitation-builder-welcome-inner" style="position:relative;z-index:2;">
@@ -144,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </style>
 @endif
 
-@if(!empty($bc['welcome_enabled']) || ($bc['opening_type'] ?? '') === 'welcome')
+@if(($bc['renderer'] ?? '') !== 'builder-wedding' && (!empty($bc['welcome_enabled']) || ($bc['opening_type'] ?? '') === 'welcome'))
 <div id="invitationBuilderWelcome" class="invitation-builder-welcome @if(!empty($bc['intro_video_enabled'])) hidden @endif">
 	<div class="invitation-builder-welcome-inner">
 		@if(!empty($bc['logo_url']))
@@ -166,8 +171,22 @@ function invitationBuilderDismissWelcome() {
 @endif
 
 <script>
-document.body.classList.add('invitation-builder-active');
-@if($isLight) document.body.classList.add('theme-light'); @endif
+(function () {
+	function applyBuilderBodyClasses() {
+		if (!document.body) {
+			return;
+		}
+		document.body.classList.add('invitation-builder-active');
+		@if($isLight)
+		document.body.classList.add('theme-light');
+		@endif
+	}
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', applyBuilderBodyClasses);
+	} else {
+		applyBuilderBodyClasses();
+	}
+})();
 </script>
 @if(($bc['renderer'] ?? '') !== 'builder-wedding')
 @include('invitation.partials.builder-blocks-preview')

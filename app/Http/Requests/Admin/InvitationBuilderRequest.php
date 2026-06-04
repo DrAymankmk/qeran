@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Services\Invitation\InvitationBuilderService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -17,6 +18,7 @@ class InvitationBuilderRequest extends FormRequest
         $eventKeys = array_keys(config('invitation_builder.event_types', []));
         $themeKeys = array_keys(config('invitation_builder.animated_themes', []));
         $envelopeKeys = array_keys(config('invitation_builder.envelope_colors', []));
+        $envelopeShapeKeys = array_keys(config('invitation_builder.envelope_shapes', []));
         $sealKeys = array_keys(config('invitation_builder.seal_styles', []));
         $datePosKeys = array_keys(config('invitation_builder.date_positions', []));
         $blockKeys = array_keys(config('invitation_builder.information_blocks', []));
@@ -42,12 +44,22 @@ class InvitationBuilderRequest extends FormRequest
             'logo_url' => ['nullable', 'url', 'max:500'],
             'background_media_url' => ['nullable', 'url', 'max:500'],
             'envelope_color' => ['required', 'string', Rule::in($envelopeKeys)],
+            'envelope_shape' => ['nullable', 'string', Rule::in($envelopeShapeKeys)],
             'seal_style' => ['required', 'string', Rule::in($sealKeys)],
+            'seal_color' => ['nullable', 'string', 'regex:/^#?[0-9A-Fa-f]{6}$/'],
             'envelope_initials' => ['nullable', 'string', 'max:8'],
+            'envelope_image_ref' => ['nullable', 'string', 'max:128'],
             'opening_headline' => ['nullable', 'string', 'max:500'],
             'event_date' => ['nullable', 'date'],
             'event_time' => ['nullable', 'string', 'max:32'],
             'date_position' => ['required', 'string', Rule::in($datePosKeys)],
+            'venue_name' => ['nullable', 'string', 'max:255'],
+            'venue_location' => ['nullable', 'string', 'max:500'],
+            'ceremony_note' => ['nullable', 'string', 'max:255'],
+            'reception_time' => ['nullable', 'string', 'max:32'],
+            'reception_note' => ['nullable', 'string', 'max:255'],
+            'details_section_title' => ['nullable', 'string', 'max:255'],
+            'details_section_label' => ['nullable', 'string', 'max:255'],
             'block_accent_color' => ['nullable', 'string', 'max:20'],
             'block_floral_border' => ['nullable', 'boolean'],
             'blocks' => ['nullable', 'array'],
@@ -75,6 +87,12 @@ class InvitationBuilderRequest extends FormRequest
 
         if ($merge !== []) {
             $this->merge($merge);
+        }
+
+        if ($this->filled('theme_slug')) {
+            $this->merge([
+                'theme_slug' => app(InvitationBuilderService::class)->normalizeThemeSlug($this->input('theme_slug')),
+            ]);
         }
     }
 }

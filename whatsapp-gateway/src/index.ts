@@ -384,6 +384,11 @@ app.get('/sessions/:id/status', async (req, res) => {
       waId: progress.waId,
       socketAlive,
       pairingCodeAgeSeconds,
+      connectedAt: meta.connectedAt ? new Date(meta.connectedAt).toISOString() : null,
+      socketUptimeSeconds:
+        meta.connectedAt && socketAlive
+          ? Math.max(0, Math.floor((Date.now() - meta.connectedAt) / 1000))
+          : null,
       quick: true,
     });
     return;

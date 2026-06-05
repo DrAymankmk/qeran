@@ -37,6 +37,8 @@ export interface SessionMeta {
   /** Failed reconnect attempts after pairing/QR interrupt (stops infinite 401 loops). */
   reconnectFailures?: number;
   lastReconnectAt?: number;
+  /** Unix ms when the socket last reached `open` (for uptime reporting). */
+  connectedAt?: number;
 }
 
 const sessions = new Map<string, SessionMeta>();
@@ -737,6 +739,7 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
       meta.status = 'connected';
       meta.qr = undefined;
       meta.pairingCode = undefined;
+      meta.connectedAt = Date.now();
       stopPairingKeepalive(sessionId);
       const user = sock.user;
       meta.phone = user?.id?.split(':')[0]?.split('@')[0];
@@ -798,6 +801,7 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
         meta.status = 'disconnected';
         meta.pairingCode = undefined;
         meta.qr = undefined;
+        meta.connectedAt = undefined;
         return;
       }
 

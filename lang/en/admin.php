@@ -779,6 +779,10 @@ return[
     'whatsapp-gateway-not-configured' => 'WhatsApp gateway is not configured in .env',
     'whatsapp-gateway-url' => 'Gateway URL',
     'whatsapp-disconnect' => 'Disconnect',
+    'whatsapp-uptime' => 'Current connection uptime',
+    'whatsapp-last-session-duration' => 'Last session duration before disconnect',
+    'whatsapp-auto-reconnect-hint' => 'Reconnects automatically after brief drops (unless you click Disconnect).',
+    'whatsapp-admin-disconnect-locked' => 'Manually disconnected from admin — scan a new QR to link again.',
 
     'whatsapp-clients-title' => 'Linked WhatsApp clients',
     'whatsapp-clients-description' => 'Clients who linked WhatsApp to send invitations. Live status checks the gateway; «Linked device» means the session appears as a linked device on the phone.',

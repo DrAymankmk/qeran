@@ -109,6 +109,10 @@
 		waitingScan: @json(__('admin.whatsapp-waiting-scan')),
 		qrExpires: @json(__('admin.whatsapp-qr-expires-hint')),
 		clickGenerate: @json(__('admin.whatsapp-click-generate-qr')),
+		uptime: @json(__('admin.whatsapp-uptime')),
+		lastSession: @json(__('admin.whatsapp-last-session-duration')),
+		autoReconnect: @json(__('admin.whatsapp-auto-reconnect-hint')),
+		adminLocked: @json(__('admin.whatsapp-admin-disconnect-locked')),
 	};
 	const pollMs = 3000;
 	const qrPollMs = 2500;
@@ -185,7 +189,44 @@
 			+ '<p class="text-danger mb-0 small">' + escapeHtml(errorMsg || labels.gatewayUnreachable) + '</p>';
 	}
 
-	function renderStatusBox(connectionStatus, phone, qrImage, message) {
+	function formatDuration(seconds) {
+		if (seconds == null || seconds < 0) {
+			return '—';
+		}
+		const h = Math.floor(seconds / 3600);
+		const m = Math.floor((seconds % 3600) / 60);
+		const s = seconds % 60;
+		if (h > 0) {
+			return h + 'h ' + m + 'm';
+		}
+		if (m > 0) {
+			return m + 'm ' + s + 's';
+		}
+		return s + 's';
+	}
+
+	function renderSessionMeta(meta) {
+		if (!meta) {
+			return '';
+		}
+		let html = '';
+		if (meta.uptime_seconds != null && meta.uptime_seconds >= 0) {
+			html += '<p class="mb-1 small text-muted"><strong>' + labels.uptime + ':</strong> '
+				+ escapeHtml(formatDuration(meta.uptime_seconds)) + '</p>';
+		}
+		if (meta.last_session_seconds != null && meta.last_session_seconds > 0) {
+			html += '<p class="mb-1 small text-muted"><strong>' + labels.lastSession + ':</strong> '
+				+ escapeHtml(formatDuration(meta.last_session_seconds)) + '</p>';
+		}
+		if (meta.admin_disconnect_locked) {
+			html += '<p class="mb-0 small text-warning">' + labels.adminLocked + '</p>';
+		} else {
+			html += '<p class="mb-0 small text-muted">' + labels.autoReconnect + '</p>';
+		}
+		return html;
+	}
+
+	function renderStatusBox(connectionStatus, phone, qrImage, message, sessionMeta) {
 		const box = document.getElementById('wa-status-box');
 		if (!box) {
 			return;
@@ -194,7 +235,8 @@
 		let html = '<p class="mb-2"><strong>' + labels.connectionStatus + ':</strong> ';
 		if (connectionStatus === 'connected') {
 			html += '<span class="badge bg-success">' + labels.connected + '</span></p>';
-			html += '<p class="mb-0"><strong>' + labels.linkedPhone + ':</strong> ' + escapeHtml(phone || '—') + '</p>';
+			html += '<p class="mb-2"><strong>' + labels.linkedPhone + ':</strong> ' + escapeHtml(phone || '—') + '</p>';
+			html += renderSessionMeta(sessionMeta);
 			stopStatusPoll();
 			setGenerateBusy(false);
 		} else if (connectionStatus === 'pending_qr') {
@@ -207,6 +249,7 @@
 			const badgeLabel = connectionStatus === 'disconnected' ? labels.disconnected : connectionStatus;
 			html += '<span class="badge bg-secondary">' + escapeHtml(badgeLabel) + '</span></p>';
 			html += '<p class="mb-2 text-muted">' + escapeHtml(message || labels.clickGenerate) + '</p>';
+			html += renderSessionMeta(sessionMeta);
 			if (qrImage) {
 				html += renderQrImage(qrImage);
 			}
@@ -223,9 +266,9 @@
 		const d = payload.data || {};
 		const status = d.status || 'disconnected';
 		const existingQr = document.getElementById('wa-qr-image');
-		renderStatusBox(status, d.phone || null, existingQr ? existingQr.src : null, null);
+		renderStatusBox(status, d.phone || null, existingQr ? existingQr.src : null, null, payload.session_meta || null);
 		if (status === 'connected') {
-			stopStatusPoll();
+			/* keep polling to refresh uptime */
 		}
 	}
 

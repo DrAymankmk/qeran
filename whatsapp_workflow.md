@@ -82,5 +82,33 @@ QUEUE_CONNECTION=redis
 ```bash
 php artisan migrate
 php artisan config:clear
-# Supervisor: php artisan queue:work redis
+# Supervisor: php artisan queue:work redis --sleep=3 --tries=3 --timeout=120
 ```
+
+### Queue troubleshooting (invitation WhatsApp jobs)
+
+`SendBaileysInvitationContactMessage` only runs when a worker is listening on the **same** connection as `QUEUE_CONNECTION`:
+
+| `QUEUE_CONNECTION` | Where jobs live | Worker command |
+|---|---|---|
+| `redis` | Redis list `queues:default` | `php artisan queue:work redis` |
+| `database` | `jobs` table | `php artisan queue:work database` |
+| `sync` | (none — runs inline in the HTTP request) | N/A |
+
+If rows sit in `jobs` with `reserved_at` null and `available_at` in the past, the worker is not running or is pointed at the wrong driver.
+
+```bash
+# On server — must match .env QUEUE_CONNECTION
+php artisan tinker --execute="echo config('queue.default');"
+
+# Redis backlog (when QUEUE_CONNECTION=redis)
+redis-cli LLEN queues:default
+
+# Stuck database jobs
+mysql -e "SELECT id, queue, available_at, reserved_at, attempts FROM jobs ORDER BY id DESC LIMIT 10;"
+
+# Failed jobs
+php artisan queue:failed
+```
+
+After deploy: `php artisan config:clear` and restart the supervisor queue worker.

@@ -1639,6 +1639,23 @@ class InvitationsController extends Controller
     }
 
     /**
+     * Stagger WhatsApp sends 12 seconds apart (max 80 per batch).
+     * Bulk new imports can defer each batch to 10:00 on successive days; re-shares run immediately.
+     */
+    private function invitationContactDispatchDelay(int $index, bool $deferBatchesToTenAm = false): \DateTimeInterface
+    {
+        $positionInBatch = $index % 80;
+        $batch = intdiv($index, 80);
+        $delaySeconds = $positionInBatch * 12;
+
+        if ($deferBatchesToTenAm) {
+            return now()->addDays($batch)->setTime(10, 0, 0)->addSeconds($delaySeconds);
+        }
+
+        return now()->addSeconds($delaySeconds + ($batch * 80 * 12));
+    }
+
+    /**
      * @param  array<int, array{name?: string, phone?: string}>  $contacts
      */
     private function shareInvitationToContacts(Invitation $invitation, array $contacts)
@@ -1663,8 +1680,7 @@ class InvitationsController extends Controller
             ]);
 
             $message = $this->buildInvitationMessage($invitation, $guestUser->id, 'invitation_sms_template');
-            $dayOffset = intdiv($index, 80);
-            $delaySeconds = ($index % 80) * 12;
+            $availableAt = $this->invitationContactDispatchDelay($index, deferBatchesToTenAm: true);
 
             SendBaileysInvitationContactMessage::dispatch(
                 contactLogId: $log->id,
@@ -1675,9 +1691,14 @@ class InvitationsController extends Controller
                 phone: $contact['phone'],
                 message: $message,
                 referenceId: $referenceId,
-            )->delay(
-                now()->addDays($dayOffset)->setHour(10)->addSeconds($delaySeconds)
-            );
+            )->delay($availableAt);
+
+            Log::info('Queued Baileys contact invitation (new contacts)', [
+                'contact_log_id' => $log->id,
+                'invitation_id' => $invitation->id,
+                'available_at' => $availableAt->format('c'),
+                'queue_connection' => config('queue.default'),
+            ]);
 
             $queued[] = $this->formatContactLog($log->fresh());
             $index++;
@@ -1713,8 +1734,7 @@ class InvitationsController extends Controller
 
             $referenceId = $log->reference_id ?: $invitation->id.'-contact-'.$log->user_id.'-'.$log->id;
             $message = $this->buildInvitationMessage($invitation, $log->user_id, 'invitation_sms_template');
-            $dayOffset = intdiv($index, 80);
-            $delaySeconds = ($index % 80) * 12;
+            $availableAt = $this->invitationContactDispatchDelay($index, deferBatchesToTenAm: false);
 
             $log->update([
                 'send_status' => Constant::INVITATION_CONTACT_SEND_STATUS['pending'],
@@ -1732,9 +1752,14 @@ class InvitationsController extends Controller
                 phone: (string) $log->phone,
                 message: $message,
                 referenceId: $referenceId,
-            )->delay(
-                now()->addDays($dayOffset)->setHour(10)->addSeconds($delaySeconds)
-            );
+            )->delay($availableAt);
+
+            Log::info('Queued Baileys contact invitation (re-share)', [
+                'contact_log_id' => $log->id,
+                'invitation_id' => $invitation->id,
+                'available_at' => $availableAt->format('c'),
+                'queue_connection' => config('queue.default'),
+            ]);
 
             $queued[] = $this->formatContactLog($log->fresh());
             $index++;

@@ -20,6 +20,8 @@ class SendBaileysInvitationContactMessage implements ShouldQueue
 
     public int $tries = 3;
 
+    public int $timeout = 120;
+
     public function __construct(
         public int $contactLogId,
         public int $hostUserId,
@@ -33,9 +35,20 @@ class SendBaileysInvitationContactMessage implements ShouldQueue
 
     public function handle(): void
     {
+        Log::info('SendBaileysInvitationContactMessage started', [
+            'contact_log_id' => $this->contactLogId,
+            'invitation_id' => $this->invitationId,
+            'host_user_id' => $this->hostUserId,
+            'attempt' => $this->attempts(),
+        ]);
+
         $log = InvitationContactLog::query()->find($this->contactLogId);
 
         if (! $log) {
+            Log::warning('SendBaileysInvitationContactMessage skipped — contact log missing', [
+                'contact_log_id' => $this->contactLogId,
+            ]);
+
             return;
         }
 
@@ -107,5 +120,22 @@ class SendBaileysInvitationContactMessage implements ShouldQueue
             'target_phone' => $targetPhone,
             'error' => $errorMessage,
         ]);
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('SendBaileysInvitationContactMessage failed permanently', [
+            'contact_log_id' => $this->contactLogId,
+            'invitation_id' => $this->invitationId,
+            'host_user_id' => $this->hostUserId,
+            'error' => $exception->getMessage(),
+        ]);
+
+        InvitationContactLog::query()
+            ->where('id', $this->contactLogId)
+            ->update([
+                'send_status' => Constant::INVITATION_CONTACT_SEND_STATUS['failed'],
+                'error_message' => $exception->getMessage(),
+            ]);
     }
 }

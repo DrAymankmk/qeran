@@ -113,6 +113,7 @@ class InvitationsController extends Controller
                 'user_id' => auth()->id(),
                 'host_name' => auth()->user()->name,
                 'name' => $request->event_name,
+                'link_url' => $request->link_url,
                 'date' => $request->date,
                 'time' => $request->time,
                 'latitude' => $request->latitude,
@@ -499,6 +500,7 @@ class InvitationsController extends Controller
                         'invitation_media_type' => $request->invitation_media_type ?? $invitation->invitation_media_type,
                         'host_name' => $request->host_name ?? $invitation->host_name,
                         'status' => $request->status ?? $invitation->status,
+                        'link_url' => $request->link_url ?? $invitation->link_url,
                     ]);
                     if ($request->image) {
                         storeImage([
@@ -1087,8 +1089,9 @@ class InvitationsController extends Controller
             'event_type' => $eventType,
             'host_name' => $hostName,
             'invitation_link' => $invitationLink,
-            'apple_link' => env('APPLE_LINK'),
-            'google_play_link' => env('GOOGLE_PLAY_LINK'),
+            'application_link' => env('APPLICATION_LINK'),
+            // 'apple_link' => env('APPLE_LINK'),
+            // 'google_play_link' => env('GOOGLE_PLAY_LINK'),
         ]);
     }
 

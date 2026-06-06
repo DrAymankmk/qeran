@@ -83,7 +83,7 @@ class InvitationRequest extends FormRequest
                 Rule::exists('users', 'id'),
             ],
             'host_name'=>['nullable'],
-
+            'link_url'=>['nullable'],
         ];
     }
 

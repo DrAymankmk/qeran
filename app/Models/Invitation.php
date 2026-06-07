@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class Invitation extends Model
 {
@@ -278,6 +279,46 @@ class Invitation extends Model
         }
 
         return null;
+    }
+
+    public function ensureQrCodeForUser(int $userId): void
+    {
+        $basePath = 'qr-code/Qr-'.$this->id.'-'.$userId;
+
+        if (Storage::disk('public')->exists($basePath.'.png')
+            || Storage::disk('public')->exists($basePath.'.svg')) {
+            return;
+        }
+
+        $payload = $this->id.'-'.$userId;
+
+        try {
+            $image = QrCode::format('png')
+                ->size(200)
+                ->color(0, 0, 0)
+                ->backgroundColor(255, 255, 255, 0)
+                ->style('square')
+                ->generate($payload);
+
+            Storage::disk('public')->put($basePath.'.png', $image);
+
+            return;
+        } catch (\Throwable $e) {
+            Log::warning('PNG QR generation failed, falling back to SVG', [
+                'invitation_id' => $this->id,
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        $svg = QrCode::format('svg')
+            ->size(200)
+            ->color(0, 0, 0)
+            ->backgroundColor(255, 255, 255, 0)
+            ->style('square')
+            ->generate($payload);
+
+        Storage::disk('public')->put($basePath.'.svg', $svg);
     }
 
     public function category()

@@ -138,7 +138,7 @@
 @if ($errors->any())
 
     <script>
-        toastr["error"]("{{__('admin.please-check-all-entered-data')}}")
+        toastr["error"](@json($errors->first() ?: __('admin.please-check-all-entered-data')))
 
         toastr.options = {
             "closeButton": true,

@@ -132,11 +132,12 @@
   z-index: 0;
   pointer-events: none;
 }
-.wi-hero-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+.wi-hero-video,
+.wi-hero-image {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
 }
 .wi-hero-video-overlay {
   position: absolute;
@@ -155,7 +156,40 @@
 .wi-hero-has-video .wi-corner { opacity: 0.45; color: var(--wi-gold); }
 .wi-hero-has-video .wi-date-badge,
 .wi-hero-has-video .wi-subtitle,
+.wi-hero-has-video .wi-parents,
 .wi-hero-has-video .wi-hero-detail {
+  color: color-mix(in srgb, var(--wi-text) 92%, #fff);
+}
+.wi-couple-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+.wi-couple-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+.wi-couple-name {
+  display: block;
+  line-height: 1.05;
+}
+.wi-couple-stack .wi-ampersand {
+  margin: 0.15rem 0 0.25rem;
+}
+.wi-couple-stack .wi-parent-line {
+  display: block;
+  margin: 0;
+  font-family: var(--ib-font, 'Cairo'), sans-serif;
+  font-size: clamp(0.85rem, 2.2vw, 1rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  opacity: 0.88;
+  line-height: 1.5;
+}
+.wi-hero-has-video .wi-couple-stack .wi-parent-line {
   color: color-mix(in srgb, var(--wi-text) 92%, #fff);
 }
 .wi-hero-has-video .wi-names { color: var(--wi-text); text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35); }

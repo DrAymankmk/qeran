@@ -44,14 +44,29 @@ class WeddingInvitationPresenter
 
         $envelopeHex = config('invitation_builder.envelope_colors.'.$bc['envelope_color'].'.hex', '#f5f0e6');
 
-        $heroVideoUrl = '';
-        if (! empty($bc['video_background'])) {
-            $heroVideoUrl = trim((string) ($bc['opening_video_url'] ?? $bc['background_media_url'] ?? ''));
+        $heroMediaType = trim((string) ($bc['hero_media_type'] ?? ''));
+        $heroMediaUrl = trim((string) ($bc['background_media_url'] ?? ''));
+
+        if ($heroMediaUrl === '' && ! empty($bc['video_background'])) {
+            $heroMediaUrl = trim((string) ($bc['opening_video_url'] ?? ''));
+            $heroMediaType = $heroMediaUrl !== '' ? 'video' : $heroMediaType;
         }
-        if ($heroVideoUrl === '') {
+
+        if ($heroMediaUrl === '') {
             $themeDef = app(InvitationBuilderService::class)->themeDefinition($bc['theme_slug'] ?? null);
-            $heroVideoUrl = trim((string) ($themeDef['opening_video_url'] ?? ''));
+            $heroMediaUrl = trim((string) ($themeDef['opening_media_url'] ?? $themeDef['opening_video_url'] ?? ''));
+            $heroMediaType = trim((string) ($themeDef['media_type'] ?? ''));
+            if ($heroMediaType === '' && $heroMediaUrl !== '') {
+                $heroMediaType = ! empty($themeDef['opening_video_url']) ? 'video' : 'image';
+            }
         }
+
+        if ($heroMediaType === '') {
+            $heroMediaType = ! empty($bc['video_background']) ? 'video' : 'image';
+        }
+
+        $heroVideoUrl = $heroMediaType === 'video' ? $heroMediaUrl : '';
+        $heroImageUrl = in_array($heroMediaType, ['image', 'gif'], true) ? $heroMediaUrl : '';
 
         $envelopeImageUrl = app(InvitationBuilderService::class)->resolveEnvelopeImageUrl(
             (string) ($bc['envelope_image_ref'] ?? ''),
@@ -96,7 +111,13 @@ class WeddingInvitationPresenter
             'wiInitials' => $initials,
             'wiHostLabel' => $hostName ?? $invitation->host_name ?? '',
             'wiSubtitle' => $category?->getTranslation('ar')?->name ?? 'نتشرف بدعوتكم لحضور حفل الزفاف',
-            'wiHeadline' => $bc['opening_headline'] ?? $invitation->event_name,
+            'wiHeadline' => $bc['opening_headline']
+                ?? app(InvitationBuilderService::class)->coupleHeadlineFromParty($invitation)
+                ?: $invitation->event_name,
+            'wiGroom' => trim((string) ($invitation->groom ?? '')),
+            'wiBride' => trim((string) ($invitation->bride ?? '')),
+            'wiGroomFather' => trim((string) ($invitation->groom_father ?? '')),
+            'wiBrideFather' => trim((string) ($invitation->bride_father ?? '')),
             'wiDateBadge' => $dateCarbon ? $dateCarbon->locale($locale)->translatedFormat('j F Y') : '',
             'wiDateMain' => $dateCarbon ? $dateCarbon->locale($locale)->translatedFormat('j F').'<br>'.$dateCarbon->format('Y') : '',
             'wiDayName' => $dateCarbon ? $dateCarbon->locale($locale)->translatedFormat('l') : '',
@@ -134,6 +155,9 @@ class WeddingInvitationPresenter
             'wiDatePosition' => $bc['date_position'] ?? 'center',
             'wiHeroVideoUrl' => $heroVideoUrl,
             'wiHeroHasVideo' => $heroVideoUrl !== '',
+            'wiHeroImageUrl' => $heroImageUrl,
+            'wiHeroHasImage' => $heroImageUrl !== '',
+            'wiHeroMediaType' => $heroMediaType,
             'showEnvelope' => ($bc['opening_type'] ?? 'envelope') === 'envelope',
         ];
     }

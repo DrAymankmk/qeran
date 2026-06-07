@@ -1,9 +1,14 @@
   <!-- ① Hero (dynamic) -->
-  <section class="wi-hero wi-date-pos-{{ $wiDatePosition }}@if(!empty($wiHeroHasVideo)) wi-hero-has-video @endif">
+  <section class="wi-hero wi-date-pos-{{ $wiDatePosition }}@if(!empty($wiHeroHasVideo) || !empty($wiHeroHasImage)) wi-hero-has-video @endif">
   	@if(!empty($wiHeroHasVideo) && !empty($wiHeroVideoUrl))
   	<div class="wi-hero-media" aria-hidden="true">
   		<video class="wi-hero-video" autoplay muted loop playsinline preload="metadata"
   			src="{{ $wiHeroVideoUrl }}"></video>
+  		<div class="wi-hero-video-overlay"></div>
+  	</div>
+  	@elseif(!empty($wiHeroHasImage) && !empty($wiHeroImageUrl))
+  	<div class="wi-hero-media" aria-hidden="true">
+  		<img class="wi-hero-image" src="{{ $wiHeroImageUrl }}" alt="">
   		<div class="wi-hero-video-overlay"></div>
   	</div>
   	@endif
@@ -36,10 +41,40 @@
   	</p>
   	@endif
 
-  	<h1 class="wi-names wi-fade-in d2">
-  		{{ $wiName1 }}<br>
-  		<span class="wi-ampersand">&</span><br>
-  		{{ $wiName2 ?: $wiName1 }}
+  	<h1 class="wi-names wi-couple-stack wi-fade-in d2">
+  		@if(!empty($wiGroom) || !empty($wiGroomFather))
+  		<span class="wi-couple-block wi-couple-groom">
+  			@if(!empty($wiGroom))
+  			<span class="wi-couple-name">{{ $wiGroom }}</span>
+  			@endif
+  			@if(!empty($wiGroomFather))
+  			<span class="wi-parent-line">{{ __('admin.ib-groom-father-line', ['name' => $wiGroomFather]) }}</span>
+  			@endif
+  		</span>
+  		@endif
+
+  		@if((!empty($wiGroom) || !empty($wiGroomFather)) && (!empty($wiBride) || !empty($wiBrideFather)))
+  		<span class="wi-ampersand">&</span>
+  		@endif
+
+  		@if(!empty($wiBride) || !empty($wiBrideFather))
+  		<span class="wi-couple-block wi-couple-bride">
+  			@if(!empty($wiBride))
+  			<span class="wi-couple-name">{{ $wiBride }}</span>
+  			@endif
+  			@if(!empty($wiBrideFather))
+  			<span class="wi-parent-line">{{ __('admin.ib-bride-father-line', ['name' => $wiBrideFather]) }}</span>
+  			@endif
+  		</span>
+  		@elseif(empty($wiGroom) && empty($wiGroomFather))
+  		<span class="wi-couple-block">
+  			<span class="wi-couple-name">{{ $wiName1 }}</span>
+  			@if(!empty($wiName2))
+  			<span class="wi-ampersand">&</span>
+  			<span class="wi-couple-name">{{ $wiName2 }}</span>
+  			@endif
+  		</span>
+  		@endif
   	</h1>
 
   	<p class="wi-subtitle wi-fade-in d3">{{ $wiSubtitle }}</p>

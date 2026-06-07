@@ -43,6 +43,9 @@ return [
         'details_section_label' => 'جميع التفاصيل',
     ],
 
+    /** When false, built-in themes below are hidden from the admin picker (still work for saved invitations). */
+    'show_builtin_animated_themes' => false,
+
     'theme_categories' => [
         'opening' => ['label_ar' => 'افتتاحية', 'label_en' => 'Opening'],
         'romantic' => ['label_ar' => 'رومانسي', 'label_en' => 'Romantic'],
@@ -59,9 +62,10 @@ return [
      */
     'animated_themes' => [
         'opening-gold-bloom' => [
-            'name_ar' => 'زهور ذهبية',
+            'name_ar' => 'نموذج 1',
             'name_en' => 'Gold Bloom Opening',
             'category' => 'opening',
+            'media_type' => 'video',
             'opening_video_url' => 'https://www.wooowinvites.com/assets/palm-zoom-theme-DTmwX1Yh.mp4',
             'preview' => '#1a1520',
             'primary_color' => '#c8a97a',
@@ -71,9 +75,10 @@ return [
             'renderer' => 'builder-wedding',
         ],
         'opening-soft-glow' => [
-            'name_ar' => 'توهج ناعم',
+            'name_ar' => 'نموذج 2',
             'name_en' => 'Soft Glow Opening',
             'category' => 'opening',
+            'media_type' => 'video',
             'opening_video_url' => 'https://www.wooowinvites.com/assets/castle-theme-DW5muDbc.mp4',
             'preview' => '#2d1f28',
             'primary_color' => '#c9a962',

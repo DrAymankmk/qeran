@@ -16,7 +16,7 @@ class InvitationBuilderRequest extends FormRequest
     public function rules(): array
     {
         $eventKeys = array_keys(config('invitation_builder.event_types', []));
-        $themeKeys = array_keys(config('invitation_builder.animated_themes', []));
+        $themeKeys = app(InvitationBuilderService::class)->themeSlugs();
         $envelopeKeys = array_keys(config('invitation_builder.envelope_colors', []));
         $envelopeShapeKeys = array_keys(config('invitation_builder.envelope_shapes', []));
         $sealKeys = array_keys(config('invitation_builder.seal_styles', []));
@@ -42,7 +42,7 @@ class InvitationBuilderRequest extends FormRequest
             'video_background' => ['nullable', 'boolean'],
             'intro_video_enabled' => ['nullable', 'boolean'],
             'logo_url' => ['nullable', 'url', 'max:500'],
-            'background_media_url' => ['nullable', 'url', 'max:500'],
+            'background_media_url' => ['nullable', 'string', 'max:500'],
             'envelope_color' => ['required', 'string', Rule::in($envelopeKeys)],
             'envelope_shape' => ['nullable', 'string', Rule::in($envelopeShapeKeys)],
             'seal_style' => ['required', 'string', Rule::in($sealKeys)],
@@ -50,6 +50,10 @@ class InvitationBuilderRequest extends FormRequest
             'envelope_initials' => ['nullable', 'string', 'max:8'],
             'envelope_image_ref' => ['nullable', 'string', 'max:128'],
             'opening_headline' => ['nullable', 'string', 'max:500'],
+            'groom' => ['nullable', 'string', 'max:50'],
+            'bride' => ['nullable', 'string', 'max:50'],
+            'groom_father' => ['nullable', 'string', 'max:50'],
+            'bride_father' => ['nullable', 'string', 'max:50'],
             'event_date' => ['nullable', 'date'],
             'event_time' => ['nullable', 'string', 'max:32'],
             'date_position' => ['required', 'string', Rule::in($datePosKeys)],
@@ -85,14 +89,42 @@ class InvitationBuilderRequest extends FormRequest
             }
         }
 
-        if ($merge !== []) {
-            $this->merge($merge);
+        if (! $this->has('theme_mode') || $this->input('theme_mode') === '') {
+            $merge['theme_mode'] = config('invitation_builder.defaults.theme_mode', 'dark');
         }
 
         if ($this->filled('theme_slug')) {
-            $this->merge([
-                'theme_slug' => app(InvitationBuilderService::class)->normalizeThemeSlug($this->input('theme_slug')),
-            ]);
+            $merge['theme_slug'] = app(InvitationBuilderService::class)->normalizeThemeSlug($this->input('theme_slug'));
         }
+
+        $merge['envelope_shape'] = app(InvitationBuilderService::class)->normalizeEnvelopeShape($this->input('envelope_shape'));
+
+        if ($merge !== []) {
+            $this->merge($merge);
+        }
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'theme_slug' => __('admin.ib-field-theme_slug'),
+            'theme_mode' => __('admin.ib-field-theme_mode'),
+            'event_category' => __('admin.ib-field-event_category'),
+            'envelope_color' => __('admin.ib-field-envelope_color'),
+            'envelope_shape' => __('admin.ib-field-envelope_shape'),
+            'seal_style' => __('admin.ib-field-seal_style'),
+            'seal_color' => __('admin.ib-field-seal_color'),
+            'date_position' => __('admin.ib-field-date_position'),
+            'background_media_url' => __('admin.ib-field-background_media_url'),
+            'groom' => __('admin.groom'),
+            'bride' => __('admin.bride'),
+            'groom_father' => __('admin.groom_father'),
+            'bride_father' => __('admin.bride_father'),
+            'event_date' => __('admin.ib-event-date'),
+            'event_time' => __('admin.ib-event-time'),
+        ];
     }
 }

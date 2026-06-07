@@ -117,12 +117,72 @@ body {
 	position: relative;
 }
 
-.ib-theme-preview-vid {
+.ib-theme-preview-vid,
+.ib-theme-preview-img {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
 	display: block;
 	pointer-events: none;
+}
+
+.ib-theme-preview-media {
+	height: 120px;
+	overflow: hidden;
+	background: #1a1520;
+}
+
+.ib-theme-preview {
+	position: relative;
+}
+
+.ib-theme-preview-video,
+.ib-theme-preview-media {
+	position: relative;
+}
+
+.ib-theme-type-badge {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	z-index: 2;
+	padding: 2px 8px;
+	border-radius: 999px;
+	font-size: 0.65rem;
+	font-weight: 700;
+	line-height: 1.4;
+	color: #fff;
+	background: rgba(18, 18, 35, 0.72);
+	backdrop-filter: blur(4px);
+	pointer-events: none;
+}
+
+.ib-theme-type-video {
+	background: rgba(37, 99, 235, 0.88);
+}
+
+.ib-theme-type-gif {
+	background: rgba(124, 58, 237, 0.88);
+}
+
+.ib-theme-type-image {
+	background: rgba(5, 150, 105, 0.88);
+}
+
+.ib-theme-meta {
+	background: #f8f9fa;
+}
+
+.ib-theme-delete-btn {
+	position: absolute;
+	top: 6px;
+	left: 6px;
+	z-index: 3;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	line-height: 1;
+	border-radius: 50%;
 }
 
 .ib-envelope-swatch {
@@ -416,6 +476,10 @@ body {
 
 @if(session('success'))
 <div class="alert alert-success">{{ session('success') }}</div>
+@endif
+
+@if($errors->any())
+@include('admin.invitation-builder.partials.validation-errors')
 @endif
 
 <form method="post" action="{{ route('admin.invitation-builder.update', $invitation) }}" id="invitationBuilderForm">

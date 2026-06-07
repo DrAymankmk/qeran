@@ -39,14 +39,19 @@ class InvitationBuilderController extends Controller
 
     public function preview(InvitationBuilderPreviewRequest $request, Invitation $invitation)
     {
-        $builderConfig = $this->builder->resolveFromDraft($invitation, array_merge(
+        $draft = array_merge(
             $request->validated(),
             ['blocks' => $request->input('blocks', [])]
-        ));
+        );
+
+        $this->builder->syncInvitationPartyFields($invitation, $draft, persist: false);
+
+        $builderConfig = $this->builder->resolveFromDraft($invitation, $draft);
         $host_name = $invitation->host_name;
         $category = \App\Models\Category::find($invitation->category_id);
         $user = new \App\Models\User(['name' => __('admin.invitation-builder-preview-guest')]);
         $user->id = $invitation->user_id;
+        $invitation->ensureQrCodeForUser((int) $user->id);
         $routes = ['accept' => '#', 'decline' => '#'];
         $initialView = 'envelope';
         $useBuilderWedding = ($builderConfig['renderer'] ?? '') === 'builder-wedding';

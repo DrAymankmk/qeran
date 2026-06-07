@@ -6,14 +6,73 @@ use App\Helpers\Constant;
 use App\Models\HubFile;
 use App\Models\Invitation;
 use App\Models\InvitationBuilderSetting;
+use App\Models\InvitationBuilderTheme;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 class InvitationBuilderService
 {
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    protected function builtinAnimatedThemes(): array
+    {
+        return config('invitation_builder.animated_themes', []);
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    protected function customAnimatedThemes(): array
+    {
+        return InvitationBuilderTheme::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderByDesc('id')
+            ->get()
+            ->mapWithKeys(fn (InvitationBuilderTheme $theme) => [
+                $theme->slug => $theme->toCatalogEntry(),
+            ])
+            ->all();
+    }
+
+    /**
+     * All themes (built-in + uploaded) for resolution and validation.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public function allAnimatedThemes(): array
+    {
+        return array_merge($this->builtinAnimatedThemes(), $this->customAnimatedThemes());
+    }
+
+    /**
+     * Themes shown in the admin theme picker.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public function animatedThemes(): array
+    {
+        $custom = $this->customAnimatedThemes();
+
+        if (! config('invitation_builder.show_builtin_animated_themes', true)) {
+            return $custom;
+        }
+
+        return array_merge($this->builtinAnimatedThemes(), $custom);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function themeSlugs(): array
+    {
+        return array_keys($this->allAnimatedThemes());
+    }
+
     public function catalog(): array
     {
-        $themes = config('invitation_builder.animated_themes', []);
+        $themes = $this->animatedThemes();
 
         return [
             'event_types' => config('invitation_builder.event_types', []),
@@ -38,7 +97,7 @@ class InvitationBuilderService
             return null;
         }
 
-        $themes = config('invitation_builder.animated_themes', []);
+        $themes = $this->allAnimatedThemes();
 
         if (isset($themes[$slug])) {
             return $themes[$slug];
@@ -58,13 +117,18 @@ class InvitationBuilderService
             return $shape;
         }
 
-        return config('invitation_builder.defaults.envelope_shape', 'classic');
+        $default = config('invitation_builder.defaults.envelope_shape', 'classic');
+        if (isset($shapes[$default])) {
+            return $default;
+        }
+
+        return array_key_first($shapes) ?: 'european';
     }
 
     public function normalizeThemeSlug(?string $slug): string
     {
         $slug = trim((string) ($slug ?? ''));
-        $themes = config('invitation_builder.animated_themes', []);
+        $themes = $this->allAnimatedThemes();
 
         if ($slug !== '' && isset($themes[$slug])) {
             return $slug;
@@ -76,44 +140,91 @@ class InvitationBuilderService
             return $alias;
         }
 
+        $visible = $this->animatedThemes();
+        if ($visible !== []) {
+            return array_key_first($visible);
+        }
+
         return config('invitation_builder.defaults.theme_slug', 'opening-gold-bloom');
+    }
+
+    /**
+     * @return array{url: ?string, type: ?string}
+     */
+    protected function themeOpeningMedia(?array $themeDef): array
+    {
+        if (! $themeDef) {
+            return ['url' => null, 'type' => null];
+        }
+
+        $url = trim((string) ($themeDef['opening_media_url'] ?? $themeDef['opening_video_url'] ?? ''));
+        $type = trim((string) ($themeDef['media_type'] ?? ''));
+
+        if ($type === '' && $url !== '') {
+            $type = ! empty($themeDef['opening_video_url']) ? 'video' : 'image';
+        }
+
+        return [
+            'url' => $url !== '' ? $url : null,
+            'type' => $type !== '' ? $type : null,
+        ];
     }
 
     protected function themeOpeningVideoUrl(?array $themeDef): ?string
     {
-        $url = trim((string) ($themeDef['opening_video_url'] ?? ''));
+        $media = $this->themeOpeningMedia($themeDef);
 
-        return $url !== '' ? $url : null;
+        return $media['type'] === 'video' ? $media['url'] : null;
+    }
+
+    protected function isLegacyUploadedThemeUrl(string $url): bool
+    {
+        $path = strtolower(parse_url($url, PHP_URL_PATH) ?: $url);
+
+        return str_contains($path, '/storage/invitation-builder/themes/');
     }
 
     /**
-     * @return array{background_media_url: ?string, video_background: bool, opening_video_url: ?string}
+     * @return array{background_media_url: ?string, video_background: bool, opening_video_url: ?string, hero_media_type: ?string}
      */
     protected function resolveThemeMedia(?array $themeDef, array $json, bool $videoFlag): array
     {
-        $opening = $this->themeOpeningVideoUrl($themeDef);
+        $themeMedia = $this->themeOpeningMedia($themeDef);
+        $opening = $themeMedia['url'];
+        $openingType = $themeMedia['type'] ?? 'video';
         $custom = trim((string) ($json['background_media_url'] ?? ''));
+
+        if ($opening !== null && $custom !== '' && $this->isLegacyUploadedThemeUrl($custom)) {
+            $custom = '';
+        }
 
         if ($opening !== null && ($custom === '' || $custom === $opening)) {
             return [
                 'background_media_url' => $opening,
-                'video_background' => true,
-                'opening_video_url' => $opening,
+                'video_background' => $openingType === 'video',
+                'opening_video_url' => $openingType === 'video' ? $opening : null,
+                'hero_media_type' => $openingType,
             ];
         }
 
         if ($custom !== '' && ($videoFlag || $opening !== null)) {
+            $heroType = $custom === $opening
+                ? $openingType
+                : ($videoFlag ? 'video' : 'image');
+
             return [
                 'background_media_url' => $custom,
-                'video_background' => $videoFlag || $custom === $opening,
-                'opening_video_url' => $opening,
+                'video_background' => $heroType === 'video',
+                'opening_video_url' => $heroType === 'video' ? $custom : null,
+                'hero_media_type' => $heroType,
             ];
         }
 
         return [
             'background_media_url' => $custom !== '' ? $custom : null,
             'video_background' => $videoFlag,
-            'opening_video_url' => $opening,
+            'opening_video_url' => $this->themeOpeningVideoUrl($themeDef),
+            'hero_media_type' => $custom !== '' ? ($videoFlag ? 'video' : 'image') : $openingType,
         ];
     }
 
@@ -193,6 +304,7 @@ class InvitationBuilderService
             'logo_url' => $json['logo_url'] ?? null,
             'background_media_url' => $themeMedia['background_media_url'],
             'opening_video_url' => $themeMedia['opening_video_url'],
+            'hero_media_type' => $themeMedia['hero_media_type'] ?? null,
             'custom_css' => $json['custom_css'] ?? '',
             'envelope_color' => $json['envelope_color'] ?? $defaults['envelope_color'] ?? 'cream',
             'envelope_shape' => $this->normalizeEnvelopeShape($json['envelope_shape'] ?? $defaults['envelope_shape'] ?? null),
@@ -394,7 +506,7 @@ class InvitationBuilderService
             ARRAY_FILTER_USE_BOTH
         );
 
-        return InvitationBuilderSetting::query()->updateOrCreate(
+        $setting = InvitationBuilderSetting::query()->updateOrCreate(
             ['invitation_id' => $invitation->id],
             [
                 'event_category' => $data['event_category'] ?? 'wedding',
@@ -405,6 +517,55 @@ class InvitationBuilderService
                 'published_at' => $publishedAt,
             ]
         );
+
+        $this->syncInvitationPartyFields($invitation, $data, persist: true);
+
+        return $setting;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function syncInvitationPartyFields(Invitation $invitation, array $data, bool $persist = false): Invitation
+    {
+        $fields = ['groom', 'bride', 'groom_father', 'bride_father'];
+        $updates = [];
+
+        foreach ($fields as $field) {
+            if (! array_key_exists($field, $data)) {
+                continue;
+            }
+
+            $value = trim((string) $data[$field]);
+            $updates[$field] = $value !== '' ? $value : null;
+            $invitation->{$field} = $updates[$field];
+        }
+
+        if ($updates !== []) {
+            $headline = $this->coupleHeadlineFromParty($invitation);
+            if ($headline !== '') {
+                $updates['event_name'] = $headline;
+                $invitation->event_name = $headline;
+            }
+        }
+
+        if ($persist && $updates !== []) {
+            $invitation->update($updates);
+        }
+
+        return $invitation;
+    }
+
+    public function coupleHeadlineFromParty(Invitation $invitation): string
+    {
+        $bride = trim((string) ($invitation->bride ?? ''));
+        $groom = trim((string) ($invitation->groom ?? ''));
+
+        if ($bride !== '' && $groom !== '') {
+            return $bride.' & '.$groom;
+        }
+
+        return $bride !== '' ? $bride : $groom;
     }
 
     /**

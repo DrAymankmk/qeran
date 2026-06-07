@@ -11,9 +11,28 @@
 </ul>
 
 <div class="row g-3">
+	<div class="col-12">
+		<h6 class="text-muted mb-0">{{ __('admin.ib-couple-section') }}</h6>
+	</div>
 	<div class="col-md-6">
-		<label class="form-label">{{ __('admin.ib-opening-headline') }}</label>
-		<textarea name="opening_headline" class="form-control ib-preview-field" rows="3" placeholder="{{ $invitation->event_name }}">{{ old('opening_headline', $config['opening_headline']) }}</textarea>
+		<label class="form-label">{{ __('admin.bride') }}</label>
+		<input type="text" name="bride" class="form-control ib-preview-field" maxlength="50"
+			value="{{ old('bride', $invitation->bride) }}" placeholder="{{ __('admin.bride') }}">
+	</div>
+	<div class="col-md-6">
+		<label class="form-label">{{ __('admin.groom') }}</label>
+		<input type="text" name="groom" class="form-control ib-preview-field" maxlength="50"
+			value="{{ old('groom', $invitation->groom) }}" placeholder="{{ __('admin.groom') }}">
+	</div>
+	<div class="col-md-6">
+		<label class="form-label">{{ __('admin.bride_father') }}</label>
+		<input type="text" name="bride_father" class="form-control ib-preview-field" maxlength="50"
+			value="{{ old('bride_father', $invitation->bride_father) }}" placeholder="{{ __('admin.bride_father') }}">
+	</div>
+	<div class="col-md-6">
+		<label class="form-label">{{ __('admin.groom_father') }}</label>
+		<input type="text" name="groom_father" class="form-control ib-preview-field" maxlength="50"
+			value="{{ old('groom_father', $invitation->groom_father) }}" placeholder="{{ __('admin.groom_father') }}">
 	</div>
 	<div class="col-md-6">
 		<label class="form-label">{{ __('admin.ib-event-date') }}</label>
@@ -78,15 +97,16 @@
 	</div>
 	<div class="col-md-6">
 		<label class="form-label">{{ __('admin.invitation-builder-text-color') }}</label>
-		<input type="color" name="text_color_visible" class="form-control form-control-color w-100 ib-color-sync" data-target="text_color" value="{{ old('text_color', $config['text_color']) }}">
-		<input type="hidden" name="text_color" id="text_color" value="{{ old('text_color', $config['text_color']) }}" class="ib-preview-field">
+		<input type="color" name="text_color_visible" class="form-control form-control-color w-100 ib-color-sync @error('text_color') is-invalid @enderror" data-target="text_color" value="{{ old('text_color', $config['text_color']) }}">
+		@error('text_color')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
 	</div>
 	<div class="col-md-6">
 		<label class="form-label">{{ __('admin.ib-date-position') }}</label>
-		<select name="date_position" class="form-select ib-preview-field">
+		<select name="date_position" class="form-select ib-preview-field @error('date_position') is-invalid @enderror">
 			@foreach($catalog['date_positions'] as $key => $pos)
 			<option value="{{ $key }}" @selected($config['date_position'] === $key)>{{ $pos['label_ar'] }}</option>
 			@endforeach
 		</select>
+		@error('date_position')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
 	</div>
 </div>

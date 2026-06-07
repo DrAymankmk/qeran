@@ -23,6 +23,7 @@ $activeEnvelopeShape = app(\App\Services\Invitation\InvitationBuilderService::cl
 
 <label class="form-label fw-semibold">{{ __('admin.ib-envelope-shape') }}</label>
 <p class="small text-muted mb-2">{{ __('admin.ib-envelope-shape-hint') }}</p>
+@error('envelope_shape')<div class="alert alert-danger py-2 small mb-2">{{ $message }}</div>@enderror
 <div class="row g-2 mb-4" id="ibEnvelopeShapeGrid">
 	@foreach($catalog['envelope_shapes'] as $shapeKey => $shape)
 	<div class="col-4 col-md-4">
@@ -81,6 +82,7 @@ $activeEnvelopeShape = app(\App\Services\Invitation\InvitationBuilderService::cl
 
 <label class="form-label fw-semibold">{{ __('admin.ib-envelope-color') }}</label>
 <small class="text-muted d-block mb-2">{{ __('admin.ib-envelope-color-hint') }}</small>
+@error('envelope_color')<div class="alert alert-danger py-2 small mb-2">{{ $message }}</div>@enderror
 <div class="d-flex flex-wrap gap-2 mb-4">
 	@foreach($catalog['envelope_colors'] as $key => $color)
 	<label class="ib-envelope-swatch @if($config['envelope_color'] === $key) is-active @endif"
@@ -115,6 +117,8 @@ $activeEnvelopeShape = app(\App\Services\Invitation\InvitationBuilderService::cl
 	@endforeach
 </div>
 
+@error('seal_style')<div class="alert alert-danger py-2 small mb-2">{{ $message }}</div>@enderror
+@error('seal_color')<div class="alert alert-danger py-2 small mb-2">{{ $message }}</div>@enderror
 <div class="row g-2 mb-4" id="ibSealStyleGrid">
 	@foreach($catalog['seal_styles'] as $key => $seal)
 	@php

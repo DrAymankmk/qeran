@@ -5,6 +5,8 @@
 	const loading = document.getElementById('ibPreviewLoading');
 	const deviceWrap = document.getElementById('ibPreviewDevice');
 	const previewPostUrl = @json($previewPostUrl);
+	const themeUploadUrl = @json(route('admin.invitation-builder.themes.store'));
+	const themeDeleteUrlTemplate = @json(route('admin.invitation-builder.themes.destroy', ['theme' => '__SLUG__']));
 	const csrf = @json(csrf_token());
 	const blockCatalog = @json($catalog['information_blocks']);
 	let debounceTimer = null;
@@ -225,15 +227,16 @@
 		});
 	});
 
-	function syncThemeMedia(url, isVideo) {
+	function syncThemeMedia(url, mediaType) {
 		var hiddenUrl = document.getElementById('background_media_url');
 		var hiddenVideo = document.getElementById('video_background_hidden');
 		var customUrl = document.getElementById('background_media_url_custom');
 		var videoCb = document.getElementById('video_background');
+		var isVideo = mediaType === 'video';
 		if (hiddenUrl) hiddenUrl.value = url || '';
 		if (hiddenVideo) hiddenVideo.value = isVideo ? '1' : '0';
 		if (customUrl) customUrl.value = url || '';
-		if (videoCb) videoCb.checked = !!isVideo;
+		if (videoCb) videoCb.checked = isVideo;
 	}
 
 	function updateThemePreviewVideos() {
@@ -248,39 +251,152 @@
 		});
 	}
 
-	/* Theme picker */
-	document.querySelectorAll('.ib-theme-card').forEach(function (card) {
-		card.addEventListener('click', function () {
-			document.querySelectorAll('.ib-theme-card').forEach(function (c) { c.classList.remove('is-active'); });
-			card.classList.add('is-active');
-			document.getElementById('theme_slug').value = card.dataset.slug;
-			document.getElementById('primary_color').value = card.dataset.primary;
-			document.getElementById('secondary_color').value = card.dataset.secondary;
-			document.getElementById('background_color').value = card.dataset.bg;
-			document.getElementById('text_color').value = card.dataset.text;
-			const sync = document.querySelector('.ib-color-sync[data-target="text_color"]');
-			if (sync) sync.value = card.dataset.text;
-			if (card.dataset.video) {
-				syncThemeMedia(card.dataset.video, true);
+	function activateThemeCard(card) {
+		document.querySelectorAll('.ib-theme-card').forEach(function (c) { c.classList.remove('is-active'); });
+		card.classList.add('is-active');
+		document.getElementById('theme_slug').value = card.dataset.slug;
+		document.getElementById('primary_color').value = card.dataset.primary;
+		document.getElementById('secondary_color').value = card.dataset.secondary;
+		document.getElementById('background_color').value = card.dataset.bg;
+		document.getElementById('text_color').value = card.dataset.text;
+		var sync = document.querySelector('.ib-color-sync[data-target="text_color"]');
+		if (sync) sync.value = card.dataset.text;
+		var mediaUrl = card.dataset.mediaUrl || card.dataset.video || '';
+		var mediaType = card.dataset.mediaType || (card.dataset.video ? 'video' : 'image');
+		if (mediaUrl) {
+			syncThemeMedia(mediaUrl, mediaType);
+		}
+		updateThemePreviewVideos();
+		schedulePreview();
+	}
+
+	function bindThemeCards() {
+		document.querySelectorAll('.ib-theme-card').forEach(function (card) {
+			if (card.dataset.bound === '1') {
+				return;
 			}
-			updateThemePreviewVideos();
-			schedulePreview();
+			card.dataset.bound = '1';
+			card.addEventListener('click', function () {
+				activateThemeCard(card);
+			});
+		});
+	}
+
+	bindThemeCards();
+	updateThemePreviewVideos();
+
+	var themeUploadBtn = document.getElementById('ibThemeUploadBtn');
+	if (themeUploadBtn) {
+		themeUploadBtn.addEventListener('click', function () {
+			var nameInput = document.getElementById('ibThemeNameAr');
+			var typeInput = document.getElementById('ibThemeMediaType');
+			var fileInput = document.getElementById('ibThemeMediaInput');
+			var statusEl = document.getElementById('ibThemeUploadStatus');
+			var file = fileInput && fileInput.files ? fileInput.files[0] : null;
+
+			if (!nameInput || !nameInput.value.trim()) {
+				if (statusEl) statusEl.textContent = @json(__('admin.ib-theme-upload-name-required'));
+				return;
+			}
+			if (!file) {
+				if (statusEl) statusEl.textContent = @json(__('admin.ib-theme-upload-file-required'));
+				return;
+			}
+
+			var formData = new FormData();
+			formData.append('name_ar', nameInput.value.trim());
+			formData.append('media_type', typeInput ? typeInput.value : 'video');
+			formData.append('media', file);
+			formData.append('_token', csrf);
+
+			themeUploadBtn.disabled = true;
+			if (statusEl) statusEl.textContent = @json(__('admin.ib-theme-uploading'));
+
+			fetch(themeUploadUrl, {
+				method: 'POST',
+				body: formData,
+				headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+			})
+				.then(function (response) {
+					return response.json().then(function (data) {
+						if (!response.ok) {
+							throw data;
+						}
+						return data;
+					});
+				})
+				.then(function () {
+					window.location.hash = 'ibTabThemes';
+					window.location.reload();
+				})
+				.catch(function (error) {
+					var message = @json(__('admin.ib-theme-upload-failed'));
+					if (error && error.errors) {
+						var firstKey = Object.keys(error.errors)[0];
+						if (firstKey && error.errors[firstKey][0]) {
+							message = error.errors[firstKey][0];
+						}
+					} else if (error && error.message) {
+						message = error.message;
+					}
+					if (statusEl) statusEl.textContent = message;
+				})
+				.finally(function () {
+					themeUploadBtn.disabled = false;
+				});
+		});
+	}
+
+	document.querySelectorAll('.ib-theme-delete-btn').forEach(function (btn) {
+		btn.addEventListener('click', function (event) {
+			event.preventDefault();
+			event.stopPropagation();
+			var themeSlug = btn.dataset.themeSlug;
+			if (!themeSlug || !window.confirm(@json(__('admin.ib-theme-delete-confirm')))) {
+				return;
+			}
+
+			var deleteUrl = themeDeleteUrlTemplate.replace('__SLUG__', encodeURIComponent(themeSlug));
+			btn.disabled = true;
+
+			fetch(deleteUrl, {
+				method: 'DELETE',
+				headers: {
+					'Accept': 'application/json',
+					'X-CSRF-TOKEN': csrf,
+					'X-Requested-With': 'XMLHttpRequest',
+				},
+			})
+				.then(function (response) {
+					return response.json().then(function (data) {
+						if (!response.ok) {
+							throw data;
+						}
+						return data;
+					});
+				})
+				.then(function () {
+					window.location.hash = 'ibTabThemes';
+					window.location.reload();
+				})
+				.catch(function () {
+					btn.disabled = false;
+					window.alert(@json(__('admin.ib-theme-delete-failed')));
+				});
 		});
 	});
-
-	updateThemePreviewVideos();
 
 	var customBg = document.getElementById('background_media_url_custom');
 	var videoBgCb = document.getElementById('video_background');
 	if (customBg) {
 		customBg.addEventListener('input', function () {
-			syncThemeMedia(customBg.value, videoBgCb ? videoBgCb.checked : false);
+			syncThemeMedia(customBg.value, videoBgCb && videoBgCb.checked ? 'video' : 'image');
 			schedulePreview();
 		});
 	}
 	if (videoBgCb) {
 		videoBgCb.addEventListener('change', function () {
-			syncThemeMedia(customBg ? customBg.value : '', videoBgCb.checked);
+			syncThemeMedia(customBg ? customBg.value : '', videoBgCb.checked ? 'video' : 'image');
 			schedulePreview();
 		});
 	}
@@ -452,6 +568,13 @@
 	}
 
 	document.querySelectorAll('.ib-block-add').forEach(bindBlockAdd);
+
+	if (window.location.hash === '#ibTabThemes') {
+		var themesTab = document.querySelector('[data-bs-target="#ibTabThemes"]');
+		if (themesTab && window.bootstrap && bootstrap.Tab) {
+			bootstrap.Tab.getOrCreateInstance(themesTab).show();
+		}
+	}
 
 	refreshPreview(true);
 })();

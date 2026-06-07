@@ -2162,59 +2162,10 @@
 					</div>
 				</div>
 
-				@php
-				$qrUrl = $invitation->qr($invitation->id, $user->id);
-				$qrExtension = $qrUrl ? (pathinfo(parse_url($qrUrl, PHP_URL_PATH) ?: '',
-				PATHINFO_EXTENSION) ?: 'png') : 'png';
-				$qrFilename = 'Qr-' . $invitation->id . '-' . $user->id . '.' . $qrExtension;
-				@endphp
-				<div class="qr-section">
-					@if($qrUrl)
-					<img src="{{ $qrUrl }}" id="invitationQrImage"
-						alt="رمز الاستجابة السريعة" />
-					<p>الرجاء الاحتفاظ بالرمز وابرازه لحارس القاعه</p>
-					<button type="button" class="qr-download-button"
-						data-qr-url="{{ $qrUrl }}"
-						data-qr-filename="{{ $qrFilename }}"
-						onclick="downloadInvitationQr(this)">
-						تحميل
-					</button>
-					@else
-					<p>رمز الاستجابة السريعة غير متوفر حالياً</p>
-					@endif
-				</div>
-				<script>
-				function downloadInvitationQr(button) {
-					const url = button.dataset.qrUrl;
-					const filename = button.dataset.qrFilename;
-
-					if (!url) {
-						return;
-					}
-
-					fetch(url)
-						.then(function(response) {
-							if (!response.ok) {
-								throw new Error('download failed');
-							}
-
-							return response.blob();
-						})
-						.then(function(blob) {
-							const objectUrl = URL.createObjectURL(blob);
-							const link = document.createElement('a');
-							link.href = objectUrl;
-							link.download = filename;
-							document.body.appendChild(link);
-							link.click();
-							link.remove();
-							URL.revokeObjectURL(objectUrl);
-						})
-						.catch(function() {
-							window.open(url, '_blank');
-						});
-				}
-				</script>
+				@include('invitation.partials.qr-section', [
+					'invitation' => $invitation,
+					'user' => $user,
+				])
 			</div>
 
 			<!-- Decline View -->

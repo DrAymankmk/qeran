@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\MediaDirectUploadController;
 use App\Http\Controllers\Admin\ContactsController;
 use App\Http\Controllers\Admin\InvitationRequestController;
 use App\Http\Controllers\Admin\InvitationBuilderController;
+use App\Http\Controllers\Admin\InvitationBuilderThemeController;
 use App\Http\Controllers\Admin\InvitationsController;
 use App\Http\Controllers\Admin\NotificationsController;
 use App\Http\Controllers\Admin\PackagesController;
@@ -66,6 +67,9 @@ use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 //     echo 'Error: ' . $e->getMessage();
 // }
 // });
+
+Route::get('invitation-theme-media/{theme:slug}', [InvitationBuilderThemeController::class, 'showMedia'])
+    ->name('invitation-theme-media');
 
 // Root route - redirect to localized home page
 Route::get('/', function () {
@@ -280,6 +284,8 @@ Route::group(['prefix' => 'admin', 'middleware' => 'set.admin.locale'], function
         Route::get('invitation/{invitation}/builder', [InvitationBuilderController::class, 'edit'])->name('admin.invitation-builder.edit');
         Route::post('invitation/{invitation}/builder/preview', [InvitationBuilderController::class, 'preview'])->name('admin.invitation-builder.preview');
         Route::put('invitation/{invitation}/builder', [InvitationBuilderController::class, 'update'])->name('admin.invitation-builder.update');
+        Route::post('invitation-builder/themes', [InvitationBuilderThemeController::class, 'store'])->name('admin.invitation-builder.themes.store');
+        Route::delete('invitation-builder/themes/{theme:slug}', [InvitationBuilderThemeController::class, 'destroy'])->name('admin.invitation-builder.themes.destroy');
         Route::resource('invitation', InvitationsController::class);
         Route::resource('users', UsersController::class);
         Route::controller(UsersController::class)->group(function () {

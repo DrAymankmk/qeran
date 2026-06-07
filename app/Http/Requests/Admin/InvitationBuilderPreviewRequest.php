@@ -16,7 +16,7 @@ class InvitationBuilderPreviewRequest extends FormRequest
     public function rules(): array
     {
         $eventKeys = array_keys(config('invitation_builder.event_types', []));
-        $themeKeys = array_keys(config('invitation_builder.animated_themes', []));
+        $themeKeys = app(InvitationBuilderService::class)->themeSlugs();
         $envelopeKeys = array_keys(config('invitation_builder.envelope_colors', []));
         $envelopeShapeKeys = array_keys(config('invitation_builder.envelope_shapes', []));
         $sealKeys = array_keys(config('invitation_builder.seal_styles', []));
@@ -50,6 +50,10 @@ class InvitationBuilderPreviewRequest extends FormRequest
             'envelope_initials' => ['nullable', 'string', 'max:8'],
             'envelope_image_ref' => ['nullable', 'string', 'max:128'],
             'opening_headline' => ['nullable', 'string', 'max:500'],
+            'groom' => ['nullable', 'string', 'max:50'],
+            'bride' => ['nullable', 'string', 'max:50'],
+            'groom_father' => ['nullable', 'string', 'max:50'],
+            'bride_father' => ['nullable', 'string', 'max:50'],
             'event_date' => ['nullable', 'string', 'max:32'],
             'event_time' => ['nullable', 'string', 'max:32'],
             'date_position' => ['nullable', 'string', Rule::in($datePosKeys)],

@@ -785,6 +785,28 @@
 		margin: 0;
 	}
 
+	.qr-download-button {
+		display: inline-block;
+		margin-top: 18px;
+		padding: 12px 28px;
+		border: none;
+		border-radius: 25px;
+		background: linear-gradient(135deg, #121223, #2d3748);
+		color: #fff;
+		font-family: "Cairo", sans-serif;
+		font-size: 1em;
+		font-weight: 600;
+		cursor: pointer;
+		text-decoration: none;
+		box-shadow: 0 6px 18px rgba(18, 18, 35, 0.25);
+		transition: transform 0.2s ease, box-shadow 0.2s ease;
+	}
+
+	.qr-download-button:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 8px 22px rgba(18, 18, 35, 0.35);
+	}
+
 	.flip-button {
 		background: linear-gradient(135deg,
 				rgba(18, 18, 35, 0.8),
@@ -2137,11 +2159,60 @@
 					</div>
 				</div>
 
+				@php
+					$qrUrl = $invitation->qr($invitation->id, $user->id);
+					$qrExtension = $qrUrl ? (pathinfo(parse_url($qrUrl, PHP_URL_PATH) ?: '', PATHINFO_EXTENSION) ?: 'png') : 'png';
+					$qrFilename = 'Qr-' . $invitation->id . '-' . $user->id . '.' . $qrExtension;
+				@endphp
 				<div class="qr-section">
-					<img src="{{$invitation->qr($invitation->id,$user->id)}}"
-						alt="رمز الاستجابة السريعة" />
-					<p>الرجاء الاحتفاظ بالرمز وابرازه لحارس القاعه</p>
+					@if($qrUrl)
+						<img src="{{ $qrUrl }}"
+							id="invitationQrImage"
+							alt="رمز الاستجابة السريعة" />
+						<p>الرجاء الاحتفاظ بالرمز وابرازه لحارس القاعه</p>
+						<button type="button"
+							class="qr-download-button"
+							data-qr-url="{{ $qrUrl }}"
+							data-qr-filename="{{ $qrFilename }}"
+							onclick="downloadInvitationQr(this)">
+							تحميل رمز الاستجابة السريعة
+						</button>
+					@else
+						<p>رمز الاستجابة السريعة غير متوفر حالياً</p>
+					@endif
 				</div>
+				<script>
+					function downloadInvitationQr(button) {
+						const url = button.dataset.qrUrl;
+						const filename = button.dataset.qrFilename;
+
+						if (!url) {
+							return;
+						}
+
+						fetch(url)
+							.then(function (response) {
+								if (!response.ok) {
+									throw new Error('download failed');
+								}
+
+								return response.blob();
+							})
+							.then(function (blob) {
+								const objectUrl = URL.createObjectURL(blob);
+								const link = document.createElement('a');
+								link.href = objectUrl;
+								link.download = filename;
+								document.body.appendChild(link);
+								link.click();
+								link.remove();
+								URL.revokeObjectURL(objectUrl);
+							})
+							.catch(function () {
+								window.open(url, '_blank');
+							});
+					}
+				</script>
 			</div>
 
 			<!-- Decline View -->

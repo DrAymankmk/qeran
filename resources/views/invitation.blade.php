@@ -43,9 +43,11 @@
 		background: var(--ib-bg, #faf7f2) !important;
 		perspective: none;
 	}
+
 	body.invitation-builder-wedding-page .container {
 		display: none;
 	}
+
 	body {
 		background: linear-gradient(135deg,
 				#121223 0%,
@@ -1971,19 +1973,20 @@
 	@include('invitation.partials.builder-theme')
 </head>
 
-<body class="@if(!empty($builderConfig) && ($builderConfig['renderer'] ?? '') === 'builder-wedding') invitation-builder-wedding-page @endif">
+<body
+	class="@if(!empty($builderConfig) && ($builderConfig['renderer'] ?? '') === 'builder-wedding') invitation-builder-wedding-page @endif">
 	@php
-		$useBuilderWedding = !empty($builderConfig) && ($builderConfig['renderer'] ?? '') === 'builder-wedding';
-		$template = $template ?? 1;
-		if (!$useBuilderWedding && ($template < 1 || $template > 21)) {
-			$template = 1;
+	$useBuilderWedding = !empty($builderConfig) && ($builderConfig['renderer'] ?? '') === 'builder-wedding';
+	$template = $template ?? 1;
+	if (!$useBuilderWedding && ($template < 1 || $template> 21)) {
+		$template = 1;
 		}
-	@endphp
+		@endphp
 
-	@if($useBuilderWedding)
+		@if($useBuilderWedding)
 		@include($builderView ?? 'invitation.templates.builder-wedding')
-	@else
-	<div class="container">
+		@else
+		<div class="container">
 			@include('invitation.templates.template' . $template)
 
 			<!-- Success View -->
@@ -2160,58 +2163,57 @@
 				</div>
 
 				@php
-					$qrUrl = $invitation->qr($invitation->id, $user->id);
-					$qrExtension = $qrUrl ? (pathinfo(parse_url($qrUrl, PHP_URL_PATH) ?: '', PATHINFO_EXTENSION) ?: 'png') : 'png';
-					$qrFilename = 'Qr-' . $invitation->id . '-' . $user->id . '.' . $qrExtension;
+				$qrUrl = $invitation->qr($invitation->id, $user->id);
+				$qrExtension = $qrUrl ? (pathinfo(parse_url($qrUrl, PHP_URL_PATH) ?: '',
+				PATHINFO_EXTENSION) ?: 'png') : 'png';
+				$qrFilename = 'Qr-' . $invitation->id . '-' . $user->id . '.' . $qrExtension;
 				@endphp
 				<div class="qr-section">
 					@if($qrUrl)
-						<img src="{{ $qrUrl }}"
-							id="invitationQrImage"
-							alt="رمز الاستجابة السريعة" />
-						<p>الرجاء الاحتفاظ بالرمز وابرازه لحارس القاعه</p>
-						<button type="button"
-							class="qr-download-button"
-							data-qr-url="{{ $qrUrl }}"
-							data-qr-filename="{{ $qrFilename }}"
-							onclick="downloadInvitationQr(this)">
-							تحميل رمز الاستجابة السريعة
-						</button>
+					<img src="{{ $qrUrl }}" id="invitationQrImage"
+						alt="رمز الاستجابة السريعة" />
+					<p>الرجاء الاحتفاظ بالرمز وابرازه لحارس القاعه</p>
+					<button type="button" class="qr-download-button"
+						data-qr-url="{{ $qrUrl }}"
+						data-qr-filename="{{ $qrFilename }}"
+						onclick="downloadInvitationQr(this)">
+						تحميل
+					</button>
 					@else
-						<p>رمز الاستجابة السريعة غير متوفر حالياً</p>
+					<p>رمز الاستجابة السريعة غير متوفر حالياً</p>
 					@endif
 				</div>
 				<script>
-					function downloadInvitationQr(button) {
-						const url = button.dataset.qrUrl;
-						const filename = button.dataset.qrFilename;
+				function downloadInvitationQr(button) {
+					const url = button.dataset.qrUrl;
+					const filename = button.dataset.qrFilename;
 
-						if (!url) {
-							return;
-						}
-
-						fetch(url)
-							.then(function (response) {
-								if (!response.ok) {
-									throw new Error('download failed');
-								}
-
-								return response.blob();
-							})
-							.then(function (blob) {
-								const objectUrl = URL.createObjectURL(blob);
-								const link = document.createElement('a');
-								link.href = objectUrl;
-								link.download = filename;
-								document.body.appendChild(link);
-								link.click();
-								link.remove();
-								URL.revokeObjectURL(objectUrl);
-							})
-							.catch(function () {
-								window.open(url, '_blank');
-							});
+					if (!url) {
+						return;
 					}
+
+					fetch(url)
+						.then(function(response) {
+							if (!response.ok) {
+								throw new Error('download failed');
+							}
+
+							return response.blob();
+						})
+						.then(function(blob) {
+							const objectUrl = URL.createObjectURL(blob);
+							const link = document.createElement('a');
+							link.href = objectUrl;
+							link.download = filename;
+							document.body.appendChild(link);
+							link.click();
+							link.remove();
+							URL.revokeObjectURL(objectUrl);
+						})
+						.catch(function() {
+							window.open(url, '_blank');
+						});
+				}
 				</script>
 			</div>
 
@@ -2223,12 +2225,12 @@
 					نأسف لعدم قدرتك على الحضور إلى {{$invitation->event_name}}
 				</p>
 			</div>
-	</div>
-	@endif
+		</div>
+		@endif
 
-	@if(!$useBuilderWedding)
-	@include('pages.scripts.invitations-scripts')
-	@endif
+		@if(!$useBuilderWedding)
+		@include('pages.scripts.invitations-scripts')
+		@endif
 </body>
 
 </html>

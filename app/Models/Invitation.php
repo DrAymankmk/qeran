@@ -269,19 +269,15 @@ class Invitation extends Model
         $guestId = $user_id ?: auth()->id();
         $basePath = 'qr-code/Qr-' . $invitation_id . '-' . $guestId;
 
-        if (Storage::disk('public')->exists($basePath . '.png')) {
-            return asset('storage/' . $basePath . '.png');
+        foreach (['png', 'svg'] as $extension) {
+            $relativePath = $basePath . '.' . $extension;
+
+            if (Storage::disk('public')->exists($relativePath)) {
+                return Storage::disk('public')->url($relativePath);
+            }
         }
 
-        if (Storage::disk('public')->exists($basePath . '.svg')) {
-            return asset('storage/' . $basePath . '.svg');
-        }
-
-        if (!$user_id) {
-            return asset('storage/' . 'qr-code/Qr-' . $invitation_id . '-' . auth()->id() . '.png');
-        }
-        return asset('storage/' . 'qr-code/Qr-' . $invitation_id . '-' . $user_id . '.png');
-
+        return null;
     }
 
     public function category()

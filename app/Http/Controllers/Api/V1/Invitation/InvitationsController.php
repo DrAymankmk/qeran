@@ -1933,8 +1933,8 @@ class InvitationsController extends Controller
     private function storeInvitationQrCode(int $invitationId, int $userId): void
     {
         $payload = $invitationId.'-'.$userId;
-        $pngPath = 'public/qr-code/Qr-'.$invitationId.'-'.$userId.'.png';
-        $svgPath = 'public/qr-code/Qr-'.$invitationId.'-'.$userId.'.svg';
+        $pngPath = 'qr-code/Qr-'.$invitationId.'-'.$userId.'.png';
+        $svgPath = 'qr-code/Qr-'.$invitationId.'-'.$userId.'.svg';
 
         try {
             $image = QrCode::format('png')
@@ -1944,10 +1944,10 @@ class InvitationsController extends Controller
                 ->style('square')
                 ->generate($payload);
 
-            Storage::disk('local')->put($pngPath, $image);
+            Storage::disk('public')->put($pngPath, $image);
 
-            if (Storage::disk('local')->exists($svgPath)) {
-                Storage::disk('local')->delete($svgPath);
+            if (Storage::disk('public')->exists($svgPath)) {
+                Storage::disk('public')->delete($svgPath);
             }
 
             return;
@@ -1966,7 +1966,7 @@ class InvitationsController extends Controller
             ->style('square')
             ->generate($payload);
 
-        Storage::disk('local')->put($svgPath, $svg);
+        Storage::disk('public')->put($svgPath, $svg);
     }
 
     /**

@@ -59,6 +59,8 @@ class InvitationBuilderController extends Controller
         $view = $builderConfig['view'] ?? $this->builder->resolveViewName($builderConfig['theme_slug'] ?? null);
         $template = (int) ($builderConfig['template'] ?? 0);
 
+        $isBuilderPreview = true;
+
         return response()
             ->view('admin.invitation-builder.preview-frame', compact(
                 'invitation',
@@ -70,7 +72,8 @@ class InvitationBuilderController extends Controller
                 'user',
                 'routes',
                 'initialView',
-                'useBuilderWedding'
+                'useBuilderWedding',
+                'isBuilderPreview'
             ))
             ->header('X-Frame-Options', 'SAMEORIGIN');
     }

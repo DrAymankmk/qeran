@@ -472,6 +472,9 @@ function wiOpenEnvelope() {
 			main.classList.remove('is-gated');
 			main.style.display = 'block';
 		}
+		if (window.wiEnsureHeroVideosPlay) {
+			window.wiEnsureHeroVideosPlay();
+		}
 	}, 900);
 }
 </script>

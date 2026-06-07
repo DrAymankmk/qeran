@@ -111,7 +111,7 @@ body.invitation-builder-active.theme-light {
 		&& ! empty($bc['opening_video_url'] ?? $bc['background_media_url']);
 @endphp
 @if(!$heroUsesOpeningVideo && !empty($bc['background_media_url']) && !empty($bc['video_background']))
-<video class="invitation-builder-bg-media" autoplay muted loop playsinline src="{{ $bc['background_media_url'] }}"></video>
+<video class="invitation-builder-bg-media" autoplay muted loop playsinline webkit-playsinline preload="auto" src="{{ $bc['background_media_url'] }}"></video>
 <div class="invitation-builder-bg-overlay"></div>
 @elseif(!$heroUsesOpeningVideo && !empty($bc['background_media_url']))
 <div class="invitation-builder-bg-media" style="background:url('{{ $bc['background_media_url'] }}') center/cover no-repeat;"></div>

@@ -2,7 +2,7 @@
   <section class="wi-hero wi-date-pos-{{ $wiDatePosition }}@if(!empty($wiHeroHasVideo) || !empty($wiHeroHasImage)) wi-hero-has-video @endif">
   	@if(!empty($wiHeroHasVideo) && !empty($wiHeroVideoUrl))
   	<div class="wi-hero-media" aria-hidden="true">
-  		<video class="wi-hero-video" autoplay muted loop playsinline preload="metadata"
+  		<video class="wi-hero-video" autoplay muted loop playsinline webkit-playsinline preload="auto"
   			src="{{ $wiHeroVideoUrl }}"></video>
   		<div class="wi-hero-video-overlay"></div>
   	</div>

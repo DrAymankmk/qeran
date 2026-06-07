@@ -19,6 +19,9 @@
 				main.classList.remove('is-gated');
 				main.style.display = 'block';
 			}
+			if (window.wiEnsureHeroVideosPlay) {
+				window.wiEnsureHeroVideosPlay();
+			}
 		}, 900);
 	};
 
@@ -90,9 +93,22 @@
 
 	window.ibAfterPreviewPatch = function () {
 		window.ibStartCountdown();
+		if (window.wiEnsureHeroVideosPlay) {
+			window.wiEnsureHeroVideosPlay();
+		}
 		document.querySelectorAll('.wi-fade-in').forEach(function (el, i) {
 			el.style.animationDelay = (i * 0.05) + 's';
 		});
 	};
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', function () {
+			if (window.wiEnsureHeroVideosPlay) {
+				window.wiEnsureHeroVideosPlay();
+			}
+		});
+	} else if (window.wiEnsureHeroVideosPlay) {
+		window.wiEnsureHeroVideosPlay();
+	}
 })();
 </script>

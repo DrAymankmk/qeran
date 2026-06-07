@@ -106,6 +106,9 @@
     }
 
     $gateMain = $showEnvelope && ! in_array($initialView ?? '', ['success', 'decline'], true);
+    if (! empty($isBuilderPreview)) {
+        $gateMain = false;
+    }
 @endphp
 
 <style>
@@ -126,18 +129,33 @@
 .wi-section-label, .wi-date-badge, .wi-subtitle, .wi-detail-heading { color: color-mix(in srgb, var(--wi-gold) 85%, var(--wi-text)); }
 .wi-rsvp-submit { background: var(--wi-gold) !important; }
 .wi-hero { overflow: hidden; }
+.wi-hero-has-video::before { display: none; }
 .wi-hero-media {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  overflow: hidden;
 }
-.wi-hero-video,
 .wi-hero-image {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
+	object-position: center center;
 	display: block;
+}
+.wi-hero-video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  object-position: center center;
+  display: block;
 }
 .wi-hero-video-overlay {
   position: absolute;

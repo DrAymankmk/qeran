@@ -596,6 +596,7 @@ body {
 					</div>
 					<div id="ibPreviewDevice" class="ib-preview-device is-desktop">
 						<iframe id="ibPreviewFrame"
+							allow="autoplay; fullscreen"
 							title="{{ __('admin.invitation-builder-live-preview') }}"></iframe>
 					</div>
 				</div>

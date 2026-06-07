@@ -40,7 +40,8 @@ class Invitation extends Model
         'description',
         'package_id',
         'invitation_media_type',
-        'code'
+        'code',
+	'link_url'
     ];
 
     /**

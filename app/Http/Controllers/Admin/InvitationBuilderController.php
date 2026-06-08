@@ -37,45 +37,85 @@ class InvitationBuilderController extends Controller
         ));
     }
 
+    public function previewShow(Invitation $invitation)
+    {
+        $invitation->load(['builderSetting', 'hubFiles']);
+
+        return $this->standalonePreviewResponse(
+            $this->compilePreviewContext($invitation, $this->builder->resolve($invitation))
+        );
+    }
+
     public function preview(InvitationBuilderPreviewRequest $request, Invitation $invitation)
     {
-        $draft = array_merge(
-            $request->validated(),
-            ['blocks' => $request->input('blocks', [])]
-        );
+        $draft = $request->validated();
+        $draft['blocks'] = $request->input('blocks', $draft['blocks'] ?? []);
 
         $this->builder->syncInvitationPartyFields($invitation, $draft, persist: false);
 
-        $builderConfig = $this->builder->resolveFromDraft($invitation, $draft);
+        $context = $this->compilePreviewContext(
+            $invitation,
+            $this->builder->resolveFromDraft($invitation, $draft)
+        );
+
+        if ($request->boolean('preview_standalone')) {
+            return $this->standalonePreviewResponse($context);
+        }
+
+        return $this->embedPreviewResponse($context);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function compilePreviewContext(Invitation $invitation, array $builderConfig): array
+    {
         $host_name = $invitation->host_name;
         $category = \App\Models\Category::find($invitation->category_id);
         $user = new \App\Models\User(['name' => __('admin.invitation-builder-preview-guest')]);
         $user->id = $invitation->user_id;
         $invitation->ensureQrCodeForUser((int) $user->id);
-        $routes = ['accept' => '#', 'decline' => '#'];
-        $initialView = 'envelope';
         $useBuilderWedding = ($builderConfig['renderer'] ?? '') === 'builder-wedding';
-
         $view = $builderConfig['view'] ?? $this->builder->resolveViewName($builderConfig['theme_slug'] ?? null);
         $template = (int) ($builderConfig['template'] ?? 0);
 
-        $isBuilderPreview = true;
+        return [
+            'invitation' => $invitation,
+            'builderConfig' => $builderConfig,
+            'template' => $template,
+            'host_name' => $host_name,
+            'view' => $view,
+            'category' => $category,
+            'user' => $user,
+            'routes' => ['accept' => '#', 'decline' => '#'],
+            'initialView' => 'envelope',
+            'useBuilderWedding' => $useBuilderWedding,
+            'isBuilderPreview' => true,
+        ];
+    }
 
+    /**
+     * @param  array<string, mixed>  $context
+     */
+    protected function embedPreviewResponse(array $context)
+    {
         return response()
-            ->view('admin.invitation-builder.preview-frame', compact(
-                'invitation',
-                'builderConfig',
-                'template',
-                'host_name',
-                'view',
-                'category',
-                'user',
-                'routes',
-                'initialView',
-                'useBuilderWedding',
-                'isBuilderPreview'
-            ))
+            ->view('admin.invitation-builder.preview-frame', $context)
             ->header('X-Frame-Options', 'SAMEORIGIN');
+    }
+
+    /**
+     * @param  array<string, mixed>  $context
+     */
+    protected function standalonePreviewResponse(array $context)
+    {
+        $embedHtml = view('admin.invitation-builder.preview-frame', $context)->render();
+
+        return response()->view('admin.invitation-builder.preview-standalone', [
+            'invitation' => $context['invitation'],
+            'embedHtml' => $embedHtml,
+            'backUrl' => route('admin.invitation-builder.edit', $context['invitation']),
+        ]);
     }
 
     public function update(InvitationBuilderRequest $request, Invitation $invitation)

@@ -9,6 +9,7 @@
 	const themeDeleteUrlTemplate = @json(route('admin.invitation-builder.themes.destroy', ['theme' => '__SLUG__']));
 	const csrf = @json(csrf_token());
 	const blockCatalog = @json($catalog['information_blocks']);
+	const blockSchemas = JSON.parse(document.getElementById('ibBlockSchemasJson')?.textContent || '{}');
 	let debounceTimer = null;
 	let previewSeq = 0;
 	let previewReady = false;
@@ -166,9 +167,15 @@
 		debounceTimer = setTimeout(function () { refreshPreview(false); }, 280);
 	}
 
-	form.querySelectorAll('.ib-preview-field').forEach(function (el) {
-		el.addEventListener('input', schedulePreview);
-		el.addEventListener('change', schedulePreview);
+	form.addEventListener('input', function (e) {
+		if (e.target.classList.contains('ib-preview-field')) {
+			schedulePreview();
+		}
+	});
+	form.addEventListener('change', function (e) {
+		if (e.target.classList.contains('ib-preview-field')) {
+			schedulePreview();
+		}
 	});
 
 	document.getElementById('ibPreviewRefresh').addEventListener('click', function () {
@@ -198,6 +205,12 @@
 		tokenInput.name = '_token';
 		tokenInput.value = csrf;
 		tempForm.appendChild(tokenInput);
+
+		const standaloneInput = document.createElement('input');
+		standaloneInput.type = 'hidden';
+		standaloneInput.name = 'preview_standalone';
+		standaloneInput.value = '1';
+		tempForm.appendChild(standaloneInput);
 
 		body.forEach(function (value, key) {
 			const input = document.createElement('input');
@@ -491,6 +504,185 @@
 		});
 	});
 
+	function syncBlocksOrderInputs() {
+		if (!sortable) return;
+		sortable.querySelectorAll('.ib-block-item').forEach(function (item) {
+			var hidden = item.querySelector('input[name="blocks[]"]');
+			if (hidden) {
+				hidden.value = item.getAttribute('data-block') || hidden.value;
+			}
+		});
+	}
+
+	function reindexRepeaterRows(repeaterEl) {
+		var blockKey = repeaterEl.getAttribute('data-block');
+		var repeaterKey = repeaterEl.getAttribute('data-repeater');
+		repeaterEl.querySelectorAll('.ib-repeater-row').forEach(function (row, index) {
+			row.querySelectorAll('[name]').forEach(function (input) {
+				var name = input.getAttribute('name');
+				if (!name) return;
+				input.setAttribute('name', name.replace(
+					/block_data\[[^\]]+\]\[[^\]]+\]\[\d+\]/,
+					'block_data[' + blockKey + '][' + repeaterKey + '][' + index + ']'
+				));
+			});
+			var label = row.querySelector('.small.text-muted');
+			if (label) label.textContent = '#' + (index + 1);
+		});
+	}
+
+	function ibBlockFieldColumnClass(fieldType) {
+		if (fieldType === 'textarea') return 'col-12';
+		if (fieldType === 'checkbox') return 'col-md-6';
+		if (fieldType === 'color' || fieldType === 'optional_color') return 'col-md-4';
+		if (fieldType === 'font' || fieldType === 'font_weight') return 'col-md-6';
+		if (fieldType === 'font_size') return 'col-md-4';
+		if (fieldType === 'date' || fieldType === 'time' || fieldType === 'datetime-local') return 'col-md-4';
+		return 'col-md-6';
+	}
+
+	function bindOptionalColorControls(root) {
+		root = root || document;
+		root.querySelectorAll('.ib-optional-color-picker').forEach(function (picker) {
+			if (picker.dataset.bound === '1') return;
+			picker.dataset.bound = '1';
+			picker.addEventListener('input', function () {
+				var target = document.getElementById(picker.getAttribute('data-target'));
+				if (target) {
+					target.value = picker.value;
+					target.dispatchEvent(new Event('input', { bubbles: true }));
+				}
+			});
+		});
+		root.querySelectorAll('.ib-optional-color-text.ib-preview-field').forEach(function (input) {
+			if (input.dataset.bound === '1') return;
+			input.dataset.bound = '1';
+			input.addEventListener('input', function () {
+				var picker = input.parentElement && input.parentElement.querySelector('.ib-optional-color-picker');
+				if (picker && /^#[0-9A-Fa-f]{6}$/.test(input.value)) {
+					picker.value = input.value;
+				}
+			});
+		});
+		root.querySelectorAll('.ib-optional-color-clear').forEach(function (btn) {
+			if (btn.dataset.bound === '1') return;
+			btn.dataset.bound = '1';
+			btn.addEventListener('click', function () {
+				var target = document.getElementById(btn.getAttribute('data-target'));
+				if (target) {
+					target.value = '';
+					target.dispatchEvent(new Event('input', { bubbles: true }));
+				}
+				var picker = btn.parentElement && btn.parentElement.querySelector('.ib-optional-color-picker');
+				if (picker) picker.value = '#faf7f2';
+			});
+		});
+	}
+
+	function ibBlockFieldInputHtml(fieldType, name, label, fieldDef) {
+		fieldDef = fieldDef || {};
+		var inputId = 'ib_bf_dyn_' + Math.random().toString(36).slice(2, 9);
+		var maxlength = fieldDef.max || 500;
+		var placeholder = fieldDef.placeholder || '';
+
+		if (fieldType === 'checkbox') {
+			return '<div class="form-check mt-1"><input type="hidden" name="' + name + '" value="0">'
+				+ '<input type="checkbox" class="form-check-input ib-preview-field" name="' + name + '" value="1" id="' + inputId + '">'
+				+ '<label class="form-check-label small" for="' + inputId + '">' + label + '</label></div>';
+		}
+
+		var html = '<label class="form-label small mb-1" for="' + inputId + '">' + label + '</label>';
+		if (fieldType === 'textarea') {
+			return html + '<textarea name="' + name + '" id="' + inputId + '" rows="' + (fieldDef.rows || 2)
+				+ '" class="form-control form-control-sm ib-preview-field" maxlength="' + maxlength
+				+ '" placeholder="' + placeholder + '"></textarea>';
+		}
+		if (fieldType === 'color') {
+			return html + '<input type="color" name="' + name + '" id="' + inputId
+				+ '" class="form-control form-control-color w-100 ib-preview-field" value="#c9a962">';
+		}
+		if (fieldType === 'number') {
+			return html + '<input type="number" name="' + name + '" id="' + inputId
+				+ '" class="form-control form-control-sm ib-preview-field" placeholder="' + placeholder + '">';
+		}
+		if (fieldType === 'date' || fieldType === 'time' || fieldType === 'datetime-local') {
+			return html + '<input type="' + fieldType + '" name="' + name + '" id="' + inputId
+				+ '" class="form-control form-control-sm ib-preview-field" placeholder="' + placeholder + '">';
+		}
+		var htmlType = ({ url: 'url', email: 'email', tel: 'tel' })[fieldType] || 'text';
+		return html + '<input type="' + htmlType + '" name="' + name + '" id="' + inputId
+			+ '" class="form-control form-control-sm ib-preview-field" maxlength="' + maxlength
+			+ '" placeholder="' + placeholder + '">';
+	}
+
+	function buildRepeaterRowHtml(blockKey, repeaterKey, rowIndex, fields) {
+		var html = '<div class="ib-repeater-row card card-body p-2 mb-2 bg-light">';
+		html += '<div class="d-flex justify-content-between align-items-center mb-2">';
+		html += '<span class="small text-muted">#' + (rowIndex + 1) + '</span>';
+		html += '<button type="button" class="btn btn-sm btn-outline-danger py-0 ib-repeater-remove">×</button></div><div class="row g-2">';
+		Object.keys(fields).forEach(function (rfKey) {
+			var rf = fields[rfKey];
+			var rfType = rf.type || 'text';
+			var rfName = 'block_data[' + blockKey + '][' + repeaterKey + '][' + rowIndex + '][' + rfKey + ']';
+			var col = ibBlockFieldColumnClass(rfType);
+			html += '<div class="' + col + ' ib-block-field ib-block-field-' + rfType + '">';
+			html += ibBlockFieldInputHtml(rfType, rfName, rf.label_ar || rfKey, rf);
+			html += '</div>';
+		});
+		html += '</div></div>';
+		return html;
+	}
+
+	function bindRepeater(container) {
+		if (!container || container.dataset.ibRepeaterBound === '1') return;
+		container.dataset.ibRepeaterBound = '1';
+		container.querySelectorAll('.ib-repeater-add').forEach(function (btn) {
+			btn.addEventListener('click', function () {
+				var wrap = btn.closest('.ib-block-repeater');
+				if (!wrap) return;
+				var max = parseInt(wrap.getAttribute('data-max') || '8', 10);
+				var rows = wrap.querySelector('.ib-repeater-rows');
+				if (!rows || rows.children.length >= max) return;
+				var blockKey = wrap.getAttribute('data-block');
+				var repeaterKey = wrap.getAttribute('data-repeater');
+				var fields = (blockSchemas[blockKey] && blockSchemas[blockKey].repeaters && blockSchemas[blockKey].repeaters[repeaterKey])
+					? blockSchemas[blockKey].repeaters[repeaterKey].fields : {};
+				rows.insertAdjacentHTML('beforeend', buildRepeaterRowHtml(blockKey, repeaterKey, rows.children.length, fields));
+				bindRepeaterRow(rows.lastElementChild);
+				schedulePreview();
+			});
+		});
+		container.querySelectorAll('.ib-repeater-row').forEach(bindRepeaterRow);
+	}
+
+	function bindRepeaterRow(row) {
+		if (!row || row.dataset.ibRowBound === '1') return;
+		row.dataset.ibRowBound = '1';
+		var removeBtn = row.querySelector('.ib-repeater-remove');
+		if (removeBtn) {
+			removeBtn.addEventListener('click', function () {
+				var repeater = row.closest('.ib-block-repeater');
+				row.remove();
+				if (repeater) {
+					reindexRepeaterRows(repeater);
+					schedulePreview();
+				}
+			});
+		}
+	}
+
+	document.querySelectorAll('.ib-block-toggle').forEach(function (btn) {
+		btn.addEventListener('click', function () {
+			var wrap = btn.closest('.ib-block-item')?.querySelector('.ib-block-fields-wrap');
+			if (wrap) wrap.classList.toggle('show');
+		});
+	});
+
+	document.querySelectorAll('#ibBlocksSortable .ib-block-fields').forEach(function (wrap) {
+		bindRepeater(wrap);
+	});
+	bindOptionalColorControls(document);
+
 	/* Blocks drag & drop */
 	const sortable = document.getElementById('ibBlocksSortable');
 	let dragged = null;
@@ -505,6 +697,7 @@
 		sortable.addEventListener('dragend', function () {
 			if (dragged) dragged.classList.remove('dragging');
 			dragged = null;
+			syncBlocksOrderInputs();
 			schedulePreview();
 		});
 		sortable.addEventListener('dragover', function (e) {
@@ -553,16 +746,55 @@
 		btn.addEventListener('click', function () {
 			const key = btn.dataset.block;
 			const li = document.createElement('li');
-			li.className = 'list-group-item ib-block-item d-flex align-items-center gap-2';
+			li.className = 'list-group-item ib-block-item';
 			li.draggable = true;
 			li.dataset.block = key;
-			li.innerHTML = '<span class="ib-drag-handle text-muted cursor-grab">⋮⋮</span><span class="fs-5">' + btn.dataset.icon + '</span><div class="flex-grow-1"><strong class="small d-block">' + btn.dataset.label + '</strong></div><input type="hidden" name="blocks[]" value="' + key + '" class="ib-preview-field"><button type="button" class="btn btn-sm btn-outline-danger ib-block-remove">×</button>';
+			var hasSchema = !!blockSchemas[key];
+			var rowHtml = '<div class="d-flex align-items-center gap-2">';
+			rowHtml += '<span class="ib-drag-handle text-muted cursor-grab">⋮⋮</span><span class="fs-5">' + btn.dataset.icon + '</span>';
+			rowHtml += '<div class="flex-grow-1"><strong class="small d-block">' + btn.dataset.label + '</strong>';
+			if (btn.dataset.desc) rowHtml += '<span class="text-muted" style="font-size:11px;">' + btn.dataset.desc + '</span>';
+			rowHtml += '</div><input type="hidden" name="blocks[]" value="' + key + '" class="ib-preview-field">';
+			if (hasSchema) {
+				rowHtml += '<button type="button" class="btn btn-sm btn-outline-secondary ib-block-toggle"><i class="mdi mdi-pencil-outline"></i></button>';
+			}
+			rowHtml += '<button type="button" class="btn btn-sm btn-outline-danger ib-block-remove">×</button></div>';
+			li.innerHTML = rowHtml;
+			if (hasSchema) {
+				var tpl = document.getElementById('ibBlockFieldsTpl_' + key);
+				if (tpl && tpl.content) {
+					li.appendChild(tpl.content.cloneNode(true));
+				}
+			}
 			sortable.appendChild(li);
 			btn.closest('.col-md-6').remove();
+			var toggleBtn = li.querySelector('.ib-block-toggle');
+			if (toggleBtn) {
+				toggleBtn.addEventListener('click', function () {
+					var wrap = li.querySelector('.ib-block-fields-wrap');
+					if (wrap) wrap.classList.toggle('show');
+				});
+			}
 			li.querySelector('.ib-block-remove').addEventListener('click', function () {
-				li.remove();
+				const item = li;
+				const blockKey = item.dataset.block;
+				const meta = blockCatalog[blockKey];
+				if (meta) {
+					const col = document.createElement('div');
+					col.className = 'col-md-6';
+					col.innerHTML = '<button type="button" class="btn btn-outline-secondary w-100 text-start ib-block-add" data-block="' + blockKey + '" data-icon="' + meta.icon + '" data-label="' + meta.label_ar + '" data-desc="">' + meta.icon + ' ' + meta.label_ar + '</button>';
+					document.getElementById('ibBlocksAvailable').appendChild(col);
+					bindBlockAdd(col.querySelector('.ib-block-add'));
+				}
+				item.remove();
 				schedulePreview();
 			});
+			var fieldsWrap = li.querySelector('.ib-block-fields-wrap');
+			if (fieldsWrap) {
+				fieldsWrap.classList.add('show');
+				bindRepeater(fieldsWrap);
+				bindOptionalColorControls(fieldsWrap);
+			}
 			schedulePreview();
 		});
 	}

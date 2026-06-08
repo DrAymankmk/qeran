@@ -137,13 +137,14 @@ class WeddingInvitationPresenter
             'wiVenueName' => $venueName !== '' ? $venueName : '—',
             'wiVenueLocation' => $venueLocation,
             'wiVenueAddressLine' => $venueAddressLine,
-            'wiVenueTitle' => $bc['venue_section_title'] ?? ($venueName !== '' ? $venueName : ($invitation->event_name ?: 'موقع الحفل')),
-            'wiVenueLabel' => $bc['venue_section_label'] ?? 'موقع الحفل',
-            'wiVenueDescription' => trim((string) ($bc['venue_description'] ?? '')),
+            'wiVenueTitle' => self::blockValue($bc, 'venue', 'title', $bc['venue_section_title'] ?? ($venueName !== '' ? $venueName : ($invitation->event_name ?: 'موقع الحفل'))),
+            'wiVenueLabel' => self::blockValue($bc, 'venue', 'label', $bc['venue_section_label'] ?? 'موقع الحفل'),
+            'wiVenueDescription' => self::blockValue($bc, 'venue', 'description', trim((string) ($bc['venue_description'] ?? ''))),
             'wiHasMap' => $mapQuery !== null,
             'wiMapEmbedUrl' => $mapEmbedUrl,
-            'wiDetailsTitle' => $bc['details_section_title'] ?? ($invitation->event_name ?: 'تفاصيل الحفل'),
-            'wiDetailsLabel' => $bc['details_section_label'] ?? 'جميع التفاصيل',
+            'wiDetailsTitle' => self::blockValue($bc, 'event_details', 'title', $bc['details_section_title'] ?? ($invitation->event_name ?: 'تفاصيل الحفل')),
+            'wiDetailsLabel' => self::blockValue($bc, 'event_details', 'label', $bc['details_section_label'] ?? 'جميع التفاصيل'),
+            'wiBlockData' => $bc['block_data'] ?? [],
             'wiCountdownIso' => $countdownIso,
             'wiMapUrl' => $mapUrl,
             'wiEnvelopeHex' => $envelopeHex,
@@ -165,6 +166,134 @@ class WeddingInvitationPresenter
     public static function hasBlock(array $blocks, string $key): bool
     {
         return in_array($key, $blocks, true);
+    }
+
+    /**
+     * @return array{class: string, style: string}
+     */
+    public static function blockStyleAttributes(array $bc, string $blockKey): array
+    {
+        $data = is_array($bc['block_data'][$blockKey] ?? null) ? $bc['block_data'][$blockKey] : [];
+        $styleParts = [];
+        $allowedFonts = array_keys(config('invitation_builder.fonts', []));
+
+        $bg = trim((string) ($data['background_color'] ?? ''));
+        if ($bg !== '' && preg_match('/^#?[0-9A-Fa-f]{6}$/i', $bg)) {
+            $hex = str_starts_with($bg, '#') ? $bg : '#'.$bg;
+            $styleParts[] = '--wi-block-bg: '.$hex;
+        }
+
+        $font = trim((string) ($data['font_family'] ?? ''));
+        if ($font !== '' && in_array($font, $allowedFonts, true)) {
+            $styleParts[] = "font-family: '{$font}', 'Cairo', sans-serif";
+        }
+
+        $headline = trim((string) ($data['headline_font'] ?? ''));
+        $headlineEffective = ($headline !== '' && in_array($headline, $allowedFonts, true)) ? $headline : $font;
+        if ($headlineEffective !== '' && in_array($headlineEffective, $allowedFonts, true)) {
+            $styleParts[] = "--wi-block-headline-font: '{$headlineEffective}'";
+        }
+
+        $typographyVars = [
+            'title_font_size' => '--wi-block-title-size',
+            'title_font_weight' => '--wi-block-title-weight',
+            'title_color' => '--wi-block-title-color',
+            'label_font_size' => '--wi-block-label-size',
+            'label_font_weight' => '--wi-block-label-weight',
+            'label_color' => '--wi-block-label-color',
+            'body_font_size' => '--wi-block-body-size',
+            'body_font_weight' => '--wi-block-body-weight',
+            'body_color' => '--wi-block-body-color',
+        ];
+
+        foreach ($typographyVars as $fieldKey => $cssVar) {
+            $raw = trim((string) ($data[$fieldKey] ?? ''));
+            if ($raw === '') {
+                continue;
+            }
+            if (str_ends_with($fieldKey, '_color') && preg_match('/^#?[0-9A-Fa-f]{6}$/i', $raw)) {
+                $hex = str_starts_with($raw, '#') ? $raw : '#'.$raw;
+                $styleParts[] = "{$cssVar}: {$hex}";
+            } elseif (str_ends_with($fieldKey, '_font_size') && preg_match('/^\d+(?:\.\d+)?px$/', $raw)) {
+                $styleParts[] = "{$cssVar}: {$raw}";
+            } elseif (str_ends_with($fieldKey, '_font_weight') && in_array($raw, array_keys(config('invitation_builder.font_weights', [])), true)) {
+                $styleParts[] = "{$cssVar}: {$raw}";
+            }
+        }
+
+        return [
+            'class' => 'wi-block-custom wi-block-'.$blockKey,
+            'style' => implode('; ', $styleParts),
+        ];
+    }
+
+    public static function blockValue(array $bc, string $block, string $key, mixed $default = ''): mixed
+    {
+        $data = $bc['block_data'][$block] ?? [];
+        if (! is_array($data) || ! array_key_exists($key, $data)) {
+            return $default;
+        }
+
+        $value = $data[$key];
+        if ($value === null || $value === '') {
+            return $default;
+        }
+
+        return $value;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public static function blockRepeater(array $bc, string $block, string $repeater): array
+    {
+        $rows = $bc['block_data'][$block][$repeater] ?? [];
+
+        return is_array($rows) ? array_values($rows) : [];
+    }
+
+    public static function formatBlockDisplay(string $type, mixed $value): string
+    {
+        return app(InvitationBuilderService::class)->formatBlockFieldForDisplay($type, $value);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function blockSectionPartials(): array
+    {
+        return [
+            'countdown' => 'builder-wedding-section-countdown',
+            'our_story' => 'builder-wedding-section-our-story',
+            'event_details' => 'builder-wedding-section-details',
+            'gallery' => 'builder-wedding-section-gallery',
+            'timeline' => 'builder-wedding-section-timeline',
+            'venue' => 'builder-wedding-section-venue',
+            'gift_list' => 'builder-wedding-section-gift-list',
+            'rsvp' => 'builder-wedding-section-rsvp',
+            'wishes' => 'builder-wedding-section-wishes',
+            'menu' => 'builder-wedding-section-menu',
+        ];
+    }
+
+    /**
+     * @param  array<int, string>  $blocks
+     */
+    public static function composeOrderedBlockSections(array $blocks, array $viewData): string
+    {
+        $partials = self::blockSectionPartials();
+        $sectionsHtml = '';
+
+        foreach ($blocks as $blockKey) {
+            $partial = $partials[$blockKey] ?? null;
+            if ($partial === null) {
+                continue;
+            }
+
+            $sectionsHtml .= view('invitation.templates.partials.'.$partial, $viewData)->render()."\n\n  ";
+        }
+
+        return rtrim($sectionsHtml);
     }
 
     public static function replaceBetweenMarkers(

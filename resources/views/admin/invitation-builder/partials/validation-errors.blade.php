@@ -25,6 +25,8 @@
 		'venue_location' => ['tab' => 'ibTabDetails', 'label' => __('admin.ib-tab-details')],
 		'blocks' => ['tab' => 'ibTabBlocks', 'label' => __('admin.ib-tab-blocks')],
 		'blocks.*' => ['tab' => 'ibTabBlocks', 'label' => __('admin.ib-tab-blocks')],
+		'block_data' => ['tab' => 'ibTabBlocks', 'label' => __('admin.ib-tab-blocks')],
+		'block_data.*' => ['tab' => 'ibTabBlocks', 'label' => __('admin.ib-tab-blocks')],
 	];
 @endphp
 

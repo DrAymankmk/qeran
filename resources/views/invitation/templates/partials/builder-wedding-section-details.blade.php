@@ -1,5 +1,9 @@
+@php
+use App\Services\Invitation\WeddingInvitationPresenter;
+$bs = WeddingInvitationPresenter::blockStyleAttributes($builderConfig ?? [], 'event_details');
+@endphp
   <!-- ④ Event Details (dynamic) -->
-  <section class="wi-section">
+  <section class="wi-section {{ $bs['class'] }}"@if($bs['style'] !== '') style="{{ $bs['style'] }}"@endif>
     <p class="wi-section-label">{{ $wiDetailsLabel }}</p>
     <h2 class="wi-section-title">{{ $wiDetailsTitle }}</h2>
     <div class="wi-details-grid">

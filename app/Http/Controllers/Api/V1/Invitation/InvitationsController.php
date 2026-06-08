@@ -39,6 +39,7 @@ use App\Jobs\SendBaileysInvitationMessage;
 use App\Services\External\BaileysGateway;
 use App\Services\External\BaileysWhatsApp;
 use App\Services\External\TwilioSMS;
+use App\Services\Invitation\InvitationBuilderService;
 use App\Services\RespondActive;
 use App\Support\PhoneNumber;
 use App\Traits\SendsNotificationAndEmail;
@@ -679,12 +680,14 @@ class InvitationsController extends Controller
 
         // Ensure invitation_link, invitation_message, and store links are present for this endpoint.
         // UserResource reads dynamic attributes; Eloquent users won't have them unless we attach them.
+        $builderService = app(InvitationBuilderService::class);
+
         foreach ($usersModels as $u) {
-            $u->invitation_link = route('user.invitation.show', [
-                'invitation_code' => $invitation->code,
-                'user_id' => $u->id,
-                'inserted_by' => auth()->id(),
-            ]);
+            $u->invitation_link = $builderService->guestInvitationUrl(
+                $invitation,
+                (int) $u->id,
+                (int) auth()->id()
+            );
             $u->invitation_message = $this->buildInvitationMessage($invitation, $u->id);
             $u->apple_link = $appleLink;
             $u->google_play_link = $googlePlayLink;
@@ -1079,11 +1082,11 @@ class InvitationsController extends Controller
             }
         }
 
-        $invitationLink = route('user.invitation.show', [
-            'invitation_code' => $invitation->code,
-            'user_id' => $user_id,
-            'inserted_by' => auth()->id(),
-        ]);
+        $invitationLink = app(InvitationBuilderService::class)->guestInvitationUrl(
+            $invitation,
+            (int) $user_id,
+            auth()->id() ? (int) auth()->id() : null
+        );
 
         return __('messages.'.$templateType, [
             'event_type' => $eventType,
@@ -1139,7 +1142,7 @@ class InvitationsController extends Controller
             $invitation->users,
             function ($user) use ($request, $invitation) {
                 $message = $request->use_template || ! $request->message
-                    ? $this->buildInvitationMessage($invitation, 'invitation_sms_template')
+                    ? $this->buildInvitationMessage($invitation, $user->id, 'invitation_sms_template')
                     : $request->message;
 
                 return str_replace('{user_id}', $user->id, $message);
@@ -1171,7 +1174,7 @@ class InvitationsController extends Controller
                 $invitation,
                 $invitation->users,
                 function ($user) use ($invitation) {
-                    $smsMessage = $this->buildInvitationMessage($invitation, 'invitation_sms_template');
+                    $smsMessage = $this->buildInvitationMessage($invitation, $user->id, 'invitation_sms_template');
 
                     return str_replace('{user_id}', $user->id, $smsMessage);
                 }

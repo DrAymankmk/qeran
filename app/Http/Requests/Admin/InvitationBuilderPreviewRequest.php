@@ -68,6 +68,7 @@ class InvitationBuilderPreviewRequest extends FormRequest
             'block_floral_border' => ['nullable', 'boolean'],
             'blocks' => ['nullable', 'array'],
             'blocks.*' => ['string', Rule::in($blockKeys)],
+            'block_data' => ['nullable', 'array'],
         ];
     }
 
@@ -95,6 +96,22 @@ class InvitationBuilderPreviewRequest extends FormRequest
         if ($this->filled('theme_slug')) {
             $this->merge([
                 'theme_slug' => app(InvitationBuilderService::class)->normalizeThemeSlug($this->input('theme_slug')),
+            ]);
+        }
+
+        $blockData = is_array($this->input('block_data')) ? $this->input('block_data') : [];
+        if ($this->filled('details_section_label')) {
+            $blockData['event_details']['label'] = $this->input('details_section_label');
+        }
+        if ($this->filled('details_section_title')) {
+            $blockData['event_details']['title'] = $this->input('details_section_title');
+        }
+        if ($this->has('block_data') || $this->has('blocks') || $blockData !== []) {
+            $this->merge([
+                'block_data' => app(InvitationBuilderService::class)->normalizeBlockData(
+                    $blockData,
+                    $this->route('invitation')
+                ),
             ]);
         }
     }

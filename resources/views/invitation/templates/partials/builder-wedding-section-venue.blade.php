@@ -1,5 +1,9 @@
+@php
+use App\Services\Invitation\WeddingInvitationPresenter;
+$bs = WeddingInvitationPresenter::blockStyleAttributes($builderConfig ?? [], 'venue');
+@endphp
   <!-- ⑦ Venue (dynamic) -->
-  <div class="wi-venue-bg">
+  <div class="wi-venue-bg {{ $bs['class'] }}"@if($bs['style'] !== '') style="{{ $bs['style'] }}"@endif>
     <section class="wi-section">
       <p class="wi-section-label">{{ $wiVenueLabel }}</p>
       <h2 class="wi-section-title">{{ $wiVenueTitle }}</h2>

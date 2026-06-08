@@ -3,7 +3,6 @@
 
     $bc = $builderConfig ?? [];
     $blocks = $bc['blocks'] ?? ['countdown', 'event_details', 'venue', 'rsvp'];
-    $has = fn (string $b) => WeddingInvitationPresenter::hasBlock($blocks, $b);
 
     $present = WeddingInvitationPresenter::from(
         $invitation,
@@ -15,21 +14,6 @@
 
     $bodyPath = resource_path('views/invitation/templates/partials/builder-wedding-body.html');
     $bodyHtml = file_exists($bodyPath) ? file_get_contents($bodyPath) : '';
-
-    $sectionMarkers = [
-        '<!-- ② Countdown -->' => 'countdown',
-        '<!-- ③ Our Story -->' => 'our_story',
-        '<!-- ④ Event Details' => 'event_details',
-        '<!-- ⑤ Photo Gallery -->' => 'gallery',
-        '<!-- ⑥ Schedule -->' => 'timeline',
-        '<!-- ⑦ Venue' => 'venue',
-        '<!-- ⑧ Accommodation -->' => 'accommodation',
-        '<!-- ⑨ Dress Code -->' => 'dress_code',
-        '<!-- ⑩ Gift Registry -->' => 'gift_list',
-        '<!-- ⑪ RSVP -->' => 'rsvp',
-        '<!-- ⑫ Guestbook -->' => 'wishes',
-        '<!-- ⑬ Music Wishlist -->' => 'wishes',
-    ];
 
     $viewData = array_merge($present, [
         'invitation' => $invitation,
@@ -48,57 +32,12 @@
         $heroHtml
     );
 
-    $detailsHtml = view('invitation.templates.partials.builder-wedding-section-details', $viewData)->render();
+    $sectionsHtml = WeddingInvitationPresenter::composeOrderedBlockSections($blocks, $viewData);
     $bodyHtml = WeddingInvitationPresenter::replaceBetweenMarkers(
         $bodyHtml,
-        '<!-- ④ Event Details',
-        '<!-- ⑤ Photo Gallery -->',
-        $detailsHtml
-    );
-
-    $venueHtml = view('invitation.templates.partials.builder-wedding-section-venue', $viewData)->render();
-    $bodyHtml = WeddingInvitationPresenter::replaceBetweenMarkers(
-        $bodyHtml,
-        '<!-- ⑦ Venue',
-        '<!-- ⑧ Accommodation -->',
-        $venueHtml
-    );
-
-    foreach ($sectionMarkers as $marker => $blockKey) {
-        if ($has($blockKey)) {
-            continue;
-        }
-        $pos = strpos($bodyHtml, $marker);
-        if ($pos === false) {
-            continue;
-        }
-        $nextPos = strlen($bodyHtml);
-        foreach ($sectionMarkers as $m => $_) {
-            if ($m === $marker) {
-                continue;
-            }
-            $p = strpos($bodyHtml, $m, $pos + 1);
-            if ($p !== false && $p < $nextPos) {
-                $nextPos = $p;
-            }
-        }
-        $footerPos = strpos($bodyHtml, '<!-- ⑭ Thank You Footer -->', $pos);
-        if ($footerPos !== false && $footerPos < $nextPos) {
-            $nextPos = $footerPos;
-        }
-        $bodyHtml = substr($bodyHtml, 0, $pos).substr($bodyHtml, $nextPos);
-    }
-
-    $bodyHtml = str_replace(
-        ['Counting down the days', "new Date('2025-09-14T16:30:00')", 'onclick="submitRsvp()"'],
-        ['العد التنازلي', "new Date('".$wiCountdownIso."')", 'type="button" onclick="wiSubmitRsvpAccept()"'],
-        $bodyHtml
-    );
-
-    $bodyHtml = str_replace(
-        ['Joyfully accepts', 'Regretfully declines', 'Send my RSVP'],
-        ['أوافق بحب', 'أعتذر', 'تأكيد الحضور'],
-        $bodyHtml
+        '<!-- ② Countdown -->',
+        '<!-- ⑭ Thank You Footer -->',
+        $sectionsHtml
     );
 
     if ($wiNamesFooter) {
@@ -121,7 +60,33 @@
 }
 .wi-root { background: var(--wi-bg) !important; color: var(--wi-text) !important; }
 .wi-names, .wi-section-title, .wi-detail-main, .wi-footer-names { font-family: var(--ib-headline-font, 'Cormorant Garamond'), serif; }
-.wi-countdown-bar { background: color-mix(in srgb, var(--wi-text) 92%, #000) !important; }
+.wi-block-custom .wi-section-title,
+.wi-block-custom .wi-detail-main,
+.wi-block-custom .wi-sch-title,
+.wi-block-custom .wi-count-num {
+  font-family: var(--wi-block-headline-font, var(--ib-headline-font, 'Cormorant Garamond')), serif;
+  font-size: var(--wi-block-title-size, inherit);
+  font-weight: var(--wi-block-title-weight, inherit);
+  color: var(--wi-block-title-color) !important;
+}
+.wi-block-custom .wi-section-label,
+.wi-block-custom .wi-countdown-label,
+.wi-block-custom .wi-detail-heading {
+  font-size: var(--wi-block-label-size, inherit);
+  font-weight: var(--wi-block-label-weight, inherit);
+  color: var(--wi-block-label-color) !important;
+}
+.wi-block-custom .wi-section-body,
+.wi-block-custom .wi-detail-sub,
+.wi-block-custom .wi-count-unit,
+.wi-block-custom .wi-sch-place {
+  font-family: inherit;
+  font-size: var(--wi-block-body-size, inherit);
+  font-weight: var(--wi-block-body-weight, inherit);
+  color: var(--wi-block-body-color) !important;
+}
+.wi-countdown-bar:not(.wi-block-custom) { background: color-mix(in srgb, var(--wi-text) 92%, #000) !important; }
+.wi-block-custom { background: var(--wi-block-bg) !important; background-color: var(--wi-block-bg) !important; }
 .wi-count-num { color: var(--wi-gold) !important; }
 .wi-corner { color: var(--wi-gold); }
 .wi-detail-icon { color: var(--wi-gold); }

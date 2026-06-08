@@ -85,6 +85,9 @@ class InvitationBuilderService
             'fonts' => config('invitation_builder.fonts', []),
             'date_positions' => config('invitation_builder.date_positions', []),
             'information_blocks' => config('invitation_builder.information_blocks', []),
+            'block_field_schemas' => config('invitation_builder.block_field_schemas', []),
+            'block_style_fields' => config('invitation_builder.block_style_fields', []),
+            'font_weights' => config('invitation_builder.font_weights', []),
             'opening_types' => config('invitation_builder.opening_types', []),
             'theme_modes' => config('invitation_builder.theme_modes', []),
             'defaults' => config('invitation_builder.defaults', []),
@@ -283,6 +286,7 @@ class InvitationBuilderService
         }
 
         $blocks = $this->normalizeBlocks($json['blocks'] ?? $defaults['blocks'] ?? []);
+        $blockData = $this->resolveBlockData($json, $invitation);
 
         return array_merge($this->colorDefaults($themeDef, $json, $defaults), [
             'enabled' => $row !== null,
@@ -324,6 +328,7 @@ class InvitationBuilderService
             'block_accent_color' => $json['block_accent_color'] ?? $defaults['block_accent_color'] ?? '#c9a962',
             'block_floral_border' => (bool) ($json['block_floral_border'] ?? $defaults['block_floral_border'] ?? true),
             'blocks' => $blocks,
+            'block_data' => $blockData,
             'venue_name' => $json['venue_name'] ?? $invitation->event_name ?? '',
             'venue_location' => $json['venue_location'] ?? $invitation->address ?? '',
             'ceremony_note' => $json['ceremony_note'] ?? '',
@@ -381,6 +386,10 @@ class InvitationBuilderService
             ? $this->normalizeBlocks($data['blocks'])
             : $base['blocks'];
 
+        $blockData = array_key_exists('block_data', $data)
+            ? $this->normalizeBlockData($data['block_data'], $invitation)
+            : ($base['block_data'] ?? []);
+
         return array_merge($colors, [
             'enabled' => true,
             'published' => true,
@@ -427,6 +436,7 @@ class InvitationBuilderService
             'block_accent_color' => $data['block_accent_color'] ?? $base['block_accent_color'],
             'block_floral_border' => $bool('block_floral_border'),
             'blocks' => $blocks,
+            'block_data' => $blockData,
             'venue_name' => $this->draftString($data, $base, 'venue_name'),
             'venue_location' => $this->draftString($data, $base, 'venue_location'),
             'ceremony_note' => $this->draftString($data, $base, 'ceremony_note'),
@@ -474,6 +484,9 @@ class InvitationBuilderService
             'block_accent_color' => $data['block_accent_color'] ?? null,
             'block_floral_border' => filter_var($data['block_floral_border'] ?? true, FILTER_VALIDATE_BOOLEAN),
             'blocks' => isset($data['blocks']) ? $this->normalizeBlocks($data['blocks']) : null,
+            'block_data' => isset($data['block_data'])
+                ? $this->normalizeBlockData($data['block_data'], $invitation)
+                : null,
             'venue_name' => $data['venue_name'] ?? null,
             'venue_location' => $data['venue_location'] ?? null,
             'ceremony_note' => $data['ceremony_note'] ?? null,
@@ -500,8 +513,8 @@ class InvitationBuilderService
 
         $filtered = array_filter(
             $settings,
-            fn ($v, $k) => $k === 'blocks'
-                ? is_array($v)
+            fn ($v, $k) => in_array($k, ['blocks', 'block_data'], true)
+                ? is_array($v) && $v !== []
                 : ($v !== null && $v !== '' && $v !== []),
             ARRAY_FILTER_USE_BOTH
         );
@@ -730,6 +743,283 @@ class InvitationBuilderService
         return $normalized !== [] ? $normalized : (config('invitation_builder.defaults.blocks') ?? ['countdown', 'event_details', 'venue', 'rsvp']);
     }
 
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    public function blockFieldSchemas(): array
+    {
+        return config('invitation_builder.block_field_schemas', []);
+    }
+
+    /**
+     * @param  array<string, mixed>  $json
+     * @return array<string, array<string, mixed>>
+     */
+    public function resolveBlockData(array $json, Invitation $invitation): array
+    {
+        $stored = is_array($json['block_data'] ?? null) ? $json['block_data'] : [];
+
+        return $this->normalizeBlockData(
+            $this->mergeLegacyBlockFields($stored, $json, $invitation)
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $stored
+     * @param  array<string, mixed>  $json
+     * @return array<string, mixed>
+     */
+    protected function mergeLegacyBlockFields(array $stored, array $json, Invitation $invitation): array
+    {
+        if (! isset($stored['event_details'])) {
+            $stored['event_details'] = [];
+        }
+        if (empty($stored['event_details']['label']) && ! empty($json['details_section_label'])) {
+            $stored['event_details']['label'] = $json['details_section_label'];
+        }
+        if (empty($stored['event_details']['title']) && ! empty($json['details_section_title'])) {
+            $stored['event_details']['title'] = $json['details_section_title'];
+        }
+        if (empty($stored['event_details']['title']) && ! empty($invitation->event_name)) {
+            $stored['event_details']['title'] = $invitation->event_name;
+        }
+
+        if (! isset($stored['venue'])) {
+            $stored['venue'] = [];
+        }
+        if (empty($stored['venue']['label']) && ! empty($json['venue_section_label'])) {
+            $stored['venue']['label'] = $json['venue_section_label'];
+        }
+        if (empty($stored['venue']['title']) && ! empty($json['venue_section_title'])) {
+            $stored['venue']['title'] = $json['venue_section_title'];
+        }
+        if (empty($stored['venue']['title']) && ! empty($json['venue_name'])) {
+            $stored['venue']['title'] = $json['venue_name'];
+        }
+        if (empty($stored['venue']['description']) && ! empty($json['venue_description'])) {
+            $stored['venue']['description'] = $json['venue_description'];
+        }
+
+        return $stored;
+    }
+
+    public function blockFieldColumnClass(string $type): string
+    {
+        return match ($type) {
+            'textarea' => 'col-12',
+            'checkbox' => 'col-md-6',
+            'color', 'optional_color' => 'col-md-4',
+            'font', 'font_weight' => 'col-md-4',
+            'font_size' => 'col-md-4',
+            'date', 'time', 'datetime-local' => 'col-md-4',
+            default => 'col-md-6',
+        };
+    }
+
+    public function formatBlockFieldForInput(string $type, mixed $value): string
+    {
+        if ($type === 'checkbox') {
+            return '';
+        }
+
+        $value = trim((string) ($value ?? ''));
+        if ($value === '') {
+            return '';
+        }
+
+        if ($type === 'font_size' && preg_match('/^(\d+(?:\.\d+)?)px$/i', $value, $matches)) {
+            return $matches[1];
+        }
+
+        try {
+            return match ($type) {
+                'time' => \Carbon\Carbon::parse($value)->format('H:i'),
+                'date' => \Carbon\Carbon::parse($value)->format('Y-m-d'),
+                'datetime-local' => \Carbon\Carbon::parse($value)->format('Y-m-d\TH:i'),
+                default => $value,
+            };
+        } catch (\Throwable) {
+            if ($type === 'time' && preg_match('/^\d{1,2}:\d{2}/', $value)) {
+                return substr($value, 0, 5);
+            }
+
+            return $value;
+        }
+    }
+
+    public function formatBlockFieldForDisplay(string $type, mixed $value): string
+    {
+        if ($type === 'checkbox') {
+            return filter_var($value, FILTER_VALIDATE_BOOLEAN) ? '1' : '';
+        }
+
+        $value = trim((string) ($value ?? ''));
+        if ($value === '') {
+            return '';
+        }
+
+        $locale = app()->getLocale() ?: 'ar';
+
+        try {
+            return match ($type) {
+                'time' => \Carbon\Carbon::parse($value)->locale($locale)->translatedFormat('h:i A'),
+                'date' => \Carbon\Carbon::parse($value)->locale($locale)->translatedFormat('j F Y'),
+                'datetime-local' => \Carbon\Carbon::parse($value)->locale($locale)->translatedFormat('j F Y · h:i A'),
+                default => $value,
+            };
+        } catch (\Throwable) {
+            return $value;
+        }
+    }
+
+    public function normalizeBlockStyleFieldValue(string $type, mixed $value): string
+    {
+        $value = trim((string) ($value ?? ''));
+        if ($value === '') {
+            return '';
+        }
+
+        if ($type === 'font') {
+            $allowed = array_keys(config('invitation_builder.fonts', []));
+
+            return in_array($value, $allowed, true) ? $value : '';
+        }
+
+        if ($type === 'optional_color') {
+            if (! preg_match('/^#?[0-9A-Fa-f]{6}$/', $value)) {
+                return '';
+            }
+
+            return str_starts_with($value, '#') ? strtoupper($value) : '#'.strtoupper($value);
+        }
+
+        if ($type === 'font_size') {
+            if (preg_match('/^(\d+(?:\.\d+)?)\s*px$/i', $value, $matches)) {
+                $value = $matches[1];
+            }
+            if (! is_numeric($value)) {
+                return '';
+            }
+            $px = (float) $value;
+            if ($px < 8 || $px > 120) {
+                return '';
+            }
+
+            return rtrim(rtrim(number_format($px, 1, '.', ''), '0'), '.').'px';
+        }
+
+        if ($type === 'font_weight') {
+            $allowed = array_keys(config('invitation_builder.font_weights', []));
+
+            return in_array($value, $allowed, true) ? $value : '';
+        }
+
+        return $value;
+    }
+
+    public function normalizeBlockFieldValue(string $type, mixed $value): mixed
+    {
+        if ($type === 'checkbox') {
+            return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+        }
+
+        $value = trim((string) ($value ?? ''));
+        if ($value === '') {
+            return '';
+        }
+
+        try {
+            return match ($type) {
+                'time' => \Carbon\Carbon::parse($value)->format('H:i'),
+                'date' => \Carbon\Carbon::parse($value)->format('Y-m-d'),
+                'datetime-local' => \Carbon\Carbon::parse($value)->format('Y-m-d\TH:i'),
+                'number' => is_numeric($value) ? $value : $value,
+                default => $value,
+            };
+        } catch (\Throwable) {
+            return $value;
+        }
+    }
+
+    /**
+     * @param  mixed  $input
+     * @return array<string, array<string, mixed>>
+     */
+    public function normalizeBlockData(mixed $input, ?Invitation $invitation = null): array
+    {
+        $schemas = $this->blockFieldSchemas();
+        $raw = is_array($input) ? $input : [];
+        $normalized = [];
+
+        foreach ($schemas as $blockKey => $schema) {
+            $blockInput = is_array($raw[$blockKey] ?? null) ? $raw[$blockKey] : [];
+            $blockOut = [];
+
+            foreach ($schema['fields'] ?? [] as $fieldKey => $fieldDef) {
+                $fieldType = $fieldDef['type'] ?? 'text';
+                $value = $blockInput[$fieldKey] ?? null;
+                if (is_string($value)) {
+                    $value = trim($value);
+                }
+                if ($value === null || $value === '') {
+                    $value = $fieldDef['default'] ?? '';
+                    if ($blockKey === 'event_details' && $fieldKey === 'title' && $invitation && $value === '') {
+                        $value = $invitation->event_name ?? '';
+                    }
+                    if ($blockKey === 'venue' && $fieldKey === 'title' && $invitation && $value === '') {
+                        $value = $invitation->event_name ?? '';
+                    }
+                }
+                $blockOut[$fieldKey] = $this->normalizeBlockFieldValue($fieldType, $value);
+            }
+
+            foreach (config('invitation_builder.block_style_fields', []) as $styleKey => $styleDef) {
+                $styleType = $styleDef['type'] ?? 'text';
+                $styleValue = $blockInput[$styleKey] ?? '';
+                $blockOut[$styleKey] = $this->normalizeBlockStyleFieldValue($styleType, $styleValue);
+            }
+
+            foreach ($schema['repeaters'] ?? [] as $repeaterKey => $repeaterDef) {
+                $rows = is_array($blockInput[$repeaterKey] ?? null) ? $blockInput[$repeaterKey] : [];
+                $max = (int) ($repeaterDef['max'] ?? 12);
+                $cleanRows = [];
+
+                foreach ($rows as $row) {
+                    if (! is_array($row)) {
+                        continue;
+                    }
+                    $cleanRow = [];
+                    $hasContent = false;
+                    foreach ($repeaterDef['fields'] ?? [] as $rfKey => $rfDef) {
+                        $rfType = $rfDef['type'] ?? 'text';
+                        $rv = $this->normalizeBlockFieldValue($rfType, $row[$rfKey] ?? '');
+                        $cleanRow[$rfKey] = $rv;
+                        if ($rfType === 'checkbox') {
+                            if ($rv) {
+                                $hasContent = true;
+                            }
+                            continue;
+                        }
+                        if ((string) $rv !== '') {
+                            $hasContent = true;
+                        }
+                    }
+                    if ($hasContent) {
+                        $cleanRows[] = $cleanRow;
+                    }
+                    if (count($cleanRows) >= $max) {
+                        break;
+                    }
+                }
+                $blockOut[$repeaterKey] = $cleanRows;
+            }
+
+            $normalized[$blockKey] = $blockOut;
+        }
+
+        return $normalized;
+    }
+
     protected function colorDefaults(?array $themeDef, array $json, array $defaults): array
     {
         return [
@@ -815,21 +1105,51 @@ class InvitationBuilderService
     public function previewUrl(Invitation $invitation): string
     {
         $invitation->loadMissing(['users', 'builderSetting']);
-        $json = is_array($invitation->builderSetting?->settings)
-            ? $invitation->builderSetting->settings
-            : [];
-        $themeSlug = $json['theme_slug'] ?? config('invitation_builder.defaults.theme_slug', 'elegant-wedding');
-        $renderer = $this->resolveRenderer($themeSlug);
-        $template = $renderer === 'builder-wedding' ? 0 : (int) ($invitation->builderSetting?->theme_template ?? 1);
         $ids = $this->resolvePreviewGuestIds($invitation);
 
-        $url = route('user.invitation.show', [
-            'invitation_code' => $invitation->code,
-            'user_id' => $ids['user_id'],
-            'inserted_by' => $ids['inserted_by'],
-            'template' => $template > 0 ? $template : 1,
-        ]);
+        return $this->guestInvitationUrl(
+            $invitation,
+            (int) $ids['user_id'],
+            (int) $ids['inserted_by'],
+            preview: true
+        );
+    }
 
-        return $url.(str_contains($url, '?') ? '&' : '?').'builder=1';
+    /**
+     * Guest-facing invitation URL for SMS, WhatsApp, and API responses.
+     * Uses the builder-rendered page when invitation_builder_settings exist.
+     */
+    public function guestInvitationUrl(
+        Invitation $invitation,
+        int $userId,
+        ?int $insertedBy = null,
+        bool $preview = false
+    ): string {
+        $invitation->loadMissing('builderSetting');
+        $builderRow = $invitation->builderSetting;
+
+        $routeParams = array_filter([
+            'invitation_code' => $invitation->code,
+            'user_id' => $userId,
+            'inserted_by' => $insertedBy,
+        ], fn ($value) => $value !== null && $value !== '');
+
+        if ($builderRow) {
+            $json = is_array($builderRow->settings) ? $builderRow->settings : [];
+            $themeSlug = $json['theme_slug'] ?? config('invitation_builder.defaults.theme_slug', 'elegant-wedding');
+            $renderer = $this->resolveRenderer($themeSlug);
+            $template = $renderer === 'builder-wedding' ? 0 : (int) ($builderRow->theme_template ?? 1);
+            if ($template >= 1 && $template <= 21) {
+                $routeParams['template'] = $template;
+            }
+        }
+
+        $url = route('user.invitation.show', $routeParams);
+
+        if ($preview || ($builderRow && ! $builderRow->isPublished())) {
+            $url .= (str_contains($url, '?') ? '&' : '?').'builder=1';
+        }
+
+        return $url;
     }
 }

@@ -68,6 +68,7 @@ class InvitationBuilderRequest extends FormRequest
             'block_floral_border' => ['nullable', 'boolean'],
             'blocks' => ['nullable', 'array'],
             'blocks.*' => ['string', Rule::in($blockKeys)],
+            'block_data' => ['nullable', 'array'],
             'publish' => ['nullable', 'boolean'],
         ];
     }
@@ -98,6 +99,20 @@ class InvitationBuilderRequest extends FormRequest
         }
 
         $merge['envelope_shape'] = app(InvitationBuilderService::class)->normalizeEnvelopeShape($this->input('envelope_shape'));
+
+        if ($this->has('block_data') || $this->has('details_section_label') || $this->has('details_section_title')) {
+            $blockData = is_array($this->input('block_data')) ? $this->input('block_data') : [];
+            if ($this->filled('details_section_label')) {
+                $blockData['event_details']['label'] = $this->input('details_section_label');
+            }
+            if ($this->filled('details_section_title')) {
+                $blockData['event_details']['title'] = $this->input('details_section_title');
+            }
+            $merge['block_data'] = app(InvitationBuilderService::class)->normalizeBlockData(
+                $blockData,
+                $this->route('invitation')
+            );
+        }
 
         if ($merge !== []) {
             $this->merge($merge);

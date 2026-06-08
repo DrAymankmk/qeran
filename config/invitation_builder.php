@@ -196,22 +196,180 @@ return [
         'bottom' => ['label_ar' => 'أسفل البطاقة', 'label_en' => 'Bottom'],
     ],
 
+    'font_weights' => [
+        '300' => 'خفيف (300)',
+        '400' => 'عادي (400)',
+        '500' => 'متوسط (500)',
+        '600' => 'شبه عريض (600)',
+        '700' => 'عريض (700)',
+    ],
+
+    /**
+     * Per-block appearance (stored in settings.block_data[block_key]).
+     * Types: optional_color, font, font_size (px), font_weight.
+     * Optional group + group_label_ar render a subheading in the block editor.
+     */
+    'block_style_fields' => [
+        'background_color' => ['type' => 'optional_color', 'label_ar' => 'لون خلفية القسم', 'default' => '', 'group' => 'base', 'group_label_ar' => 'الخلفية والخطوط'],
+        'font_family' => ['type' => 'font', 'label_ar' => 'خط النص', 'default' => '', 'group' => 'base'],
+        'headline_font' => ['type' => 'font', 'label_ar' => 'خط العناوين', 'default' => '', 'group' => 'base'],
+        'title_font_size' => ['type' => 'font_size', 'label_ar' => 'حجم العنوان', 'default' => '', 'min' => 10, 'max' => 96, 'group' => 'title', 'group_label_ar' => 'العنوان الرئيسي'],
+        'title_font_weight' => ['type' => 'font_weight', 'label_ar' => 'سُمك العنوان', 'default' => '', 'group' => 'title'],
+        'title_color' => ['type' => 'optional_color', 'label_ar' => 'لون العنوان', 'default' => '', 'group' => 'title'],
+        'label_font_size' => ['type' => 'font_size', 'label_ar' => 'حجم العنوان الفرعي', 'default' => '', 'min' => 8, 'max' => 48, 'group' => 'label', 'group_label_ar' => 'العنوان الفرعي / التسمية'],
+        'label_font_weight' => ['type' => 'font_weight', 'label_ar' => 'سُمك العنوان الفرعي', 'default' => '', 'group' => 'label'],
+        'label_color' => ['type' => 'optional_color', 'label_ar' => 'لون العنوان الفرعي', 'default' => '', 'group' => 'label'],
+        'body_font_size' => ['type' => 'font_size', 'label_ar' => 'حجم الوصف', 'default' => '', 'min' => 8, 'max' => 48, 'group' => 'body', 'group_label_ar' => 'الوصف / النص'],
+        'body_font_weight' => ['type' => 'font_weight', 'label_ar' => 'سُمك الوصف', 'default' => '', 'group' => 'body'],
+        'body_color' => ['type' => 'optional_color', 'label_ar' => 'لون الوصف', 'default' => '', 'group' => 'body'],
+    ],
+
+    /**
+     * Editable fields per information block (stored in settings.block_data).
+     * Supported field types: text, textarea, url, email, tel, number, date, time,
+     * datetime-local, color, optional_color, font, checkbox (repeaters).
+     */
+    'block_field_schemas' => [
+        'countdown' => [
+            'fields' => [
+                'label' => ['type' => 'text', 'label_ar' => 'عنوان العداد', 'default' => 'العد التنازلي ليوم الحدث'],
+                'days_unit' => ['type' => 'text', 'label_ar' => 'وحدة الأيام', 'default' => 'يوم'],
+                'hours_unit' => ['type' => 'text', 'label_ar' => 'وحدة الساعات', 'default' => 'ساعة'],
+                'mins_unit' => ['type' => 'text', 'label_ar' => 'وحدة الدقائق', 'default' => 'دقيقة'],
+                'secs_unit' => ['type' => 'text', 'label_ar' => 'وحدة الثواني', 'default' => 'ثانية'],
+            ],
+        ],
+        'event_details' => [
+            'fields' => [
+                'label' => ['type' => 'text', 'label_ar' => 'عنوان فرعي', 'default' => 'جميع التفاصيل'],
+                'title' => ['type' => 'text', 'label_ar' => 'عنوان القسم', 'default' => 'تفاصيل الحفل'],
+            ],
+        ],
+        'venue' => [
+            'fields' => [
+                'label' => ['type' => 'text', 'label_ar' => 'عنوان فرعي', 'default' => 'موقع الحفل'],
+                'title' => ['type' => 'text', 'label_ar' => 'عنوان القسم', 'default' => 'المكان'],
+                'description' => ['type' => 'textarea', 'label_ar' => 'وصف المكان', 'default' => ''],
+            ],
+        ],
+        'our_story' => [
+            'fields' => [
+                'label' => ['type' => 'text', 'label_ar' => 'عنوان فرعي', 'default' => 'كيف بدأت قصتنا'],
+                'title' => ['type' => 'text', 'label_ar' => 'عنوان القسم', 'default' => 'قصتنا'],
+                'body' => ['type' => 'textarea', 'label_ar' => 'النص الرئيسي', 'default' => ''],
+            ],
+            'repeaters' => [
+                'milestones' => [
+                    'label_ar' => 'محطات القصة',
+                    'max' => 8,
+                    'fields' => [
+                        'year' => ['type' => 'date', 'label_ar' => 'التاريخ'],
+                        'text' => ['type' => 'textarea', 'label_ar' => 'النص'],
+                    ],
+                ],
+            ],
+        ],
+        'timeline' => [
+            'fields' => [
+                'label' => ['type' => 'text', 'label_ar' => 'عنوان فرعي', 'default' => 'يوم الاحتفال'],
+                'title' => ['type' => 'text', 'label_ar' => 'عنوان القسم', 'default' => 'الجدول الزمني'],
+            ],
+            'repeaters' => [
+                'items' => [
+                    'label_ar' => 'بنود الجدول',
+                    'max' => 12,
+                    'fields' => [
+                        'time' => ['type' => 'time', 'label_ar' => 'الوقت'],
+                        'title' => ['type' => 'text', 'label_ar' => 'العنوان'],
+                        'place' => ['type' => 'text', 'label_ar' => 'المكان / الوصف'],
+                    ],
+                ],
+            ],
+        ],
+        'gallery' => [
+            'fields' => [
+                'label' => ['type' => 'text', 'label_ar' => 'عنوان فرعي', 'default' => 'لحظاتنا'],
+                'title' => ['type' => 'text', 'label_ar' => 'عنوان القسم', 'default' => 'معرض الصور'],
+            ],
+            'repeaters' => [
+                'photos' => [
+                    'label_ar' => 'الصور',
+                    'max' => 8,
+                    'fields' => [
+                        'url' => ['type' => 'url', 'label_ar' => 'رابط الصورة'],
+                        'caption' => ['type' => 'text', 'label_ar' => 'التسمية'],
+                        'wide' => ['type' => 'checkbox', 'label_ar' => 'عرض عريض (صفين)'],
+                    ],
+                ],
+            ],
+        ],
+        'gift_list' => [
+            'fields' => [
+                'label' => ['type' => 'text', 'label_ar' => 'عنوان فرعي', 'default' => 'إن رغبت بالإهداء'],
+                'title' => ['type' => 'text', 'label_ar' => 'عنوان القسم', 'default' => 'قائمة الهدايا'],
+                'body' => ['type' => 'textarea', 'label_ar' => 'نص تمهيدي', 'default' => ''],
+            ],
+            'repeaters' => [
+                'items' => [
+                    'label_ar' => 'خيارات الهدايا',
+                    'max' => 6,
+                    'fields' => [
+                        'name' => ['type' => 'text', 'label_ar' => 'الاسم'],
+                        'subtitle' => ['type' => 'text', 'label_ar' => 'وصف قصير'],
+                        'url' => ['type' => 'url', 'label_ar' => 'رابط (اختياري)'],
+                    ],
+                ],
+            ],
+        ],
+        'menu' => [
+            'fields' => [
+                'label' => ['type' => 'text', 'label_ar' => 'عنوان فرعي', 'default' => 'قائمة الطعام'],
+                'title' => ['type' => 'text', 'label_ar' => 'عنوان القسم', 'default' => 'ماذا نقدّم'],
+                'body' => ['type' => 'textarea', 'label_ar' => 'نص تمهيدي', 'default' => ''],
+            ],
+            'repeaters' => [
+                'items' => [
+                    'label_ar' => 'الأطباق',
+                    'max' => 12,
+                    'fields' => [
+                        'name' => ['type' => 'text', 'label_ar' => 'اسم الطبق'],
+                        'description' => ['type' => 'text', 'label_ar' => 'الوصف'],
+                    ],
+                ],
+            ],
+        ],
+        'rsvp' => [
+            'fields' => [
+                'label' => ['type' => 'text', 'label_ar' => 'عنوان فرعي', 'default' => 'يرجى الرد'],
+                'title' => ['type' => 'text', 'label_ar' => 'عنوان القسم', 'default' => 'هل ستشاركنا؟'],
+                'body' => ['type' => 'textarea', 'label_ar' => 'نص الدعوة للرد', 'default' => ''],
+            ],
+        ],
+        'wishes' => [
+            'fields' => [
+                'label' => ['type' => 'text', 'label_ar' => 'عنوان فرعي', 'default' => 'تهانيكم'],
+                'title' => ['type' => 'text', 'label_ar' => 'عنوان القسم', 'default' => 'رسائل المحبة'],
+                'body' => ['type' => 'textarea', 'label_ar' => 'نص تمهيدي', 'default' => ''],
+            ],
+        ],
+    ],
+
     'information_blocks' => [
         'countdown' => ['label_ar' => 'عداد تنازلي', 'icon' => '⏱', 'description_ar' => 'العد التنازلي ليوم الحدث'],
         'event_details' => ['label_ar' => 'بطاقات التفاصيل', 'icon' => '💍', 'description_ar' => 'التاريخ، الوقت، المكان، الاستقبال'],
         'venue' => ['label_ar' => 'المكان', 'icon' => '📍', 'description_ar' => 'عنوان القاعة والخريطة'],
         'timeline' => ['label_ar' => 'الجدول الزمني', 'icon' => '📅', 'description_ar' => 'برنامج اليوم'],
-        'dress_code' => ['label_ar' => 'قواعد اللباس', 'icon' => '👗', 'description_ar' => 'الزي المطلوب'],
+        // 'dress_code' => ['label_ar' => 'قواعد اللباس', 'icon' => '👗', 'description_ar' => 'الزي المطلوب'],
         'gift_list' => ['label_ar' => 'قائمة الهدايا', 'icon' => '🎁', 'description_ar' => 'سجل الهدايا أو التبرعات'],
         'our_story' => ['label_ar' => 'قصتنا', 'icon' => '💕', 'description_ar' => 'قصة العروسين'],
         'gallery' => ['label_ar' => 'معرض صور', 'icon' => '🖼', 'description_ar' => 'صور مميزة'],
         'rsvp' => ['label_ar' => 'تأكيد الحضور', 'icon' => '✉️', 'description_ar' => 'قبول أو رفض الدعوة'],
-        'parking' => ['label_ar' => 'مواقف السيارات', 'icon' => '🚗', 'description_ar' => 'معلومات المواقف'],
-        'accommodation' => ['label_ar' => 'الإقامة', 'icon' => '🏨', 'description_ar' => 'فنادق قريبة'],
-        'faq' => ['label_ar' => 'أسئلة شائعة', 'icon' => '❓', 'description_ar' => 'إجابات للضيوف'],
-        'contact' => ['label_ar' => 'تواصل', 'icon' => '📞', 'description_ar' => 'أرقام التواصل'],
+        // 'parking' => ['label_ar' => 'مواقف السيارات', 'icon' => '🚗', 'description_ar' => 'معلومات المواقف'],
+        // 'accommodation' => ['label_ar' => 'الإقامة', 'icon' => '🏨', 'description_ar' => 'فنادق قريبة'],
+        // 'faq' => ['label_ar' => 'أسئلة شائعة', 'icon' => '❓', 'description_ar' => 'إجابات للضيوف'],
+        // 'contact' => ['label_ar' => 'تواصل', 'icon' => '📞', 'description_ar' => 'أرقام التواصل'],
         'menu' => ['label_ar' => 'قائمة الطعام', 'icon' => '🍽', 'description_ar' => 'أطباق الحفل'],
-        'transport' => ['label_ar' => 'المواصلات', 'icon' => '🚌', 'description_ar' => 'باصات الضيوف'],
+        // 'transport' => ['label_ar' => 'المواصلات', 'icon' => '🚌', 'description_ar' => 'باصات الضيوف'],
         'wishes' => ['label_ar' => 'تهاني', 'icon' => '💬', 'description_ar' => 'رسائل من الضيوف'],
     ],
 

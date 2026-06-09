@@ -98,14 +98,14 @@ class WhatsAppConnectController extends Controller
         }
 
         // Saved creds exist but socket is down — reconnect instead of issuing a new pairing code
-        if ($registeredOnDisk && $existingConnection === 'disconnected') {
+        if ($registeredOnDisk && in_array($existingConnection, ['disconnected', 'reconnecting', 'starting'], true)) {
             Log::info('WhatsApp connect: reconnecting saved session (registered on disk)', [
                 'user_id' => $user->id,
             ]);
-            BaileysGateway::startSession($sessionId);
-            $reconnectStatus = BaileysGateway::getStatus($sessionId);
-            if (($reconnectStatus['data']['status'] ?? '') === 'connected') {
-                $connectedPhone = $reconnectStatus['data']['phone'] ?? $phone;
+            BaileysGateway::startSession($sessionId, 60);
+            $reconnectedData = $this->waitForSessionConnected($sessionId, 90);
+            if ($reconnectedData !== null) {
+                $connectedPhone = $reconnectedData['phone'] ?? $phone;
                 $this->syncSessionRecord($user->id, $sessionId, 'connected', $connectedPhone);
 
                 return RespondActive::success(__('messages.whatsapp_connected'), [
@@ -114,7 +114,7 @@ class WhatsAppConnectController extends Controller
                     'session_id' => $sessionId,
                 ]);
             }
-            Log::info('WhatsApp connect: reconnect failed — wiping for fresh pairing', [
+            Log::warning('WhatsApp connect: reconnect failed after extended wait — wiping for fresh pairing', [
                 'user_id' => $user->id,
             ]);
         }
@@ -423,8 +423,6 @@ class WhatsAppConnectController extends Controller
             ]);
         }
 
-        $this->enforceGatewayDisconnect($sessionId);
-
         WhatsappSession::query()->where('user_id', $user->id)->update([
             'status' => 'disconnected',
             'phone' => null,
@@ -442,6 +440,10 @@ class WhatsAppConnectController extends Controller
     {
         if ($connectionStatus === 'connected') {
             return 'connected';
+        }
+
+        if ($connectionStatus === 'reconnecting') {
+            return 'wait_for_connection';
         }
 
         if ($connectionStatus === 'pending_pairing' && $pairingAccepted) {
@@ -483,6 +485,10 @@ class WhatsAppConnectController extends Controller
             }
 
             return __('messages.whatsapp_pairing_waiting_user');
+        }
+
+        if ($connectionStatus === 'reconnecting' || ($registeredOnDisk && ! $socketAlive)) {
+            return __('messages.whatsapp_reconnecting');
         }
 
         return __('messages.whatsapp_not_connected');
@@ -534,13 +540,15 @@ class WhatsAppConnectController extends Controller
 
     protected function syncSessionRecord(int $userId, string $sessionId, string $status, ?string $phone): void
     {
+        $existing = WhatsappSession::query()->where('session_id', $sessionId)->first();
+
         WhatsappSession::query()->updateOrCreate(
             ['session_id' => $sessionId],
             [
                 'user_id' => $userId,
                 'status' => $status,
-                'phone' => $phone,
-                'connected_at' => $status === 'connected' ? now() : null,
+                'phone' => $phone ?? ($status === 'reconnecting' ? $existing?->phone : null),
+                'connected_at' => $status === 'connected' ? now() : ($status === 'reconnecting' ? $existing?->connected_at : null),
                 'last_seen_at' => now(),
             ]
         );
@@ -578,8 +586,8 @@ class WhatsAppConnectController extends Controller
         Cache::put($reconnectKey, 1, now()->addSeconds(8));
 
         Log::info('WhatsApp status: reconnecting registered session', ['session_id' => $sessionId]);
-        BaileysGateway::startSession($sessionId);
-        $retry = BaileysGateway::getStatus($sessionId, true);
+        BaileysGateway::startSession($sessionId, 45);
+        $retry = BaileysGateway::getStatus($sessionId, true, 30);
 
         return $retry['ok'] ? ($retry['data'] ?? $data) : $data;
     }
@@ -697,7 +705,7 @@ class WhatsAppConnectController extends Controller
             && ! $socketAlive
             && ! $this->isEnteringPairingCode($connectionStatus, $registeredOnDisk, $pairingAccepted)
         ) {
-            return ['disconnected', false];
+            return ['reconnecting', false];
         }
 
         if ($connectionStatus === 'pending_pairing') {
@@ -728,7 +736,6 @@ class WhatsAppConnectController extends Controller
 
     protected function disconnectedStatusResponse($user, string $sessionId, ?WhatsappSession $dbSession): JsonResponse
     {
-        $this->enforceGatewayDisconnect($sessionId);
         $this->syncSessionRecord($user->id, $sessionId, 'disconnected', null);
 
         return RespondActive::success('OK', $this->buildStatusPayload(
@@ -777,15 +784,9 @@ class WhatsAppConnectController extends Controller
         Cache::forget('whatsapp_finalize_pairing:'.$sessionId);
     }
 
-    protected function enforceGatewayDisconnect(string $sessionId): void
-    {
-        $this->clearStatusReconnectCaches($sessionId);
-        BaileysGateway::deleteSession($sessionId);
-    }
-
     protected function shouldTrustStoredConnection(?WhatsappSession $dbSession): bool
     {
-        if (! $dbSession || $dbSession->status !== 'connected') {
+        if (! $dbSession || ! in_array($dbSession->status, ['connected', 'reconnecting'], true)) {
             return false;
         }
 
@@ -817,6 +818,8 @@ class WhatsAppConnectController extends Controller
             $pairingAccepted,
             $socketAlive
         );
+        $reconnecting = (bool) ($connectionStatus === 'reconnecting' || ($registeredOnDisk && ! $socketAlive && ! $this->isEnteringPairingCode($connectionStatus, $registeredOnDisk, $pairingAccepted)));
+        $unlinked = ! $registeredOnDisk;
         $linkDisplay = $dbSession?->phone
             ? PhoneNumber::formatForWhatsAppDisplay(PhoneNumber::e164ForWhatsAppPairing($user->country_code, $dbSession->phone))
             : PhoneNumber::formatForWhatsAppDisplay(PhoneNumber::e164ForWhatsAppPairing($user->country_code, $user->phone));
@@ -830,6 +833,9 @@ class WhatsAppConnectController extends Controller
             'linked_on_whatsapp' => $linkedOnWhatsApp,
             'socket_alive' => $socketAlive,
             'registered_on_disk' => $registeredOnDisk,
+            'reconnecting' => $reconnecting,
+            'unlinked' => $unlinked,
+            'connection_state' => $this->resolveConnectionState($connectionStatus, $registeredOnDisk, $socketAlive, $pairingAccepted),
             'pairing_accepted' => $pairingAccepted,
             'pairing_progress' => $pairingProgress,
             'pairing_code_age_seconds' => $codeAge,
@@ -838,5 +844,56 @@ class WhatsAppConnectController extends Controller
             'link_phone_display' => $linkDisplay,
             'message' => $this->statusMessage($connectionStatus, $registeredOnDisk, $pairingAccepted, $socketAlive),
         ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    protected function waitForSessionConnected(string $sessionId, int $maxSeconds = 90): ?array
+    {
+        $deadline = microtime(true) + $maxSeconds;
+
+        while (microtime(true) < $deadline) {
+            $status = BaileysGateway::getStatus($sessionId, true, 25);
+            if (! $status['ok']) {
+                usleep(2_000_000);
+
+                continue;
+            }
+
+            $data = is_array($status['data'] ?? null) ? $status['data'] : [];
+            if (($data['status'] ?? '') === 'connected') {
+                return $data;
+            }
+
+            if (! ($data['registeredOnDisk'] ?? false)) {
+                break;
+            }
+
+            usleep(2_000_000);
+        }
+
+        return null;
+    }
+
+    protected function resolveConnectionState(
+        string $connectionStatus,
+        bool $registeredOnDisk,
+        bool $socketAlive,
+        bool $pairingAccepted
+    ): string {
+        if ($connectionStatus === 'connected' && $socketAlive && $registeredOnDisk) {
+            return 'connected';
+        }
+
+        if ($this->isEnteringPairingCode($connectionStatus, $registeredOnDisk, $pairingAccepted)) {
+            return 'linking';
+        }
+
+        if ($registeredOnDisk && ! $socketAlive) {
+            return 'socket_down';
+        }
+
+        return 'unlinked';
     }
 }

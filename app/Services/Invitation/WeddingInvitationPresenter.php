@@ -242,6 +242,52 @@ class WeddingInvitationPresenter
         return $value;
     }
 
+    public static function detailCardIcon(array $bc, string $card, string $default): string
+    {
+        $fieldKey = match ($card) {
+            'date' => 'date_icon',
+            'ceremony' => 'ceremony_icon',
+            'venue' => 'venue_icon',
+            'reception' => 'reception_icon',
+            default => '',
+        };
+
+        if ($fieldKey === '') {
+            return $default;
+        }
+
+        $icon = (string) self::blockValue($bc, 'event_details', $fieldKey, $default);
+        $allowed = array_keys(config('invitation_builder.detail_card_icons', []));
+
+        return in_array($icon, $allowed, true) ? $icon : $default;
+    }
+
+    public static function detailCardIconUrl(array $bc, string $card): string
+    {
+        $fieldKey = match ($card) {
+            'date' => 'date_icon_url',
+            'ceremony' => 'ceremony_icon_url',
+            'venue' => 'venue_icon_url',
+            'reception' => 'reception_icon_url',
+            default => '',
+        };
+
+        if ($fieldKey === '') {
+            return '';
+        }
+
+        $url = trim((string) self::blockValue($bc, 'event_details', $fieldKey, ''));
+        if ($url === '') {
+            return '';
+        }
+
+        if (preg_match('#^(https?://|/)#i', $url)) {
+            return $url;
+        }
+
+        return '';
+    }
+
     /**
      * @return array<int, array<string, mixed>>
      */

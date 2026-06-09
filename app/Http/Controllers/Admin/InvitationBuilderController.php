@@ -91,6 +91,7 @@ class InvitationBuilderController extends Controller
             'initialView' => 'envelope',
             'useBuilderWedding' => $useBuilderWedding,
             'isBuilderPreview' => true,
+            'previewQrUrl' => $invitation->qr($invitation->id, (int) $user->id),
         ];
     }
 

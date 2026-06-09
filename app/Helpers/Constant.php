@@ -142,6 +142,11 @@ class Constant
         'failed' => 3,
     ];
 
+    const ACCEPTANCE_STATUS = [
+        'accepted' => 1,
+        'declined' => 2,
+    ];
+
     const PACKAGE_TYPE = [
         'Static Package' => 1,
         'Dynamic Package' => 2,

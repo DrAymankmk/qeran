@@ -57,14 +57,16 @@ class WhatsAppSystemSessionService
         $status = (string) ($gatewayData['status'] ?? 'disconnected');
         $socketAlive = (bool) ($gatewayData['socketAlive'] ?? false);
         $registered = (bool) ($gatewayData['registeredOnDisk'] ?? false);
+        $reconnecting = (bool) ($gatewayData['reconnecting'] ?? false);
         $phone = $gatewayData['phone'] ?? null;
         $isLive = $status === 'connected' && $socketAlive && $registered;
+        $isReconnecting = $registered && ($reconnecting || $status === 'reconnecting' || (! $socketAlive && ! in_array($status, ['pending_qr', 'pending_pairing'], true)));
 
         $record = self::record();
         $wasConnected = $record->status === 'connected' && $record->connected_at !== null;
 
         $updates = [
-            'status' => $isLive ? 'connected' : ($status === 'pending_qr' ? 'pending_qr' : 'disconnected'),
+            'status' => $isLive ? 'connected' : ($isReconnecting ? 'reconnecting' : ($status === 'pending_qr' ? 'pending_qr' : 'disconnected')),
             'phone' => $isLive ? $phone : ($record->phone && $registered ? $record->phone : null),
             'last_seen_at' => now(),
         ];
@@ -73,6 +75,8 @@ class WhatsAppSystemSessionService
             $updates['connected_at'] = now();
             $updates['disconnected_at'] = null;
         } elseif ($isLive) {
+            $updates['disconnected_at'] = null;
+        } elseif ($isReconnecting) {
             $updates['disconnected_at'] = null;
         } elseif ($wasConnected && ! $isLive) {
             $updates['disconnected_at'] = now();
@@ -148,7 +152,7 @@ class WhatsAppSystemSessionService
             $connectionStatus === 'connected'
             || $socketAlive
             || ! $registeredOnDisk
-            || in_array($connectionStatus, ['pending_qr', 'pending_pairing', 'starting'], true)
+            || in_array($connectionStatus, ['pending_qr', 'pending_pairing', 'starting', 'reconnecting'], true)
         ) {
             return $data;
         }
@@ -160,8 +164,8 @@ class WhatsAppSystemSessionService
 
         Cache::put($reconnectKey, 1, now()->addSeconds(8));
 
-        BaileysGateway::startSession($sessionId, 20);
-        $retry = BaileysGateway::getStatus($sessionId, true, 15);
+        BaileysGateway::startSession($sessionId, 45);
+        $retry = BaileysGateway::getStatus($sessionId, true, 30);
 
         return $retry['ok'] ? ($retry['data'] ?? $data) : $data;
     }

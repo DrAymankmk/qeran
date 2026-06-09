@@ -96,6 +96,7 @@ class InvitationsController extends Controller
         $initialView = 'envelope';
         if ($user->pivot->seen == Constant::SEEN_STATUS['accepted']) {
             $initialView = 'success';
+            $invitation->ensureQrCodeForUser($resolvedUserId);
         } elseif ($user->pivot->seen == Constant::SEEN_STATUS['declined']) {
             $initialView = 'decline';
         }
@@ -134,6 +135,8 @@ class InvitationsController extends Controller
             }
 
             $invitation->users()->updateExistingPivot($user_id, ['seen' => Constant::SEEN_STATUS['accepted']]);
+            $invitation->ensureQrCodeForUser((int) $user_id);
+            $this->syncContactLogAcceptance($invitation, (int) $user_id, Constant::ACCEPTANCE_STATUS['accepted']);
 
             $invitation->load('users');
             $updatedUser = $invitation->users()->where('user_id', $user_id)->first();
@@ -144,6 +147,7 @@ class InvitationsController extends Controller
                 'status' => 'accepted',
                 'user_id' => $user_id,
                 'user_seen' => $updatedUser->pivot->seen,
+                'qr_url' => $invitation->qr($invitation->id, (int) $user_id),
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'حدث خطأ أثناء قبول الدعوة: '.$e->getMessage()], 500);
@@ -170,6 +174,7 @@ class InvitationsController extends Controller
             }
 
             $invitation->users()->updateExistingPivot($user_id, ['seen' => Constant::SEEN_STATUS['declined']]);
+            $this->syncContactLogAcceptance($invitation, (int) $user_id, Constant::ACCEPTANCE_STATUS['declined']);
 
             $invitation->load('users');
             $updatedUser = $invitation->users()->where('user_id', $user_id)->first();
@@ -183,5 +188,28 @@ class InvitationsController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'حدث خطأ أثناء رفض الدعوة: '.$e->getMessage()], 500);
         }
+    }
+
+    protected function syncContactLogAcceptance(Invitation $invitation, int $userId, int $acceptanceStatus): void
+    {
+        $guest = $invitation->users()->where('user_id', $userId)->first();
+        $invitedBy = $guest?->pivot?->invited_by;
+
+        $seen = $acceptanceStatus === Constant::ACCEPTANCE_STATUS['accepted']
+            ? Constant::SEEN_STATUS['accepted']
+            : Constant::SEEN_STATUS['declined'];
+
+        $query = InvitationContactLog::query()
+            ->where('invitation_id', $invitation->id)
+            ->where('user_id', $userId);
+
+        if ($invitedBy) {
+            $query->where('invited_by', $invitedBy);
+        }
+
+        $query->update([
+            'acceptance_status' => $acceptanceStatus,
+            'seen' => $seen,
+        ]);
     }
 }

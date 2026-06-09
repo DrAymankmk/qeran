@@ -830,6 +830,11 @@ return[
     'invitation-builder-preview-refresh' => 'Refresh preview',
     'invitation-builder-preview-error' => 'Could not load preview. Check URLs and fields.',
     'invitation-builder-preview-guest' => 'Guest (preview)',
+    'accept-invitation' => 'Accept',
+    'refuse-invitation' => 'Decline',
+    'confirm-decline-invitation' => 'Are you sure you want to decline this invitation?',
+    'invitation-accepted-thanks' => 'Thank you — your attendance is confirmed. Please show this QR code at the entrance.',
+    'invitation-declined-message' => 'Your decline has been recorded. We are sorry you cannot attend.',
 
     'ib-validation-errors-title' => 'Please fix the following errors before saving:',
     'ib-field-theme_slug' => 'Opening theme',

@@ -384,6 +384,7 @@ $wiEnvelopeShape = $wiEnvelopeShape ?? 'classic';
 
 .wi-main-content {
 	display: block;
+	width: 100%;
 }
 
 .wi-main-content.is-gated {
@@ -435,9 +436,9 @@ $wiEnvelopeShape = $wiEnvelopeShape ?? 'classic';
 					<div class="wi-env-paper-texture"></div>
 				</div>
 				<div class="wi-env-seal-wrap">
-					<div
-						class="wi-env-seal has-seal-custom-color wi-seal-shape-{{ $wiSealShape }} wi-seal-pal-{{ $wiSealPalette }} @if($wiSealRing) has-seal-ring @endif @if($wiSealDrip) has-seal-drip @endif"
-						@if(!empty($wiSealInlineStyle)) style="{{ $wiSealInlineStyle }}" @endif>
+					<div class="wi-env-seal has-seal-custom-color wi-seal-shape-{{ $wiSealShape }} wi-seal-pal-{{ $wiSealPalette }} @if($wiSealRing) has-seal-ring @endif @if($wiSealDrip) has-seal-drip @endif"
+						@if(!empty($wiSealInlineStyle))
+						style="{{ $wiSealInlineStyle }}" @endif>
 						<span class="wi-seal-ring" aria-hidden="true"></span>
 						<button type="button" class="wi-env-seal-button"
 							onclick="wiOpenEnvelope()"

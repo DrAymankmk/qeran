@@ -71,6 +71,22 @@
 		@endforeach
 	</select>
 	@break
+	@case('select')
+	@php
+		$selectOptions = $builder->resolveSelectOptions($fieldDef);
+		$selectLocale = app()->getLocale() === 'en' ? 'label_en' : 'label_ar';
+	@endphp
+	<select name="{{ $name }}" id="{{ $inputId }}" class="form-select form-select-sm {{ $inputClass }}">
+		@foreach($selectOptions as $optionKey => $optionDef)
+		@php
+			$optionLabel = is_array($optionDef)
+				? trim(($optionDef['glyph'] ?? '').' '.($optionDef[$selectLocale] ?? $optionDef['label_ar'] ?? $optionKey))
+				: (string) $optionDef;
+		@endphp
+		<option value="{{ $optionKey }}" @selected((string) ($value ?? ($fieldDef['default'] ?? '')) === (string) $optionKey)>{{ $optionLabel }}</option>
+		@endforeach
+	</select>
+	@break
 	@case('number')
 	<input type="number" name="{{ $name }}" id="{{ $inputId }}"
 		class="form-control form-control-sm {{ $inputClass }}" value="{{ $displayValue }}"

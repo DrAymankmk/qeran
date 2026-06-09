@@ -609,6 +609,20 @@
 			return html + '<input type="' + fieldType + '" name="' + name + '" id="' + inputId
 				+ '" class="form-control form-control-sm ib-preview-field" placeholder="' + placeholder + '">';
 		}
+		if (fieldType === 'select') {
+			var options = fieldDef.options || {};
+			if (typeof options === 'string') {
+				options = (window.ibDetailCardIcons || {});
+			}
+			html += '<select name="' + name + '" id="' + inputId + '" class="form-select form-select-sm ib-preview-field">';
+			Object.keys(options).forEach(function (optionKey) {
+				var optionDef = options[optionKey] || {};
+				var optionLabel = ((optionDef.glyph || '') + ' ' + (optionDef.label_ar || optionKey)).trim();
+				html += '<option value="' + optionKey + '">' + optionLabel + '</option>';
+			});
+			html += '</select>';
+			return html;
+		}
 		var htmlType = ({ url: 'url', email: 'email', tel: 'tel' })[fieldType] || 'text';
 		return html + '<input type="' + htmlType + '" name="' + name + '" id="' + inputId
 			+ '" class="form-control form-control-sm ib-preview-field" maxlength="' + maxlength

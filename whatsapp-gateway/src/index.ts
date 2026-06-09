@@ -3,6 +3,7 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import QRCode from 'qrcode';
 import pino from 'pino';
 import {
+  clearStaleSessionMeta,
   deleteSession,
   disconnectedStatusPayload,
   getPairingCode,
@@ -20,9 +21,11 @@ import {
   isPairingSocketAlive,
   isSessionAborted,
   isLinkingInProgress,
+  isSessionReconnecting,
   isSessionStartInFlight,
   isSystemSession,
   normalizePhoneDigits,
+  restorePersistedSessions,
   sessionAuthExists,
   startSession,
   startSessionWithPairing,
@@ -266,7 +269,7 @@ app.get('/sessions/:id/status', async (req, res) => {
   if (!sessionAuthExists(sessionId)) {
     const staleMeta = getSessionMeta(sessionId);
     if (staleMeta && !isLinkingInProgress(sessionId)) {
-      await deleteSession(sessionId);
+      clearStaleSessionMeta(sessionId);
     }
     if (staleMeta && isLinkingInProgress(sessionId)) {
       res.json({
@@ -346,13 +349,21 @@ app.get('/sessions/:id/status', async (req, res) => {
       });
     }
 
+    const reconnecting =
+      progress.registered &&
+      !socketAlive &&
+      !inPairingFlow &&
+      (isSessionReconnecting(sessionId) || isSessionStartInFlight(sessionId) || meta.status === 'starting');
+
     let reportStatus: SessionStatus = meta.status;
     if (socketAlive && (meta.status === 'connected' || (progress.registered && !inPairingFlow))) {
       reportStatus = 'connected';
+    } else if (reconnecting) {
+      reportStatus = 'reconnecting';
     } else if (meta.status === 'connected' && !socketAlive) {
       reportStatus = 'disconnected';
     } else if (progress.registered && !inPairingFlow && !socketAlive) {
-      reportStatus = 'disconnected';
+      reportStatus = 'reconnecting';
     }
 
     const liveConnected = reportStatus === 'connected' && socketAlive;
@@ -383,6 +394,8 @@ app.get('/sessions/:id/status', async (req, res) => {
       linkedOnWhatsApp,
       waId: progress.waId,
       socketAlive,
+      reconnecting: reconnecting || (registeredOnDisk && !socketAlive && !inPairingFlow && reportStatus !== 'connected'),
+      unlinked: !registeredOnDisk,
       pairingCodeAgeSeconds,
       connectedAt: meta.connectedAt ? new Date(meta.connectedAt).toISOString() : null,
       socketUptimeSeconds:
@@ -434,10 +447,16 @@ app.get('/sessions/:id/status', async (req, res) => {
 
   const fullSocketAlive = isPairingSocketAlive(sessionId);
   const linkedOnWhatsApp = isLinkedOnWhatsApp(meta.status, fullSocketAlive, progress.registered);
+  const fullReconnecting =
+    progress.registered &&
+    !fullSocketAlive &&
+    meta.status !== 'pending_pairing' &&
+    meta.status !== 'pending_qr' &&
+    (isSessionReconnecting(sessionId) || meta.status === 'starting');
 
   res.json({
     sessionId: meta.sessionId,
-    status: meta.status,
+    status: fullReconnecting ? 'reconnecting' : meta.status,
     phone: meta.phone ?? progress.waId?.split('@')[0]?.split(':')[0] ?? null,
     pairingCode: meta.pairingCode ? formatPairingCodeDisplay(meta.pairingCode) : null,
     registeredOnDisk: progress.registered,
@@ -450,6 +469,8 @@ app.get('/sessions/:id/status', async (req, res) => {
     linkedOnWhatsApp,
     waId: progress.waId,
     socketAlive: fullSocketAlive,
+    reconnecting: fullReconnecting || (progress.registered && !fullSocketAlive && meta.status !== 'pending_pairing'),
+    unlinked: !progress.registered,
     pairingCodeAgeSeconds: getPairingCodeAgeSeconds(sessionId),
   });
 });
@@ -580,4 +601,7 @@ app.delete('/sessions/:id', async (req, res) => {
 
 app.listen(PORT, HOST, () => {
   logger.info(`WhatsApp gateway listening on http://${HOST}:${PORT}`);
+  void restorePersistedSessions().catch((err) => {
+    logger.error({ err }, 'failed to restore persisted WhatsApp sessions on startup');
+  });
 });

@@ -80,6 +80,7 @@ return [
     'whatsapp_disconnected' => 'تم قطع اتصال واتساب.',
     'whatsapp_status_failed' => 'تعذر قراءة حالة الاتصال.',
     'whatsapp_not_connected' => 'يجب ربط واتساب أولاً من الإعدادات.',
+    'whatsapp_reconnecting' => 'جاري إعادة اتصال واتساب. انتظر قليلاً — لا تعِد الربط من جديد.',
     'whatsapp_pairing_waiting_user' => 'أدخل رمز الربط في واتساب الآن. عند طلب الرقم، استخدم link_phone_display بالضبط.',
     'whatsapp_pairing_enter_fast' => 'افتح واتساب خلال 30 ثانية وأدخل الرمز. التأخير يسبب غالباً "حدث خطأ ما".',
     'whatsapp_pairing_socket_down' => 'انقطع جلسة الربط. اضغط ربط مرة أخرى للحصول على رمز جديد.',

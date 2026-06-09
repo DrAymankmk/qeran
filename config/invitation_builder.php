@@ -225,9 +225,27 @@ return [
     ],
 
     /**
+     * Icons for event-details cards (builder-wedding-section-details).
+     */
+    'detail_card_icons' => [
+        'calendar' => ['label_ar' => 'تقويم', 'label_en' => 'Calendar', 'glyph' => '📅'],
+        'clock' => ['label_ar' => 'ساعة', 'label_en' => 'Clock', 'glyph' => '🕐'],
+        'location' => ['label_ar' => 'موقع', 'label_en' => 'Location', 'glyph' => '📍'],
+        'reception' => ['label_ar' => 'احتفال', 'label_en' => 'Celebration', 'glyph' => '🎉'],
+        'heart' => ['label_ar' => 'قلب', 'label_en' => 'Heart', 'glyph' => '♥'],
+        'ring' => ['label_ar' => 'خاتم', 'label_en' => 'Ring', 'glyph' => '💍'],
+        'star' => ['label_ar' => 'نجمة', 'label_en' => 'Star', 'glyph' => '★'],
+        'gift' => ['label_ar' => 'هدية', 'label_en' => 'Gift', 'glyph' => '🎁'],
+        'music' => ['label_ar' => 'موسيقى', 'label_en' => 'Music', 'glyph' => '🎵'],
+        'camera' => ['label_ar' => 'كاميرا', 'label_en' => 'Camera', 'glyph' => '📷'],
+        'car' => ['label_ar' => 'سيارة', 'label_en' => 'Car', 'glyph' => '🚗'],
+        'users' => ['label_ar' => 'ضيوف', 'label_en' => 'Guests', 'glyph' => '👥'],
+    ],
+
+    /**
      * Editable fields per information block (stored in settings.block_data).
      * Supported field types: text, textarea, url, email, tel, number, date, time,
-     * datetime-local, color, optional_color, font, checkbox (repeaters).
+     * datetime-local, color, optional_color, font, select, checkbox (repeaters).
      */
     'block_field_schemas' => [
         'countdown' => [
@@ -243,6 +261,21 @@ return [
             'fields' => [
                 'label' => ['type' => 'text', 'label_ar' => 'عنوان فرعي', 'default' => 'جميع التفاصيل'],
                 'title' => ['type' => 'text', 'label_ar' => 'عنوان القسم', 'default' => 'تفاصيل الحفل'],
+            ],
+            'groups' => [
+                [
+                    'label_ar' => 'أيقونات البطاقات',
+                    'fields' => [
+                        'date_icon' => ['type' => 'select', 'label_ar' => 'أيقونة التاريخ', 'default' => 'calendar', 'options' => 'detail_card_icons'],
+                        'date_icon_url' => ['type' => 'url', 'label_ar' => 'رابط أيقونة التاريخ', 'default' => '', 'placeholder' => 'https://example.com/icon.png'],
+                        'ceremony_icon' => ['type' => 'select', 'label_ar' => 'أيقونة الحفل', 'default' => 'clock', 'options' => 'detail_card_icons'],
+                        'ceremony_icon_url' => ['type' => 'url', 'label_ar' => 'رابط أيقونة الحفل', 'default' => '', 'placeholder' => 'https://example.com/icon.png'],
+                        'venue_icon' => ['type' => 'select', 'label_ar' => 'أيقونة المكان', 'default' => 'location', 'options' => 'detail_card_icons'],
+                        'venue_icon_url' => ['type' => 'url', 'label_ar' => 'رابط أيقونة المكان', 'default' => '', 'placeholder' => 'https://example.com/icon.png'],
+                        'reception_icon' => ['type' => 'select', 'label_ar' => 'أيقونة الاستقبال', 'default' => 'reception', 'options' => 'detail_card_icons'],
+                        'reception_icon_url' => ['type' => 'url', 'label_ar' => 'رابط أيقونة الاستقبال', 'default' => '', 'placeholder' => 'https://example.com/icon.png'],
+                    ],
+                ],
             ],
         ],
         'venue' => [

@@ -66,6 +66,30 @@
 		</div>
 	@endforeach
 
+	@foreach($schema['groups'] ?? [] as $groupDef)
+		@if(!empty($groupDef['label_ar']))
+		<p class="small fw-semibold text-muted mb-2 mt-1">{{ $groupDef['label_ar'] }}</p>
+		@endif
+		<div class="row g-2 mb-2">
+			@foreach($groupDef['fields'] ?? [] as $fieldKey => $fieldDef)
+			@php
+				$fieldName = 'block_data['.$blockKey.']['.$fieldKey.']';
+				$fieldValue = old('block_data.'.$blockKey.'.'.$fieldKey, $blockValues[$fieldKey] ?? ($fieldDef['default'] ?? ''));
+				$fieldCol = app(\App\Services\Invitation\InvitationBuilderService::class)->blockFieldColumnClass($fieldDef['type'] ?? 'text');
+			@endphp
+			<div class="{{ $fieldCol }} ib-block-field ib-block-field-{{ $fieldDef['type'] ?? 'text' }}">
+				@include('admin.invitation-builder.partials.block-field-input', [
+					'name' => $fieldName,
+					'value' => $fieldValue,
+					'fieldDef' => $fieldDef,
+					'fieldKey' => $fieldKey,
+					'inputId' => 'ib_bf_'.$blockKey.'_'.$fieldKey,
+				])
+			</div>
+			@endforeach
+		</div>
+	@endforeach
+
 	@foreach($schema['repeaters'] ?? [] as $repeaterKey => $repeaterDef)
 		@php
 			$rows = old('block_data.'.$blockKey.'.'.$repeaterKey, $blockValues[$repeaterKey] ?? []);

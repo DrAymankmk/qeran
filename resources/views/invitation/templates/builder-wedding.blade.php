@@ -20,8 +20,11 @@
         'builderConfig' => $bc,
         'category' => $category ?? null,
         'host_name' => $host_name ?? null,
+        'user' => $user ?? null,
         'routes' => $routes ?? ['accept' => '#', 'decline' => '#'],
         'initialView' => $initialView ?? 'envelope',
+        'isBuilderPreview' => ! empty($isBuilderPreview),
+        'previewQrUrl' => $previewQrUrl ?? null,
     ]);
 
     $heroHtml = view('invitation.templates.partials.builder-wedding-section-hero', $viewData)->render();
@@ -229,19 +232,7 @@ a.wi-venue-btn { text-decoration: none; display: inline-block; }
 {!! $bodyHtml !!}
 </div>
 
-<div id="wiStatusAccepted" class="wi-builder-status-overlay @if(($initialView ?? '') === 'success') active @endif">
-  <div>
-    <div style="font-size:48px;margin-bottom:16px;">✓</div>
-    <h2 style="font-family:var(--ib-headline-font,serif);font-size:2rem;margin-bottom:12px;">تم قبول الدعوة</h2>
-    <p style="opacity:0.85;">شكراً لك — نتطلع لرؤيتك</p>
-  </div>
-</div>
-<div id="wiStatusDeclined" class="wi-builder-status-overlay @if(($initialView ?? '') === 'decline') active @endif">
-  <div>
-    <div style="font-size:48px;margin-bottom:16px;">✗</div>
-    <h2 style="font-family:var(--ib-headline-font,serif);font-size:2rem;margin-bottom:12px;">تم رفض الدعوة</h2>
-    <p style="opacity:0.85;">نأسف لعدم تمكنك من الحضور</p>
-  </div>
-</div>
+<div id="wiStatusAccepted" class="wi-builder-status-overlay"></div>
+<div id="wiStatusDeclined" class="wi-builder-status-overlay"></div>
 
 @include('invitation.templates.partials.builder-wedding-scripts', $viewData)

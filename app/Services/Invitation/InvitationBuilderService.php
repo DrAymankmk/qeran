@@ -809,11 +809,40 @@ class InvitationBuilderService
             'textarea' => 'col-12',
             'checkbox' => 'col-md-6',
             'color', 'optional_color' => 'col-md-4',
-            'font', 'font_weight' => 'col-md-4',
+            'font', 'font_weight', 'select' => 'col-md-4',
             'font_size' => 'col-md-4',
             'date', 'time', 'datetime-local' => 'col-md-4',
             default => 'col-md-6',
         };
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    public function resolveSelectOptions(array $fieldDef): array
+    {
+        $options = $fieldDef['options'] ?? [];
+        if (is_string($options) && $options !== '') {
+            $options = config('invitation_builder.'.$options, []);
+        }
+
+        return is_array($options) ? $options : [];
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    public function blockSchemaFields(array $schema): array
+    {
+        $fields = $schema['fields'] ?? [];
+
+        foreach ($schema['groups'] ?? [] as $groupDef) {
+            foreach ($groupDef['fields'] ?? [] as $fieldKey => $fieldDef) {
+                $fields[$fieldKey] = $fieldDef;
+            }
+        }
+
+        return $fields;
     }
 
     public function formatBlockFieldForInput(string $type, mixed $value): string
@@ -917,7 +946,7 @@ class InvitationBuilderService
         return $value;
     }
 
-    public function normalizeBlockFieldValue(string $type, mixed $value): mixed
+    public function normalizeBlockFieldValue(string $type, mixed $value, array $fieldDef = []): mixed
     {
         if ($type === 'checkbox') {
             return filter_var($value, FILTER_VALIDATE_BOOLEAN);
@@ -925,6 +954,20 @@ class InvitationBuilderService
 
         $value = trim((string) ($value ?? ''));
         if ($value === '') {
+            return '';
+        }
+
+        if ($type === 'select') {
+            $options = $this->resolveSelectOptions($fieldDef);
+
+            return array_key_exists($value, $options) ? $value : '';
+        }
+
+        if ($type === 'url') {
+            if (preg_match('#^(https?://|/)#i', $value)) {
+                return $value;
+            }
+
             return '';
         }
 
@@ -955,7 +998,7 @@ class InvitationBuilderService
             $blockInput = is_array($raw[$blockKey] ?? null) ? $raw[$blockKey] : [];
             $blockOut = [];
 
-            foreach ($schema['fields'] ?? [] as $fieldKey => $fieldDef) {
+            foreach ($this->blockSchemaFields($schema) as $fieldKey => $fieldDef) {
                 $fieldType = $fieldDef['type'] ?? 'text';
                 $value = $blockInput[$fieldKey] ?? null;
                 if (is_string($value)) {
@@ -970,7 +1013,7 @@ class InvitationBuilderService
                         $value = $invitation->event_name ?? '';
                     }
                 }
-                $blockOut[$fieldKey] = $this->normalizeBlockFieldValue($fieldType, $value);
+                $blockOut[$fieldKey] = $this->normalizeBlockFieldValue($fieldType, $value, $fieldDef);
             }
 
             foreach (config('invitation_builder.block_style_fields', []) as $styleKey => $styleDef) {
@@ -992,7 +1035,7 @@ class InvitationBuilderService
                     $hasContent = false;
                     foreach ($repeaterDef['fields'] ?? [] as $rfKey => $rfDef) {
                         $rfType = $rfDef['type'] ?? 'text';
-                        $rv = $this->normalizeBlockFieldValue($rfType, $row[$rfKey] ?? '');
+                        $rv = $this->normalizeBlockFieldValue($rfType, $row[$rfKey] ?? '', $rfDef);
                         $cleanRow[$rfKey] = $rv;
                         if ($rfType === 'checkbox') {
                             if ($rv) {

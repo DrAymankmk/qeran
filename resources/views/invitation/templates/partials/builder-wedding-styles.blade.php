@@ -267,6 +267,10 @@
     margin: 0 auto 16px;
     opacity: 0.55;
   }
+  .wi-detail-icon-img {
+    display: block;
+    object-fit: contain;
+  }
   .wi-detail-heading {
     font-size: 9px;
     letter-spacing: 0.35em;
@@ -490,47 +494,88 @@
   .wi-field input:focus, .wi-field select:focus, .wi-field textarea:focus {
     border-color: rgba(200,169,122,0.85);
   }
-  .wi-rsvp-toggle {
+  .wi-rsvp-actions {
     display: flex;
-    gap: 0;
-    border: 0.5px solid rgba(200,169,122,0.4);
-    border-radius: 3px;
-    overflow: hidden;
-    margin-bottom: 24px;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 28px;
   }
-  .wi-rsvp-opt {
-    flex: 1;
-    padding: 11px;
-    text-align: center;
-    font-size: 11px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: rgba(200,169,122,0.6);
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-    user-select: none;
-  }
-  .wi-rsvp-opt.active {
-    background: rgba(200,169,122,0.2);
-    color: #f5ede0;
-  }
-  .wi-rsvp-submit {
-    width: 100%;
-    background: #c8a97a;
-    color: #2c2416;
+  .wi-rsvp-actions.is-hidden { display: none; }
+  .wi-rsvp-btn {
+    min-width: 140px;
     border: none;
     border-radius: 3px;
-    padding: 14px;
+    padding: 14px 24px;
     font-family: 'Jost', sans-serif;
     font-size: 11px;
-    letter-spacing: 0.35em;
+    letter-spacing: 0.25em;
     text-transform: uppercase;
     cursor: pointer;
-    transition: background 0.2s;
-    font-weight: 400;
-    margin-top: 8px;
+    transition: background 0.2s, opacity 0.2s;
+    font-weight: 500;
   }
-  .wi-rsvp-submit:hover { background: #b89060; }
+  .wi-rsvp-btn:disabled { opacity: 0.65; cursor: wait; }
+  .wi-rsvp-btn-accept {
+    background: #c8a97a;
+    color: #2c2416;
+  }
+  .wi-rsvp-btn-accept:hover:not(:disabled) { background: #b89060; }
+  .wi-rsvp-btn-decline {
+    background: transparent;
+    color: #f5ede0;
+    border: 0.5px solid rgba(200,169,122,0.55);
+  }
+  .wi-rsvp-btn-decline:hover:not(:disabled) {
+    background: rgba(200,169,122,0.12);
+  }
+  .wi-rsvp-result {
+    margin-top: 28px;
+    text-align: center;
+  }
+  .wi-rsvp-result.is-hidden { display: none; }
+  .wi-rsvp-result-title {
+    font-size: 14px;
+    color: #f5ede0;
+    margin-bottom: 20px;
+    line-height: 1.7;
+  }
+  .wi-rsvp-qr-wrap {
+    display: flex;
+    justify-content: center;
+  }
+  .wi-rsvp-qr.qr-section,
+  .wi-rsvp-qr .qr-section {
+    background: rgba(255,255,255,0.96);
+    padding: 20px;
+    border-radius: 12px;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+  .wi-rsvp-qr img,
+  .wi-rsvp-qr .qr-section img {
+    width: 160px;
+    height: 160px;
+    margin: 0 auto 12px;
+    display: block;
+  }
+  .wi-rsvp-qr p,
+  .wi-rsvp-qr .qr-section p {
+    color: #2d3748;
+    font-size: 0.85rem;
+    margin: 0;
+  }
+  .wi-rsvp-qr .qr-download-button {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #6b4f2e, #2c2416);
+    color: #fff;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
 
   /* ── Guestbook ── */
   .wi-guestbook-bg { background: #f4ede2; }

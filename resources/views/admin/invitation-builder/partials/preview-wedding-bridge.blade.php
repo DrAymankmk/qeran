@@ -93,6 +93,9 @@
 
 	window.ibAfterPreviewPatch = function () {
 		window.ibStartCountdown();
+		if (typeof wiBindRsvpButtons === 'function') {
+			wiBindRsvpButtons();
+		}
 		if (window.wiEnsureHeroVideosPlay) {
 			window.wiEnsureHeroVideosPlay();
 		}

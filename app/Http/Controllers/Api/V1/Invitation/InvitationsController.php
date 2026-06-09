@@ -2009,6 +2009,10 @@ class InvitationsController extends Controller
             'whatsapp_read' => $log->read_at !== null,
             'seen' => (int) $log->seen,
             'seen_label' => array_search((int) $log->seen, Constant::SEEN_STATUS, true) ?: 'unknown',
+            'acceptance_status' => $log->acceptance_status !== null ? (int) $log->acceptance_status : null,
+            'acceptance_status_label' => $log->acceptance_status !== null
+                ? (array_search((int) $log->acceptance_status, Constant::ACCEPTANCE_STATUS, true) ?: 'unknown')
+                : null,
             'error_message' => $log->error_message,
             'sent_at' => $log->sent_at?->toIso8601String(),
             'delivered_at' => $log->delivered_at?->toIso8601String(),

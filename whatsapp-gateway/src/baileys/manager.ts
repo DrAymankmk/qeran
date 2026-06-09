@@ -19,7 +19,8 @@ export type SessionStatus =
   | 'pending_pairing'
   | 'connected'
   | 'disconnected'
-  | 'starting';
+  | 'starting'
+  | 'reconnecting';
 
 export interface SessionMeta {
   sessionId: string;
@@ -103,6 +104,8 @@ export function disconnectedStatusPayload(sessionId: string): Record<string, unk
     linkedOnWhatsApp: false,
     waId: null,
     socketAlive: false,
+    reconnecting: false,
+    unlinked: true,
     pairingCodeAgeSeconds: null,
   };
 }
@@ -111,6 +114,16 @@ const PAIRING_READY_DELAY_MS = Number(process.env.PAIRING_READY_DELAY_MS ?? 3000
 const PAIRING_KEEPALIVE_MS = Number(process.env.PAIRING_KEEPALIVE_MS ?? 15_000);
 const PAIRING_CODE_TTL_MS = Number(process.env.PAIRING_CODE_TTL_MS ?? 300_000);
 const PAIRING_SOCKET_READY_TIMEOUT_MS = Number(process.env.PAIRING_SOCKET_READY_TIMEOUT_MS ?? 45_000);
+/** 0 = never auto-wipe on reconnect failure (recommended). Set e.g. 12 to wipe after N failures. */
+const RECONNECT_WIPE_THRESHOLD = Number(process.env.RECONNECT_WIPE_THRESHOLD ?? 0);
+const RECONNECT_BACKOFF_MS = (process.env.RECONNECT_BACKOFF_MS ?? '30000,120000,600000')
+  .split(',')
+  .map((s) => Number(s.trim()))
+  .filter((n) => Number.isFinite(n) && n > 0);
+const RECONNECT_BACKOFF_SCHEDULE =
+  RECONNECT_BACKOFF_MS.length > 0 ? RECONNECT_BACKOFF_MS : [30_000, 120_000, 600_000];
+
+const scheduledReconnects = new Set<string>();
 
 function sessionsDir(): string {
   return process.env.SESSIONS_DIR ?? path.join(process.cwd(), 'sessions');
@@ -284,6 +297,7 @@ async function maintainPairingSocketAlive(sessionId: string, meta: SessionMeta):
 }
 
 function wipeSessionAuth(sessionId: string): void {
+  scheduledReconnects.delete(sessionId);
   stopPairingKeepalive(sessionId);
   const meta = sessions.get(sessionId);
   if (meta) {
@@ -295,6 +309,90 @@ function wipeSessionAuth(sessionId: string): void {
     fs.rmSync(dir, { recursive: true, force: true });
   }
   logger.info({ sessionId }, 'session auth wiped');
+}
+
+function reconnectBackoffMs(failures: number): number {
+  const idx = Math.min(Math.max(0, failures - 1), RECONNECT_BACKOFF_SCHEDULE.length - 1);
+  return RECONNECT_BACKOFF_SCHEDULE[idx]!;
+}
+
+function scheduleReconnectAfterRestart(sessionId: string, delayMs: number): void {
+  if (isSessionAborted(sessionId) || scheduledReconnects.has(sessionId)) {
+    return;
+  }
+
+  scheduledReconnects.add(sessionId);
+  logger.info({ sessionId, delayMs }, 'scheduled reconnect after backoff');
+
+  setTimeout(() => {
+    scheduledReconnects.delete(sessionId);
+    const meta = sessions.get(sessionId);
+    if (!meta || meta.status === 'connected' || isSessionAborted(sessionId)) {
+      return;
+    }
+    void reconnectAfterRestart(sessionId, meta);
+  }, delayMs);
+}
+
+/** Clear in-memory session state without logging out or deleting disk credentials. */
+export function clearStaleSessionMeta(sessionId: string): void {
+  scheduledReconnects.delete(sessionId);
+  stopPairingKeepalive(sessionId);
+  finalizingSessions.delete(sessionId);
+  startPromises.delete(sessionId);
+  const meta = sessions.get(sessionId);
+  if (meta) {
+    endSocket(meta);
+  }
+  sessions.delete(sessionId);
+}
+
+export function isSessionReconnecting(sessionId: string): boolean {
+  if (isSessionStartInFlight(sessionId)) {
+    return true;
+  }
+  if (scheduledReconnects.has(sessionId)) {
+    return true;
+  }
+  const meta = sessions.get(sessionId);
+  if (!meta) {
+    return false;
+  }
+  return meta.status === 'starting' || (meta.reconnectFailures ?? 0) > 0;
+}
+
+/** Restore registered sessions from disk after gateway restart (PM2). */
+export async function restorePersistedSessions(): Promise<void> {
+  const dir = sessionsDir();
+  if (!fs.existsSync(dir)) {
+    return;
+  }
+
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isDirectory()) {
+      continue;
+    }
+
+    const sessionId = entry.name;
+    if (!sessionAuthExists(sessionId) || isSessionAborted(sessionId)) {
+      continue;
+    }
+
+    try {
+      const progress = await getPairingProgress(sessionId);
+      if (!progress.registered) {
+        continue;
+      }
+
+      logger.info({ sessionId }, 'restoring persisted WhatsApp session on startup');
+      void startSession(sessionId).catch((err) => {
+        logger.warn({ sessionId, err }, 'startup session restore failed');
+      });
+    } catch (err) {
+      logger.warn({ sessionId, err }, 'skipped startup restore for session');
+    }
+  }
 }
 
 export async function waitForConnected(sessionId: string, timeoutMs: number): Promise<boolean> {
@@ -462,8 +560,11 @@ async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Prom
     return;
   }
 
+  const failures = meta.reconnectFailures ?? 0;
+  const minGap = failures === 0 ? 2500 : reconnectBackoffMs(failures);
   const now = Date.now();
-  if (meta.lastReconnectAt && now - meta.lastReconnectAt < 2500) {
+  if (meta.lastReconnectAt && now - meta.lastReconnectAt < minGap) {
+    scheduleReconnectAfterRestart(sessionId, minGap - (now - meta.lastReconnectAt));
     return;
   }
   meta.lastReconnectAt = now;
@@ -496,7 +597,7 @@ async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Prom
     const ok = await waitForConnected(sessionId, isSystemSession(sessionId) ? 120_000 : 90_000);
     if (!ok) {
       const progress = await getPairingProgress(sessionId);
-      meta.reconnectFailures = (meta.reconnectFailures ?? 0) + 1;
+      meta.reconnectFailures = failures + 1;
 
       logger.warn(
         {
@@ -508,8 +609,11 @@ async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Prom
         'reconnect after link did not reach connected within timeout'
       );
 
-      if (meta.reconnectFailures >= 4) {
-        logger.error({ sessionId, failures: meta.reconnectFailures }, 'too many reconnect failures — wiping session');
+      if (RECONNECT_WIPE_THRESHOLD > 0 && meta.reconnectFailures >= RECONNECT_WIPE_THRESHOLD) {
+        logger.error(
+          { sessionId, failures: meta.reconnectFailures, threshold: RECONNECT_WIPE_THRESHOLD },
+          'too many reconnect failures — wiping session'
+        );
         wipeSessionAuth(sessionId);
         meta.status = 'disconnected';
         meta.reconnectFailures = 0;
@@ -521,21 +625,25 @@ async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Prom
       } else {
         meta.status = 'disconnected';
       }
+
+      scheduleReconnectAfterRestart(sessionId, reconnectBackoffMs(meta.reconnectFailures));
     } else {
       meta.reconnectFailures = 0;
     }
   } catch (err) {
     logger.error({ sessionId, err }, 'reconnect after link failed');
     const progress = await getPairingProgress(sessionId);
-    meta.reconnectFailures = (meta.reconnectFailures ?? 0) + 1;
-    if (meta.reconnectFailures >= 4) {
+    meta.reconnectFailures = failures + 1;
+    if (RECONNECT_WIPE_THRESHOLD > 0 && meta.reconnectFailures >= RECONNECT_WIPE_THRESHOLD) {
       wipeSessionAuth(sessionId);
       meta.status = 'disconnected';
       meta.reconnectFailures = 0;
     } else if (progress.pairingAccepted && !progress.registered) {
       meta.status = isSystemSession(sessionId) ? 'pending_qr' : 'pending_pairing';
+      scheduleReconnectAfterRestart(sessionId, reconnectBackoffMs(meta.reconnectFailures));
     } else {
       meta.status = 'disconnected';
+      scheduleReconnectAfterRestart(sessionId, reconnectBackoffMs(meta.reconnectFailures));
     }
   }
 }
@@ -798,10 +906,21 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
       }
 
       if (loggedOut) {
-        meta.status = 'disconnected';
-        meta.pairingCode = undefined;
-        meta.qr = undefined;
-        meta.connectedAt = undefined;
+        void (async () => {
+          const progress = await getPairingProgress(sessionId);
+          if (progress.registered) {
+            logger.warn(
+              { sessionId, statusCode },
+              'logged out from WhatsApp phone — wiping session credentials'
+            );
+            wipeSessionAuth(sessionId);
+          }
+          meta.status = 'disconnected';
+          meta.pairingCode = undefined;
+          meta.qr = undefined;
+          meta.connectedAt = undefined;
+          meta.reconnectFailures = 0;
+        })();
         return;
       }
 

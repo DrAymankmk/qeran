@@ -19,6 +19,7 @@ class InvitationContactLog extends Model
         'phone',
         'send_status',
         'seen',
+        'acceptance_status',
         'error_message',
         'reference_id',
         'whatsapp_message_id',

@@ -1,52 +1,149 @@
 <script>
-function wiSubmitRsvpAccept() {
-  if (typeof acceptInvitation === 'function') {
-    acceptInvitation();
-    return;
+var wiAcceptUrl = @json($routes['accept'] ?? '');
+var wiDeclineUrl = @json($routes['decline'] ?? '');
+var wiIsBuilderPreview = @json(!empty($isBuilderPreview));
+var wiPreviewQrUrl = @json($previewQrUrl ?? '');
+
+function wiIsPreviewRsvpUrl(url) {
+  return wiIsBuilderPreview || !url || url === '#';
+}
+
+function wiGetCsrfToken() {
+  var meta = document.querySelector('meta[name="csrf-token"]');
+  if (meta && meta.content) return meta.content;
+  var match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : @json(csrf_token());
+}
+
+function wiParseJsonResponse(r) {
+  var ct = (r.headers.get('content-type') || '').toLowerCase();
+  if (!ct.includes('application/json')) {
+    return r.text().then(function () {
+      throw new Error(r.status === 419 ? 'انتهت صلاحية الجلسة، يرجى تحديث الصفحة' : 'استجابة غير صالحة من الخادم');
+    });
   }
-  var btn = document.querySelector('.wi-rsvp-submit');
-  if (btn) {
-    btn.textContent = 'جاري الإرسال…';
-    btn.disabled = true;
+  return r.json();
+}
+
+function wiPreviewRsvpQrUrl() {
+  if (wiPreviewQrUrl) return wiPreviewQrUrl;
+  var hiddenImg = document.querySelector('#wiRsvpAccepted img');
+  return hiddenImg ? (hiddenImg.getAttribute('src') || '') : '';
+}
+
+function wiRsvpPost(url, button) {
+  var originalText = button ? button.textContent : '';
+
+  if (wiIsPreviewRsvpUrl(url)) {
+    if (button) {
+      button.disabled = true;
+      button.textContent = '…';
+    }
+    return new Promise(function (resolve) {
+      window.setTimeout(function () {
+        if (button) {
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+        resolve({ success: true, qr_url: wiPreviewRsvpQrUrl() });
+      }, 300);
+    });
   }
-  fetch(@json($routes['accept'] ?? ''), {
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = '…';
+  }
+
+  return fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': @json(csrf_token()) },
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-CSRF-TOKEN': wiGetCsrfToken(),
+    },
   })
-    .then(function (r) { return r.json(); })
+    .then(wiParseJsonResponse)
     .then(function (data) {
-      if (data.success) {
-        document.getElementById('wiStatusAccepted')?.classList.add('active');
-      } else {
-        alert(data.message || 'حدث خطأ');
-        if (btn) { btn.disabled = false; btn.textContent = 'تأكيد الحضور'; }
+      if (!data.success) {
+        throw new Error(data.message || 'حدث خطأ');
       }
+      return data;
     })
-    .catch(function () {
-      alert('حدث خطأ');
-      if (btn) { btn.disabled = false; btn.textContent = 'تأكيد الحضور'; }
+    .catch(function (err) {
+      if (button) {
+        button.disabled = false;
+        button.textContent = originalText;
+      }
+      throw err;
     });
 }
 
-function setRsvp(val, el) {
-  document.querySelectorAll('.wi-rsvp-opt').forEach(function (o) { o.classList.remove('active'); });
-  if (el) el.classList.add('active');
-  var meal = document.getElementById('mealField');
-  if (meal) meal.style.display = val === 'yes' ? '' : 'none';
-  if (val === 'no') {
-    if (typeof declineInvitation === 'function') {
-      declineInvitation();
-    } else {
-      fetch(@json($routes['decline'] ?? ''), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': @json(csrf_token()) },
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-          if (data.success) document.getElementById('wiStatusDeclined')?.classList.add('active');
-        });
-    }
+function wiShowRsvpAccepted(qrUrl) {
+  var actions = document.getElementById('wiRsvpActions');
+  var accepted = document.getElementById('wiRsvpAccepted');
+  var declined = document.getElementById('wiRsvpDeclined');
+  if (actions) actions.classList.add('is-hidden');
+  if (declined) declined.classList.add('is-hidden');
+  if (accepted) accepted.classList.remove('is-hidden');
+  if (qrUrl) {
+    var img = accepted ? accepted.querySelector('img') : null;
+    var downloadBtn = accepted ? accepted.querySelector('.qr-download-button') : null;
+    if (img) img.src = qrUrl;
+    if (downloadBtn) downloadBtn.dataset.qrUrl = qrUrl;
   }
+}
+
+function wiShowRsvpDeclined() {
+  var actions = document.getElementById('wiRsvpActions');
+  var accepted = document.getElementById('wiRsvpAccepted');
+  var declined = document.getElementById('wiRsvpDeclined');
+  if (actions) actions.classList.add('is-hidden');
+  if (accepted) accepted.classList.add('is-hidden');
+  if (declined) declined.classList.remove('is-hidden');
+}
+
+function wiBindRsvpButtons() {
+  var acceptBtn = document.getElementById('wiRsvpAcceptBtn');
+  var declineBtn = document.getElementById('wiRsvpDeclineBtn');
+
+  if (acceptBtn && acceptBtn.dataset.bound !== '1') {
+    acceptBtn.dataset.bound = '1';
+    acceptBtn.addEventListener('click', function () {
+      wiRsvpPost(wiAcceptUrl, acceptBtn)
+        .then(function (data) {
+          wiShowRsvpAccepted(data.qr_url || '');
+          if (acceptBtn) acceptBtn.disabled = false;
+        })
+        .catch(function (err) {
+          alert(err.message || 'حدث خطأ أثناء قبول الدعوة');
+        });
+    });
+  }
+
+  if (declineBtn && declineBtn.dataset.bound !== '1') {
+    declineBtn.dataset.bound = '1';
+    declineBtn.addEventListener('click', function () {
+      if (!window.confirm(@json(__('admin.confirm-decline-invitation')))) {
+        return;
+      }
+      wiRsvpPost(wiDeclineUrl, declineBtn)
+        .then(function () {
+          wiShowRsvpDeclined();
+          if (declineBtn) declineBtn.disabled = false;
+        })
+        .catch(function (err) {
+          alert(err.message || 'حدث خطأ أثناء رفض الدعوة');
+        });
+    });
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', wiBindRsvpButtons);
+} else {
+  wiBindRsvpButtons();
 }
 
 function countdown() {

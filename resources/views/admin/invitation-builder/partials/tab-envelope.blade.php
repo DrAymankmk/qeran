@@ -4,7 +4,7 @@ $stockChoices = collect($envelopeImageChoices ?? [])->where('group', 'stock');
 $invitationChoices = collect($envelopeImageChoices ?? [])->where('group', 'invitation');
 @endphp
 
-<div class="ib-tab-hero mb-4">
+<!-- <div class="ib-tab-hero mb-4">
 	<h5 class="fw-bold mb-1">{{ __('admin.ib-tab-envelope-title') }}</h5>
 	<p class="text-muted mb-2">{{ __('admin.ib-tab-envelope-subtitle') }}</p>
 	<p class="small text-muted mb-0">{{ __('admin.ib-tab-envelope-desc') }}</p>
@@ -14,7 +14,7 @@ $invitationChoices = collect($envelopeImageChoices ?? [])->where('group', 'invit
 	<li>✓ {{ __('admin.ib-tab-envelope-bullet-1') }}</li>
 	<li>✓ {{ __('admin.ib-tab-envelope-bullet-2') }}</li>
 	<li>✓ {{ __('admin.ib-tab-envelope-bullet-3') }}</li>
-</ul>
+</ul> -->
 
 @php
 $activeEnvelopeShape = app(\App\Services\Invitation\InvitationBuilderService::class)
@@ -96,10 +96,10 @@ $activeEnvelopeShape = app(\App\Services\Invitation\InvitationBuilderService::cl
 </div>
 
 @php
-	$resolvedSealColor = \App\Services\Invitation\WeddingInvitationPresenter::resolveSealColor(
-		$config['seal_style'] ?? 'wax_classic',
-		$config['seal_color'] ?? null
-	);
+$resolvedSealColor = \App\Services\Invitation\WeddingInvitationPresenter::resolveSealColor(
+$config['seal_style'] ?? 'wax_classic',
+$config['seal_color'] ?? null
+);
 @endphp
 
 <label class="form-label fw-semibold">{{ __('admin.ib-seal-style') }}</label>
@@ -109,11 +109,12 @@ $activeEnvelopeShape = app(\App\Services\Invitation\InvitationBuilderService::cl
 	<label class="small text-muted mb-0" for="seal_color_picker">{{ __('admin.ib-seal-color') }}</label>
 	<input type="color" id="seal_color_picker" class="form-control form-control-color ib-seal-color-picker"
 		value="{{ $resolvedSealColor }}" title="{{ __('admin.ib-seal-color') }}">
-	<input type="hidden" name="seal_color" id="seal_color" value="{{ $resolvedSealColor }}" class="ib-preview-field">
+	<input type="hidden" name="seal_color" id="seal_color" value="{{ $resolvedSealColor }}"
+		class="ib-preview-field">
 	@foreach(config('invitation_builder.seal_palette_colors', []) as $palKey => $palHex)
-	<button type="button" class="ib-seal-color-swatch @if(strtolower($resolvedSealColor) === strtolower($palHex)) is-active @endif"
-		data-seal-color="{{ $palHex }}" title="{{ $palKey }}"
-		style="background: {{ $palHex }};"></button>
+	<button type="button"
+		class="ib-seal-color-swatch @if(strtolower($resolvedSealColor) === strtolower($palHex)) is-active @endif"
+		data-seal-color="{{ $palHex }}" title="{{ $palKey }}" style="background: {{ $palHex }};"></button>
 	@endforeach
 </div>
 
@@ -122,26 +123,26 @@ $activeEnvelopeShape = app(\App\Services\Invitation\InvitationBuilderService::cl
 <div class="row g-2 mb-4" id="ibSealStyleGrid">
 	@foreach($catalog['seal_styles'] as $key => $seal)
 	@php
-		$sealDefaultColor = \App\Services\Invitation\WeddingInvitationPresenter::defaultSealColorForStyle($key);
-		$sealVars = \App\Services\Invitation\WeddingInvitationPresenter::sealViewVars($key, $sealDefaultColor);
+	$sealDefaultColor = \App\Services\Invitation\WeddingInvitationPresenter::defaultSealColorForStyle($key);
+	$sealVars = \App\Services\Invitation\WeddingInvitationPresenter::sealViewVars($key, $sealDefaultColor);
 	@endphp
 	<div class="col-6 col-md-4">
-		<label
-			class="ib-seal-option card h-100 mb-0 @if($config['seal_style'] === $key) border-primary @endif"
+		<label class="ib-seal-option card h-100 mb-0 @if($config['seal_style'] === $key) border-primary @endif"
 			data-seal-color="{{ $sealDefaultColor }}">
 			<div class="card-body text-center py-2 px-2">
 				<input type="radio" name="seal_style" value="{{ $key }}"
 					class="d-none ib-preview-field"
-					@checked($config['seal_style'] === $key)>
+					@checked($config['seal_style']===$key)>
 				<div class="ib-seal-preview-wrap">
-					<div
-						class="wi-env-seal ib-seal-mini has-seal-custom-color wi-seal-shape-{{ $sealVars['wiSealShape'] }} wi-seal-pal-{{ $sealVars['wiSealPalette'] }} @if($sealVars['wiSealRing']) has-seal-ring @endif @if($sealVars['wiSealDrip']) has-seal-drip @endif"
-						@if(!empty($sealVars['wiSealInlineStyle'])) style="{{ $sealVars['wiSealInlineStyle'] }}" @endif>
+					<div class="wi-env-seal ib-seal-mini has-seal-custom-color wi-seal-shape-{{ $sealVars['wiSealShape'] }} wi-seal-pal-{{ $sealVars['wiSealPalette'] }} @if($sealVars['wiSealRing']) has-seal-ring @endif @if($sealVars['wiSealDrip']) has-seal-drip @endif"
+						@if(!empty($sealVars['wiSealInlineStyle']))
+						style="{{ $sealVars['wiSealInlineStyle'] }}" @endif>
 						<span class="wi-seal-ring" aria-hidden="true"></span>
 						<span class="wi-seal-initials">AB</span>
 					</div>
 				</div>
-				<span class="ib-seal-color-dot" style="background: {{ $sealDefaultColor }};"></span>
+				<span class="ib-seal-color-dot"
+					style="background: {{ $sealDefaultColor }};"></span>
 				<strong class="small d-block mt-1">{{ $seal['label_ar'] }}</strong>
 			</div>
 		</label>

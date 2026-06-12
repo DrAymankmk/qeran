@@ -52,6 +52,7 @@ class InvitationResource extends JsonResource
             'extra_invitation_price'=>$this->price,
             'admin_invitation_count'=>$this->admin_invitation_count,
 	   'link_url'=>$this->link_url,
+            'client_preview_url'=>$this->client_preview_url,
             // Hub files split by uploader; recent first in each list
             'media' => $this->formatInvitationMediaByCreator(),
 

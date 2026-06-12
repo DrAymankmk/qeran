@@ -441,6 +441,7 @@ class InvitationsController extends Controller
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude ?? $request->latitude, // Fallback if not provided
                 'date' => $request->date,
+                'client_preview_url' => $request->client_preview_url,
             ]);
 
             // Handle file upload with proper validation

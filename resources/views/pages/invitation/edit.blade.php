@@ -17,7 +17,8 @@
 			<h4 class="mb-sm-0 font-size-18">{{__('admin.invitations')}}</h4>
 
 			<div class="page-title-right d-flex align-items-center gap-2">
-				<a href="{{ route('admin.invitation-builder.edit', $invitation) }}" class="btn btn-primary btn-sm">
+				<a href="{{ route('admin.invitation-builder.edit', $invitation) }}"
+					class="btn btn-primary btn-sm">
 					{{ __('admin.invitation-builder') }}
 				</a>
 				<ol class="breadcrumb m-0">
@@ -48,10 +49,12 @@
 						@if($invitation->hubFiles->isNotEmpty())
 						@php
 						$adminHubFiles = $invitation->hubFiles->filter(
-							fn ($file) => $file->created_by_type === \App\Models\Admin::class
+						fn ($file) => $file->created_by_type ===
+						\App\Models\Admin::class
 						);
 						$clientHubFiles = $invitation->hubFiles->filter(
-							fn ($file) => $file->created_by_type !== \App\Models\Admin::class
+						fn ($file) => $file->created_by_type !==
+						\App\Models\Admin::class
 						);
 						@endphp
 						<div class="mb-4">
@@ -78,7 +81,8 @@
 								@endphp
 								<div class="col-12 col-md-6 col-lg-4">
 									<div class="card h-100">
-										<div class="card-body">
+										<div
+											class="card-body">
 											<div
 												class="d-flex justify-content-between align-items-center mb-2">
 												<span
@@ -191,7 +195,8 @@
 								@endphp
 								<div class="col-12 col-md-6 col-lg-4">
 									<div class="card h-100">
-										<div class="card-body">
+										<div
+											class="card-body">
 											<div
 												class="d-flex justify-content-between align-items-center mb-2">
 												<span
@@ -312,6 +317,17 @@
 								{{ $message }}</div>
 							@enderror
 						</div>
+
+						<div class="mb-3">
+							<label for="formrow-firstname-input"
+								class="form-label">
+								{{__('admin.client-preview-url')}}
+							</label>
+							<input class="form-control" type="text"
+								name="client_preview_url"
+								id="client_preview_url"
+								value="{{$invitation->client_preview_url}}">
+						</div>
 						<div class="mb-3">
 							<label for="start_at-input"
 								class="form-label">{{__('admin.date')}}
@@ -391,8 +407,16 @@
 function initAutocomplete() {
 	const map = new google.maps.Map(document.getElementById("map"), {
 		center: {
-			lat: {{$invitation->latitude}},
-			lng: {{$invitation->longitude}}
+			lat: {
+				{
+					$invitation - > latitude
+				}
+			},
+			lng: {
+				{
+					$invitation - > longitude
+				}
+			}
 		},
 		zoom: 20,
 		mapTypeId: "roadmap",
@@ -401,8 +425,15 @@ function initAutocomplete() {
 	const input = document.getElementById("pac-input");
 	const searchBox = new google.maps.places.SearchBox(input);
 	marker = new google.maps.Marker({
-		position: new google.maps.LatLng({{$invitation->latitude}}, 
-		{{$invitation->longitude}}),
+		position: new google.maps.LatLng({
+			{
+				$invitation - > latitude
+			}
+		}, {
+			{
+				$invitation - > longitude
+			}
+		}),
 		map: map,
 	});
 

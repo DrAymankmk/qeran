@@ -182,6 +182,7 @@ Route::get('/email', function () {
 });
 // Route::resource('category', CategoryController::class);
 
+Route::get('/invitation-builder/{invitation_code}/{user_id?}', [WebsiteInvitationController::class, 'showBuilder'])->name('user.invitation.builder.show');
 Route::get('/invitation/{invitation_code}/{user_id}/{inserted_by?}/{template?}', [WebsiteInvitationController::class, 'show'])->name('user.invitation.show');
 Route::post('/invitation/{invitation_code}/{user_id}/accept', [WebsiteInvitationController::class, 'accept'])->name('user.invitation.accept');
 Route::post('/invitation/{invitation_code}/{user_id}/decline', [WebsiteInvitationController::class, 'decline'])->name('user.invitation.decline');
@@ -285,6 +286,8 @@ Route::group(['prefix' => 'admin', 'middleware' => 'set.admin.locale'], function
         Route::get('invitation/{invitation}/builder/preview', [InvitationBuilderController::class, 'previewShow'])->name('admin.invitation-builder.preview.show');
         Route::post('invitation/{invitation}/builder/preview', [InvitationBuilderController::class, 'preview'])->name('admin.invitation-builder.preview');
         Route::put('invitation/{invitation}/builder', [InvitationBuilderController::class, 'update'])->name('admin.invitation-builder.update');
+        Route::post('invitation/{invitation}/builder/block-icon', [InvitationBuilderController::class, 'uploadBlockIcon'])->name('admin.invitation-builder.block-icon.store');
+        Route::post('invitation/{invitation}/builder/block-audio', [InvitationBuilderController::class, 'uploadBlockAudio'])->name('admin.invitation-builder.block-audio.store');
         Route::post('invitation-builder/themes', [InvitationBuilderThemeController::class, 'store'])->name('admin.invitation-builder.themes.store');
         Route::delete('invitation-builder/themes/{theme:slug}', [InvitationBuilderThemeController::class, 'destroy'])->name('admin.invitation-builder.themes.destroy');
         Route::resource('invitation', InvitationsController::class);

@@ -20,7 +20,7 @@ return [
         'font_family' => 'Cairo',
         'headline_font' => 'Playfair Display',
         'animated_theme' => true,
-        'music_enabled' => true,
+        'music_enabled' => false,
         'welcome_enabled' => false,
         'envelope_color' => 'cream',
         'envelope_shape' => 'classic',
@@ -245,7 +245,7 @@ return [
     /**
      * Editable fields per information block (stored in settings.block_data).
      * Supported field types: text, textarea, url, email, tel, number, date, time,
-     * datetime-local, color, optional_color, font, select, checkbox (repeaters).
+     * datetime-local, color, optional_color, font, select, icon_upload, checkbox (repeaters).
      */
     'block_field_schemas' => [
         'countdown' => [
@@ -267,13 +267,13 @@ return [
                     'label_ar' => 'أيقونات البطاقات',
                     'fields' => [
                         'date_icon' => ['type' => 'select', 'label_ar' => 'أيقونة التاريخ', 'default' => 'calendar', 'options' => 'detail_card_icons'],
-                        'date_icon_url' => ['type' => 'url', 'label_ar' => 'رابط أيقونة التاريخ', 'default' => '', 'placeholder' => 'https://example.com/icon.png'],
+                        'date_icon_url' => ['type' => 'icon_upload', 'label_ar' => 'صورة أيقونة التاريخ', 'default' => ''],
                         'ceremony_icon' => ['type' => 'select', 'label_ar' => 'أيقونة الحفل', 'default' => 'clock', 'options' => 'detail_card_icons'],
-                        'ceremony_icon_url' => ['type' => 'url', 'label_ar' => 'رابط أيقونة الحفل', 'default' => '', 'placeholder' => 'https://example.com/icon.png'],
+                        'ceremony_icon_url' => ['type' => 'icon_upload', 'label_ar' => 'صورة أيقونة الحفل', 'default' => ''],
                         'venue_icon' => ['type' => 'select', 'label_ar' => 'أيقونة المكان', 'default' => 'location', 'options' => 'detail_card_icons'],
-                        'venue_icon_url' => ['type' => 'url', 'label_ar' => 'رابط أيقونة المكان', 'default' => '', 'placeholder' => 'https://example.com/icon.png'],
+                        'venue_icon_url' => ['type' => 'icon_upload', 'label_ar' => 'صورة أيقونة المكان', 'default' => ''],
                         'reception_icon' => ['type' => 'select', 'label_ar' => 'أيقونة الاستقبال', 'default' => 'reception', 'options' => 'detail_card_icons'],
-                        'reception_icon_url' => ['type' => 'url', 'label_ar' => 'رابط أيقونة الاستقبال', 'default' => '', 'placeholder' => 'https://example.com/icon.png'],
+                        'reception_icon_url' => ['type' => 'icon_upload', 'label_ar' => 'صورة أيقونة الاستقبال', 'default' => ''],
                     ],
                 ],
             ],
@@ -385,6 +385,13 @@ return [
                 'body' => ['type' => 'textarea', 'label_ar' => 'نص تمهيدي', 'default' => ''],
             ],
         ],
+        'background_music' => [
+            'fields' => [
+                'audio_url' => ['type' => 'audio_upload', 'label_ar' => 'ملف الموسيقى', 'default' => ''],
+                'volume' => ['type' => 'number', 'label_ar' => 'مستوى الصوت (٪)', 'default' => '50', 'min' => 0, 'max' => 100],
+                'loop' => ['type' => 'checkbox', 'label_ar' => 'تكرار الموسيقى', 'default' => true],
+            ],
+        ],
     ],
 
     'information_blocks' => [
@@ -404,6 +411,7 @@ return [
         'menu' => ['label_ar' => 'قائمة الطعام', 'icon' => '🍽', 'description_ar' => 'أطباق الحفل'],
         // 'transport' => ['label_ar' => 'المواصلات', 'icon' => '🚌', 'description_ar' => 'باصات الضيوف'],
         'wishes' => ['label_ar' => 'تهاني', 'icon' => '💬', 'description_ar' => 'رسائل من الضيوف'],
+        'background_music' => ['label_ar' => 'موسيقى خلفية', 'icon' => '🎵', 'description_ar' => 'تشغيل موسيقى عند فتح الظرف'],
     ],
 
     'event_types' => [

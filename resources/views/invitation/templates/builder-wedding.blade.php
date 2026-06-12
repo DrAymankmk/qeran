@@ -216,14 +216,15 @@ a.wi-venue-btn { text-decoration: none; display: inline-block; }
 .wi-builder-status-overlay.active { display: flex; }
 </style>
 
-@if(!empty($bc['music_enabled']))
-@php $audioUrls = $invitation->getAudioUrls(); @endphp
-@if(!empty($audioUrls['mp3']) || !empty($audioUrls['ogg']))
-<audio id="inviteOpeningAudio" preload="auto" style="display:none;">
-  @if(!empty($audioUrls['ogg']))<source src="{{ $audioUrls['ogg'] }}" type="audio/ogg">@endif
-  @if(!empty($audioUrls['mp3']))<source src="{{ $audioUrls['mp3'] }}" type="audio/mpeg">@endif
+@php
+  $wiMusicUrl = WeddingInvitationPresenter::backgroundMusicUrl($bc, $invitation);
+  $wiMusicVolume = WeddingInvitationPresenter::backgroundMusicVolume($bc);
+  $wiMusicLoop = WeddingInvitationPresenter::backgroundMusicLoop($bc);
+@endphp
+@if($wiMusicUrl !== '')
+<audio id="inviteOpeningAudio" preload="auto" data-volume="{{ $wiMusicVolume }}" @if($wiMusicLoop) loop @endif style="display:none;">
+  <source src="{{ $wiMusicUrl }}" type="{{ WeddingInvitationPresenter::backgroundMusicMime($bc) }}">
 </audio>
-@endif
 @endif
 
 @include('invitation.templates.partials.builder-wedding-envelope', $viewData)

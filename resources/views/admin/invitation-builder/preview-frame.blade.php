@@ -92,7 +92,10 @@
 		cursor: pointer;
 	}
 	</style>
-	@if(empty($builderConfig['music_enabled']))
+	@php
+		$previewHasMusic = \App\Services\Invitation\WeddingInvitationPresenter::backgroundMusicUrl($builderConfig ?? [], $invitation ?? null) !== '';
+	@endphp
+	@if(!$previewHasMusic)
 	<style>
 	#inviteOpeningAudio {
 		display: none !important;

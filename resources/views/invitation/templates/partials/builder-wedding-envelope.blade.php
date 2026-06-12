@@ -462,10 +462,8 @@ function wiOpenEnvelope() {
 	var main = document.getElementById('wiMainContent');
 	if (!gate) return;
 	gate.classList.add('is-opening');
-	var audio = document.getElementById('inviteOpeningAudio');
-	if (audio) {
-		audio.volume = 0.5;
-		audio.play().catch(function() {});
+	if (window.wiPlayOpeningAudio) {
+		window.wiPlayOpeningAudio();
 	}
 	setTimeout(function() {
 		gate.classList.add('is-open');

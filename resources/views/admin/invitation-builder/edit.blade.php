@@ -20,6 +20,17 @@ body {
 	z-index: 10;
 }
 
+.ib-icon-upload-preview {
+	width: 48px;
+	height: 48px;
+}
+
+.ib-icon-upload-img {
+	max-width: 40px;
+	max-height: 40px;
+	object-fit: contain;
+}
+
 .ib-preview-device.is-live-updating iframe {
 	opacity: 0.94;
 	transition: opacity 0.15s ease;

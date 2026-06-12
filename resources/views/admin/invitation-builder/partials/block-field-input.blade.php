@@ -110,6 +110,54 @@
 		class="form-control form-control-sm {{ $inputClass }}" value="{{ $displayValue }}"
 		placeholder="{{ $placeholder }}">
 	@break
+	@case('audio_upload')
+	<div class="ib-audio-upload" data-ib-audio-upload>
+		<input type="hidden" name="{{ $name }}" id="{{ $inputId }}"
+			class="{{ $inputClass }} ib-audio-upload-url" value="{{ $displayValue }}">
+		@if($displayValue !== '')
+		<audio class="ib-audio-upload-player w-100 mb-2" controls preload="metadata" src="{{ $displayValue }}"></audio>
+		@else
+		<div class="ib-audio-upload-empty text-muted small mb-2">{{ __('admin.ib-block-audio-empty') }}</div>
+		@endif
+		<input type="file" class="form-control form-control-sm ib-audio-upload-file"
+			accept="audio/mpeg,audio/mp3,audio/ogg,audio/wav,audio/webm,audio/mp4,.mp3,.ogg,.wav,.m4a,.webm">
+		<div class="d-flex gap-1 mt-1 flex-wrap">
+			<button type="button" class="btn btn-sm btn-outline-primary ib-audio-upload-btn">
+				<i class="mdi mdi-upload"></i> {{ __('admin.ib-block-audio-upload') }}
+			</button>
+			<button type="button" class="btn btn-sm btn-outline-secondary ib-audio-upload-clear"
+				@if($displayValue === '') disabled @endif title="{{ __('admin.ib-block-audio-clear') }}">×</button>
+		</div>
+		<small class="text-muted d-block ib-audio-upload-status"></small>
+	</div>
+	@break
+	@case('icon_upload')
+	<div class="ib-icon-upload" data-ib-icon-upload>
+		<input type="hidden" name="{{ $name }}" id="{{ $inputId }}"
+			class="{{ $inputClass }} ib-icon-upload-url" value="{{ $displayValue }}">
+		<div class="d-flex gap-2 align-items-start">
+			<div class="ib-icon-upload-preview border rounded bg-white d-flex align-items-center justify-content-center flex-shrink-0">
+				@if($displayValue !== '')
+				<img src="{{ $displayValue }}" alt="" class="ib-icon-upload-img">
+				@else
+				<span class="ib-icon-upload-placeholder text-muted small">—</span>
+				@endif
+			</div>
+			<div class="flex-grow-1 min-w-0">
+				<input type="file" class="form-control form-control-sm ib-icon-upload-file"
+					accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.svg">
+				<div class="d-flex gap-1 mt-1 flex-wrap">
+					<button type="button" class="btn btn-sm btn-outline-primary ib-icon-upload-btn">
+						<i class="mdi mdi-upload"></i> {{ __('admin.ib-block-icon-upload') }}
+					</button>
+					<button type="button" class="btn btn-sm btn-outline-secondary ib-icon-upload-clear"
+						@if($displayValue === '') disabled @endif title="{{ __('admin.ib-block-icon-clear') }}">×</button>
+				</div>
+				<small class="text-muted d-block ib-icon-upload-status"></small>
+			</div>
+		</div>
+	</div>
+	@break
 	@default
 	@php $htmlType = match ($type) {
 		'url' => 'url',

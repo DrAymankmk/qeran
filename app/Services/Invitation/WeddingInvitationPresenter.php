@@ -262,6 +262,59 @@ class WeddingInvitationPresenter
         return in_array($icon, $allowed, true) ? $icon : $default;
     }
 
+    public static function hasBackgroundMusicBlock(array $bc): bool
+    {
+        return in_array('background_music', $bc['blocks'] ?? [], true);
+    }
+
+    public static function backgroundMusicUrl(array $bc, ?Invitation $invitation = null): string
+    {
+        $url = trim((string) self::blockValue($bc, 'background_music', 'audio_url', ''));
+        if ($url !== '' && preg_match('#^(https?://|/)#i', $url)) {
+            return $url;
+        }
+
+        if ($invitation !== null) {
+            $legacy = $invitation->getAudioUrls();
+            $legacyUrl = trim((string) ($legacy['mp3'] ?? $legacy['ogg'] ?? ''));
+            if ($legacyUrl !== '') {
+                return $legacyUrl;
+            }
+        }
+
+        return '';
+    }
+
+    public static function backgroundMusicMime(array $bc): string
+    {
+        $url = self::backgroundMusicUrl($bc);
+        $extension = strtolower(pathinfo(parse_url($url, PHP_URL_PATH) ?: '', PATHINFO_EXTENSION));
+
+        return match ($extension) {
+            'ogg', 'oga' => 'audio/ogg',
+            'wav' => 'audio/wav',
+            'm4a', 'mp4' => 'audio/mp4',
+            'webm' => 'audio/webm',
+            default => 'audio/mpeg',
+        };
+    }
+
+    public static function backgroundMusicVolume(array $bc): float
+    {
+        $volume = self::blockValue($bc, 'background_music', 'volume', 50);
+
+        if (! is_numeric($volume)) {
+            return 0.5;
+        }
+
+        return max(0, min(100, (float) $volume)) / 100;
+    }
+
+    public static function backgroundMusicLoop(array $bc): bool
+    {
+        return filter_var(self::blockValue($bc, 'background_music', 'loop', true), FILTER_VALIDATE_BOOLEAN);
+    }
+
     public static function detailCardIconUrl(array $bc, string $card): string
     {
         $fieldKey = match ($card) {

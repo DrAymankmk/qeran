@@ -27,10 +27,38 @@
 				<h5 class="mb-0">{{ $invitation->event_name }}</h5>
 				<small class="text-muted">{{ __('admin.invitation-builder-live-preview') }}</small>
 			</div>
-			<a href="{{ $backUrl }}" class="btn btn-secondary btn-sm">
-				<i class="mdi mdi-arrow-right"></i> {{ __('admin.back') }}
-			</a>
+			<div class="d-flex flex-wrap gap-2">
+				@if(!empty($directInvitationUrl))
+				<a href="{{ $directInvitationUrl }}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">
+					<i class="mdi mdi-open-in-new"></i> {{ __('admin.invitation-builder-open-direct') }}
+				</a>
+				@endif
+				<a href="{{ $backUrl }}" class="btn btn-secondary btn-sm">
+					<i class="mdi mdi-arrow-right"></i> {{ __('admin.back') }}
+				</a>
+			</div>
 		</div>
+
+		@if(!empty($directInvitationUrl))
+		<div class="card mb-3">
+			<div class="card-body py-3">
+				<label class="form-label small fw-semibold mb-1" for="ibDirectInvitationUrl">
+					{{ __('admin.invitation-builder-direct-link') }}
+				</label>
+				<p class="small text-muted mb-2">{{ __('admin.invitation-builder-direct-link-hint') }}</p>
+				<div class="input-group input-group-sm">
+					<input type="text" class="form-control" id="ibDirectInvitationUrl" readonly value="{{ $directInvitationUrl }}">
+					<button type="button" class="btn btn-outline-secondary" id="ibCopyDirectInvitationUrl" title="{{ __('admin.invitation-builder-copy-link') }}">
+						<i class="mdi mdi-content-copy"></i>
+					</button>
+					<a href="{{ $directInvitationUrl }}" target="_blank" rel="noopener" class="btn btn-outline-primary">
+						<i class="mdi mdi-open-in-new"></i>
+					</a>
+				</div>
+				<small class="text-muted d-block mt-2" id="ibCopyDirectInvitationStatus"></small>
+			</div>
+		</div>
+		@endif
 
 		<div class="card mb-0">
 			<div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -105,6 +133,33 @@
 		});
 
 		loadPreview();
+
+		var copyBtn = document.getElementById('ibCopyDirectInvitationUrl');
+		var urlInput = document.getElementById('ibDirectInvitationUrl');
+		var copyStatus = document.getElementById('ibCopyDirectInvitationStatus');
+		if (copyBtn && urlInput) {
+			copyBtn.addEventListener('click', function () {
+				var url = urlInput.value || '';
+				if (!url) return;
+				function showCopied() {
+					if (copyStatus) {
+						copyStatus.textContent = @json(__('admin.invitation-builder-link-copied'));
+						window.setTimeout(function () { copyStatus.textContent = ''; }, 2000);
+					}
+				}
+				if (navigator.clipboard && navigator.clipboard.writeText) {
+					navigator.clipboard.writeText(url).then(showCopied).catch(function () {
+						urlInput.select();
+						document.execCommand('copy');
+						showCopied();
+					});
+					return;
+				}
+				urlInput.select();
+				document.execCommand('copy');
+				showCopied();
+			});
+		}
 	})();
 	</script>
 </body>

@@ -9,6 +9,9 @@ use App\Models\InvitationBuilderSetting;
 use App\Models\InvitationBuilderTheme;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\Pivot;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class InvitationBuilderService
 {
@@ -287,6 +290,7 @@ class InvitationBuilderService
 
         $blocks = $this->normalizeBlocks($json['blocks'] ?? $defaults['blocks'] ?? []);
         $blockData = $this->resolveBlockData($json, $invitation);
+        [$blocks, $blockData] = $this->syncBackgroundMusicBlock($blocks, $blockData);
 
         return array_merge($this->colorDefaults($themeDef, $json, $defaults), [
             'enabled' => $row !== null,
@@ -302,7 +306,7 @@ class InvitationBuilderService
             'welcome_title' => $json['welcome_title'] ?? $invitation->event_name,
             'welcome_subtitle' => $json['welcome_subtitle'] ?? ($invitation->host_name ?? ''),
             'welcome_enabled' => (bool) ($json['welcome_enabled'] ?? ($row?->opening_type === 'welcome')),
-            'music_enabled' => (bool) ($json['music_enabled'] ?? $defaults['music_enabled'] ?? true),
+            'music_enabled' => $this->hasBackgroundMusicAudio($blockData),
             'video_background' => $themeMedia['video_background'],
             'intro_video_enabled' => (bool) ($json['intro_video_enabled'] ?? ($row?->opening_type === 'intro_video')),
             'logo_url' => $json['logo_url'] ?? null,
@@ -389,6 +393,7 @@ class InvitationBuilderService
         $blockData = array_key_exists('block_data', $data)
             ? $this->normalizeBlockData($data['block_data'], $invitation)
             : ($base['block_data'] ?? []);
+        [$blocks, $blockData] = $this->syncBackgroundMusicBlock($blocks, $blockData);
 
         return array_merge($colors, [
             'enabled' => true,
@@ -407,7 +412,7 @@ class InvitationBuilderService
             'welcome_title' => $data['welcome_title'] ?? $base['welcome_title'],
             'welcome_subtitle' => $data['welcome_subtitle'] ?? $base['welcome_subtitle'],
             'welcome_enabled' => $welcomeEnabled,
-            'music_enabled' => $bool('music_enabled'),
+            'music_enabled' => $this->hasBackgroundMusicAudio($blockData),
             ...$this->resolveThemeMedia(
                 $themeDef,
                 [
@@ -453,6 +458,15 @@ class InvitationBuilderService
         $renderer = $this->resolveRenderer($themeSlug);
         $template = $renderer === 'builder-wedding' ? 0 : $this->resolveTemplateFromThemeSlug($themeSlug);
 
+        $blocks = isset($data['blocks']) ? $this->normalizeBlocks($data['blocks']) : null;
+        $blockData = isset($data['block_data'])
+            ? $this->normalizeBlockData($data['block_data'], $invitation)
+            : null;
+
+        if ($blocks !== null && $blockData !== null) {
+            [$blocks, $blockData] = $this->syncBackgroundMusicBlock($blocks, $blockData);
+        }
+
         $settings = [
             'theme_slug' => $themeSlug,
             'primary_color' => $data['primary_color'] ?? null,
@@ -465,7 +479,11 @@ class InvitationBuilderService
             'welcome_title' => $data['welcome_title'] ?? null,
             'welcome_subtitle' => $data['welcome_subtitle'] ?? null,
             'welcome_enabled' => filter_var($data['welcome_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN),
-            'music_enabled' => filter_var($data['music_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN),
+            'music_enabled' => $blockData !== null
+                ? $this->hasBackgroundMusicAudio($blockData)
+                : ($blocks !== null
+                    ? $this->musicEnabledFromBlocks($blocks)
+                    : filter_var($data['music_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)),
             'video_background' => filter_var($data['video_background'] ?? false, FILTER_VALIDATE_BOOLEAN),
             'intro_video_enabled' => filter_var($data['intro_video_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN),
             'logo_url' => $data['logo_url'] ?? null,
@@ -483,10 +501,8 @@ class InvitationBuilderService
             'date_position' => $data['date_position'] ?? null,
             'block_accent_color' => $data['block_accent_color'] ?? null,
             'block_floral_border' => filter_var($data['block_floral_border'] ?? true, FILTER_VALIDATE_BOOLEAN),
-            'blocks' => isset($data['blocks']) ? $this->normalizeBlocks($data['blocks']) : null,
-            'block_data' => isset($data['block_data'])
-                ? $this->normalizeBlockData($data['block_data'], $invitation)
-                : null,
+            'blocks' => $blocks,
+            'block_data' => $blockData,
             'venue_name' => $data['venue_name'] ?? null,
             'venue_location' => $data['venue_location'] ?? null,
             'ceremony_note' => $data['ceremony_note'] ?? null,
@@ -809,11 +825,83 @@ class InvitationBuilderService
             'textarea' => 'col-12',
             'checkbox' => 'col-md-6',
             'color', 'optional_color' => 'col-md-4',
-            'font', 'font_weight', 'select' => 'col-md-4',
+            'font', 'font_weight', 'select', 'icon_upload', 'audio_upload' => 'col-md-6',
             'font_size' => 'col-md-4',
             'date', 'time', 'datetime-local' => 'col-md-4',
             default => 'col-md-6',
         };
+    }
+
+    public function storeBlockIcon(Invitation $invitation, UploadedFile $file): string
+    {
+        $extension = strtolower($file->getClientOriginalExtension() ?: 'png');
+        $filename = 'icon-'.Str::uuid()->toString().'.'.$extension;
+        $directory = 'invitation-builder/block-icons/'.$invitation->id;
+
+        Storage::disk('public')->putFileAs($directory, $file, $filename);
+
+        return Storage::disk('public')->url($directory.'/'.$filename);
+    }
+
+    public function storeBlockAudio(Invitation $invitation, UploadedFile $file): string
+    {
+        $extension = strtolower($file->getClientOriginalExtension() ?: 'mp3');
+        $filename = 'audio-'.Str::uuid()->toString().'.'.$extension;
+        $directory = 'invitation-builder/block-audio/'.$invitation->id;
+
+        Storage::disk('public')->putFileAs($directory, $file, $filename);
+
+        return Storage::disk('public')->url($directory.'/'.$filename);
+    }
+
+    public function musicEnabledFromBlocks(array $blocks): bool
+    {
+        return in_array('background_music', $blocks, true);
+    }
+
+    public function hasBackgroundMusicAudio(array $blockData): bool
+    {
+        $url = trim((string) ($blockData['background_music']['audio_url'] ?? ''));
+
+        return $url !== '' && (bool) preg_match('#^(https?://|/)#i', $url);
+    }
+
+    /**
+     * @return array{0: array<int, string>, 1: array<string, mixed>}
+     */
+    public function syncBackgroundMusicBlock(array $blocks, array $blockData): array
+    {
+        if ($this->hasBackgroundMusicAudio($blockData) && ! in_array('background_music', $blocks, true)) {
+            $blocks[] = 'background_music';
+        }
+
+        return [$blocks, $blockData];
+    }
+
+    public function persistBackgroundMusicAudio(Invitation $invitation, string $audioUrl): void
+    {
+        $audioUrl = trim($audioUrl);
+        if ($audioUrl === '' || ! preg_match('#^(https?://|/)#i', $audioUrl)) {
+            return;
+        }
+
+        $row = $invitation->builderSetting;
+        if (! $row) {
+            return;
+        }
+
+        $json = is_array($row->settings) ? $row->settings : [];
+        $blocks = $this->normalizeBlocks($json['blocks'] ?? []);
+        $blockData = $this->resolveBlockData($json, $invitation);
+        $blockData['background_music']['audio_url'] = $audioUrl;
+        [$blocks, $blockData] = $this->syncBackgroundMusicBlock($blocks, $blockData);
+
+        $json['blocks'] = $blocks;
+        $json['block_data'] = $blockData;
+        $json['music_enabled'] = true;
+
+        $row->update(['settings' => $json]);
+        $invitation->unsetRelation('builderSetting');
     }
 
     /**
@@ -963,7 +1051,7 @@ class InvitationBuilderService
             return array_key_exists($value, $options) ? $value : '';
         }
 
-        if ($type === 'url') {
+        if ($type === 'url' || $type === 'icon_upload' || $type === 'audio_upload') {
             if (preg_match('#^(https?://|/)#i', $value)) {
                 return $value;
             }
@@ -1074,6 +1162,40 @@ class InvitationBuilderService
         ];
     }
 
+    public function builderDisplayGuest(Invitation $invitation, ?int $userId = null): User
+    {
+        $invitation->loadMissing('users');
+
+        if ($userId !== null && $userId > 0) {
+            $guest = $this->resolveGuestForShow($invitation, $userId, null, true);
+
+            if ($guest) {
+                return $guest;
+            }
+
+            $ids = $this->resolvePreviewGuestIds($invitation);
+            $guest = $this->resolveGuestForShow($invitation, $userId, (int) $ids['inserted_by'], true);
+
+            if ($guest) {
+                return $guest;
+            }
+        }
+
+        $ids = $this->resolvePreviewGuestIds($invitation);
+        $guest = $this->resolveGuestForShow(
+            $invitation,
+            (int) $ids['user_id'],
+            (int) $ids['inserted_by'],
+            true
+        );
+
+        if ($guest) {
+            return $guest;
+        }
+
+        return $this->syntheticPreviewUser($invitation);
+    }
+
     public function resolvePreviewGuestIds(Invitation $invitation): array
     {
         $invitation->loadMissing('users');
@@ -1159,6 +1281,30 @@ class InvitationBuilderService
     }
 
     /**
+     * Full-page guest invitation URL (no admin preview chrome).
+     * Returns null when the invitation has no builder settings.
+     */
+    public function directGuestInvitationUrl(Invitation $invitation): ?string
+    {
+        $invitation->loadMissing('builderSetting');
+        $builderRow = $invitation->builderSetting;
+
+        if (! $builderRow) {
+            return null;
+        }
+
+        $url = route('user.invitation.builder.show', [
+            'invitation_code' => $invitation->code,
+        ]);
+
+        if (! $builderRow->isPublished()) {
+            $url .= (str_contains($url, '?') ? '&' : '?').'builder=1';
+        }
+
+        return $url;
+    }
+
+    /**
      * Guest-facing invitation URL for SMS, WhatsApp, and API responses.
      * Uses the builder-rendered page when invitation_builder_settings exist.
      */
@@ -1171,28 +1317,27 @@ class InvitationBuilderService
         $invitation->loadMissing('builderSetting');
         $builderRow = $invitation->builderSetting;
 
+        if ($builderRow) {
+            $routeParams = ['invitation_code' => $invitation->code];
+            if ($userId > 0) {
+                $routeParams['user_id'] = $userId;
+            }
+
+            $url = route('user.invitation.builder.show', $routeParams);
+
+            if ($preview || ! $builderRow->isPublished()) {
+                $url .= (str_contains($url, '?') ? '&' : '?').'builder=1';
+            }
+
+            return $url;
+        }
+
         $routeParams = array_filter([
             'invitation_code' => $invitation->code,
             'user_id' => $userId,
             'inserted_by' => $insertedBy,
         ], fn ($value) => $value !== null && $value !== '');
 
-        if ($builderRow) {
-            $json = is_array($builderRow->settings) ? $builderRow->settings : [];
-            $themeSlug = $json['theme_slug'] ?? config('invitation_builder.defaults.theme_slug', 'elegant-wedding');
-            $renderer = $this->resolveRenderer($themeSlug);
-            $template = $renderer === 'builder-wedding' ? 0 : (int) ($builderRow->theme_template ?? 1);
-            if ($template >= 1 && $template <= 21) {
-                $routeParams['template'] = $template;
-            }
-        }
-
-        $url = route('user.invitation.show', $routeParams);
-
-        if ($preview || ($builderRow && ! $builderRow->isPublished())) {
-            $url .= (str_contains($url, '?') ? '&' : '?').'builder=1';
-        }
-
-        return $url;
+        return route('user.invitation.show', $routeParams);
     }
 }

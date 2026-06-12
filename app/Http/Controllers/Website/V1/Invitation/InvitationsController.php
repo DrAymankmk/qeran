@@ -15,6 +15,83 @@ class InvitationsController extends Controller
         protected InvitationBuilderService $invitationBuilder
     ) {}
 
+    public function showBuilder(string $invitation_code, $user_id = null)
+    {
+        $invitation = Invitation::with('builderSetting')->where('code', $invitation_code)->first();
+
+        if (! $invitation) {
+            return view('invitation-error', ['message' => 'الدعوة غير موجودة أو قد تم حذفها.']);
+        }
+
+        $builderRow = $invitation->builderSetting;
+        if (! $builderRow) {
+            return view('invitation-error', ['message' => 'هذه الدعوة لا تستخدم منشئ الدعوات.']);
+        }
+
+        $userId = ($user_id !== null && $user_id !== '') ? (int) $user_id : null;
+        $builderPreview = request()->boolean('builder')
+            || request()->query('builder') === '1'
+            || ! $builderRow->isPublished();
+
+        $user = $this->invitationBuilder->builderDisplayGuest($invitation, $userId);
+        $resolvedUserId = (int) $user->id;
+        $resolvedInsertedBy = (int) ($user->pivot->invited_by ?? $invitation->user_id);
+        $hasRealGuest = $invitation->users()->where('user_id', $resolvedUserId)->exists();
+
+        $host_name = $invitation->host_name;
+        if ($hasRealGuest && ! empty($user->pivot->host_name)) {
+            $host_name = $user->pivot->host_name;
+        }
+
+        $category = Category::where('id', $invitation->category_id)->first();
+
+        if (! $builderPreview
+            && $hasRealGuest
+            && $user->pivot->seen != Constant::SEEN_STATUS['accepted']
+            && $user->pivot->seen != Constant::SEEN_STATUS['declined']) {
+            $invitation->users()->updateExistingPivot($resolvedUserId, ['seen' => Constant::SEEN_STATUS['seen']]);
+
+            InvitationContactLog::query()
+                ->where('invitation_id', $invitation->id)
+                ->where('user_id', $resolvedUserId)
+                ->when($resolvedInsertedBy, fn ($query) => $query->where('invited_by', $resolvedInsertedBy))
+                ->update(['seen' => Constant::SEEN_STATUS['seen']]);
+
+            $invitation->load('users');
+            $user = $invitation->users()->where('invitation_user.user_id', $resolvedUserId)->first() ?? $user;
+        }
+
+        $builderConfig = $this->invitationBuilder->resolve($invitation, 0);
+        $builderView = $builderConfig['view'] ?? null;
+        $template = (int) ($builderConfig['template'] ?? 0);
+
+        $routes = [
+            'accept' => route('user.invitation.accept', ['invitation_code' => $invitation->code, 'user_id' => $resolvedUserId]),
+            'decline' => route('user.invitation.decline', ['invitation_code' => $invitation->code, 'user_id' => $resolvedUserId]),
+        ];
+
+        $initialView = 'envelope';
+        if ($hasRealGuest && $user->pivot->seen == Constant::SEEN_STATUS['accepted']) {
+            $initialView = 'success';
+            $invitation->ensureQrCodeForUser($resolvedUserId);
+        } elseif ($hasRealGuest && $user->pivot->seen == Constant::SEEN_STATUS['declined']) {
+            $initialView = 'decline';
+        }
+
+        return view('invitation', compact(
+            'invitation',
+            'user',
+            'routes',
+            'category',
+            'host_name',
+            'initialView',
+            'template',
+            'builderConfig',
+            'builderPreview',
+            'builderView'
+        ));
+    }
+
     public function show($invitation_code, $user_id, $inserted_by = null, $template = 1)
     {
         $invitation = Invitation::with('builderSetting')->where('code', $invitation_code)->first();

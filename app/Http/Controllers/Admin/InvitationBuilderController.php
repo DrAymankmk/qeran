@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\InvitationBuilderPreviewRequest;
 use App\Http\Requests\Admin\InvitationBuilderRequest;
+use App\Http\Requests\Admin\StoreInvitationBuilderBlockAudioRequest;
+use App\Http\Requests\Admin\StoreInvitationBuilderBlockIconRequest;
 use App\Models\Invitation;
 use App\Services\Invitation\InvitationBuilderService;
+use Illuminate\Http\JsonResponse;
 
 class InvitationBuilderController extends Controller
 {
@@ -112,10 +115,13 @@ class InvitationBuilderController extends Controller
     {
         $embedHtml = view('admin.invitation-builder.preview-frame', $context)->render();
 
+        $invitation = $context['invitation'];
+
         return response()->view('admin.invitation-builder.preview-standalone', [
-            'invitation' => $context['invitation'],
+            'invitation' => $invitation,
             'embedHtml' => $embedHtml,
-            'backUrl' => route('admin.invitation-builder.edit', $context['invitation']),
+            'backUrl' => route('admin.invitation-builder.edit', $invitation),
+            'directInvitationUrl' => $this->builder->directGuestInvitationUrl($invitation),
         ]);
     }
 
@@ -126,5 +132,28 @@ class InvitationBuilderController extends Controller
         return redirect()
             ->route('admin.invitation-builder.edit', $invitation)
             ->with('success', __('admin.invitation-builder-saved'));
+    }
+
+    public function uploadBlockIcon(StoreInvitationBuilderBlockIconRequest $request, Invitation $invitation): JsonResponse
+    {
+        $url = $this->builder->storeBlockIcon($invitation, $request->file('icon'));
+
+        return response()->json([
+            'ok' => true,
+            'url' => $url,
+            'message' => __('admin.ib-block-icon-upload-success'),
+        ]);
+    }
+
+    public function uploadBlockAudio(StoreInvitationBuilderBlockAudioRequest $request, Invitation $invitation): JsonResponse
+    {
+        $url = $this->builder->storeBlockAudio($invitation, $request->file('audio'));
+        $this->builder->persistBackgroundMusicAudio($invitation, $url);
+
+        return response()->json([
+            'ok' => true,
+            'url' => $url,
+            'message' => __('admin.ib-block-audio-upload-success'),
+        ]);
     }
 }

@@ -5,7 +5,7 @@
 @if($schema)
 <div class="ib-block-fields border-top mt-2 pt-3">
 	@php $styleFields = $catalog['block_style_fields'] ?? config('invitation_builder.block_style_fields', []); @endphp
-	@if(count($styleFields) > 0)
+	@if(count($styleFields) > 0 && $blockKey !== 'background_music')
 	<div class="ib-block-style-fields mb-3 pb-3 border-bottom">
 		<p class="small fw-semibold text-muted mb-2">{{ __('admin.ib-block-style-section') }}</p>
 		@php

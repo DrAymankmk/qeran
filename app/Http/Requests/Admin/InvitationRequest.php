@@ -33,6 +33,10 @@ class InvitationRequest extends FormRequest
                 'mimes:mp4,webm,ogg,mov,avi,jpeg,jpg,png,gif',
                 'mimetypes:video/mp4,video/webm,video/ogg,video/quicktime,video/x-msvideo,image/jpeg,image/png,image/gif',
             ],
+            'client_preview_url' => [
+                'nullable',
+                'url',
+            ],
         ];
     }
     public function messages()

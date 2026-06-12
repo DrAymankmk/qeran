@@ -1,4 +1,12 @@
 <script>
+window.wiPlayOpeningAudio = function () {
+  var audio = document.getElementById('inviteOpeningAudio');
+  if (!audio) return;
+  var vol = parseFloat(audio.dataset.volume || '0.5');
+  audio.volume = Math.max(0, Math.min(1, isFinite(vol) ? vol : 0.5));
+  audio.play().catch(function () {});
+};
+
 var wiAcceptUrl = @json($routes['accept'] ?? '');
 var wiDeclineUrl = @json($routes['decline'] ?? '');
 var wiIsBuilderPreview = @json(!empty($isBuilderPreview));

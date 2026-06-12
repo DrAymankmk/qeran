@@ -41,7 +41,8 @@ class Invitation extends Model
         'package_id',
         'invitation_media_type',
         'code',
-	'link_url'
+	'link_url',
+    'client_preview_url',
     ];
 
     /**
@@ -50,13 +51,13 @@ class Invitation extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($invitation) {
             Log::info('Invitation creating event triggered', [
                 'current_code' => $invitation->code,
                 'is_empty' => empty($invitation->code)
             ]);
-            
+
             if (empty($invitation->code)) {
                 $invitation->code = static::generateUniqueCode();
                 Log::info('Generated new code', ['code' => $invitation->code]);
@@ -74,7 +75,7 @@ class Invitation extends Model
         do {
             $code = Str::upper(Str::random(8));
         } while (static::where('code', $code)->exists());
-        
+
         return $code;
     }
 
@@ -140,14 +141,14 @@ class Invitation extends Model
     /**
      * Get audio URLs (MP3 and OGG)
      * Converts MP3 to OGG if OGG doesn't exist
-     * 
+     *
      * @return array ['mp3' => string|null, 'ogg' => string|null]
      */
     public function getAudioUrls()
     {
         $this->load('hubFiles');
         $disk = Storage::disk(mediaDisk());
-        
+
         $audioFile = $this->hubFiles()->where([
             'file_type' => Constant::FILE_TYPE['Audio'],
             'file_key' => Constant::FILE_KEY['Not Main']
@@ -159,7 +160,7 @@ class Invitation extends Model
 
         $mp3Path = $audioFile->get_path();
         $mp3Extension = strtolower($audioFile->extension ?? pathinfo($audioFile->path, PATHINFO_EXTENSION));
-        
+
         // If it's already OGG, return both as the same
         if ($mp3Extension === 'ogg' || $mp3Extension === 'oga') {
             return ['mp3' => $mp3Path, 'ogg' => $mp3Path];
@@ -192,7 +193,7 @@ class Invitation extends Model
                 // Check if FFmpeg is available
                 $ffmpegPath = shell_exec('which ffmpeg') ?: 'ffmpeg';
                 $ffmpegCheck = shell_exec($ffmpegPath . ' -version 2>&1');
-                
+
                 if ($ffmpegCheck && strpos($ffmpegCheck, 'ffmpeg version') !== false) {
                     $tempDir = storage_path('app/tmp/audio');
                     if (!is_dir($tempDir)) {
@@ -206,9 +207,9 @@ class Invitation extends Model
                     // Convert MP3 to OGG using FFmpeg command
                     $command = escapeshellarg($ffmpegPath) . ' -i ' . escapeshellarg($sourceAbs) .
                                ' -acodec libvorbis -q:a 5 ' . escapeshellarg($oggStoragePath) . ' 2>&1';
-                    
+
                     exec($command, $output, $returnCode);
-                    
+
                     if ($returnCode === 0 && file_exists($oggStoragePath)) {
                         $oggBytes = file_get_contents($oggStoragePath);
                         if ($oggBytes !== false) {
@@ -442,7 +443,7 @@ class Invitation extends Model
         );
     }
 
-    public function totalInvitationsCount() 
+    public function totalInvitationsCount()
     {
         // Fixed: Use $this->id instead of $invitation->id
         // Use relationship instead of direct query for better performance
@@ -453,7 +454,7 @@ class Invitation extends Model
         return $extraCountInvitation + $invitationCount;
     }
 
-    public function totalUnPaidInvitationsCount() 
+    public function totalUnPaidInvitationsCount()
     {
         // Fixed: Use $this->id instead of $invitation->id
         // Use relationship instead of direct query for better performance
@@ -495,7 +496,7 @@ class Invitation extends Model
         }
 
         // Combine date and time to create a full datetime
-        $invitationDateTime = $this->time 
+        $invitationDateTime = $this->time
             ? Carbon::parse($this->date . ' ' . $this->time)
             : Carbon::parse($this->date)->endOfDay(); // If no time, assume end of day
 

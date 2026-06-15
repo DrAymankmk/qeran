@@ -114,8 +114,15 @@ class WhatsAppConnectController extends Controller
                     'session_id' => $sessionId,
                 ]);
             }
-            Log::warning('WhatsApp connect: reconnect failed after extended wait — wiping for fresh pairing', [
+            Log::warning('WhatsApp connect: reconnect failed after extended wait — keeping saved credentials', [
                 'user_id' => $user->id,
+            ]);
+
+            return RespondActive::success(__('messages.whatsapp_reconnecting'), [
+                'status' => 'reconnecting',
+                'phone' => $existingStatus['data']['phone'] ?? $phone,
+                'session_id' => $sessionId,
+                'action' => 'wait_for_connection',
             ]);
         }
 
@@ -709,6 +716,15 @@ class WhatsAppConnectController extends Controller
         }
 
         if ($connectionStatus === 'pending_pairing') {
+            return ['pending_pairing', false];
+        }
+
+        if (
+            in_array($connectionStatus, ['starting', 'pending_qr'], true)
+            && $socketAlive
+            && ! $registeredOnDisk
+            && ! $pairingAccepted
+        ) {
             return ['pending_pairing', false];
         }
 

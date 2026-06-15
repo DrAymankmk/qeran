@@ -59,23 +59,6 @@ export function isSessionAborted(sessionId: string): boolean {
   return abortedSessions.has(sessionId);
 }
 
-export function isLinkingInProgress(sessionId: string): boolean {
-  const meta = sessions.get(sessionId);
-  if (!meta) {
-    return false;
-  }
-
-  if (meta.status === 'pending_qr' || meta.status === 'starting' || meta.status === 'pending_pairing') {
-    return true;
-  }
-
-  if (meta.qr && meta.qrGeneratedAt && Date.now() - meta.qrGeneratedAt < 120_000) {
-    return true;
-  }
-
-  return false;
-}
-
 export function clearSessionAbort(sessionId: string): void {
   abortedSessions.delete(sessionId);
 }
@@ -133,6 +116,82 @@ const CONNECTED_SESSION_WATCHDOG_MS = Number(process.env.CONNECTED_SESSION_WATCH
 const scheduledReconnects = new Set<string>();
 let connectedSessionWatchdogTimer: ReturnType<typeof setInterval> | undefined;
 let connectedSessionWatchdogTickInFlight = false;
+
+export function isLinkingInProgress(sessionId: string): boolean {
+  const meta = sessions.get(sessionId);
+  if (!meta) {
+    return false;
+  }
+
+  if (meta.status === 'pending_pairing') {
+    if (meta.pairingCode) {
+      return true;
+    }
+    if (meta.pairingRequestedAt && Date.now() - meta.pairingRequestedAt < PAIRING_CODE_TTL_MS) {
+      return true;
+    }
+    return false;
+  }
+
+  if (meta.status === 'pending_qr') {
+    if (meta.qr && meta.qrGeneratedAt && Date.now() - meta.qrGeneratedAt < 120_000) {
+      return true;
+    }
+    return false;
+  }
+
+  if (meta.status === 'starting') {
+    if (meta.pairingCode) {
+      return true;
+    }
+    if (meta.pairingRequestedAt && Date.now() - meta.pairingRequestedAt < PAIRING_CODE_TTL_MS) {
+      return true;
+    }
+    return false;
+  }
+
+  if (meta.qr && meta.qrGeneratedAt && Date.now() - meta.qrGeneratedAt < 120_000) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Drop orphan sockets / partial auth folders that never completed registration.
+ * Returns true when stale state was removed.
+ */
+export async function cleanupStaleUnregisteredSession(sessionId: string): Promise<boolean> {
+  if (isSessionAborted(sessionId) || isLinkingInProgress(sessionId)) {
+    return false;
+  }
+
+  const progress = await getPairingProgress(sessionId);
+  if (progress.registered || progress.pairingAccepted) {
+    return false;
+  }
+
+  const meta = sessions.get(sessionId);
+  const hasLiveSocket = Boolean(meta?.sock);
+  const hasAuthFolder = sessionAuthExists(sessionId);
+
+  if (!hasLiveSocket && !hasAuthFolder) {
+    return false;
+  }
+
+  logger.info(
+    { sessionId, status: meta?.status, hasLiveSocket, hasAuthFolder },
+    'cleaning stale unregistered WhatsApp session'
+  );
+
+  if (hasAuthFolder) {
+    wipeSessionAuth(sessionId);
+  } else if (meta) {
+    clearStaleSessionMeta(sessionId);
+  }
+
+  return true;
+}
 
 function sessionsDir(): string {
   return process.env.SESSIONS_DIR ?? path.join(process.cwd(), 'sessions');
@@ -460,6 +519,7 @@ async function runConnectedSessionWatchdog(): Promise<void> {
   try {
     for (const sessionId of collectKnownSessionIds()) {
       try {
+        await cleanupStaleUnregisteredSession(sessionId);
         await recoverRegisteredSessionIfSocketDown(sessionId);
       } catch (err) {
         logger.warn({ sessionId, err }, 'watchdog session probe failed');

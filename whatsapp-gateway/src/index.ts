@@ -4,6 +4,7 @@ import QRCode from 'qrcode';
 import pino from 'pino';
 import {
   clearStaleSessionMeta,
+  cleanupStaleUnregisteredSession,
   deleteSession,
   disconnectedStatusPayload,
   getPairingCode,
@@ -286,6 +287,11 @@ app.get('/sessions/:id/status', async (req, res) => {
       });
       return;
     }
+    res.json(disconnectedStatusPayload(sessionId));
+    return;
+  }
+
+  if (await cleanupStaleUnregisteredSession(sessionId)) {
     res.json(disconnectedStatusPayload(sessionId));
     return;
   }

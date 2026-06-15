@@ -19,6 +19,7 @@ module.exports = {
         SESSIONS_DIR: process.env.SESSIONS_DIR || './sessions',
         RECONNECT_WIPE_THRESHOLD: process.env.RECONNECT_WIPE_THRESHOLD ?? '0',
         RECONNECT_BACKOFF_MS: process.env.RECONNECT_BACKOFF_MS ?? '30000,120000,600000',
+        CONNECTED_SESSION_WATCHDOG_MS: process.env.CONNECTED_SESSION_WATCHDOG_MS ?? '45000',
         ENABLE_QR_SETUP_PAGE: process.env.ENABLE_QR_SETUP_PAGE ?? 'true',
         LARAVEL_WEBHOOK_URL: process.env.LARAVEL_WEBHOOK_URL || '',
         LARAVEL_WEBHOOK_SECRET: process.env.LARAVEL_WEBHOOK_SECRET || '',

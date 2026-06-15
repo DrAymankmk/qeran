@@ -92,6 +92,11 @@ export function isLinkedOnWhatsApp(
   return status === 'connected' && socketAlive && registered;
 }
 
+/** True only when status is connected AND the Baileys WebSocket is still open. */
+export function isSessionLiveConnected(meta: SessionMeta | undefined): boolean {
+  return meta?.status === 'connected' && Boolean(meta.sock);
+}
+
 export function disconnectedStatusPayload(sessionId: string): Record<string, unknown> {
   return {
     sessionId,
@@ -122,8 +127,12 @@ const RECONNECT_BACKOFF_MS = (process.env.RECONNECT_BACKOFF_MS ?? '30000,120000,
   .filter((n) => Number.isFinite(n) && n > 0);
 const RECONNECT_BACKOFF_SCHEDULE =
   RECONNECT_BACKOFF_MS.length > 0 ? RECONNECT_BACKOFF_MS : [30_000, 120_000, 600_000];
+/** Periodic check for registered sessions with a dead socket (0 = disabled). */
+const CONNECTED_SESSION_WATCHDOG_MS = Number(process.env.CONNECTED_SESSION_WATCHDOG_MS ?? 45_000);
 
 const scheduledReconnects = new Set<string>();
+let connectedSessionWatchdogTimer: ReturnType<typeof setInterval> | undefined;
+let connectedSessionWatchdogTickInFlight = false;
 
 function sessionsDir(): string {
   return process.env.SESSIONS_DIR ?? path.join(process.cwd(), 'sessions');
@@ -327,7 +336,7 @@ function scheduleReconnectAfterRestart(sessionId: string, delayMs: number): void
   setTimeout(() => {
     scheduledReconnects.delete(sessionId);
     const meta = sessions.get(sessionId);
-    if (!meta || meta.status === 'connected' || isSessionAborted(sessionId)) {
+    if (!meta || isSessionLiveConnected(meta) || isSessionAborted(sessionId)) {
       return;
     }
     void reconnectAfterRestart(sessionId, meta);
@@ -393,6 +402,98 @@ export async function restorePersistedSessions(): Promise<void> {
       logger.warn({ sessionId, err }, 'skipped startup restore for session');
     }
   }
+}
+
+function collectKnownSessionIds(): string[] {
+  const ids = new Set<string>();
+
+  for (const sessionId of sessions.keys()) {
+    ids.add(sessionId);
+  }
+
+  const dir = sessionsDir();
+  if (fs.existsSync(dir)) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        ids.add(entry.name);
+      }
+    }
+  }
+
+  return [...ids];
+}
+
+async function recoverRegisteredSessionIfSocketDown(sessionId: string): Promise<void> {
+  if (isSessionAborted(sessionId) || !sessionAuthExists(sessionId)) {
+    return;
+  }
+
+  if (isSessionStartInFlight(sessionId) || scheduledReconnects.has(sessionId) || finalizingSessions.has(sessionId)) {
+    return;
+  }
+
+  const progress = await getPairingProgress(sessionId);
+  if (!progress.registered) {
+    return;
+  }
+
+  const meta = ensureSessionMeta(sessionId);
+  if (isSessionLiveConnected(meta)) {
+    return;
+  }
+
+  if (meta.status === 'pending_pairing' && progress.pairingAccepted && !progress.registered) {
+    return;
+  }
+
+  logger.info({ sessionId, status: meta.status }, 'watchdog: registered session socket down — reconnecting');
+  void reconnectAfterRestart(sessionId, meta);
+}
+
+async function runConnectedSessionWatchdog(): Promise<void> {
+  if (connectedSessionWatchdogTickInFlight) {
+    return;
+  }
+
+  connectedSessionWatchdogTickInFlight = true;
+
+  try {
+    for (const sessionId of collectKnownSessionIds()) {
+      try {
+        await recoverRegisteredSessionIfSocketDown(sessionId);
+      } catch (err) {
+        logger.warn({ sessionId, err }, 'watchdog session probe failed');
+      }
+    }
+  } finally {
+    connectedSessionWatchdogTickInFlight = false;
+  }
+}
+
+/** Start periodic recovery for registered sessions whose Baileys socket dropped. */
+export function startConnectedSessionWatchdog(): void {
+  if (CONNECTED_SESSION_WATCHDOG_MS <= 0) {
+    logger.info('connected session watchdog disabled (CONNECTED_SESSION_WATCHDOG_MS <= 0)');
+    return;
+  }
+
+  if (connectedSessionWatchdogTimer) {
+    return;
+  }
+
+  logger.info({ intervalMs: CONNECTED_SESSION_WATCHDOG_MS }, 'starting connected session watchdog');
+
+  connectedSessionWatchdogTimer = setInterval(() => {
+    void runConnectedSessionWatchdog().catch((err) => {
+      logger.error({ err }, 'connected session watchdog tick failed');
+    });
+  }, CONNECTED_SESSION_WATCHDOG_MS);
+
+  setTimeout(() => {
+    void runConnectedSessionWatchdog().catch((err) => {
+      logger.error({ err }, 'connected session watchdog initial probe failed');
+    });
+  }, 10_000);
 }
 
 export async function waitForConnected(sessionId: string, timeoutMs: number): Promise<boolean> {
@@ -552,7 +653,7 @@ export async function isAuthRegistered(sessionId: string): Promise<boolean> {
 }
 
 async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Promise<void> {
-  if (meta.status === 'connected') {
+  if (isSessionLiveConnected(meta)) {
     return;
   }
 
@@ -663,7 +764,8 @@ export function ensureSessionMeta(sessionId: string): SessionMeta {
       if (isSystemSession(sessionId)) {
         return 'starting' as const;
       }
-      return 'pending_pairing' as const;
+      // Saved creds on disk — socket must be restored, not a fresh pairing flow.
+      return 'starting' as const;
     })(),
     pairingCode: undefined,
     linkPhone: undefined,
@@ -688,7 +790,7 @@ export async function ensurePairingFinalized(sessionId: string): Promise<Session
   try {
     const meta = ensureSessionMeta(sessionId);
 
-    if (meta.status === 'connected') {
+    if (isSessionLiveConnected(meta)) {
       return meta;
     }
 
@@ -956,11 +1058,9 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
       void (async () => {
         const progress = await getPairingProgress(sessionId);
         if (progress.registered) {
-          meta.status = 'connected';
+          meta.status = 'starting';
           logger.info({ sessionId }, 'registered session socket closed — reconnecting');
-          if (!meta.sock) {
-            await reconnectAfterRestart(sessionId, meta);
-          }
+          await reconnectAfterRestart(sessionId, meta);
           return;
         }
 
@@ -1089,8 +1189,8 @@ export async function startSession(sessionId: string): Promise<SessionMeta> {
   await ensureQrLinkingSession(sessionId);
 
   const existing = sessions.get(sessionId);
-  if (existing?.status === 'connected') {
-    return existing;
+  if (isSessionLiveConnected(existing)) {
+    return existing!;
   }
 
   if (existing?.sock) {
@@ -1158,8 +1258,8 @@ export async function startSessionWithPairing(
   }
 
   const existing = sessions.get(sessionId);
-  if (existing?.status === 'connected') {
-    return existing;
+  if (isSessionLiveConnected(existing)) {
+    return existing!;
   }
 
   const inFlight = startPromises.get(sessionId);
@@ -1202,7 +1302,7 @@ export function getPairingCodeAgeSeconds(sessionId: string): number | null {
  */
 export async function ensureQrLinkingSession(sessionId: string): Promise<void> {
   const meta = sessions.get(sessionId);
-  if (meta?.status === 'connected') {
+  if (isSessionLiveConnected(meta)) {
     return;
   }
 

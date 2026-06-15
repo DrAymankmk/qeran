@@ -570,7 +570,7 @@ class WhatsAppConnectController extends Controller
         $socketAlive = (bool) ($data['socketAlive'] ?? false);
 
         if (
-            $connectionStatus === 'connected'
+            ($connectionStatus === 'connected' && $socketAlive)
             || $socketAlive
             || $this->isEnteringPairingCode($connectionStatus, $registeredOnDisk, $pairingAccepted)
             || ! $registeredOnDisk

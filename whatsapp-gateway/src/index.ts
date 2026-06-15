@@ -27,6 +27,7 @@ import {
   normalizePhoneDigits,
   restorePersistedSessions,
   sessionAuthExists,
+  startConnectedSessionWatchdog,
   startSession,
   startSessionWithPairing,
   waitForConnected,
@@ -314,7 +315,6 @@ app.get('/sessions/:id/status', async (req, res) => {
       !isSessionAborted(sessionId) &&
       progress.registered &&
       !socketAlive &&
-      meta.status !== 'connected' &&
       !inPairingFlow
     ) {
       if (!isSessionStartInFlight(sessionId)) {
@@ -604,4 +604,5 @@ app.listen(PORT, HOST, () => {
   void restorePersistedSessions().catch((err) => {
     logger.error({ err }, 'failed to restore persisted WhatsApp sessions on startup');
   });
+  startConnectedSessionWatchdog();
 });

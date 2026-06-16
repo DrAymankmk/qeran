@@ -40,6 +40,18 @@ class InvitationRequest extends FormRequest
             $userIdRules[] = 'max:'.(int)$this->count;
         }
 
+        $isUpdate = $this->route('invitation') !== null;
+
+        $invitationMediaTypeRules = $isUpdate
+            ? ['nullable']
+            : ['required_if:invitation_type,==,'.Constant::INVITATION_TYPE['Contact Design']];
+
+        $invitationMediaTypeRules[] = Rule::in([
+            Constant::FILE_TYPE['Image'],
+            Constant::FILE_TYPE['Video'],
+            Constant::FILE_TYPE['Gif'],
+        ]);
+
         return [
             'invitation_type'      => ['required_if:invitation_step,==,'.Constant::INVITATION_STEP['Upload Invitation'],
                 Rule::in([
@@ -51,12 +63,7 @@ class InvitationRequest extends FormRequest
             'invitation_step'=>['required'],
             'category_id'=>['nullable',Rule::exists('categories','id')],
             'description'=>['nullable'],
-            'invitation_media_type'=>['required_if:invitation_type,==,'.Constant::INVITATION_TYPE['Contact Design'],
-                Rule::in([
-                   Constant::FILE_TYPE['Image'],
-                   Constant::FILE_TYPE['Video'],
-                   Constant::FILE_TYPE['Gif'],
-                ])],
+            'invitation_media_type' => $invitationMediaTypeRules,
             'image'=>['nullable','mimes:jpeg,jpg,png,gif,webp,mp4,webm,ogg,mov,avi,m4v'],
             'video'=>['nullable','mimes:mp4,webm,ogg,mov,avi,m4v'],
             // Voice records from mobile apps are often m4a/aac/3gp/amr; allow them.

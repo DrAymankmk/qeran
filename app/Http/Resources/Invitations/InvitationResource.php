@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources\Invitations;
 
-use App\Helpers\Constant;
 use App\Http\Resources\Advertisement\AdvertisementResource;
 use App\Models\Admin;
 use App\Http\Resources\Category\CategoryResource;
@@ -42,8 +41,7 @@ class InvitationResource extends JsonResource
             'time'=>$this->time?Carbon::parse($this->time)->format('H:i'):null,
             'day'=>date('l', strtotime("$this->date $this->time") ),
             'invitation_step'=>(int)$this->invitation_step,
-          //   'invitation_type'=>(int)$this->invitation_type,
-	   'inviation_type' => Constant::INVITATION_TYPE[$this->invitation_type],
+            'invitation_type'=>(int)$this->invitation_type,
             'status'=> $this->getInvitationStatus(),
             'qr' => $this->qr($this->id),
             'number_of_invitees'=>$this->users()->where('invitation_user.user_id',auth()->id())->first()?->pivot->invitation_count,

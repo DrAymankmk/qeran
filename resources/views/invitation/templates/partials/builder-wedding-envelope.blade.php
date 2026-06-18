@@ -6,8 +6,42 @@ $wiSealPalette = $wiSealPalette ?? 'crimson';
 $wiSealRing = $wiSealRing ?? true;
 $wiSealDrip = $wiSealDrip ?? true;
 $envImageUrl = $wiEnvelopeImageUrl ?? '';
+$envBodyImageUrl = $wiEnvelopeBodyImageUrl ?? $envImageUrl;
+$envFlapImageUrl = $wiEnvelopeFlapImageUrl ?? $envImageUrl;
 $hasEnvImage = ! empty($wiEnvelopeHasImage) || $envImageUrl !== '';
-$envImageCss = $hasEnvImage ? str_replace(["\\", "'"], ["\\\\", "\\'"], $envImageUrl) : '';
+$envLayout = is_array($wiEnvelopePhotoLayout ?? null) ? $wiEnvelopePhotoLayout : [];
+$envImageFit = in_array($envLayout['body_fit'] ?? ($wiEnvelopeImageFit ?? 'contain'), ['contain', 'cover'], true)
+? ($envLayout['body_fit'] ?? ($wiEnvelopeImageFit ?? 'contain'))
+: 'contain';
+$envBodyPosition = (string) ($envLayout['body_position'] ?? 'center');
+$envBodyClip = (string) ($envLayout['body_clip_path'] ?? '');
+$envShowPocketLiner = (bool) ($envLayout['show_pocket_liner'] ?? true);
+$envHasBodyFlapSplit = (bool) ($envLayout['has_body_flap_split'] ?? ($envBodyClip !== ''));
+$envHasSeparateFlap = (bool) ($envLayout['has_separate_flap'] ?? false);
+$envStockSlug = (string) ($envLayout['stock_slug'] ?? '');
+$envFlapHeight = (string) ($envLayout['flap_height'] ?? '54%');
+$envFlapTop = (string) ($envLayout['flap_top'] ?? '-8px');
+$envFlapLeft = (string) ($envLayout['flap_left'] ?? '0');
+$envFlapWidth = (string) ($envLayout['flap_width'] ?? '100%');
+$envFlapClip = (string) ($envLayout['flap_clip_path'] ?? 'polygon(0 0, 50% 100%, 100% 0)');
+$envFlapOrigin = (string) ($envLayout['flap_transform_origin'] ?? '50% 0%');
+$envFlapImgFit = in_array($envLayout['flap_image_fit'] ?? 'cover', ['contain', 'cover'], true)
+? ($envLayout['flap_image_fit'] ?? 'cover')
+: 'cover';
+$envFlapImgPosition = (string) ($envLayout['flap_image_position'] ?? 'center top');
+$envFlapImgMinHeight = (string) ($envLayout['flap_image_min_height'] ?? '185%');
+$envFlapOpenRotate = (string) ($envLayout['flap_open_rotate'] ?? '-168deg');
+$envMobileBreakpoint = (int) ($envLayout['mobile_breakpoint'] ?? 767);
+$envHasMobileFlapTune = (bool) ($envLayout['has_mobile_flap_tune'] ?? false);
+$envBodyClipSm = (string) ($envLayout['body_clip_path_sm'] ?? '');
+$envFlapClipSm = (string) ($envLayout['flap_clip_path_sm'] ?? '');
+$envFlapHeightSm = (string) ($envLayout['flap_height_sm'] ?? '');
+$envFlapTopSm = (string) ($envLayout['flap_top_sm'] ?? '');
+$envFlapLeftSm = (string) ($envLayout['flap_left_sm'] ?? '');
+$envFlapWidthSm = (string) ($envLayout['flap_width_sm'] ?? '');
+$envFlapImgPositionSm = (string) ($envLayout['flap_image_position_sm'] ?? '');
+$envFlapImgMinHeightSm = (string) ($envLayout['flap_image_min_height_sm'] ?? '');
+$envelopeBuilderConfig = $builderConfig ?? [];
 $wiEnvelopeShape = $wiEnvelopeShape ?? 'classic';
 @endphp
 @if($showEnvelope && !$skipEnvelope)
@@ -75,7 +109,7 @@ $wiEnvelopeShape = $wiEnvelopeShape ?? 'classic';
 	width: 100%;
 	height: 100%;
 	max-width: min(92vw, 420px);
-	max-height: min(72dvh, 520px);
+	max-height: min(90dvh, 520px);
 	aspect-ratio: 4 / 5.2;
 	margin: 0 auto;
 	position: relative;
@@ -119,28 +153,81 @@ $wiEnvelopeShape = $wiEnvelopeShape ?? 'classic';
 	position: absolute;
 	inset: 0;
 	background-color: var(--env-paper, #f5f0e6);
-	background-image: var(--env-image-url);
-	background-size: contain;
-	background-position: center;
-	background-repeat: no-repeat;
+	overflow: hidden;
+}
+
+.wi-env-envelope.has-body-flap-split .wi-env-photo-body {
+	clip-path: var(--env-body-clip, none);
+	-webkit-clip-path: var(--env-body-clip, none);
+}
+
+.wi-env-photo-pocket-liner {
+	display: none;
+	position: absolute;
+	left: 6%;
+	right: 6%;
+	top: 22%;
+	height: 38%;
+	background: linear-gradient(180deg, color-mix(in srgb, var(--wi-gold) 18%, transparent), transparent 70%);
+	clip-path: polygon(0 0, 50% 100%, 100% 0);
+	z-index: 3;
+	opacity: 0.65;
+	pointer-events: none;
+}
+
+.wi-env-envelope.has-body-flap-split.show-pocket-liner .wi-env-photo-pocket-liner {
+	display: block;
+}
+
+.wi-env-photo-body-img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: var(--env-body-fit, contain);
+	object-position: var(--env-body-position, center);
+	display: block;
+	pointer-events: none;
 }
 
 .wi-env-photo-flap {
 	position: absolute;
-	left: 0;
-	top: -8px;
-	width: 100%;
-	height: 54%;
-	background-image: var(--env-image-url);
-	background-size: 100% auto;
-	background-position: center top;
-	background-repeat: no-repeat;
-	clip-path: polygon(0 0, 50% 100%, 100% 0);
-	transform-origin: 50% 0%;
+	left: var(--env-flap-left, 0);
+	top: var(--env-flap-top, -8px);
+	width: var(--env-flap-width, 100%);
+	height: var(--env-flap-height, 54%);
+	overflow: hidden;
+	clip-path: var(--env-flap-clip, polygon(0 0, 50% 100%, 100% 0));
+	-webkit-clip-path: var(--env-flap-clip, polygon(0 0, 50% 100%, 100% 0));
+	transform-origin: var(--env-flap-origin, 50% 0%);
 	transform: rotateX(0deg) translateZ(2px);
 	transition: transform 1.05s cubic-bezier(0.45, 0.05, 0.2, 1);
 	z-index: 6;
 	filter: brightness(1.02);
+	transform-style: preserve-3d;
+	backface-visibility: hidden;
+}
+
+.wi-env-envelope.has-separate-flap .wi-env-photo-flap {
+	clip-path: none;
+	-webkit-clip-path: none;
+}
+
+.wi-env-envelope.has-separate-flap .wi-env-photo-flap-img {
+	min-height: 100%;
+	height: 100%;
+	object-fit: contain;
+	object-position: center bottom;
+}
+
+.wi-env-photo-flap-img {
+	width: 100%;
+	height: auto;
+	min-height: var(--env-flap-img-min-height, 185%);
+	object-fit: var(--env-flap-img-fit, cover);
+	object-position: var(--env-flap-img-position, center top);
+	display: block;
+	pointer-events: none;
 }
 
 .wi-env-photo-flap-shade {
@@ -153,7 +240,7 @@ $wiEnvelopeShape = $wiEnvelopeShape ?? 'classic';
 
 .wi-envelope-gate.is-opening .wi-env-photo-flap,
 .wi-envelope-gate.is-open .wi-env-photo-flap {
-	transform: rotateX(-168deg);
+	transform: rotateX(var(--env-flap-open-rotate, -168deg));
 	z-index: 1;
 }
 
@@ -391,6 +478,28 @@ $wiEnvelopeShape = $wiEnvelopeShape ?? 'classic';
 	display: none;
 }
 
+@media (max-width: {{ $envMobileBreakpoint }}px) {
+	.wi-env-envelope.has-env-image.has-mobile-flap-tune .wi-env-photo-flap {
+		top: var(--env-flap-top-sm, var(--env-flap-top, -8px));
+		left: var(--env-flap-left-sm, var(--env-flap-left, 0));
+		width: var(--env-flap-width-sm, var(--env-flap-width, 100%));
+		height: var(--env-flap-height-sm, var(--env-flap-height, 54%));
+		clip-path: var(--env-flap-clip-sm, var(--env-flap-clip, polygon(0 0, 50% 100%, 100% 0)));
+		-webkit-clip-path: var(--env-flap-clip-sm, var(--env-flap-clip, polygon(0 0, 50% 100%, 100% 0)));
+	}
+
+	.wi-env-envelope.has-env-image.has-mobile-flap-tune .wi-env-photo-flap-img {
+		object-position: var(--env-flap-img-position-sm, var(--env-flap-img-position, center top));
+		min-height: var(--env-flap-img-min-height-sm, var(--env-flap-img-min-height, 185%));
+	}
+
+	.wi-env-envelope.has-env-image.has-mobile-flap-tune.has-body-flap-split .wi-env-photo-body,
+	.wi-env-envelope.has-env-image.has-mobile-flap-tune.has-mobile-body-clip .wi-env-photo-body {
+		clip-path: var(--env-body-clip-sm, var(--env-body-clip, none));
+		-webkit-clip-path: var(--env-body-clip-sm, var(--env-body-clip, none));
+	}
+}
+
 @media (max-height: 520px) {
 	.wi-env-scene {
 		/* height: min(calc(100dvh - 100px), 68dvh); */
@@ -410,15 +519,30 @@ $wiEnvelopeShape = $wiEnvelopeShape ?? 'classic';
 
 <div id="wiEnvelopeGate"
 	class="wi-envelope-gate wi-env-shape-{{ $wiEnvelopeShape }}-gate @if($hasEnvImage) has-env-image-gate @endif"
-	style="--wi-envelope: {{ $wiEnvelopeHex }}; --wi-gold: var(--ib-primary, #c8a97a); --wi-accent: var(--ib-secondary, #e8b4b8);@if($hasEnvImage) --env-image-url: url('{{ $envImageCss }}');@endif">
+	data-envelope-ref="{{ $envelopeBuilderConfig['envelope_image_ref'] ?? '' }}"
+	data-envelope-shape="{{ $wiEnvelopeShape }}" @if($envStockSlug !=='' )
+	data-envelope-stock="{{ $envStockSlug }}" @endif
+	style="--wi-envelope: {{ $wiEnvelopeHex }}; --wi-gold: var(--ib-primary, #c8a97a); --wi-accent: var(--ib-secondary, #e8b4b8);">
 	<div class="wi-env-stage">
 		<div class="wi-env-scene">
-			<div class="wi-env-envelope wi-env-shape-{{ $wiEnvelopeShape }} @if($hasEnvImage) has-env-image @endif"
-				role="presentation">
+			<div class="wi-env-envelope wi-env-shape-{{ $wiEnvelopeShape }} @if($hasEnvImage) has-env-image @endif @if($envHasBodyFlapSplit) has-body-flap-split @endif @if($envBodyClipSm !== '') has-mobile-body-clip @endif @if($envHasMobileFlapTune) has-mobile-flap-tune @endif @if($envHasSeparateFlap) has-separate-flap @endif @if($envShowPocketLiner) show-pocket-liner @endif @if($envStockSlug !== '') wi-env-stock-{{ $envStockSlug }} @endif"
+				role="presentation" @if($hasEnvImage)
+				style="--env-body-fit: {{ $envImageFit }}; --env-body-position: {{ $envBodyPosition }};@if($envBodyClip !== '') --env-body-clip: {{ $envBodyClip }};@endif --env-flap-left: {{ $envFlapLeft }}; --env-flap-top: {{ $envFlapTop }}; --env-flap-width: {{ $envFlapWidth }}; --env-flap-height: {{ $envFlapHeight }}; --env-flap-clip: {{ $envFlapClip }}; --env-flap-origin: {{ $envFlapOrigin }}; --env-flap-img-fit: {{ $envFlapImgFit }}; --env-flap-img-position: {{ $envFlapImgPosition }}; --env-flap-img-min-height: {{ $envFlapImgMinHeight }}; --env-flap-open-rotate: {{ $envFlapOpenRotate }};@if($envFlapClipSm !== '') --env-flap-clip-sm: {{ $envFlapClipSm }};@endif @if($envBodyClipSm !== '') --env-body-clip-sm: {{ $envBodyClipSm }};@endif @if($envFlapTopSm !== '') --env-flap-top-sm: {{ $envFlapTopSm }};@endif @if($envFlapLeftSm !== '') --env-flap-left-sm: {{ $envFlapLeftSm }};@endif @if($envFlapWidthSm !== '') --env-flap-width-sm: {{ $envFlapWidthSm }};@endif @if($envFlapHeightSm !== '') --env-flap-height-sm: {{ $envFlapHeightSm }};@endif @if($envFlapImgPositionSm !== '') --env-flap-img-position-sm: {{ $envFlapImgPositionSm }};@endif @if($envFlapImgMinHeightSm !== '') --env-flap-img-min-height-sm: {{ $envFlapImgMinHeightSm }};@endif"
+				@endif>
 				@if($hasEnvImage)
 				<div class="wi-env-photo-stack" aria-hidden="true">
-					<div class="wi-env-photo-body"></div>
+					<div class="wi-env-photo-body">
+						<img class="wi-env-photo-body-img"
+							src="{{ $envBodyImageUrl }}" alt=""
+							loading="eager" decoding="async">
+					</div>
+					<!-- @if($envShowPocketLiner && $envHasBodyFlapSplit)
+					<div class="wi-env-photo-pocket-liner" aria-hidden="true"></div>
+					@endif -->
 					<div class="wi-env-photo-flap">
+						<img class="wi-env-photo-flap-img"
+							src="{{ $envFlapImageUrl }}" alt=""
+							loading="eager" decoding="async">
 						<div class="wi-env-photo-flap-shade"></div>
 					</div>
 				</div>

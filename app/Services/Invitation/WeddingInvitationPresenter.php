@@ -73,6 +73,18 @@ class WeddingInvitationPresenter
             $invitation,
             $bc
         );
+        $envelopeImageFit = app(InvitationBuilderService::class)->stockEnvelopeImageFit(
+            (string) ($bc['envelope_image_ref'] ?? '')
+        );
+        $envelopePhotoLayout = app(InvitationBuilderService::class)->stockEnvelopePhotoLayout(
+            (string) ($bc['envelope_image_ref'] ?? '')
+        );
+        $envelopeBodyImageUrl = $envelopePhotoLayout['body_image_url'] !== ''
+            ? $envelopePhotoLayout['body_image_url']
+            : $envelopeImageUrl;
+        $envelopeFlapImageUrl = $envelopePhotoLayout['flap_image_url'] !== ''
+            ? $envelopePhotoLayout['flap_image_url']
+            : $envelopeImageUrl;
 
         $countdownIso = '2026-12-31T12:00:00';
         if ($dateCarbon) {
@@ -150,7 +162,11 @@ class WeddingInvitationPresenter
             'wiEnvelopeHex' => $envelopeHex,
             'wiEnvelopeShape' => app(InvitationBuilderService::class)->normalizeEnvelopeShape($bc['envelope_shape'] ?? null),
             'wiEnvelopeImageUrl' => $envelopeImageUrl,
+            'wiEnvelopeBodyImageUrl' => $envelopeBodyImageUrl,
+            'wiEnvelopeFlapImageUrl' => $envelopeFlapImageUrl,
             'wiEnvelopeHasImage' => $envelopeImageUrl !== '',
+            'wiEnvelopeImageFit' => $envelopeImageFit,
+            'wiEnvelopePhotoLayout' => $envelopePhotoLayout,
             'wiSealStyle' => $bc['seal_style'] ?? 'wax_classic',
             ...self::sealViewVars($bc['seal_style'] ?? 'wax_classic', $bc['seal_color'] ?? null),
             'wiDatePosition' => $bc['date_position'] ?? 'center',

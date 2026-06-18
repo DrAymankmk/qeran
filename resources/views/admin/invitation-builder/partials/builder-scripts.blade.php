@@ -93,6 +93,18 @@
 
 		var state = win.ibCapturePreviewState ? win.ibCapturePreviewState() : null;
 		var parsed = new DOMParser().parseFromString(html, 'text/html');
+		var oldGate = doc.getElementById('wiEnvelopeGate');
+		var newGate = parsed.querySelector('#wiEnvelopeGate');
+		if (state && oldGate && newGate) {
+			var oldRef = oldGate.getAttribute('data-envelope-ref') || '';
+			var newRef = newGate.getAttribute('data-envelope-ref') || '';
+			var oldShape = oldGate.getAttribute('data-envelope-shape') || '';
+			var newShape = newGate.getAttribute('data-envelope-shape') || '';
+			if (oldRef !== newRef || oldShape !== newShape
+				|| (oldGate.getAttribute('data-envelope-stock') || '') !== (newGate.getAttribute('data-envelope-stock') || '')) {
+				state.envelopeOpen = false;
+			}
+		}
 
 		applyPreviewStyles(doc, parsed);
 		replaceNodeFromParsed(doc, '#wiEnvelopeGate', parsed);
@@ -434,7 +446,8 @@
 			if (envRefInput) {
 				envRefInput.value = card.getAttribute('data-envelope-ref') || '';
 			}
-			schedulePreview();
+			clearTimeout(debounceTimer);
+			refreshPreview(true);
 		});
 	});
 

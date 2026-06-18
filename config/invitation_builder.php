@@ -120,8 +120,61 @@ return [
     ],
 
     /**
-     * Stock envelope images (under public/). More files in public/images/invitation-builder/envelopes/ are picked up automatically.
+     * Stock envelope images under public/images/invitation-builder/envelopes/.
+     *
+     * How to add a custom envelope:
+     * 1. Place SVG/PNG/WebP in public/images/invitation-builder/envelopes/ (e.g. custom-envelope-2.svg).
+     * 2. Add an entry below with a unique slug key, Arabic label, and path.
+     *    Saved invitations store envelope_image_ref as stock:{slug} (e.g. stock:custom-envelope-1).
+     * 3. Prefer viewBox aspect ratio 400×520 (matches the animated envelope). Wide art can set image_fit => cover.
+     * 4. Files are also auto-discovered from the folder; config entries supply Arabic labels and stable IDs.
+     *
+     * Optional per image:
+     * - label_en: English label for admin UI
+     * - image_fit: contain (default) | cover — body image object-fit
+     * - body_position: CSS object-position for body image (default center)
+     * - flap: per-envelope flap tuning — height, top, clip_path, image_position, image_min_height, open_rotate, etc.
+     *
+     * flap keys (all optional):
+     * - height: flap area height, e.g. "46%" or 46
+     * - top / top_offset: CSS top, e.g. "0px" or "-8px"
+     * - clip_path OR flap_clip_path: CSS clip-path on .wi-env-photo-flap (flap shape)
+     * - body_clip_path inside flap[]: masks body so flap art is not duplicated underneath
+     * - transform_origin: e.g. "50% 0%"
+     * - image_fit: contain | cover (flap image only)
+     * - image_position: e.g. "50% 0%" or "center top"
+     * - image_min_height: e.g. "240%"
+     * - open_rotate: degrees when opening, e.g. -168 or "-168deg"
+     * - fold_y: % from top where flap meets body — auto-hides flap on body layer (single image)
+     * - fold_depth: % pocket V-notch depth when using fold_y (default 10)
+     * - left / width: flap horizontal position/size, e.g. left "-5px", width "110%"
+     * - mobile: nested block with the same keys for screens <= envelope_mobile_breakpoint
+     * - *_mobile on flap (e.g. clip_path_mobile) — same as mobile.clip_path
+     *
+     * Optional separate assets (best for realistic open animation):
+     * - body_path: closed envelope WITHOUT top flap (pocket + sides only)
+     * - flap_path: top flap artwork only (triangle); rotates on open
      */
+    'envelope_image_defaults' => [
+        'body_fit' => 'contain',
+        'body_position' => 'center',
+        'body_clip_path' => '',
+        'show_pocket_liner' => true,
+        'flap_height' => '54%',
+        'flap_top' => '-8px',
+        'flap_left' => '0',
+        'flap_width' => '100%',
+        'flap_clip_path' => 'polygon(0 0, 50% 100%, 100% 0)',
+        'flap_transform_origin' => '50% 0%',
+        'flap_image_fit' => 'cover',
+        'flap_image_position' => 'center top',
+        'flap_image_min_height' => '185%',
+        'flap_open_rotate' => '-168deg',
+    ],
+
+    /** Max width (px) for envelope flap/body mobile overrides (flap.mobile / *_mobile keys). */
+    'envelope_mobile_breakpoint' => 767,
+
     'envelope_images' => [
         'classic-cream' => ['label_ar' => 'كريمي كلاسيكي', 'path' => 'images/invitation-builder/envelopes/classic-cream.svg'],
         'blush-rose' => ['label_ar' => 'وردي رومانسي', 'path' => 'images/invitation-builder/envelopes/blush-rose.svg'],
@@ -135,6 +188,179 @@ return [
         'peacock-elegant' => ['label_ar' => 'أنيق تركواز', 'path' => 'images/invitation-builder/envelopes/peacock-elegant.svg'],
         'lilac-dream' => ['label_ar' => 'ليلكي حالم', 'path' => 'images/invitation-builder/envelopes/lilac-dream.svg'],
         'terracotta-rustic' => ['label_ar' => 'تراكوتا ريفي', 'path' => 'images/invitation-builder/envelopes/terracotta-rustic.svg'],
+        'custom-envelope-1' => [
+            'label_ar' => 'حافة خاصة',
+            'label_en' => 'Custom border',
+            'path' => 'images/invitation-builder/envelopes/custom-envelope-1.svg',
+            'image_fit' => 'cover',
+            'body_position' => 'center',
+            'flap' => [
+                // 'fold_y' => 40,
+                // 'fold_depth' => 12,
+                'height' => '40%',
+                'top' => '0px',
+                // 'image_position' => '50% 0%',
+                'image_min_height' => '250%',
+                // Top triangle flap (hinge at top center). Use clip_path or flap_clip_path.
+                'clip_path' => 'polygon(  0 50%, 50% 100%, 100% 50%, 100% 100%,0 100%)',
+                // Optional: custom body mask (auto-set from fold_y if omitted)
+                // 'body_clip_path' => 'polygon(0 40%, 50% 52%, 100% 40%, 100% 100%, 0 100%)',
+                'open_rotate' => -168,
+            ],
+        ],
+        'custom-envelope-2' => [
+            'label_ar' => 'حافة خاصة ٢',
+            'label_en' => 'Custom border 2',
+            'path' => 'images/invitation-builder/envelopes/custom-envelope-2.svg',
+            'image_fit' => 'cover',
+            'body_position' => 'center',
+            'flap' => [
+                'height' => '60%',
+                'width' => '90%',
+                'top' => '-30px',
+                'left' => '15px',
+                'image_position' => '50% 0%',
+                'image_min_height' => '240%',
+                'clip_path' => 'polygon(0 0, 100% 0, 92% 42%, 50% 95%, 7% 42%)',
+                'open_rotate' => -168,
+                'mobile' => [
+                    'height' => '58%',
+                    'top' => '-10px',
+                    'left' => '8px',
+                    'width' => '98%',
+                    'clip_path' => 'polygon(0 0, 100% 0, 90% 40%, 50% 92%, 2% 40%)',
+                    // 'body_clip_path' => 'polygon(0 38%, 50% 50%, 100% 38%, 100% 100%, 0 100%)',
+                ],
+            ],
+        ],
+
+        'custom-envelope-3' => [
+            'label_ar' => 'حافة خاصة ٣',
+            'label_en' => 'Custom border 3',
+            'path' => 'images/invitation-builder/envelopes/custom-envelope-3.svg',
+            'image_fit' => 'cover',
+            'body_position' => 'center',
+            'flap' => [
+                'height' => '46%',
+                'top' => '-32px',
+                'left' => '-5px',
+                'image_position' => '50% 0%',
+                'image_min_height' => '240%',
+                'open_rotate' => -168,
+            ],
+        ],
+
+        'custom-envelope-4' => [
+            'label_ar' => 'حافة خاصة ٤',
+            'label_en' => 'Custom border 4',
+            'path' => 'images/invitation-builder/envelopes/custom-envelope-4.svg',
+            'image_fit' => 'cover',
+            'body_position' => 'center',
+            'flap' => [
+                'height' => '46%',
+                'top' => '-32px',
+                'left' => '-5px',
+                'image_position' => '50% 0%',
+                'image_min_height' => '240%',
+                'open_rotate' => -168,
+            ],
+        ],
+
+        'custom-envelope-5' => [
+            'label_ar' => 'حافة خاصة ٥',
+            'label_en' => 'Custom border 5',
+            'path' => 'images/invitation-builder/envelopes/custom-envelope-5.svg',
+            'image_fit' => 'cover',
+            'body_position' => 'center',
+            'flap' => [
+                'height' => '46%',
+                'top' => '-32px',
+                'left' => '-5px',
+                'image_position' => '50% 0%',
+                'image_min_height' => '240%',
+                'open_rotate' => -168,
+            ],
+        ],
+
+        'custom-envelope-6' => [
+            'label_ar' => 'حافة خاصة ٦',
+            'label_en' => 'Custom border 6',
+            'path' => 'images/invitation-builder/envelopes/custom-envelope-6.svg',
+            'image_fit' => 'cover',
+            'body_position' => 'center',
+            'flap' => [
+                'height' => '46%',
+                'top' => '-32px',
+                'left' => '-5px',
+                'image_position' => '50% 0%',
+                'image_min_height' => '240%',
+                'open_rotate' => -168,
+            ],
+        ],
+
+        'custom-envelope-7' => [
+            'label_ar' => 'حافة خاصة ٧',
+            'label_en' => 'Custom border 7',
+            'path' => 'images/invitation-builder/envelopes/custom-envelope-7.svg',
+            'image_fit' => 'cover',
+            'body_position' => 'center',
+            'flap' => [
+                'height' => '46%',
+                'top' => '-32px',
+                'left' => '-5px',
+                'image_position' => '50% 0%',
+                'image_min_height' => '240%',
+                'open_rotate' => -168,
+            ],
+        ],
+
+        'custom-envelope-8' => [
+            'label_ar' => 'حافة خاصة ٨',
+            'label_en' => 'Custom border 8',
+            'path' => 'images/invitation-builder/envelopes/custom-envelope-8.svg',
+            'image_fit' => 'cover',
+            'body_position' => 'center',
+            'flap' => [
+                'height' => '46%',
+                'top' => '-32px',
+                'left' => '-5px',
+                'image_position' => '50% 0%',
+                'image_min_height' => '240%',
+                'open_rotate' => -168,
+            ],
+        ],
+
+        'custom-envelope-9' => [
+            'label_ar' => 'حافة خاصة ٩',
+            'label_en' => 'Custom border 9',
+            'path' => 'images/invitation-builder/envelopes/custom-envelope-9.svg',
+            'image_fit' => 'cover',
+            'body_position' => 'center',
+            'flap' => [
+                'height' => '46%',
+                'top' => '-32px',
+                'left' => '-5px',
+                'image_position' => '50% 0%',
+                'image_min_height' => '240%',
+                'open_rotate' => -168,
+            ],
+        ],
+
+        'custom-envelope-10' => [
+            'label_ar' => 'حافة خاصة ١٠',
+            'label_en' => 'Custom border 10',
+            'path' => 'images/invitation-builder/envelopes/custom-envelope-10.svg',
+            'image_fit' => 'cover',
+            'body_position' => 'center',
+            'flap' => [
+                'height' => '46%',
+                'top' => '-32px',
+                'left' => '-5px',
+                'image_position' => '50% 0%',
+                'image_min_height' => '240%',
+                'open_rotate' => -168,
+            ],
+        ],
     ],
 
     'seal_palette_colors' => [

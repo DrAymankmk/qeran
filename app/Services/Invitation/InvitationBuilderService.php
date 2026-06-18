@@ -433,7 +433,9 @@ class InvitationBuilderService
                 $data['seal_color'] ?? $base['seal_color'] ?? null
             ),
             'envelope_initials' => $this->draftString($data, $base, 'envelope_initials'),
-            'envelope_image_ref' => $this->draftString($data, $base, 'envelope_image_ref'),
+            'envelope_image_ref' => array_key_exists('envelope_image_ref', $data)
+                ? trim((string) $data['envelope_image_ref'])
+                : (string) ($base['envelope_image_ref'] ?? ''),
             'opening_headline' => $this->draftString($data, $base, 'opening_headline'),
             'event_date' => $this->draftString($data, $base, 'event_date'),
             'event_time' => $this->draftString($data, $base, 'event_time'),
@@ -605,6 +607,7 @@ class InvitationBuilderService
         $choices = [];
         $seenIds = [];
         $seenUrls = [];
+        $configuredKeys = array_keys(config('invitation_builder.envelope_images', []));
 
         $add = function (string $id, string $url, string $label, string $group) use (&$choices, &$seenIds, &$seenUrls): void {
             if ($url === '' || isset($seenIds[$id]) || isset($seenUrls[$url])) {
@@ -621,16 +624,12 @@ class InvitationBuilderService
         };
 
         foreach (config('invitation_builder.envelope_images', []) as $key => $meta) {
-            $path = (string) ($meta['path'] ?? '');
-            if ($path === '') {
+            $url = $this->resolveStockEnvelopeUrl($key);
+            if ($url === '') {
                 continue;
             }
-            $add(
-                'stock:'.$key,
-                asset($path),
-                (string) ($meta['label_ar'] ?? $key),
-                'stock'
-            );
+            $label = (string) ($meta['label_ar'] ?? $meta['label_en'] ?? $key);
+            $add('stock:'.$key, $url, $label, 'stock');
         }
 
         $dir = public_path('images/invitation-builder/envelopes');
@@ -638,10 +637,14 @@ class InvitationBuilderService
             $files = glob($dir.'/*.{jpg,jpeg,png,webp,gif,svg}', GLOB_BRACE) ?: [];
             foreach ($files as $file) {
                 $basename = basename($file);
+                $stem = pathinfo($basename, PATHINFO_FILENAME);
+                if (in_array($stem, $configuredKeys, true)) {
+                    continue;
+                }
                 $add(
-                    'stock:'.$basename,
+                    'stock:'.$stem,
                     asset('images/invitation-builder/envelopes/'.$basename),
-                    pathinfo($basename, PATHINFO_FILENAME),
+                    $stem,
                     'stock'
                 );
             }
@@ -697,23 +700,308 @@ class InvitationBuilderService
         }
 
         if (str_starts_with($ref, 'stock:')) {
-            $key = substr($ref, 6);
-            if ($key === '') {
-                return '';
-            }
+            return $this->resolveStockEnvelopeUrl(substr($ref, 6));
+        }
 
-            $publicFile = public_path('images/invitation-builder/envelopes/'.$key);
-            if (is_file($publicFile)) {
-                return asset('images/invitation-builder/envelopes/'.$key);
-            }
+        return '';
+    }
 
-            $item = config('invitation_builder.envelope_images.'.$key);
-            if (is_array($item) && ! empty($item['path'])) {
-                return asset($item['path']);
+    public function resolveStockEnvelopeUrl(string $key): string
+    {
+        $key = $this->normalizeStockEnvelopeKey($key);
+        if ($key === '') {
+            return '';
+        }
+
+        $fromConfig = $this->resolveStockEnvelopeAssetPath($key, 'path');
+        if ($fromConfig !== '') {
+            return $fromConfig;
+        }
+
+        $dir = 'images/invitation-builder/envelopes/';
+        foreach (['svg', 'png', 'jpg', 'jpeg', 'webp', 'gif'] as $ext) {
+            $relative = $dir.$key.'.'.$ext;
+            if (is_file(public_path($relative))) {
+                return asset($relative);
             }
         }
 
         return '';
+    }
+
+    public function resolveStockEnvelopeFlapUrl(string $key): string
+    {
+        $key = $this->normalizeStockEnvelopeKey($key);
+        if ($key === '') {
+            return '';
+        }
+
+        $flap = $this->resolveStockEnvelopeAssetPath($key, 'flap_path');
+
+        return $flap !== '' ? $flap : $this->resolveStockEnvelopeUrl($key);
+    }
+
+    public function resolveStockEnvelopeBodyUrl(string $key): string
+    {
+        $key = $this->normalizeStockEnvelopeKey($key);
+        if ($key === '') {
+            return '';
+        }
+
+        $body = $this->resolveStockEnvelopeAssetPath($key, 'body_path');
+
+        return $body !== '' ? $body : $this->resolveStockEnvelopeUrl($key);
+    }
+
+    protected function resolveStockEnvelopeAssetPath(string $key, string $field): string
+    {
+        $meta = config('invitation_builder.envelope_images.'.$key);
+        if (! is_array($meta) || empty($meta[$field])) {
+            return '';
+        }
+
+        $relative = (string) $meta[$field];
+        if ($relative === '') {
+            return '';
+        }
+
+        if (is_file(public_path($relative))) {
+            return asset($relative);
+        }
+
+        return '';
+    }
+
+    protected function envelopeBodyClipFromFold(int $foldY, int $foldDepth = 10): string
+    {
+        $y = max(5, min(75, $foldY));
+        $depth = max(2, min(25, $foldDepth));
+        $base = min(95, $y + $depth);
+
+        return "polygon(0 {$y}%, 50% {$base}%, 100% {$y}%, 100% 100%, 0 100%)";
+    }
+
+    /**
+     * @param  array<string, mixed>  $flap
+     * @param  array<string, mixed>  $layout
+     */
+    protected function mergeEnvelopeFlapTune(array $flap, array &$layout, bool $mobile = false): void
+    {
+        $suffix = $mobile ? '_sm' : '';
+        $map = [
+            'height' => 'flap_height',
+            'top' => 'flap_top',
+            'top_offset' => 'flap_top',
+            'left' => 'flap_left',
+            'width' => 'flap_width',
+            'clip_path' => 'flap_clip_path',
+            'flap_clip_path' => 'flap_clip_path',
+            'transform_origin' => 'flap_transform_origin',
+            'image_fit' => 'flap_image_fit',
+            'image_position' => 'flap_image_position',
+            'image_min_height' => 'flap_image_min_height',
+            'open_rotate' => 'flap_open_rotate',
+            'body_clip_path' => 'body_clip_path',
+        ];
+
+        foreach ($map as $configKey => $baseKey) {
+            if (! isset($flap[$configKey]) || $flap[$configKey] === '') {
+                continue;
+            }
+
+            $value = $flap[$configKey];
+            if ($configKey === 'open_rotate') {
+                $value = is_numeric($value) ? ((string) $value).'deg' : (string) $value;
+            } elseif ($configKey === 'height' && is_numeric($value)) {
+                $value = ((string) $value).'%';
+            }
+
+            if ($baseKey === 'flap_image_fit' && ! in_array($value, ['contain', 'cover'], true)) {
+                continue;
+            }
+
+            $layout[$baseKey.$suffix] = (string) $value;
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $flap
+     * @return array<string, mixed>
+     */
+    protected function envelopeFlapMobileTune(array $flap): array
+    {
+        $mobile = is_array($flap['mobile'] ?? null) ? $flap['mobile'] : [];
+
+        foreach ($flap as $key => $value) {
+            if (! is_string($key) || ! str_ends_with($key, '_mobile')) {
+                continue;
+            }
+            $baseKey = substr($key, 0, -7);
+            if ($baseKey !== '') {
+                $mobile[$baseKey] = $value;
+            }
+        }
+
+        return $mobile;
+    }
+
+    public function envelopeMobileBreakpoint(): int
+    {
+        $breakpoint = (int) config('invitation_builder.envelope_mobile_breakpoint', 767);
+
+        return max(320, min(1200, $breakpoint));
+    }
+
+    public function stockEnvelopeImageFit(?string $ref): string
+    {
+        return $this->stockEnvelopePhotoLayout($ref)['body_fit'];
+    }
+
+    /**
+     * Photo envelope layout (body + flap) for stock images. Hub uploads use defaults.
+     *
+     * @return array{
+     *     body_fit: string,
+     *     body_position: string,
+     *     body_clip_path: string,
+     *     show_pocket_liner: bool,
+     *     body_image_url: string,
+     *     flap_image_url: string,
+     *     has_separate_flap: bool,
+     *     has_body_flap_split: bool,
+     *     flap_height: string,
+     *     flap_top: string,
+     *     flap_left: string,
+     *     flap_width: string,
+     *     flap_clip_path: string,
+     *     flap_transform_origin: string,
+     *     flap_image_fit: string,
+     *     flap_image_position: string,
+     *     flap_image_min_height: string,
+     *     flap_open_rotate: string,
+     *     stock_slug: string
+     * }
+     */
+    public function stockEnvelopePhotoLayout(?string $ref): array
+    {
+        $defaults = config('invitation_builder.envelope_image_defaults', []);
+        $layout = [
+            'body_fit' => in_array($defaults['body_fit'] ?? 'contain', ['contain', 'cover'], true)
+                ? ($defaults['body_fit'] ?? 'contain')
+                : 'contain',
+            'body_position' => (string) ($defaults['body_position'] ?? 'center'),
+            'body_clip_path' => (string) ($defaults['body_clip_path'] ?? ''),
+            'show_pocket_liner' => (bool) ($defaults['show_pocket_liner'] ?? true),
+            'body_image_url' => '',
+            'flap_image_url' => '',
+            'has_separate_flap' => false,
+            'has_body_flap_split' => false,
+            'flap_height' => (string) ($defaults['flap_height'] ?? '54%'),
+            'flap_top' => (string) ($defaults['flap_top'] ?? '-8px'),
+            'flap_left' => (string) ($defaults['flap_left'] ?? '0'),
+            'flap_width' => (string) ($defaults['flap_width'] ?? '100%'),
+            'flap_clip_path' => (string) ($defaults['flap_clip_path'] ?? 'polygon(0 0, 50% 100%, 100% 0)'),
+            'flap_transform_origin' => (string) ($defaults['flap_transform_origin'] ?? '50% 0%'),
+            'flap_image_fit' => in_array($defaults['flap_image_fit'] ?? 'cover', ['contain', 'cover'], true)
+                ? ($defaults['flap_image_fit'] ?? 'cover')
+                : 'cover',
+            'flap_image_position' => (string) ($defaults['flap_image_position'] ?? 'center top'),
+            'flap_image_min_height' => (string) ($defaults['flap_image_min_height'] ?? '185%'),
+            'flap_open_rotate' => (string) ($defaults['flap_open_rotate'] ?? '-168deg'),
+            'stock_slug' => '',
+            'has_mobile_flap_tune' => false,
+            'mobile_breakpoint' => $this->envelopeMobileBreakpoint(),
+        ];
+
+        $ref = trim((string) $ref);
+        if (! str_starts_with($ref, 'stock:')) {
+            return $layout;
+        }
+
+        $key = $this->normalizeStockEnvelopeKey(substr($ref, 6));
+        $layout['stock_slug'] = $key;
+
+        $meta = config('invitation_builder.envelope_images.'.$key);
+        if (! is_array($meta)) {
+            return $layout;
+        }
+
+        $layout['body_image_url'] = $this->resolveStockEnvelopeBodyUrl($key);
+        $layout['flap_image_url'] = $this->resolveStockEnvelopeFlapUrl($key);
+        $layout['has_separate_flap'] = $this->resolveStockEnvelopeAssetPath($key, 'flap_path') !== '';
+
+        if (! empty($meta['image_fit']) && in_array($meta['image_fit'], ['contain', 'cover'], true)) {
+            $layout['body_fit'] = $meta['image_fit'];
+        }
+        if (! empty($meta['body_position'])) {
+            $layout['body_position'] = (string) $meta['body_position'];
+        }
+        if (! empty($meta['body_clip_path'])) {
+            $layout['body_clip_path'] = (string) $meta['body_clip_path'];
+        }
+        if (array_key_exists('show_pocket_liner', $meta)) {
+            $layout['show_pocket_liner'] = (bool) $meta['show_pocket_liner'];
+        }
+
+        $flap = is_array($meta['flap'] ?? null) ? $meta['flap'] : [];
+        $this->mergeEnvelopeFlapTune($flap, $layout, false);
+
+        $mobileFlap = $this->envelopeFlapMobileTune($flap);
+        if ($mobileFlap !== []) {
+            $this->mergeEnvelopeFlapTune($mobileFlap, $layout, true);
+            $layout['has_mobile_flap_tune'] = true;
+        }
+
+        if ($layout['body_clip_path'] === '' && isset($flap['fold_y']) && is_numeric($flap['fold_y'])) {
+            $foldDepth = isset($flap['fold_depth']) && is_numeric($flap['fold_depth'])
+                ? (int) $flap['fold_depth']
+                : 10;
+            $layout['body_clip_path'] = $this->envelopeBodyClipFromFold((int) $flap['fold_y'], $foldDepth);
+            if (! isset($flap['height'])) {
+                $layout['flap_height'] = ((int) $flap['fold_y']).'%';
+            }
+        }
+
+        $bodyClipSm = (string) ($layout['body_clip_path_sm'] ?? '');
+        if ($bodyClipSm === '' && isset($mobileFlap['fold_y']) && is_numeric($mobileFlap['fold_y'])) {
+            $foldDepth = isset($mobileFlap['fold_depth']) && is_numeric($mobileFlap['fold_depth'])
+                ? (int) $mobileFlap['fold_depth']
+                : (isset($flap['fold_depth']) && is_numeric($flap['fold_depth']) ? (int) $flap['fold_depth'] : 10);
+            $layout['body_clip_path_sm'] = $this->envelopeBodyClipFromFold((int) $mobileFlap['fold_y'], $foldDepth);
+            $layout['has_mobile_flap_tune'] = true;
+            if (! isset($mobileFlap['height'])) {
+                $layout['flap_height_sm'] = ((int) $mobileFlap['fold_y']).'%';
+            }
+        }
+
+        if ($layout['flap_clip_path'] !== ($defaults['flap_clip_path'] ?? 'polygon(0 0, 50% 100%, 100% 0)')
+            && $layout['body_clip_path'] === ''
+            && ! $layout['has_separate_flap']) {
+            $layout['has_body_flap_split'] = true;
+        }
+
+        if ($layout['body_clip_path'] !== '' || $layout['has_separate_flap']) {
+            $layout['has_body_flap_split'] = true;
+        }
+
+        return $layout;
+    }
+
+    protected function normalizeStockEnvelopeKey(string $key): string
+    {
+        $key = trim($key);
+        if ($key === '') {
+            return '';
+        }
+
+        $configured = config('invitation_builder.envelope_images', []);
+        if (isset($configured[$key])) {
+            return $key;
+        }
+
+        $stem = pathinfo($key, PATHINFO_FILENAME);
+
+        return isset($configured[$stem]) ? $stem : $stem;
     }
 
     public function guessEnvelopeImageRef(string $url, Invitation $invitation): string

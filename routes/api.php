@@ -124,7 +124,7 @@ Route::prefix('/v1')->group(function () {
             Route::get('/{invitation}', 'show');
             Route::get('show-by-id/{id}', 'showById');
             Route::post('update/{invitation}', 'update');
-	  Route::delete('delete/{id}','delete');
+	        Route::delete('delete/{id}','delete');
             Route::post('add-admin/{invitation}', 'addAdmin');
             Route::post('add-guard/{invitation}', 'addGuard');
             Route::post('add-user/{invitation}', 'addUser');
@@ -142,7 +142,7 @@ Route::prefix('/v1')->group(function () {
             Route::post('/user/delete/{invitation}', 'removeUser');
             Route::get('/check/invitation', 'checkInvitation');
             Route::post('/add-contact/{invitation}', 'addContact');
-	  Route::delete('/delete-contact/{id}', 'deleteContact');
+	        Route::delete('/delete-contact/{id}', 'deleteContact');
             Route::post('/share/{invitationId}', 'shareInvitation');
           //   Route::get('/share/{invitationId}', 'shareInvitation');
             Route::get('/share/{invitation}/contact-logs', 'contactInvitationLogs');

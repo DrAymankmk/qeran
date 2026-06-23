@@ -85,9 +85,29 @@
 			</div>
 		</div>
 	</div>
+
+	@if($configured)
+	<div class="col-lg-12 mt-3">
+		@include('admin.whatsapp-system._activity_log', ['activityLogs' => $activityLogs ?? collect()])
+	</div>
+	@endif
 </div>
 
 @if($configured)
+<div class="modal fade" id="wa-log-details-modal" tabindex="-1" aria-hidden="true">
+	<div class="modal-dialog modal-lg modal-dialog-scrollable">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">{{ __('admin.whatsapp-activity-log-details-title') }}</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+			</div>
+			<div class="modal-body">
+				<pre id="wa-log-details-body" class="small mb-0 bg-light p-3 rounded" style="white-space: pre-wrap;"></pre>
+			</div>
+		</div>
+	</div>
+</div>
+
 <script>
 (function () {
 	const statusUrl = @json(route('admin.whatsapp-system.status'));
@@ -115,6 +135,8 @@
 		adminLocked: @json(__('admin.whatsapp-admin-disconnect-locked')),
 	};
 	const pollMs = 3000;
+	const logsUrl = @json(route('admin.whatsapp-system.logs'));
+	const logsRefreshMs = 30000;
 	const qrPollMs = 2500;
 	const qrRefreshMs = 0;
 	const maxQrAttempts = 30;
@@ -269,6 +291,7 @@
 		renderStatusBox(status, d.phone || null, existingQr ? existingQr.src : null, null, payload.session_meta || null);
 		if (status === 'connected') {
 			/* keep polling to refresh uptime */
+			refreshActivityLogs();
 		}
 	}
 
@@ -345,6 +368,7 @@
 				renderStatusBox('connected', d.phone || null, null, null);
 				qrRunning = false;
 				setGenerateBusy(false);
+				refreshActivityLogs();
 				return;
 			}
 
@@ -352,6 +376,7 @@
 				renderStatusBox('pending_qr', null, d.qrImage, null);
 				qrRunning = false;
 				setGenerateBusy(false);
+				refreshActivityLogs();
 				return;
 			}
 
@@ -370,10 +395,103 @@
 
 	loadStatus().then(function () {
 		statusTimer = setInterval(pollStatus, pollMs);
+		setInterval(refreshActivityLogs, logsRefreshMs);
+		bindLogDetailButtons();
 		if (autoGenerate) {
 			generateQr();
 		}
 	});
+
+	function bindLogDetailButtons() {
+		document.querySelectorAll('.wa-log-details-btn').forEach(function (btn) {
+			btn.addEventListener('click', function () {
+				const encoded = btn.getAttribute('data-context') || '';
+				let parsed = encoded;
+				try {
+					parsed = JSON.stringify(JSON.parse(decodeURIComponent(encoded)), null, 2);
+				} catch (e) {
+					try {
+						parsed = JSON.stringify(JSON.parse(encoded), null, 2);
+					} catch (e2) {
+						/* keep raw */
+					}
+				}
+				const body = document.getElementById('wa-log-details-body');
+				if (body) {
+					body.textContent = parsed;
+				}
+				const modalEl = document.getElementById('wa-log-details-modal');
+				if (modalEl && window.bootstrap) {
+					window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+				}
+			});
+		});
+	}
+
+	function renderActivityLogs(entries) {
+		const wrap = document.getElementById('wa-activity-log-wrap');
+		if (!wrap || !Array.isArray(entries)) {
+			return;
+		}
+
+		if (entries.length === 0) {
+			wrap.innerHTML = '<p class="text-muted mb-0">{{ __('admin.whatsapp-activity-log-empty') }}</p>';
+			return;
+		}
+
+		let rows = '';
+		entries.forEach(function (entry) {
+			const contextRaw = encodeURIComponent(JSON.stringify(entry.context || {}));
+			const contextBtn = Object.keys(entry.context || {}).length
+				? '<button type="button" class="btn btn-link btn-sm p-0 wa-log-details-btn" data-context="' + contextRaw + '">{{ __('admin.whatsapp-activity-log-view') }}</button>'
+				: '<span class="text-muted">—</span>';
+			const actor = entry.admin_name
+				? escapeHtml(entry.admin_name)
+				: @json(__('admin.whatsapp-activity-log-actor-system'));
+			const created = entry.created_at ? escapeHtml(entry.created_at.replace('T', ' ').slice(0, 19)) : '—';
+			const human = entry.created_at_human ? escapeHtml(entry.created_at_human) : '';
+
+			rows += '<tr>'
+				+ '<td class="small text-nowrap"><div>' + created + '</div>'
+				+ (human ? '<div class="text-muted">' + human + '</div>' : '') + '</td>'
+				+ '<td><span class="badge bg-' + escapeHtml(entry.level_badge || 'secondary') + '">'
+				+ escapeHtml(entry.event_label || entry.event || '') + '</span></td>'
+				+ '<td class="small">' + escapeHtml(entry.message || '') + '</td>'
+				+ '<td class="small text-muted">' + actor + '</td>'
+				+ '<td>' + contextBtn + '</td>'
+				+ '</tr>';
+		});
+
+		wrap.innerHTML = '<div class="table-responsive">'
+			+ '<table class="table table-sm table-hover align-middle mb-0" id="wa-activity-log-table">'
+			+ '<thead class="table-light"><tr>'
+			+ '<th style="width:140px;">{{ __('admin.whatsapp-activity-log-col-time') }}</th>'
+			+ '<th style="width:120px;">{{ __('admin.whatsapp-activity-log-col-event') }}</th>'
+			+ '<th>{{ __('admin.whatsapp-activity-log-col-message') }}</th>'
+			+ '<th style="width:120px;">{{ __('admin.whatsapp-activity-log-col-actor') }}</th>'
+			+ '<th style="width:90px;">{{ __('admin.whatsapp-activity-log-col-details') }}</th>'
+			+ '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+
+		bindLogDetailButtons();
+	}
+
+	function refreshActivityLogs() {
+		fetch(logsUrl + '?per_page=30', {
+			headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+		})
+			.then(function (r) { return r.json(); })
+			.then(function (payload) {
+				if (payload && payload.ok && payload.data) {
+					renderActivityLogs(payload.data);
+				}
+			})
+			.catch(function () { /* ignore */ });
+	}
+
+	const logsRefreshBtn = document.getElementById('wa-logs-refresh');
+	if (logsRefreshBtn) {
+		logsRefreshBtn.addEventListener('click', refreshActivityLogs);
+	}
 })();
 </script>
 @endif

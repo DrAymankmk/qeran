@@ -7,6 +7,8 @@ use App\Models\VerificationCode;
 use App\Services\Auth\Exceptions\VerificationOtpDeliveryException;
 use App\Services\External\BaileysGateway;
 use App\Services\External\BaileysWhatsApp;
+use App\Services\WhatsApp\WhatsAppSystemSessionLogService;
+use App\Models\WhatsappSessionLog;
 use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -141,6 +143,15 @@ class VerificationService
         if (! BaileysGateway::isConfigured()) {
             Log::error('OTP WhatsApp: gateway not configured in Laravel .env', $context);
 
+            WhatsAppSystemSessionLogService::record(
+                WhatsappSessionLog::EVENT_OTP_SEND_FAILED,
+                __('admin.whatsapp-log-otp-failed-gateway-not-configured'),
+                array_merge($context, ['failure' => 'gateway_not_configured']),
+                WhatsappSessionLog::LEVEL_ERROR,
+                null,
+                60
+            );
+
             throw new VerificationOtpDeliveryException(
                 'gateway_not_configured',
                 __('messages.otp_gateway_not_configured'),
@@ -171,6 +182,18 @@ class VerificationService
                 'http_status' => $statusResult['status'] ?? 0,
             ]));
 
+            WhatsAppSystemSessionLogService::record(
+                WhatsappSessionLog::EVENT_OTP_SEND_FAILED,
+                __('admin.whatsapp-log-otp-failed-gateway-unreachable'),
+                array_merge($context, [
+                    'failure' => 'gateway_unreachable',
+                    'gateway_error' => $statusResult['error'] ?? null,
+                ]),
+                WhatsappSessionLog::LEVEL_ERROR,
+                null,
+                60
+            );
+
             throw new VerificationOtpDeliveryException(
                 'gateway_unreachable',
                 __('messages.otp_gateway_unreachable'),
@@ -186,6 +209,18 @@ class VerificationService
                 'gateway_status' => $connectionStatus,
                 'hint' => 'Link qeran system number in admin → ربط واتساب (OTP)',
             ]));
+
+            WhatsAppSystemSessionLogService::record(
+                WhatsappSessionLog::EVENT_OTP_SEND_FAILED,
+                __('admin.whatsapp-log-otp-failed-not-connected', ['status' => $connectionStatus]),
+                array_merge($context, [
+                    'failure' => 'system_not_connected',
+                    'gateway_status' => $connectionStatus,
+                ]),
+                WhatsappSessionLog::LEVEL_WARNING,
+                null,
+                60
+            );
 
             throw new VerificationOtpDeliveryException(
                 'system_not_connected',
@@ -207,6 +242,18 @@ class VerificationService
                 'gateway_http_status' => $response->error->status ?? null,
             ]));
 
+            WhatsAppSystemSessionLogService::record(
+                WhatsappSessionLog::EVENT_OTP_SEND_FAILED,
+                __('admin.whatsapp-log-otp-failed-send', ['error' => $errorMessage]),
+                array_merge($context, [
+                    'failure' => 'send_failed',
+                    'gateway_error' => $errorMessage,
+                ]),
+                WhatsappSessionLog::LEVEL_ERROR,
+                null,
+                30
+            );
+
             throw new VerificationOtpDeliveryException(
                 'send_failed',
                 __('messages.otp_whatsapp_send_failed'),
@@ -218,6 +265,17 @@ class VerificationService
             'session_id' => $sessionId,
             'message_id' => $response->id ?? null,
         ]));
+
+        WhatsAppSystemSessionLogService::record(
+            WhatsappSessionLog::EVENT_OTP_SEND_SUCCESS,
+            __('admin.whatsapp-log-otp-sent'),
+            array_merge($context, [
+                'message_id' => $response->id ?? null,
+            ]),
+            WhatsappSessionLog::LEVEL_SUCCESS,
+            null,
+            10
+        );
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Services\WhatsApp;
 
 use App\Models\WhatsappSession;
+use App\Models\WhatsappSessionLog;
 use App\Services\External\BaileysGateway;
 use Illuminate\Support\Facades\Cache;
 
@@ -63,6 +64,7 @@ class WhatsAppSystemSessionService
         $isReconnecting = $registered && ($reconnecting || $status === 'reconnecting' || (! $socketAlive && ! in_array($status, ['pending_qr', 'pending_pairing'], true)));
 
         $record = self::record();
+        $before = $record->replicate();
         $wasConnected = $record->status === 'connected' && $record->connected_at !== null;
 
         $updates = [
@@ -85,7 +87,12 @@ class WhatsAppSystemSessionService
         $record->fill($updates);
         $record->save();
 
-        return $record->fresh();
+        $fresh = $record->fresh();
+        if ($fresh && ($before->status !== $fresh->status || $wasConnected !== $isLive)) {
+            WhatsAppSystemSessionLogService::logGatewayTransition($before, $fresh, $gatewayData);
+        }
+
+        return $fresh;
     }
 
     public static function markDisconnected(): WhatsappSession
@@ -164,8 +171,31 @@ class WhatsAppSystemSessionService
 
         Cache::put($reconnectKey, 1, now()->addSeconds(8));
 
+        WhatsAppSystemSessionLogService::record(
+            WhatsappSessionLog::EVENT_AUTO_RECONNECT,
+            __('admin.whatsapp-log-auto-reconnect'),
+            WhatsAppSystemSessionLogService::gatewaySnapshot($data),
+            WhatsappSessionLog::LEVEL_INFO,
+            null,
+            120
+        );
+
         BaileysGateway::startSession($sessionId, 45);
         $retry = BaileysGateway::getStatus($sessionId, true, 30);
+
+        if (! $retry['ok']) {
+            WhatsAppSystemSessionLogService::record(
+                WhatsappSessionLog::EVENT_AUTO_RECONNECT_FAILED,
+                __('admin.whatsapp-log-auto-reconnect-failed'),
+                array_merge(
+                    WhatsAppSystemSessionLogService::gatewaySnapshot($data),
+                    ['error' => $retry['error'] ?? null]
+                ),
+                WhatsappSessionLog::LEVEL_ERROR,
+                null,
+                300
+            );
+        }
 
         return $retry['ok'] ? ($retry['data'] ?? $data) : $data;
     }

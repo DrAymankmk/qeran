@@ -219,6 +219,7 @@ Route::group(['prefix' => 'admin', 'middleware' => 'set.admin.locale'], function
             Route::get('/qr', 'qr')->name('qr');
             Route::post('/refresh-qr', 'refreshQr')->name('refresh-qr');
             Route::post('/disconnect', 'disconnect')->name('disconnect');
+            Route::get('/logs', 'logs')->name('logs');
         });
 
         Route::controller(WhatsAppClientsController::class)->prefix('whatsapp-clients')->name('admin.whatsapp-clients.')->group(function () {

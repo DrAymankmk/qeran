@@ -41,6 +41,49 @@ $envFlapLeftSm = (string) ($envLayout['flap_left_sm'] ?? '');
 $envFlapWidthSm = (string) ($envLayout['flap_width_sm'] ?? '');
 $envFlapImgPositionSm = (string) ($envLayout['flap_image_position_sm'] ?? '');
 $envFlapImgMinHeightSm = (string) ($envLayout['flap_image_min_height_sm'] ?? '');
+$envEnvelopeWidth = (string) ($envLayout['envelope_width'] ?? '');
+$envEnvelopeHeight = (string) ($envLayout['envelope_height'] ?? '');
+$envEnvelopeMaxWidth = (string) ($envLayout['envelope_max_width'] ?? 'min(92vw, 420px)');
+$envEnvelopeMaxHeight = (string) ($envLayout['envelope_max_height'] ?? 'min(90dvh, 520px)');
+$envEnvelopeAspectRatio = (string) ($envLayout['envelope_aspect_ratio'] ?? '4 / 5.2');
+$envSceneWidth = (string) ($envLayout['scene_width'] ?? 'min(92vw, 440px)');
+$envSceneMinHeight = (string) ($envLayout['scene_min_height'] ?? 'min(420px, calc(100dvh - 118px))');
+$envHasMobileSizeTune = (bool) ($envLayout['has_mobile_size_tune'] ?? false);
+$envEnvelopeWidthSm = (string) ($envLayout['envelope_width_sm'] ?? '');
+$envEnvelopeHeightSm = (string) ($envLayout['envelope_height_sm'] ?? '');
+$envEnvelopeMaxWidthSm = (string) ($envLayout['envelope_max_width_sm'] ?? '');
+$envEnvelopeMaxHeightSm = (string) ($envLayout['envelope_max_height_sm'] ?? '');
+$envEnvelopeAspectRatioSm = (string) ($envLayout['envelope_aspect_ratio_sm'] ?? '');
+$envSceneWidthSm = (string) ($envLayout['scene_width_sm'] ?? '');
+$envSceneMinHeightSm = (string) ($envLayout['scene_min_height_sm'] ?? '');
+$envSizeStyle = '--env-max-width: '.$envEnvelopeMaxWidth.'; --env-max-height: '.$envEnvelopeMaxHeight.'; --env-aspect-ratio: '.$envEnvelopeAspectRatio.'; --env-scene-width: '.$envSceneWidth.'; --env-scene-min-height: '.$envSceneMinHeight.';'
+    .($envEnvelopeWidth !== '' ? ' --env-width: '.$envEnvelopeWidth.';' : '')
+    .($envEnvelopeHeight !== '' ? ' --env-height: '.$envEnvelopeHeight.';' : '')
+    .($envEnvelopeWidthSm !== '' ? ' --env-width-sm: '.$envEnvelopeWidthSm.';' : '')
+    .($envEnvelopeHeightSm !== '' ? ' --env-height-sm: '.$envEnvelopeHeightSm.';' : '')
+    .($envEnvelopeMaxWidthSm !== '' ? ' --env-max-width-sm: '.$envEnvelopeMaxWidthSm.';' : '')
+    .($envEnvelopeMaxHeightSm !== '' ? ' --env-max-height-sm: '.$envEnvelopeMaxHeightSm.';' : '')
+    .($envEnvelopeAspectRatioSm !== '' ? ' --env-aspect-ratio-sm: '.$envEnvelopeAspectRatioSm.';' : '')
+    .($envSceneWidthSm !== '' ? ' --env-scene-width-sm: '.$envSceneWidthSm.';' : '')
+    .($envSceneMinHeightSm !== '' ? ' --env-scene-min-height-sm: '.$envSceneMinHeightSm.';' : '');
+$envPhotoStyle = '';
+if ($hasEnvImage) {
+    $envPhotoStyle = '--env-body-fit: '.$envImageFit.'; --env-body-position: '.$envBodyPosition.';'
+        .($envBodyClip !== '' ? ' --env-body-clip: '.$envBodyClip.';' : '')
+        .' --env-flap-left: '.$envFlapLeft.'; --env-flap-top: '.$envFlapTop.'; --env-flap-width: '.$envFlapWidth.'; --env-flap-height: '.$envFlapHeight.';'
+        .' --env-flap-clip: '.$envFlapClip.'; --env-flap-origin: '.$envFlapOrigin.'; --env-flap-img-fit: '.$envFlapImgFit.';'
+        .' --env-flap-img-position: '.$envFlapImgPosition.'; --env-flap-img-min-height: '.$envFlapImgMinHeight.'; --env-flap-open-rotate: '.$envFlapOpenRotate.';'
+        .($envFlapClipSm !== '' ? ' --env-flap-clip-sm: '.$envFlapClipSm.';' : '')
+        .($envBodyClipSm !== '' ? ' --env-body-clip-sm: '.$envBodyClipSm.';' : '')
+        .($envFlapTopSm !== '' ? ' --env-flap-top-sm: '.$envFlapTopSm.';' : '')
+        .($envFlapLeftSm !== '' ? ' --env-flap-left-sm: '.$envFlapLeftSm.';' : '')
+        .($envFlapWidthSm !== '' ? ' --env-flap-width-sm: '.$envFlapWidthSm.';' : '')
+        .($envFlapHeightSm !== '' ? ' --env-flap-height-sm: '.$envFlapHeightSm.';' : '')
+        .($envFlapImgPositionSm !== '' ? ' --env-flap-img-position-sm: '.$envFlapImgPositionSm.';' : '')
+        .($envFlapImgMinHeightSm !== '' ? ' --env-flap-img-min-height-sm: '.$envFlapImgMinHeightSm.';' : '');
+}
+$envEnvelopeStyle = trim($envSizeStyle.' '.$envPhotoStyle);
+$wiSealStyleAttr = ! empty($wiSealInlineStyle ?? '') ? (string) ($wiSealInlineStyle ?? '') : '';
 $envelopeBuilderConfig = $builderConfig ?? [];
 $wiEnvelopeShape = $wiEnvelopeShape ?? 'classic';
 @endphp
@@ -89,11 +132,11 @@ $wiEnvelopeShape = $wiEnvelopeShape ?? 'classic';
 }
 
 .wi-env-scene {
-	width: min(92vw, 440px);
+	width: var(--env-scene-width, min(92vw, 440px));
 	/* height: min(calc(100dvh - 118px), 82dvh); */
 	height: 100%;
 	/* max-height: calc(100dvh - 118px); */
-	min-height: min(420px, calc(100dvh - 118px));
+	min-height: var(--env-scene-min-height, min(420px, calc(100dvh - 118px)));
 	position: relative;
 	display: flex;
 	align-items: center;
@@ -106,11 +149,11 @@ $wiEnvelopeShape = $wiEnvelopeShape ?? 'classic';
 	--env-paper-dark: color-mix(in srgb, var(--env-paper) 72%, #5c4a38);
 	--env-paper-light: color-mix(in srgb, var(--env-paper) 88%, #fff);
 	--env-paper-mid: color-mix(in srgb, var(--env-paper) 82%, var(--env-paper-dark));
-	width: 100%;
-	height: 100%;
-	max-width: min(92vw, 420px);
-	max-height: min(90dvh, 520px);
-	aspect-ratio: 4 / 5.2;
+	width: var(--env-width, 100%);
+	height: var(--env-height, 100%);
+	max-width: var(--env-max-width, min(92vw, 420px));
+	max-height: var(--env-max-height, min(90dvh, 520px));
+	aspect-ratio: var(--env-aspect-ratio, 4 / 5.2);
 	margin: 0 auto;
 	position: relative;
 	transform-style: preserve-3d;
@@ -479,6 +522,19 @@ $wiEnvelopeShape = $wiEnvelopeShape ?? 'classic';
 }
 
 @media (max-width: {{ $envMobileBreakpoint }}px) {
+	.wi-env-scene.has-mobile-size-tune {
+		width: var(--env-scene-width-sm, var(--env-scene-width, min(92vw, 440px)));
+		min-height: var(--env-scene-min-height-sm, var(--env-scene-min-height, min(420px, calc(100dvh - 118px))));
+	}
+
+	.wi-env-envelope.has-mobile-size-tune {
+		width: var(--env-width-sm, var(--env-width, 100%));
+		height: var(--env-height-sm, var(--env-height, 100%));
+		max-width: var(--env-max-width-sm, var(--env-max-width, min(92vw, 420px)));
+		max-height: var(--env-max-height-sm, var(--env-max-height, min(90dvh, 520px)));
+		aspect-ratio: var(--env-aspect-ratio-sm, var(--env-aspect-ratio, 4 / 5.2));
+	}
+
 	.wi-env-envelope.has-env-image.has-mobile-flap-tune .wi-env-photo-flap {
 		top: var(--env-flap-top-sm, var(--env-flap-top, -8px));
 		left: var(--env-flap-left-sm, var(--env-flap-left, 0));
@@ -524,11 +580,11 @@ $wiEnvelopeShape = $wiEnvelopeShape ?? 'classic';
 	data-envelope-stock="{{ $envStockSlug }}" @endif
 	style="--wi-envelope: {{ $wiEnvelopeHex }}; --wi-gold: var(--ib-primary, #c8a97a); --wi-accent: var(--ib-secondary, #e8b4b8);">
 	<div class="wi-env-stage">
-		<div class="wi-env-scene">
-			<div class="wi-env-envelope wi-env-shape-{{ $wiEnvelopeShape }} @if($hasEnvImage) has-env-image @endif @if($envHasBodyFlapSplit) has-body-flap-split @endif @if($envBodyClipSm !== '') has-mobile-body-clip @endif @if($envHasMobileFlapTune) has-mobile-flap-tune @endif @if($envHasSeparateFlap) has-separate-flap @endif @if($envShowPocketLiner) show-pocket-liner @endif @if($envStockSlug !== '') wi-env-stock-{{ $envStockSlug }} @endif"
-				role="presentation" @if($hasEnvImage)
-				style="--env-body-fit: {{ $envImageFit }}; --env-body-position: {{ $envBodyPosition }};@if($envBodyClip !== '') --env-body-clip: {{ $envBodyClip }};@endif --env-flap-left: {{ $envFlapLeft }}; --env-flap-top: {{ $envFlapTop }}; --env-flap-width: {{ $envFlapWidth }}; --env-flap-height: {{ $envFlapHeight }}; --env-flap-clip: {{ $envFlapClip }}; --env-flap-origin: {{ $envFlapOrigin }}; --env-flap-img-fit: {{ $envFlapImgFit }}; --env-flap-img-position: {{ $envFlapImgPosition }}; --env-flap-img-min-height: {{ $envFlapImgMinHeight }}; --env-flap-open-rotate: {{ $envFlapOpenRotate }};@if($envFlapClipSm !== '') --env-flap-clip-sm: {{ $envFlapClipSm }};@endif @if($envBodyClipSm !== '') --env-body-clip-sm: {{ $envBodyClipSm }};@endif @if($envFlapTopSm !== '') --env-flap-top-sm: {{ $envFlapTopSm }};@endif @if($envFlapLeftSm !== '') --env-flap-left-sm: {{ $envFlapLeftSm }};@endif @if($envFlapWidthSm !== '') --env-flap-width-sm: {{ $envFlapWidthSm }};@endif @if($envFlapHeightSm !== '') --env-flap-height-sm: {{ $envFlapHeightSm }};@endif @if($envFlapImgPositionSm !== '') --env-flap-img-position-sm: {{ $envFlapImgPositionSm }};@endif @if($envFlapImgMinHeightSm !== '') --env-flap-img-min-height-sm: {{ $envFlapImgMinHeightSm }};@endif"
-				@endif>
+		<div class="wi-env-scene @if($envHasMobileSizeTune) has-mobile-size-tune @endif"
+			style="{{ $envSizeStyle }}">
+			<div class="wi-env-envelope wi-env-shape-{{ $wiEnvelopeShape }} @if($hasEnvImage) has-env-image @endif @if($envHasBodyFlapSplit) has-body-flap-split @endif @if($envBodyClipSm !== '') has-mobile-body-clip @endif @if($envHasMobileFlapTune) has-mobile-flap-tune @endif @if($envHasMobileSizeTune) has-mobile-size-tune @endif @if($envHasSeparateFlap) has-separate-flap @endif @if($envShowPocketLiner) show-pocket-liner @endif @if($envStockSlug !== '') wi-env-stock-{{ $envStockSlug }} @endif"
+				role="presentation"
+				style="{{ $envEnvelopeStyle }}">
 				@if($hasEnvImage)
 				<div class="wi-env-photo-stack" aria-hidden="true">
 					<div class="wi-env-photo-body">
@@ -536,9 +592,9 @@ $wiEnvelopeShape = $wiEnvelopeShape ?? 'classic';
 							src="{{ $envBodyImageUrl }}" alt=""
 							loading="eager" decoding="async">
 					</div>
-					<!-- @if($envShowPocketLiner && $envHasBodyFlapSplit)
+					{{-- @if($envShowPocketLiner && $envHasBodyFlapSplit)
 					<div class="wi-env-photo-pocket-liner" aria-hidden="true"></div>
-					@endif -->
+					@endif --}}
 					<div class="wi-env-photo-flap">
 						<img class="wi-env-photo-flap-img"
 							src="{{ $envFlapImageUrl }}" alt=""
@@ -560,9 +616,7 @@ $wiEnvelopeShape = $wiEnvelopeShape ?? 'classic';
 					<div class="wi-env-paper-texture"></div>
 				</div>
 				<div class="wi-env-seal-wrap">
-					<div class="wi-env-seal has-seal-custom-color wi-seal-shape-{{ $wiSealShape }} wi-seal-pal-{{ $wiSealPalette }} @if($wiSealRing) has-seal-ring @endif @if($wiSealDrip) has-seal-drip @endif"
-						@if(!empty($wiSealInlineStyle))
-						style="{{ $wiSealInlineStyle }}" @endif>
+					<div class="wi-env-seal has-seal-custom-color wi-seal-shape-{{ $wiSealShape }} wi-seal-pal-{{ $wiSealPalette }} @if($wiSealRing) has-seal-ring @endif @if($wiSealDrip) has-seal-drip @endif"@if($wiSealStyleAttr !== '') style="{{ $wiSealStyleAttr }}"@endif>
 						<span class="wi-seal-ring" aria-hidden="true"></span>
 						<button type="button" class="wi-env-seal-button"
 							onclick="wiOpenEnvelope()"

@@ -785,6 +785,58 @@ class InvitationBuilderService
      * @param  array<string, mixed>  $flap
      * @param  array<string, mixed>  $layout
      */
+    protected function mergeEnvelopeSizeTune(array $size, array &$layout, bool $mobile = false): void
+    {
+        $suffix = $mobile ? '_sm' : '';
+        $map = [
+            'width' => 'envelope_width',
+            'height' => 'envelope_height',
+            'max_width' => 'envelope_max_width',
+            'max_height' => 'envelope_max_height',
+            'aspect_ratio' => 'envelope_aspect_ratio',
+            'scene_width' => 'scene_width',
+            'scene_min_height' => 'scene_min_height',
+        ];
+
+        foreach ($map as $configKey => $baseKey) {
+            if (! isset($size[$configKey]) || $size[$configKey] === '') {
+                continue;
+            }
+
+            $value = $size[$configKey];
+            if ($configKey === 'aspect_ratio') {
+                if (is_array($value) && count($value) === 2) {
+                    $value = ((string) $value[0]).' / '.((string) $value[1]);
+                } elseif (is_string($value) && str_contains($value, ':') && ! str_contains($value, '/')) {
+                    $value = str_replace(':', ' / ', $value);
+                }
+            }
+
+            $layout[$baseKey.$suffix] = (string) $value;
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $size
+     * @return array<string, mixed>
+     */
+    protected function envelopeSizeMobileTune(array $size): array
+    {
+        $mobile = is_array($size['mobile'] ?? null) ? $size['mobile'] : [];
+
+        foreach ($size as $key => $value) {
+            if (! is_string($key) || ! str_ends_with($key, '_mobile')) {
+                continue;
+            }
+            $baseKey = substr($key, 0, -7);
+            if ($baseKey !== '') {
+                $mobile[$baseKey] = $value;
+            }
+        }
+
+        return $mobile;
+    }
+
     protected function mergeEnvelopeFlapTune(array $flap, array &$layout, bool $mobile = false): void
     {
         $suffix = $mobile ? '_sm' : '';
@@ -879,7 +931,14 @@ class InvitationBuilderService
      *     flap_image_position: string,
      *     flap_image_min_height: string,
      *     flap_open_rotate: string,
-     *     stock_slug: string
+     *     stock_slug: string,
+     *     envelope_width: string,
+     *     envelope_height: string,
+     *     envelope_max_width: string,
+     *     envelope_max_height: string,
+     *     envelope_aspect_ratio: string,
+     *     scene_width: string,
+     *     scene_min_height: string
      * }
      */
     public function stockEnvelopePhotoLayout(?string $ref): array
@@ -896,6 +955,13 @@ class InvitationBuilderService
             'flap_image_url' => '',
             'has_separate_flap' => false,
             'has_body_flap_split' => false,
+            'envelope_width' => (string) ($defaults['envelope_width'] ?? ''),
+            'envelope_height' => (string) ($defaults['envelope_height'] ?? ''),
+            'envelope_max_width' => (string) ($defaults['envelope_max_width'] ?? 'min(92vw, 420px)'),
+            'envelope_max_height' => (string) ($defaults['envelope_max_height'] ?? 'min(90dvh, 520px)'),
+            'envelope_aspect_ratio' => (string) ($defaults['envelope_aspect_ratio'] ?? '4 / 5.2'),
+            'scene_width' => (string) ($defaults['scene_width'] ?? 'min(92vw, 440px)'),
+            'scene_min_height' => (string) ($defaults['scene_min_height'] ?? 'min(420px, calc(100dvh - 118px))'),
             'flap_height' => (string) ($defaults['flap_height'] ?? '54%'),
             'flap_top' => (string) ($defaults['flap_top'] ?? '-8px'),
             'flap_left' => (string) ($defaults['flap_left'] ?? '0'),
@@ -910,6 +976,7 @@ class InvitationBuilderService
             'flap_open_rotate' => (string) ($defaults['flap_open_rotate'] ?? '-168deg'),
             'stock_slug' => '',
             'has_mobile_flap_tune' => false,
+            'has_mobile_size_tune' => false,
             'mobile_breakpoint' => $this->envelopeMobileBreakpoint(),
         ];
 
@@ -941,6 +1008,15 @@ class InvitationBuilderService
         }
         if (array_key_exists('show_pocket_liner', $meta)) {
             $layout['show_pocket_liner'] = (bool) $meta['show_pocket_liner'];
+        }
+
+        $size = is_array($meta['size'] ?? null) ? $meta['size'] : [];
+        $this->mergeEnvelopeSizeTune($size, $layout, false);
+
+        $mobileSize = $this->envelopeSizeMobileTune($size);
+        if ($mobileSize !== []) {
+            $this->mergeEnvelopeSizeTune($mobileSize, $layout, true);
+            $layout['has_mobile_size_tune'] = true;
         }
 
         $flap = is_array($meta['flap'] ?? null) ? $meta['flap'] : [];

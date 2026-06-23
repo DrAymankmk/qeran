@@ -60,7 +60,7 @@ $activeEnvelopeShape = app(\App\Services\Invitation\InvitationBuilderService::cl
 		data-envelope-ref="{{ $choice['id'] }}" data-envelope-url="{{ $choice['url'] }}"
 		title="{{ $choice['label'] }}">
 		<img src="{{ $choice['url'] }}" alt="{{ $choice['label'] }}" loading="lazy">
-		<small>{{ $choice['label'] }}</small>
+		<!-- <small>{{ $choice['label'] }}</small> -->
 	</button>
 	@endforeach
 	@endif

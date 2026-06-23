@@ -363,6 +363,9 @@ class WhatsAppSystemController extends Controller
      */
     protected function formatLogEntry(WhatsappSessionLog $log): array
     {
+        $displayTz = (string) config('app.display_timezone', 'Asia/Riyadh');
+        $displayTime = $log->created_at?->timezone($displayTz);
+
         return [
             'id' => $log->id,
             'event' => $log->event,
@@ -372,8 +375,9 @@ class WhatsAppSystemController extends Controller
             'message' => $log->message,
             'context' => $log->context ?? [],
             'admin_name' => $log->admin?->name,
-            'created_at' => $log->created_at?->toIso8601String(),
-            'created_at_human' => $log->created_at?->diffForHumans(),
+            'created_at' => $displayTime?->toIso8601String(),
+            'created_at_display' => $displayTime?->format('Y-m-d H:i:s'),
+            'created_at_human' => $displayTime?->diffForHumans(),
         ];
     }
 }

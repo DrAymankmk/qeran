@@ -448,7 +448,9 @@
 			const actor = entry.admin_name
 				? escapeHtml(entry.admin_name)
 				: @json(__('admin.whatsapp-activity-log-actor-system'));
-			const created = entry.created_at ? escapeHtml(entry.created_at.replace('T', ' ').slice(0, 19)) : '—';
+			const created = entry.created_at_display
+				? escapeHtml(entry.created_at_display)
+				: (entry.created_at ? escapeHtml(entry.created_at.replace('T', ' ').slice(0, 19)) : '—');
 			const human = entry.created_at_human ? escapeHtml(entry.created_at_human) : '';
 
 			rows += '<tr>'

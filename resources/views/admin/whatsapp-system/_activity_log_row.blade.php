@@ -1,7 +1,10 @@
+@php
+	$logTime = $log->created_at?->timezone(config('app.display_timezone', 'Asia/Riyadh'));
+@endphp
 <tr>
 	<td class="small text-nowrap">
-		<div>{{ $log->created_at?->format('Y-m-d H:i:s') }}</div>
-		<div class="text-muted">{{ $log->created_at?->diffForHumans() }}</div>
+		<div>{{ $logTime?->format('Y-m-d H:i:s') }}</div>
+		<div class="text-muted">{{ $logTime?->diffForHumans() }}</div>
 	</td>
 	<td>
 		<span class="badge bg-{{ $log->levelBadgeClass() }}">

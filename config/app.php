@@ -88,6 +88,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Display Timezone (admin UI, reports)
+    |--------------------------------------------------------------------------
+    |
+    | Database timestamps stay in UTC. Use this timezone when showing dates
+    | to admins (e.g. Saudi Arabia → Asia/Riyadh).
+    |
+    */
+
+    'display_timezone' => env('APP_DISPLAY_TIMEZONE', 'Asia/Riyadh'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |

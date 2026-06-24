@@ -205,13 +205,20 @@ class WhatsAppSystemSessionLogService
             ->get();
     }
 
-    public static function paginate(int $perPage = 25): LengthAwarePaginator
+    public static function paginate(int $perPage = 25, int $page = 1): LengthAwarePaginator
     {
         return WhatsappSessionLog::query()
             ->where('session_id', WhatsAppSystemSessionService::sessionId())
             ->with('admin:id,name')
             ->orderByDesc('id')
-            ->paginate($perPage);
+            ->paginate($perPage, ['*'], 'page', max(1, $page));
+    }
+
+    public static function clearAll(): int
+    {
+        return WhatsappSessionLog::query()
+            ->where('session_id', WhatsAppSystemSessionService::sessionId())
+            ->delete();
     }
 
     /**

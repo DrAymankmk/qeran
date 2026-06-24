@@ -220,6 +220,8 @@ Route::group(['prefix' => 'admin', 'middleware' => 'set.admin.locale'], function
             Route::post('/refresh-qr', 'refreshQr')->name('refresh-qr');
             Route::post('/disconnect', 'disconnect')->name('disconnect');
             Route::get('/logs', 'logs')->name('logs');
+            Route::delete('/logs', 'destroyLogs')->name('logs.destroy-all');
+            Route::delete('/logs/{log}', 'destroyLog')->name('logs.destroy');
             Route::post('/test-otp', 'testOtp')->name('test-otp');
         });
 

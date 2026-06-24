@@ -1,4 +1,9 @@
-@if(($activityLogs ?? collect())->isEmpty())
+@php
+	$isPaginator = ($activityLogs ?? null) instanceof \Illuminate\Contracts\Pagination\Paginator;
+	$logTotal = $isPaginator ? $activityLogs->total() : ($activityLogs ?? collect())->count();
+@endphp
+
+@if($logTotal === 0)
 <p class="text-muted mb-0" id="wa-activity-log-empty">{{ __('admin.whatsapp-activity-log-empty') }}</p>
 @else
 <div class="table-responsive">
@@ -10,6 +15,7 @@
 				<th>{{ __('admin.whatsapp-activity-log-col-message') }}</th>
 				<th style="width: 120px;">{{ __('admin.whatsapp-activity-log-col-actor') }}</th>
 				<th style="width: 90px;">{{ __('admin.whatsapp-activity-log-col-details') }}</th>
+				<th style="width: 70px;">{{ __('admin.whatsapp-activity-log-col-actions') }}</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -19,4 +25,8 @@
 		</tbody>
 	</table>
 </div>
+
+@if($isPaginator)
+@include('admin.whatsapp-system._activity_log_pagination', ['activityLogs' => $activityLogs])
+@endif
 @endif

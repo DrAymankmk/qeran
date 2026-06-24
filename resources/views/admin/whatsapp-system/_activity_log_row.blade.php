@@ -29,4 +29,10 @@
 		<span class="text-muted">—</span>
 		@endif
 	</td>
+	<td>
+		<button type="button" class="btn btn-link btn-sm p-0 text-danger wa-log-delete-btn" data-id="{{ $log->id }}"
+			title="{{ __('admin.whatsapp-activity-log-delete') }}" aria-label="{{ __('admin.whatsapp-activity-log-delete') }}">
+			<i class="mdi mdi-delete-outline"></i>
+		</button>
+	</td>
 </tr>

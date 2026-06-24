@@ -11,6 +11,7 @@ use App\Services\WhatsApp\WhatsAppSystemSessionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 use App\Support\PhoneNumber;
 use Illuminate\View\View;
@@ -30,8 +31,8 @@ class WhatsAppSystemController extends Controller
             'qr' => ['ok' => false, 'data' => null, 'error' => null],
             'autoGenerateQr' => session('wa_auto_generate', false),
             'activityLogs' => $configured
-                ? WhatsAppSystemSessionLogService::recent(30)
-                : collect(),
+                ? WhatsAppSystemSessionLogService::paginate(15)
+                : new LengthAwarePaginator([], 0, 15),
         ]);
     }
 
@@ -109,8 +110,9 @@ class WhatsAppSystemController extends Controller
             return response()->json(['ok' => false, 'error' => __('admin.whatsapp-gateway-not-configured')], 503);
         }
 
-        $perPage = max(10, min(50, (int) $request->query('per_page', 25)));
-        $paginator = WhatsAppSystemSessionLogService::paginate($perPage);
+        $perPage = max(10, min(50, (int) $request->query('per_page', 15)));
+        $page = max(1, (int) $request->query('page', 1));
+        $paginator = WhatsAppSystemSessionLogService::paginate($perPage, $page);
 
         return response()->json([
             'ok' => true,
@@ -120,8 +122,40 @@ class WhatsAppSystemController extends Controller
             'meta' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
                 'total' => $paginator->total(),
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
             ],
+        ]);
+    }
+
+    public function destroyLog(WhatsappSessionLog $log): JsonResponse
+    {
+        if (! BaileysGateway::isConfigured()) {
+            return response()->json(['ok' => false, 'error' => __('admin.whatsapp-gateway-not-configured')], 503);
+        }
+
+        if ($log->session_id !== BaileysGateway::systemSessionId()) {
+            return response()->json(['ok' => false, 'error' => __('admin.whatsapp-activity-log-not-found')], 404);
+        }
+
+        $log->delete();
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function destroyLogs(): JsonResponse
+    {
+        if (! BaileysGateway::isConfigured()) {
+            return response()->json(['ok' => false, 'error' => __('admin.whatsapp-gateway-not-configured')], 503);
+        }
+
+        $deleted = WhatsAppSystemSessionLogService::clearAll();
+
+        return response()->json([
+            'ok' => true,
+            'deleted' => $deleted,
         ]);
     }
 

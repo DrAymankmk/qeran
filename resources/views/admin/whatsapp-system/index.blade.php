@@ -168,6 +168,32 @@
 	};
 	const pollMs = 3000;
 	const logsUrl = @json(route('admin.whatsapp-system.logs'));
+	const logsDestroyAllUrl = @json(route('admin.whatsapp-system.logs.destroy-all'));
+	const logsDestroyUrlTemplate = @json(route('admin.whatsapp-system.logs.destroy', ['log' => '__LOG__']));
+	const logsPerPage = 15;
+	let logsCurrentPage = @json(
+		($activityLogs ?? null) instanceof \Illuminate\Contracts\Pagination\Paginator
+			? $activityLogs->currentPage()
+			: 1
+	);
+	const logLabels = {
+		empty: @json(__('admin.whatsapp-activity-log-empty')),
+		colTime: @json(__('admin.whatsapp-activity-log-col-time')),
+		colEvent: @json(__('admin.whatsapp-activity-log-col-event')),
+		colMessage: @json(__('admin.whatsapp-activity-log-col-message')),
+		colActor: @json(__('admin.whatsapp-activity-log-col-actor')),
+		colDetails: @json(__('admin.whatsapp-activity-log-col-details')),
+		colActions: @json(__('admin.whatsapp-activity-log-col-actions')),
+		view: @json(__('admin.whatsapp-activity-log-view')),
+		delete: @json(__('admin.whatsapp-activity-log-delete')),
+		deleteConfirm: @json(__('admin.whatsapp-activity-log-delete-confirm')),
+		clearAllConfirm: @json(__('admin.whatsapp-activity-log-clear-all-confirm')),
+		showing: @json(__('admin.whatsapp-activity-log-showing', ['from' => ':from', 'to' => ':to', 'total' => ':total'])),
+		deleted: @json(__('admin.whatsapp-activity-log-deleted')),
+		cleared: @json(__('admin.whatsapp-activity-log-cleared')),
+		deleteFailed: @json(__('admin.whatsapp-activity-log-delete-failed')),
+		actorSystem: @json(__('admin.whatsapp-activity-log-actor-system')),
+	};
 	const testOtpUrl = @json(route('admin.whatsapp-system.test-otp'));
 	const logsRefreshMs = 30000;
 	const qrPollMs = 2500;
@@ -482,14 +508,60 @@
 		});
 	}
 
-	function renderActivityLogs(entries) {
+	function formatLogShowing(from, to, total) {
+		return logLabels.showing
+			.replace(':from', String(from ?? 0))
+			.replace(':to', String(to ?? 0))
+			.replace(':total', String(total ?? 0));
+	}
+
+	function logDestroyUrl(id) {
+		return logsDestroyUrlTemplate.replace('__LOG__', String(id));
+	}
+
+	function buildPaginationHtml(meta) {
+		if (!meta || !meta.total) {
+			return '';
+		}
+
+		const summary = '<p class="small text-muted mb-0" id="wa-activity-log-summary">'
+			+ escapeHtml(formatLogShowing(meta.from, meta.to, meta.total)) + '</p>';
+
+		if (!meta.last_page || meta.last_page <= 1) {
+			return '<nav class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3" id="wa-activity-log-pagination" aria-label="Activity log pagination">'
+				+ summary + '</nav>';
+		}
+
+		let pages = '';
+		for (let page = 1; page <= meta.last_page; page++) {
+			const active = page === meta.current_page ? ' active' : '';
+			pages += '<li class="page-item' + active + '">'
+				+ '<button type="button" class="page-link wa-log-page-btn" data-page="' + page + '">' + page + '</button>'
+				+ '</li>';
+		}
+
+		const prevDisabled = meta.current_page <= 1 ? ' disabled' : '';
+		const nextDisabled = meta.current_page >= meta.last_page ? ' disabled' : '';
+
+		return '<nav class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3" id="wa-activity-log-pagination" aria-label="Activity log pagination">'
+			+ summary
+			+ '<ul class="pagination pagination-sm mb-0">'
+			+ '<li class="page-item' + prevDisabled + '"><button type="button" class="page-link wa-log-page-btn" data-page="' + (meta.current_page - 1) + '"'
+			+ (meta.current_page <= 1 ? ' disabled' : '') + ' aria-label="Previous">&laquo;</button></li>'
+			+ pages
+			+ '<li class="page-item' + nextDisabled + '"><button type="button" class="page-link wa-log-page-btn" data-page="' + (meta.current_page + 1) + '"'
+			+ (meta.current_page >= meta.last_page ? ' disabled' : '') + ' aria-label="Next">&raquo;</button></li>'
+			+ '</ul></nav>';
+	}
+
+	function renderActivityLogs(entries, meta) {
 		const wrap = document.getElementById('wa-activity-log-wrap');
 		if (!wrap || !Array.isArray(entries)) {
 			return;
 		}
 
-		if (entries.length === 0) {
-			wrap.innerHTML = '<p class="text-muted mb-0">{{ __('admin.whatsapp-activity-log-empty') }}</p>';
+		if (!meta || !meta.total) {
+			wrap.innerHTML = '<p class="text-muted mb-0" id="wa-activity-log-empty">' + escapeHtml(logLabels.empty) + '</p>';
 			return;
 		}
 
@@ -497,15 +569,18 @@
 		entries.forEach(function (entry) {
 			const contextRaw = encodeURIComponent(JSON.stringify(entry.context || {}));
 			const contextBtn = Object.keys(entry.context || {}).length
-				? '<button type="button" class="btn btn-link btn-sm p-0 wa-log-details-btn" data-context="' + contextRaw + '">{{ __('admin.whatsapp-activity-log-view') }}</button>'
+				? '<button type="button" class="btn btn-link btn-sm p-0 wa-log-details-btn" data-context="' + contextRaw + '">' + escapeHtml(logLabels.view) + '</button>'
 				: '<span class="text-muted">—</span>';
 			const actor = entry.admin_name
 				? escapeHtml(entry.admin_name)
-				: @json(__('admin.whatsapp-activity-log-actor-system'));
+				: escapeHtml(logLabels.actorSystem);
 			const created = entry.created_at_display
 				? escapeHtml(entry.created_at_display)
 				: (entry.created_at ? escapeHtml(entry.created_at.replace('T', ' ').slice(0, 19)) : '—');
 			const human = entry.created_at_human ? escapeHtml(entry.created_at_human) : '';
+			const deleteBtn = '<button type="button" class="btn btn-link btn-sm p-0 text-danger wa-log-delete-btn" data-id="' + escapeHtml(String(entry.id)) + '"'
+				+ ' title="' + escapeHtml(logLabels.delete) + '" aria-label="' + escapeHtml(logLabels.delete) + '">'
+				+ '<i class="mdi mdi-delete-outline"></i></button>';
 
 			rows += '<tr>'
 				+ '<td class="small text-nowrap"><div>' + created + '</div>'
@@ -515,38 +590,129 @@
 				+ '<td class="small">' + escapeHtml(entry.message || '') + '</td>'
 				+ '<td class="small text-muted">' + actor + '</td>'
 				+ '<td>' + contextBtn + '</td>'
+				+ '<td>' + deleteBtn + '</td>'
 				+ '</tr>';
 		});
 
 		wrap.innerHTML = '<div class="table-responsive">'
 			+ '<table class="table table-sm table-hover align-middle mb-0" id="wa-activity-log-table">'
 			+ '<thead class="table-light"><tr>'
-			+ '<th style="width:140px;">{{ __('admin.whatsapp-activity-log-col-time') }}</th>'
-			+ '<th style="width:120px;">{{ __('admin.whatsapp-activity-log-col-event') }}</th>'
-			+ '<th>{{ __('admin.whatsapp-activity-log-col-message') }}</th>'
-			+ '<th style="width:120px;">{{ __('admin.whatsapp-activity-log-col-actor') }}</th>'
-			+ '<th style="width:90px;">{{ __('admin.whatsapp-activity-log-col-details') }}</th>'
-			+ '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+			+ '<th style="width:140px;">' + escapeHtml(logLabels.colTime) + '</th>'
+			+ '<th style="width:120px;">' + escapeHtml(logLabels.colEvent) + '</th>'
+			+ '<th>' + escapeHtml(logLabels.colMessage) + '</th>'
+			+ '<th style="width:120px;">' + escapeHtml(logLabels.colActor) + '</th>'
+			+ '<th style="width:90px;">' + escapeHtml(logLabels.colDetails) + '</th>'
+			+ '<th style="width:70px;">' + escapeHtml(logLabels.colActions) + '</th>'
+			+ '</tr></thead><tbody>' + rows + '</tbody></table></div>'
+			+ buildPaginationHtml(meta);
 
 		bindLogDetailButtons();
 	}
 
-	function refreshActivityLogs() {
-		fetch(logsUrl + '?per_page=30', {
+	function refreshActivityLogs(page) {
+		if (typeof page === 'number' && page > 0) {
+			logsCurrentPage = page;
+		}
+
+		const url = logsUrl + '?per_page=' + logsPerPage + '&page=' + logsCurrentPage;
+		return fetch(url, {
 			headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
 		})
 			.then(function (r) { return r.json(); })
 			.then(function (payload) {
-				if (payload && payload.ok && payload.data) {
-					renderActivityLogs(payload.data);
+				if (payload && payload.ok) {
+					if (payload.meta) {
+						logsCurrentPage = payload.meta.current_page || logsCurrentPage;
+					}
+					renderActivityLogs(payload.data || [], payload.meta || null);
 				}
+				return payload;
 			})
 			.catch(function () { /* ignore */ });
 	}
 
+	async function deleteActivityLog(id) {
+		if (!id || !window.confirm(logLabels.deleteConfirm)) {
+			return;
+		}
+
+		try {
+			const response = await fetch(logDestroyUrl(id), {
+				method: 'DELETE',
+				headers: {
+					'Accept': 'application/json',
+					'X-CSRF-TOKEN': csrfToken,
+					'X-Requested-With': 'XMLHttpRequest',
+				},
+			});
+			const payload = await response.json();
+			if (!response.ok || !payload?.ok) {
+				window.alert(logLabels.deleteFailed);
+				return;
+			}
+
+			await refreshActivityLogs(logsCurrentPage);
+		} catch (e) {
+			window.alert(logLabels.deleteFailed);
+		}
+	}
+
+	async function clearAllActivityLogs() {
+		if (!window.confirm(logLabels.clearAllConfirm)) {
+			return;
+		}
+
+		try {
+			const response = await fetch(logsDestroyAllUrl, {
+				method: 'DELETE',
+				headers: {
+					'Accept': 'application/json',
+					'X-CSRF-TOKEN': csrfToken,
+					'X-Requested-With': 'XMLHttpRequest',
+				},
+			});
+			const payload = await response.json();
+			if (!response.ok || !payload?.ok) {
+				window.alert(logLabels.deleteFailed);
+				return;
+			}
+
+			logsCurrentPage = 1;
+			await refreshActivityLogs(1);
+		} catch (e) {
+			window.alert(logLabels.deleteFailed);
+		}
+	}
+
+	const logsWrap = document.getElementById('wa-activity-log-wrap');
+	if (logsWrap) {
+		logsWrap.addEventListener('click', function (event) {
+			const pageBtn = event.target.closest('.wa-log-page-btn');
+			if (pageBtn && !pageBtn.disabled) {
+				const page = parseInt(pageBtn.getAttribute('data-page') || '1', 10);
+				if (page > 0) {
+					refreshActivityLogs(page);
+				}
+				return;
+			}
+
+			const deleteBtn = event.target.closest('.wa-log-delete-btn');
+			if (deleteBtn) {
+				deleteActivityLog(deleteBtn.getAttribute('data-id'));
+			}
+		});
+	}
+
 	const logsRefreshBtn = document.getElementById('wa-logs-refresh');
 	if (logsRefreshBtn) {
-		logsRefreshBtn.addEventListener('click', refreshActivityLogs);
+		logsRefreshBtn.addEventListener('click', function () {
+			refreshActivityLogs(logsCurrentPage);
+		});
+	}
+
+	const logsClearAllBtn = document.getElementById('wa-logs-clear-all');
+	if (logsClearAllBtn) {
+		logsClearAllBtn.addEventListener('click', clearAllActivityLogs);
 	}
 
 	const testOtpBtn = document.getElementById('wa-test-otp-btn');

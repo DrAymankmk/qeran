@@ -90,6 +90,7 @@ class WhatsAppSystemController extends Controller
             is_array($status['data'] ?? null) ? $status['data'] : []
         );
 
+        $data = $this->normalizeRegisteredReconnectStatus($data);
         $data = $this->normalizeLiveConnectedFields($data);
         $record = WhatsAppSystemSessionService::syncFromGateway($data);
 
@@ -156,6 +157,79 @@ class WhatsAppSystemController extends Controller
         return response()->json([
             'ok' => true,
             'deleted' => $deleted,
+        ]);
+    }
+
+    public function reconnect(): JsonResponse
+    {
+        if (! BaileysGateway::isConfigured()) {
+            return response()->json([
+                'ok' => false,
+                'error' => __('admin.whatsapp-gateway-not-configured'),
+            ], 503);
+        }
+
+        $sessionId = BaileysGateway::systemSessionId();
+
+        if (WhatsAppSystemSessionService::adminRequestedDisconnect($sessionId)) {
+            return response()->json([
+                'ok' => false,
+                'error' => __('admin.whatsapp-reconnect-blocked-admin-lock'),
+            ], 409);
+        }
+
+        $status = BaileysGateway::getStatus($sessionId, true, 15);
+        $data = is_array($status['data'] ?? null) ? $status['data'] : [];
+        $data = $this->normalizeRegisteredReconnectStatus($data);
+
+        if (($data['status'] ?? '') === 'connected' && ($data['socketAlive'] ?? false)) {
+            WhatsAppSystemSessionService::syncFromGateway($data);
+
+            return response()->json([
+                'ok' => true,
+                'data' => $data,
+                'session_meta' => WhatsAppSystemSessionService::sessionMeta(),
+                'error' => null,
+            ]);
+        }
+
+        if (! ($data['registeredOnDisk'] ?? false)) {
+            return response()->json([
+                'ok' => false,
+                'error' => __('admin.whatsapp-reconnect-needs-qr'),
+            ], 422);
+        }
+
+        WhatsAppSystemSessionLogService::record(
+            WhatsappSessionLog::EVENT_ADMIN_PREPARE_RECONNECT,
+            __('admin.whatsapp-log-prepare-reconnect'),
+            WhatsAppSystemSessionLogService::gatewaySnapshot($data),
+            WhatsappSessionLog::LEVEL_INFO
+        );
+
+        $result = BaileysGateway::startSession($sessionId, 45);
+
+        if ($result['ok']) {
+            $retry = BaileysGateway::getStatus($sessionId, true, 30);
+            if ($retry['ok'] && is_array($retry['data'] ?? null)) {
+                $retryData = $this->normalizeRegisteredReconnectStatus($retry['data']);
+                WhatsAppSystemSessionService::syncFromGateway($retryData);
+                $result['data'] = $retryData;
+            }
+        } else {
+            WhatsAppSystemSessionLogService::record(
+                WhatsappSessionLog::EVENT_QR_FAILED,
+                __('admin.whatsapp-log-prepare-reconnect-failed'),
+                ['error' => $result['error'] ?? null],
+                WhatsappSessionLog::LEVEL_ERROR
+            );
+        }
+
+        return response()->json([
+            'ok' => $result['ok'],
+            'data' => $result['data'] ?? $data,
+            'session_meta' => WhatsAppSystemSessionService::sessionMeta(),
+            'error' => $result['error'] ?? null,
         ]);
     }
 
@@ -503,6 +577,24 @@ class WhatsAppSystemController extends Controller
             'ok' => true,
             'message' => __('admin.whatsapp-test-otp-sent', ['phone' => $masked]),
         ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function normalizeRegisteredReconnectStatus(array $data): array
+    {
+        $registered = (bool) ($data['registeredOnDisk'] ?? false);
+        $socketAlive = (bool) ($data['socketAlive'] ?? false);
+        $status = (string) ($data['status'] ?? 'disconnected');
+
+        if ($registered && ! $socketAlive && in_array($status, ['pending_qr', 'starting', 'disconnected'], true)) {
+            $data['status'] = 'reconnecting';
+            $data['reconnecting'] = true;
+        }
+
+        return $data;
     }
 
     /**

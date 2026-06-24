@@ -51,6 +51,10 @@
 				</div>
 
 				<div class="d-flex flex-wrap gap-2">
+					<button type="button" id="wa-reconnect-btn" class="btn btn-success d-none">
+						<i class="mdi mdi-refresh me-1"></i>
+						<span id="wa-reconnect-label">{{ __('admin.whatsapp-reconnect-saved') }}</span>
+					</button>
 					<button type="button" id="wa-generate-btn" class="btn btn-primary">
 						<i class="mdi mdi-qrcode-scan me-1"></i>
 						<span id="wa-generate-label">{{ __('admin.whatsapp-generate-qr') }}</span>
@@ -144,11 +148,16 @@
 (function () {
 	const statusUrl = @json(route('admin.whatsapp-system.status'));
 	const prepareUrl = @json(route('admin.whatsapp-system.prepare'));
+	const reconnectUrl = @json(route('admin.whatsapp-system.reconnect'));
 	const qrUrl = @json(route('admin.whatsapp-system.qr'));
 	const csrfToken = @json(csrf_token());
 	const autoGenerate = @json((bool) ($autoGenerateQr ?? false));
 	const labels = {
 		generate: @json(__('admin.whatsapp-generate-qr')),
+		reconnect: @json(__('admin.whatsapp-reconnect-saved')),
+		reconnectBusy: @json(__('admin.whatsapp-reconnect-saved-busy')),
+		reconnectHint: @json(__('admin.whatsapp-reconnect-saved-hint')),
+		reconnectNeedsQr: @json(__('admin.whatsapp-reconnect-needs-qr')),
 		generating: @json(__('admin.whatsapp-qr-generating')),
 		loading: @json(__('admin.whatsapp-qr-loading')),
 		connected: @json(__('admin.whatsapp-status-connected')),
@@ -206,6 +215,40 @@
 	let statusTimer = null;
 	let qrRefreshTimer = null;
 	let qrRunning = false;
+	let reconnectRunning = false;
+	let lastRegisteredOnDisk = false;
+
+	function updateActionButtons(data) {
+		const reconnectBtn = document.getElementById('wa-reconnect-btn');
+		const generateBtn = document.getElementById('wa-generate-btn');
+		if (!reconnectBtn || !generateBtn) {
+			return;
+		}
+
+		const registered = Boolean(
+			data?.registeredOnDisk ?? data?.still_registered_on_disk ?? lastRegisteredOnDisk
+		);
+		if (data && (data.registeredOnDisk != null || data.still_registered_on_disk != null)) {
+			lastRegisteredOnDisk = registered;
+		}
+
+		const connected = (data?.status === 'connected') && Boolean(data?.socketAlive);
+		const showReconnect = registered && !connected;
+
+		reconnectBtn.classList.toggle('d-none', !showReconnect);
+		generateBtn.classList.toggle('btn-primary', !showReconnect);
+		generateBtn.classList.toggle('btn-outline-primary', showReconnect);
+	}
+
+	function setReconnectBusy(busy) {
+		const btn = document.getElementById('wa-reconnect-btn');
+		const label = document.getElementById('wa-reconnect-label');
+		if (!btn || !label) {
+			return;
+		}
+		btn.disabled = busy || qrRunning;
+		label.textContent = busy ? labels.reconnectBusy : labels.reconnect;
+	}
 
 	function stopStatusPoll() {
 		if (statusTimer) {
@@ -247,7 +290,7 @@
 		if (!btn || !label) {
 			return;
 		}
-		btn.disabled = busy;
+		btn.disabled = busy || reconnectRunning;
 		label.textContent = busy ? labels.generating : labels.generate;
 	}
 
@@ -361,6 +404,7 @@
 	function applyStatusPayload(payload) {
 		if (!payload || !payload.ok) {
 			renderStatusError(payload?.error || labels.gatewayUnreachable);
+			updateActionButtons(null);
 			return;
 		}
 		const d = payload.data || {};
@@ -373,26 +417,27 @@
 			d.recovery_hint || null,
 			payload.session_meta || null
 		);
+		updateActionButtons(d);
 		if (status === 'connected') {
 			/* keep polling to refresh uptime */
 			refreshActivityLogs();
 		}
 	}
 
-	function pollStatus() {
-		fetch(statusUrl, {
+	function fetchStatusOnce() {
+		return fetch(statusUrl, {
 			headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-		})
-			.then(r => r.json())
+		}).then(r => r.json());
+	}
+
+	function pollStatus() {
+		fetchStatusOnce()
 			.then(applyStatusPayload)
 			.catch(() => renderStatusError(labels.gatewayUnreachable));
 	}
 
 	function loadStatus() {
-		return fetch(statusUrl, {
-			headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-		})
-			.then(r => r.json())
+		return fetchStatusOnce()
 			.then(applyStatusPayload)
 			.catch(() => renderStatusError(labels.gatewayUnreachable));
 	}
@@ -401,6 +446,52 @@
 		return fetch(qrUrl + '?waitMs=' + encodeURIComponent(waitMs), {
 			headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
 		}).then(r => r.json());
+	}
+
+	async function reconnectSavedSession() {
+		if (reconnectRunning || qrRunning) {
+			return;
+		}
+		reconnectRunning = true;
+		setReconnectBusy(true);
+		renderStatusBox('reconnecting', null, null, labels.reconnectHint, null);
+
+		try {
+			const response = await fetch(reconnectUrl, {
+				method: 'POST',
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json',
+					'X-CSRF-TOKEN': csrfToken,
+					'X-Requested-With': 'XMLHttpRequest',
+				},
+				body: '{}',
+			});
+			const payload = await response.json();
+
+			if (!response.ok || !payload?.ok) {
+				renderStatusError(payload?.error || labels.reconnectNeedsQr);
+				return;
+			}
+
+			for (let attempt = 0; attempt < 25; attempt++) {
+				await new Promise(r => setTimeout(r, attempt === 0 ? 1500 : 3000));
+				const statusPayload = await fetchStatusOnce();
+				if (statusPayload?.ok) {
+					applyStatusPayload(statusPayload);
+					const d = statusPayload.data || {};
+					if (d.status === 'connected' && d.socketAlive) {
+						refreshActivityLogs();
+						return;
+					}
+				}
+			}
+		} catch (e) {
+			renderStatusError(labels.gatewayUnreachable);
+		} finally {
+			reconnectRunning = false;
+			setReconnectBusy(false);
+		}
 	}
 
 	async function generateQr() {
@@ -424,6 +515,26 @@
 			});
 		} catch (e) {
 			/* prepare may time out while gateway still starts — keep polling */
+		}
+
+		if (lastRegisteredOnDisk) {
+			for (let attempt = 0; attempt < 25; attempt++) {
+				await new Promise(r => setTimeout(r, attempt === 0 ? 1500 : 3000));
+				const statusPayload = await fetchStatusOnce();
+				if (statusPayload?.ok) {
+					applyStatusPayload(statusPayload);
+					const d = statusPayload.data || {};
+					if (d.status === 'connected' && d.socketAlive) {
+						qrRunning = false;
+						setGenerateBusy(false);
+						refreshActivityLogs();
+						return;
+					}
+					if (d.status === 'reconnecting' || d.status === 'starting') {
+						continue;
+					}
+				}
+			}
 		}
 
 		for (let attempt = 0; attempt < maxQrAttempts; attempt++) {
@@ -475,6 +586,11 @@
 	const generateBtn = document.getElementById('wa-generate-btn');
 	if (generateBtn) {
 		generateBtn.addEventListener('click', generateQr);
+	}
+
+	const reconnectBtn = document.getElementById('wa-reconnect-btn');
+	if (reconnectBtn) {
+		reconnectBtn.addEventListener('click', reconnectSavedSession);
 	}
 
 	loadStatus().then(function () {

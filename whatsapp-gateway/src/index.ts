@@ -373,6 +373,10 @@ app.get('/sessions/:id/status', async (req, res) => {
       reportStatus = 'disconnected';
     }
 
+    if (progress.registered && !socketAlive && reportStatus === 'pending_qr') {
+      reportStatus = 'reconnecting';
+    }
+
     const liveConnected = reportStatus === 'connected' && socketAlive;
     const registeredOnDisk = progress.registered;
     const pairingAccepted = liveConnected ? false : progress.pairingAccepted;

@@ -216,6 +216,7 @@ Route::group(['prefix' => 'admin', 'middleware' => 'set.admin.locale'], function
             Route::get('/', 'index')->name('index');
             Route::get('/status', 'status')->name('status');
             Route::post('/prepare', 'prepare')->name('prepare');
+            Route::post('/reconnect', 'reconnect')->name('reconnect');
             Route::get('/qr', 'qr')->name('qr');
             Route::post('/refresh-qr', 'refreshQr')->name('refresh-qr');
             Route::post('/disconnect', 'disconnect')->name('disconnect');

@@ -1021,10 +1021,13 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
     if (qr) {
       meta.qr = qr;
       meta.qrGeneratedAt = Date.now();
-      if (meta.status !== 'pending_pairing') {
+      const credsRegistered = Boolean(sock.authState.creds.registered);
+      if (!credsRegistered && meta.status !== 'pending_pairing') {
         meta.status = 'pending_qr';
+      } else if (credsRegistered) {
+        logger.info({ sessionId }, 'QR event ignored — saved credentials still registered');
       }
-      logger.info({ sessionId, status: meta.status }, 'QR event (ignored during pairing if pending_pairing)');
+      logger.info({ sessionId, status: meta.status, credsRegistered }, 'QR event');
     }
 
     if (connection === 'open') {

@@ -61,12 +61,7 @@ class WhatsAppSystemSessionService
         $reconnecting = (bool) ($gatewayData['reconnecting'] ?? false);
         $phone = $gatewayData['phone'] ?? null;
         $isLive = $status === 'connected' && $socketAlive && $registered;
-        $isReconnecting = $registered && (
-            $reconnecting
-            || $status === 'reconnecting'
-            || $status === 'starting'
-            || (! $socketAlive && ! in_array($status, ['pending_qr', 'pending_pairing'], true))
-        );
+        $isReconnecting = $registered && ! $isLive && $status !== 'pending_pairing';
 
         $record = self::record();
         $before = $record->replicate();
@@ -239,7 +234,7 @@ class WhatsAppSystemSessionService
             return 'connected';
         }
 
-        if ($isReconnecting || ($registered && $status === 'starting')) {
+        if ($isReconnecting || ($registered && ! $isLive && $status !== 'pending_pairing')) {
             return 'reconnecting';
         }
 
@@ -267,7 +262,7 @@ class WhatsAppSystemSessionService
         $registered = (bool) ($gatewayData['registeredOnDisk'] ?? false);
         $gatewayStatus = (string) ($gatewayData['status'] ?? 'disconnected');
 
-        if ($registered && in_array($gatewayStatus, ['reconnecting', 'starting', 'disconnected'], true)) {
+        if ($registered && in_array($gatewayStatus, ['reconnecting', 'starting', 'disconnected', 'pending_qr'], true)) {
             return __('admin.whatsapp-gateway-restart-reconnecting');
         }
 

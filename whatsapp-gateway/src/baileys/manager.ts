@@ -436,8 +436,9 @@ export async function restorePersistedSessions(): Promise<void> {
     return;
   }
 
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
+  const toRestore: string[] = [];
+
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (!entry.isDirectory()) {
       continue;
     }
@@ -453,12 +454,33 @@ export async function restorePersistedSessions(): Promise<void> {
         continue;
       }
 
-      logger.info({ sessionId }, 'restoring persisted WhatsApp session on startup');
-      void startSession(sessionId).catch((err) => {
-        logger.warn({ sessionId, err }, 'startup session restore failed');
-      });
+      toRestore.push(sessionId);
     } catch (err) {
       logger.warn({ sessionId, err }, 'skipped startup restore for session');
+    }
+  }
+
+  if (toRestore.length === 0) {
+    return;
+  }
+
+  toRestore.sort((a, b) => {
+    if (isSystemSession(a)) {
+      return -1;
+    }
+    if (isSystemSession(b)) {
+      return 1;
+    }
+
+    return a.localeCompare(b);
+  });
+
+  for (const sessionId of toRestore) {
+    try {
+      logger.info({ sessionId }, 'restoring persisted WhatsApp session on startup');
+      await startSession(sessionId);
+    } catch (err) {
+      logger.warn({ sessionId, err }, 'startup session restore failed');
     }
   }
 }

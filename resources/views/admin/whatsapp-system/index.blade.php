@@ -66,6 +66,30 @@
 				</div>
 
 				<hr>
+				<h6 class="mb-3">{{ __('admin.whatsapp-test-otp-title') }}</h6>
+				<p class="text-muted small mb-3">{{ __('admin.whatsapp-test-otp-description') }}</p>
+				<div id="wa-test-otp-alert" class="alert d-none mb-3" role="alert"></div>
+				<div class="row g-2 align-items-end mb-0">
+					<div class="col-sm-3">
+						<label for="wa-test-country" class="form-label small mb-1">{{ __('admin.whatsapp-test-otp-country') }}</label>
+						<input type="text" id="wa-test-country" class="form-control" value="966"
+							placeholder="966" maxlength="6" inputmode="numeric">
+					</div>
+					<div class="col-sm-5">
+						<label for="wa-test-phone" class="form-label small mb-1">{{ __('admin.whatsapp-test-otp-phone') }}</label>
+						<input type="text" id="wa-test-phone" class="form-control"
+							placeholder="{{ __('admin.whatsapp-test-otp-phone-placeholder') }}"
+							inputmode="tel" autocomplete="tel">
+					</div>
+					<div class="col-sm-4">
+						<button type="button" id="wa-test-otp-btn" class="btn btn-outline-primary w-100">
+							<i class="mdi mdi-send me-1"></i>
+							<span id="wa-test-otp-label">{{ __('admin.whatsapp-test-otp-send') }}</span>
+						</button>
+					</div>
+				</div>
+
+				<hr>
 				<h6>{{ __('admin.whatsapp-scan-instructions-title') }}</h6>
 				<ol class="text-muted mb-2">
 					<li>{{ __('admin.whatsapp-scan-step-1') }}</li>
@@ -126,6 +150,10 @@
 		stillLinkedHint: @json(__('admin.whatsapp-still-linked-hint')),
 		socketLostAt: @json(__('admin.whatsapp-socket-lost-at')),
 		disconnectedAt: @json(__('admin.whatsapp-disconnected-at-label')),
+		testOtpSending: @json(__('admin.whatsapp-test-otp-sending')),
+		testOtpSend: @json(__('admin.whatsapp-test-otp-send')),
+		gatewayRestartReconnecting: @json(__('admin.whatsapp-gateway-restart-reconnecting')),
+		gatewayRestartQrLost: @json(__('admin.whatsapp-gateway-restart-qr-lost')),
 		statusLoading: @json(__('admin.whatsapp-status-loading')),
 		gatewayUnreachable: @json(__('admin.whatsapp-gateway-unreachable')),
 		connectionStatus: @json(__('admin.whatsapp-connection-status')),
@@ -140,6 +168,7 @@
 	};
 	const pollMs = 3000;
 	const logsUrl = @json(route('admin.whatsapp-system.logs'));
+	const testOtpUrl = @json(route('admin.whatsapp-system.test-otp'));
 	const logsRefreshMs = 30000;
 	const qrPollMs = 2500;
 	const qrRefreshMs = 0;
@@ -168,13 +197,13 @@
 			try {
 				const payload = await fetchQrOnce(8000);
 				if (payload?.ok && payload.data?.status === 'connected') {
-					renderStatusBox('connected', payload.data.phone || null, null, null);
+					renderStatusBox('connected', payload.data.phone || null, null, null, null);
 					stopQrRefresh();
 					stopStatusPoll();
 					return;
 				}
 				if (payload?.ok && payload.data?.qrImage) {
-					renderStatusBox('pending_qr', null, payload.data.qrImage, null);
+					renderStatusBox('pending_qr', null, payload.data.qrImage, null, null);
 				}
 			} catch (e) {
 				/* ignore — status poll will surface errors */
@@ -260,7 +289,7 @@
 		return html;
 	}
 
-	function renderStatusBox(connectionStatus, phone, qrImage, message, sessionMeta) {
+	function renderStatusBox(connectionStatus, phone, qrImage, recoveryHint, sessionMeta) {
 		const box = document.getElementById('wa-status-box');
 		if (!box) {
 			return;
@@ -281,7 +310,7 @@
 			}
 		} else if (connectionStatus === 'reconnecting') {
 			html += '<span class="badge bg-warning text-dark">' + labels.reconnecting + '</span></p>';
-			html += '<p class="mb-2 text-muted">' + labels.autoReconnect + '</p>';
+			html += '<p class="mb-2 text-muted">' + escapeHtml(recoveryHint || labels.autoReconnect) + '</p>';
 			html += renderSessionMeta(sessionMeta);
 			if (sessionMeta && sessionMeta.socket_lost_at_display) {
 				html += '<p class="mb-0 small text-warning">' + labels.stillLinkedHint + '</p>';
@@ -289,7 +318,7 @@
 		} else {
 			const badgeLabel = connectionStatus === 'disconnected' ? labels.disconnected : connectionStatus;
 			html += '<span class="badge bg-secondary">' + escapeHtml(badgeLabel) + '</span></p>';
-			html += '<p class="mb-2 text-muted">' + escapeHtml(message || labels.clickGenerate) + '</p>';
+			html += '<p class="mb-2 text-muted">' + escapeHtml(recoveryHint || labels.clickGenerate) + '</p>';
 			html += renderSessionMeta(sessionMeta);
 			if (qrImage) {
 				html += renderQrImage(qrImage);
@@ -307,7 +336,13 @@
 		const d = payload.data || {};
 		const status = d.status || 'disconnected';
 		const existingQr = document.getElementById('wa-qr-image');
-		renderStatusBox(status, d.phone || null, existingQr ? existingQr.src : null, null, payload.session_meta || null);
+		renderStatusBox(
+			status,
+			d.phone || null,
+			existingQr ? existingQr.src : null,
+			d.recovery_hint || null,
+			payload.session_meta || null
+		);
 		if (status === 'connected') {
 			/* keep polling to refresh uptime */
 			refreshActivityLogs();
@@ -344,7 +379,7 @@
 		}
 		qrRunning = true;
 		setGenerateBusy(true);
-		renderStatusBox('starting', null, null, labels.loading);
+		renderStatusBox('starting', null, null, labels.loading, null);
 
 		try {
 			await fetch(prepareUrl, {
@@ -384,7 +419,7 @@
 
 			const d = payload.data || {};
 			if (d.status === 'connected') {
-				renderStatusBox('connected', d.phone || null, null, null);
+				renderStatusBox('connected', d.phone || null, null, null, null);
 				qrRunning = false;
 				setGenerateBusy(false);
 				refreshActivityLogs();
@@ -392,7 +427,7 @@
 			}
 
 			if (d.qrImage) {
-				renderStatusBox('pending_qr', null, d.qrImage, null);
+				renderStatusBox('pending_qr', null, d.qrImage, null, null);
 				qrRunning = false;
 				setGenerateBusy(false);
 				refreshActivityLogs();
@@ -402,7 +437,7 @@
 			await new Promise(r => setTimeout(r, qrPollMs));
 		}
 
-		renderStatusBox('disconnected', null, null, labels.clickGenerate);
+		renderStatusBox('disconnected', null, null, labels.clickGenerate, null);
 		qrRunning = false;
 		setGenerateBusy(false);
 	}
@@ -512,6 +547,83 @@
 	const logsRefreshBtn = document.getElementById('wa-logs-refresh');
 	if (logsRefreshBtn) {
 		logsRefreshBtn.addEventListener('click', refreshActivityLogs);
+	}
+
+	const testOtpBtn = document.getElementById('wa-test-otp-btn');
+	const testOtpPhone = document.getElementById('wa-test-phone');
+	const testOtpCountry = document.getElementById('wa-test-country');
+	const testOtpAlert = document.getElementById('wa-test-otp-alert');
+	const testOtpLabel = document.getElementById('wa-test-otp-label');
+
+	function showTestOtpAlert(type, message) {
+		if (!testOtpAlert) {
+			return;
+		}
+		testOtpAlert.className = 'alert alert-' + type + ' mb-3';
+		testOtpAlert.textContent = message;
+		testOtpAlert.classList.remove('d-none');
+	}
+
+	async function sendTestOtp() {
+		if (!testOtpBtn || !testOtpPhone) {
+			return;
+		}
+
+		const phone = (testOtpPhone.value || '').trim();
+		if (!phone) {
+			showTestOtpAlert('warning', @json(__('admin.whatsapp-test-otp-phone-required')));
+			testOtpPhone.focus();
+			return;
+		}
+
+		testOtpBtn.disabled = true;
+		if (testOtpLabel) {
+			testOtpLabel.textContent = labels.testOtpSending;
+		}
+
+		try {
+			const response = await fetch(testOtpUrl, {
+				method: 'POST',
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json',
+					'X-CSRF-TOKEN': csrfToken,
+					'X-Requested-With': 'XMLHttpRequest',
+				},
+				body: JSON.stringify({
+					phone: phone,
+					country_code: testOtpCountry ? testOtpCountry.value : '966',
+				}),
+			});
+
+			const payload = await response.json();
+
+			if (payload && payload.ok) {
+				showTestOtpAlert('success', payload.message || @json(__('admin.whatsapp-test-otp-sent-generic')));
+				refreshActivityLogs();
+			} else {
+				showTestOtpAlert('danger', payload?.error || @json(__('admin.whatsapp-test-otp-failed-generic')));
+			}
+		} catch (e) {
+			showTestOtpAlert('danger', @json(__('admin.whatsapp-gateway-unreachable')));
+		} finally {
+			testOtpBtn.disabled = false;
+			if (testOtpLabel) {
+				testOtpLabel.textContent = labels.testOtpSend;
+			}
+		}
+	}
+
+	if (testOtpBtn) {
+		testOtpBtn.addEventListener('click', sendTestOtp);
+	}
+	if (testOtpPhone) {
+		testOtpPhone.addEventListener('keydown', function (event) {
+			if (event.key === 'Enter') {
+				event.preventDefault();
+				sendTestOtp();
+			}
+		});
 	}
 })();
 </script>

@@ -608,8 +608,12 @@ app.delete('/sessions/:id', async (req, res) => {
 
 app.listen(PORT, HOST, () => {
   logger.info(`WhatsApp gateway listening on http://${HOST}:${PORT}`);
-  void restorePersistedSessions().catch((err) => {
-    logger.error({ err }, 'failed to restore persisted WhatsApp sessions on startup');
-  });
-  startConnectedSessionWatchdog();
+  void (async () => {
+    try {
+      await restorePersistedSessions();
+    } catch (err) {
+      logger.error({ err }, 'failed to restore persisted WhatsApp sessions on startup');
+    }
+    startConnectedSessionWatchdog();
+  })();
 });

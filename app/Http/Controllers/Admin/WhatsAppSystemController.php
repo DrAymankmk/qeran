@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\WhatsappSessionLog;
 use App\Services\External\BaileysGateway;
+use App\Services\External\BaileysWhatsApp;
 use App\Services\WhatsApp\WhatsAppSystemSessionLogService;
 use App\Services\WhatsApp\WhatsAppSystemSessionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Support\PhoneNumber;
 use Illuminate\View\View;
 
 class WhatsAppSystemController extends Controller
@@ -94,6 +96,7 @@ class WhatsAppSystemController extends Controller
             'ok' => true,
             'data' => array_merge($data, [
                 'still_registered_on_disk' => (bool) ($data['registeredOnDisk'] ?? false),
+                'recovery_hint' => WhatsAppSystemSessionService::recoveryHint($data, $record),
             ]),
             'session_meta' => WhatsAppSystemSessionService::sessionMeta($record),
             'error' => null,
@@ -339,6 +342,133 @@ class WhatsAppSystemController extends Controller
         Log::info('WhatsApp system: admin disconnected session', ['session_id' => $sessionId]);
 
         return back()->with('success', __('admin.whatsapp-disconnected'));
+    }
+
+    public function testOtp(Request $request): JsonResponse
+    {
+        if (! BaileysGateway::isConfigured()) {
+            return response()->json([
+                'ok' => false,
+                'error' => __('admin.whatsapp-gateway-not-configured'),
+            ], 503);
+        }
+
+        $validated = $request->validate([
+            'phone' => ['required', 'string', 'max:32'],
+            'country_code' => ['nullable', 'string', 'max:6'],
+        ]);
+
+        $countryCode = preg_replace('/\D+/', '', (string) ($validated['country_code'] ?? '966')) ?: '966';
+        $to = PhoneNumber::e164ForWhatsAppPairing($countryCode, $validated['phone'], $validated['phone']);
+
+        if ($to === '' || strlen($to) < 10) {
+            return response()->json([
+                'ok' => false,
+                'error' => __('admin.whatsapp-test-otp-invalid-phone'),
+            ], 422);
+        }
+
+        $sessionId = BaileysGateway::systemSessionId();
+        $masked = str_repeat('*', max(0, strlen($to) - 4)).substr($to, -4);
+        $logContext = ['phone_masked' => $masked, 'test' => true];
+
+        if (WhatsAppSystemSessionService::adminRequestedDisconnect($sessionId)) {
+            WhatsAppSystemSessionLogService::record(
+                WhatsappSessionLog::EVENT_OTP_TEST_FAILED,
+                __('admin.whatsapp-test-otp-failed-locked'),
+                array_merge($logContext, ['failure' => 'admin_disconnect_locked']),
+                WhatsappSessionLog::LEVEL_ERROR
+            );
+
+            return response()->json([
+                'ok' => false,
+                'error' => __('admin.whatsapp-test-otp-failed-locked'),
+            ], 422);
+        }
+
+        $statusResult = BaileysGateway::getStatus($sessionId, true, 20);
+
+        if ($statusResult['ok'] && is_array($statusResult['data'] ?? null)) {
+            $statusResult['data'] = WhatsAppSystemSessionService::maybeReconnect(
+                $sessionId,
+                $statusResult['data']
+            );
+            WhatsAppSystemSessionService::syncFromGateway($statusResult['data']);
+        }
+
+        if (! $statusResult['ok']) {
+            WhatsAppSystemSessionLogService::record(
+                WhatsappSessionLog::EVENT_OTP_TEST_FAILED,
+                __('admin.whatsapp-test-otp-failed-gateway'),
+                array_merge($logContext, ['failure' => 'gateway_unreachable', 'error' => $statusResult['error'] ?? null]),
+                WhatsappSessionLog::LEVEL_ERROR,
+                null,
+                30
+            );
+
+            return response()->json([
+                'ok' => false,
+                'error' => $statusResult['error'] ?? __('admin.whatsapp-gateway-unreachable'),
+            ], 503);
+        }
+
+        $data = $statusResult['data'];
+        $connectionStatus = $data['status'] ?? 'disconnected';
+        $socketAlive = (bool) ($data['socketAlive'] ?? false);
+
+        if ($connectionStatus !== 'connected' || ! $socketAlive) {
+            WhatsAppSystemSessionLogService::record(
+                WhatsappSessionLog::EVENT_OTP_TEST_FAILED,
+                __('admin.whatsapp-test-otp-failed-not-connected', ['status' => $connectionStatus]),
+                array_merge($logContext, [
+                    'failure' => 'not_connected',
+                    'gateway_status' => $connectionStatus,
+                ]),
+                WhatsappSessionLog::LEVEL_WARNING,
+                null,
+                30
+            );
+
+            return response()->json([
+                'ok' => false,
+                'error' => __('admin.whatsapp-test-otp-failed-not-connected', ['status' => $connectionStatus]),
+            ], 422);
+        }
+
+        $code = (string) random_int(1000, 9999);
+        $response = BaileysWhatsApp::sendLegacy($to, $code);
+
+        if (! isset($response->sent) || $response->sent !== 'true') {
+            $errorMessage = is_object($response->error ?? null)
+                ? ($response->error->message ?? 'unknown')
+                : 'unknown';
+
+            WhatsAppSystemSessionLogService::record(
+                WhatsappSessionLog::EVENT_OTP_TEST_FAILED,
+                __('admin.whatsapp-test-otp-failed-send', ['error' => $errorMessage]),
+                array_merge($logContext, ['failure' => 'send_failed', 'gateway_error' => $errorMessage]),
+                WhatsappSessionLog::LEVEL_ERROR
+            );
+
+            return response()->json([
+                'ok' => false,
+                'error' => __('admin.whatsapp-test-otp-failed-send', ['error' => $errorMessage]),
+            ], 503);
+        }
+
+        WhatsAppSystemSessionLogService::record(
+            WhatsappSessionLog::EVENT_OTP_TEST_SUCCESS,
+            __('admin.whatsapp-test-otp-sent', ['phone' => $masked]),
+            array_merge($logContext, ['message_id' => $response->id ?? null]),
+            WhatsappSessionLog::LEVEL_SUCCESS
+        );
+
+        Log::info('WhatsApp system: test OTP sent', ['phone_masked' => $masked, 'admin_id' => auth('admin')->id()]);
+
+        return response()->json([
+            'ok' => true,
+            'message' => __('admin.whatsapp-test-otp-sent', ['phone' => $masked]),
+        ]);
     }
 
     /**

@@ -53,6 +53,10 @@ class WhatsappSessionLog extends Model
 
     public const EVENT_OTP_SEND_FAILED = 'otp_send_failed';
 
+    public const EVENT_OTP_TEST_SUCCESS = 'otp_test_success';
+
+    public const EVENT_OTP_TEST_FAILED = 'otp_test_failed';
+
     protected $fillable = [
         'session_id',
         'event',

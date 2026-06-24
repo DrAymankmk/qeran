@@ -61,14 +61,19 @@ class WhatsAppSystemSessionService
         $reconnecting = (bool) ($gatewayData['reconnecting'] ?? false);
         $phone = $gatewayData['phone'] ?? null;
         $isLive = $status === 'connected' && $socketAlive && $registered;
-        $isReconnecting = $registered && ($reconnecting || $status === 'reconnecting' || (! $socketAlive && ! in_array($status, ['pending_qr', 'pending_pairing'], true)));
+        $isReconnecting = $registered && (
+            $reconnecting
+            || $status === 'reconnecting'
+            || $status === 'starting'
+            || (! $socketAlive && ! in_array($status, ['pending_qr', 'pending_pairing'], true))
+        );
 
         $record = self::record();
         $before = $record->replicate();
         $wasConnected = $record->status === 'connected' && $record->connected_at !== null;
 
         $updates = [
-            'status' => $isLive ? 'connected' : ($isReconnecting ? 'reconnecting' : ($status === 'pending_qr' ? 'pending_qr' : 'disconnected')),
+            'status' => self::resolveDashboardStatus($isLive, $isReconnecting, $status, $registered),
             'phone' => $isLive ? $phone : ($record->phone && $registered ? $record->phone : null),
             'last_seen_at' => now(),
         ];
@@ -178,12 +183,12 @@ class WhatsAppSystemSessionService
             $connectionStatus === 'connected'
             || $socketAlive
             || ! $registeredOnDisk
-            || in_array($connectionStatus, ['pending_qr', 'pending_pairing', 'starting'], true)
+            || in_array($connectionStatus, ['pending_qr', 'pending_pairing'], true)
         ) {
             return $data;
         }
 
-        // registered + socket down (reconnecting or disconnected) — attempt recovery
+        // registered + socket down (disconnected/reconnecting/starting after PM2 restart) — recover
 
         $reconnectKey = 'whatsapp_status_reconnect:'.$sessionId;
         if (Cache::has($reconnectKey)) {
@@ -195,7 +200,10 @@ class WhatsAppSystemSessionService
         WhatsAppSystemSessionLogService::record(
             WhatsappSessionLog::EVENT_AUTO_RECONNECT,
             __('admin.whatsapp-log-auto-reconnect'),
-            WhatsAppSystemSessionLogService::gatewaySnapshot($data),
+            array_merge(
+                WhatsAppSystemSessionLogService::gatewaySnapshot($data),
+                ['trigger' => 'status_poll', 'previous_status' => $connectionStatus]
+            ),
             WhatsappSessionLog::LEVEL_INFO,
             null,
             120
@@ -219,5 +227,58 @@ class WhatsAppSystemSessionService
         }
 
         return $retry['ok'] ? ($retry['data'] ?? $data) : $data;
+    }
+
+    protected static function resolveDashboardStatus(
+        bool $isLive,
+        bool $isReconnecting,
+        string $status,
+        bool $registered
+    ): string {
+        if ($isLive) {
+            return 'connected';
+        }
+
+        if ($isReconnecting || ($registered && $status === 'starting')) {
+            return 'reconnecting';
+        }
+
+        if ($status === 'pending_qr') {
+            return 'pending_qr';
+        }
+
+        return 'disconnected';
+    }
+
+    /**
+     * @param  array<string, mixed>  $gatewayData
+     */
+    public static function recoveryHint(array $gatewayData, WhatsappSession $record): ?string
+    {
+        if (self::adminRequestedDisconnect()) {
+            return null;
+        }
+
+        $live = ($gatewayData['status'] ?? '') === 'connected' && ($gatewayData['socketAlive'] ?? false);
+        if ($live) {
+            return null;
+        }
+
+        $registered = (bool) ($gatewayData['registeredOnDisk'] ?? false);
+        $gatewayStatus = (string) ($gatewayData['status'] ?? 'disconnected');
+
+        if ($registered && in_array($gatewayStatus, ['reconnecting', 'starting', 'disconnected'], true)) {
+            return __('admin.whatsapp-gateway-restart-reconnecting');
+        }
+
+        if (! $registered && in_array($record->status, ['connected', 'reconnecting', 'pending_qr'], true)) {
+            return __('admin.whatsapp-gateway-restart-qr-lost');
+        }
+
+        if ($gatewayStatus === 'pending_qr' && ! ($gatewayData['socketAlive'] ?? false)) {
+            return __('admin.whatsapp-gateway-restart-qr-lost');
+        }
+
+        return null;
     }
 }

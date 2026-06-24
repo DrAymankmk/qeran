@@ -364,12 +364,13 @@ app.get('/sessions/:id/status', async (req, res) => {
     let reportStatus: SessionStatus = meta.status;
     if (socketAlive && (meta.status === 'connected' || (progress.registered && !inPairingFlow))) {
       reportStatus = 'connected';
+    } else if (progress.registered && !inPairingFlow && !socketAlive) {
+      // Creds still valid (phone may show linked device) — socket drop is reconnectable, not a full logout.
+      reportStatus = 'reconnecting';
     } else if (reconnecting) {
       reportStatus = 'reconnecting';
     } else if (meta.status === 'connected' && !socketAlive) {
       reportStatus = 'disconnected';
-    } else if (progress.registered && !inPairingFlow && !socketAlive) {
-      reportStatus = 'reconnecting';
     }
 
     const liveConnected = reportStatus === 'connected' && socketAlive;

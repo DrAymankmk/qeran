@@ -92,7 +92,9 @@ class WhatsAppSystemController extends Controller
 
         return response()->json([
             'ok' => true,
-            'data' => $data,
+            'data' => array_merge($data, [
+                'still_registered_on_disk' => (bool) ($data['registeredOnDisk'] ?? false),
+            ]),
             'session_meta' => WhatsAppSystemSessionService::sessionMeta($record),
             'error' => null,
         ]);

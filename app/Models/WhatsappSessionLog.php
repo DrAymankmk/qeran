@@ -21,6 +21,8 @@ class WhatsappSessionLog extends Model
 
     public const EVENT_DISCONNECTED = 'disconnected';
 
+    public const EVENT_SOCKET_LOST = 'socket_lost';
+
     public const EVENT_RECONNECTING = 'reconnecting';
 
     public const EVENT_PENDING_QR = 'pending_qr';

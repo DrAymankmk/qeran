@@ -76,8 +76,10 @@ class WhatsAppSystemSessionService
         if ($isLive && ! $wasConnected) {
             $updates['connected_at'] = now();
             $updates['disconnected_at'] = null;
+            Cache::forget('whatsapp_socket_lost_at:'.$sessionId);
         } elseif ($isLive) {
             $updates['disconnected_at'] = null;
+            Cache::forget('whatsapp_socket_lost_at:'.$sessionId);
         } elseif ($isReconnecting) {
             $updates['disconnected_at'] = null;
         } elseif ($wasConnected && ! $isLive) {
@@ -131,14 +133,31 @@ class WhatsAppSystemSessionService
             $lastSessionSeconds = (int) $connectedAt->diffInSeconds($disconnectedAt);
         }
 
+        $socketLostRaw = Cache::get('whatsapp_socket_lost_at:'.$record->session_id);
+        $socketLostAt = is_string($socketLostRaw) ? \Illuminate\Support\Carbon::parse($socketLostRaw) : null;
+
         return [
             'connected_at' => $connectedAt?->toIso8601String(),
+            'connected_at_display' => self::formatDisplayTime($connectedAt),
             'disconnected_at' => $disconnectedAt?->toIso8601String(),
+            'disconnected_at_display' => self::formatDisplayTime($disconnectedAt),
             'last_seen_at' => $record->last_seen_at?->toIso8601String(),
             'uptime_seconds' => $uptimeSeconds,
             'last_session_seconds' => $lastSessionSeconds,
+            'last_session_human' => WhatsAppSystemSessionLogService::formatDurationPublic($lastSessionSeconds),
+            'socket_lost_at' => $socketLostAt?->toIso8601String(),
+            'socket_lost_at_display' => self::formatDisplayTime($socketLostAt),
             'admin_disconnect_locked' => self::adminRequestedDisconnect(),
         ];
+    }
+
+    protected static function formatDisplayTime(?\Illuminate\Support\Carbon $time): ?string
+    {
+        if ($time === null) {
+            return null;
+        }
+
+        return $time->timezone(config('app.display_timezone', 'Asia/Riyadh'))->format('Y-m-d H:i:s');
     }
 
     /**
@@ -159,10 +178,12 @@ class WhatsAppSystemSessionService
             $connectionStatus === 'connected'
             || $socketAlive
             || ! $registeredOnDisk
-            || in_array($connectionStatus, ['pending_qr', 'pending_pairing', 'starting', 'reconnecting'], true)
+            || in_array($connectionStatus, ['pending_qr', 'pending_pairing', 'starting'], true)
         ) {
             return $data;
         }
+
+        // registered + socket down (reconnecting or disconnected) — attempt recovery
 
         $reconnectKey = 'whatsapp_status_reconnect:'.$sessionId;
         if (Cache::has($reconnectKey)) {

@@ -8,6 +8,7 @@ use App\Services\Auth\Exceptions\VerificationOtpDeliveryException;
 use App\Services\External\BaileysGateway;
 use App\Services\External\BaileysWhatsApp;
 use App\Services\WhatsApp\WhatsAppSystemSessionLogService;
+use App\Services\WhatsApp\WhatsAppSystemSessionService;
 use App\Models\WhatsappSessionLog;
 use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\Log;
@@ -176,6 +177,14 @@ class VerificationService
         $sessionId = BaileysGateway::systemSessionId();
         $statusResult = BaileysGateway::getStatus($sessionId);
 
+        if ($statusResult['ok'] && is_array($statusResult['data'] ?? null)) {
+            $statusResult['data'] = WhatsAppSystemSessionService::maybeReconnect(
+                $sessionId,
+                $statusResult['data']
+            );
+            WhatsAppSystemSessionService::syncFromGateway($statusResult['data']);
+        }
+
         if (! $statusResult['ok']) {
             Log::error('OTP WhatsApp: could not reach gateway status endpoint', array_merge($context, [
                 'gateway_error' => $statusResult['error'] ?? null,
@@ -202,8 +211,10 @@ class VerificationService
         }
 
         $connectionStatus = $statusResult['data']['status'] ?? 'disconnected';
+        $socketAlive = (bool) ($statusResult['data']['socketAlive'] ?? false);
+        $registered = (bool) ($statusResult['data']['registeredOnDisk'] ?? false);
 
-        if ($connectionStatus !== 'connected') {
+        if ($connectionStatus !== 'connected' || ! $socketAlive) {
             Log::warning('OTP WhatsApp: system session not connected', array_merge($context, [
                 'session_id' => $sessionId,
                 'gateway_status' => $connectionStatus,

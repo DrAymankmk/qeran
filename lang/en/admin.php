@@ -834,6 +834,7 @@ return[
 
     'whatsapp-log-connected' => 'Session connected (:phone)',
     'whatsapp-log-disconnected' => 'Session disconnected — :reason',
+    'whatsapp-log-socket-lost' => 'Dashboard socket lost at :at (was connected for :duration) — device may still appear in Linked devices on phone',
     'whatsapp-log-reconnecting' => 'Session reconnecting (credentials saved, socket down)',
     'whatsapp-log-pending-qr' => 'Waiting for QR scan',
     'whatsapp-log-prepare-qr' => 'Admin started new QR linking',
@@ -860,11 +861,13 @@ return[
     'whatsapp-log-reason-unregistered' => 'Session unregistered on gateway (logged out from phone?)',
     'whatsapp-log-reason-socket-down-reconnecting' => 'Socket closed — reconnect in progress',
     'whatsapp-log-reason-socket-closed' => 'Socket closed while status was connected',
+    'whatsapp-log-reason-socket-closed-still-linked' => 'Gateway socket closed — credentials still valid (phone still shows linked device)',
     'whatsapp-log-reason-gateway-disconnected' => 'Gateway reports disconnected',
     'whatsapp-log-reason-unknown' => 'Unknown (status: :status)',
 
     'whatsapp-log-event-connected' => 'Connected',
     'whatsapp-log-event-disconnected' => 'Disconnected',
+    'whatsapp-log-event-socket_lost' => 'Socket lost (still on phone)',
     'whatsapp-log-event-reconnecting' => 'Reconnecting',
     'whatsapp-log-event-pending_qr' => 'Pending QR',
     'whatsapp-log-event-admin_prepare_qr' => 'Prepare QR',
@@ -880,6 +883,14 @@ return[
     'whatsapp-log-event-auto_reconnect_failed' => 'Reconnect failed',
     'whatsapp-log-event-otp_send_success' => 'OTP sent',
     'whatsapp-log-event-otp_send_failed' => 'OTP failed',
+
+    'whatsapp-status-connected' => 'Connected',
+    'whatsapp-status-pending-qr' => 'Pending scan',
+    'whatsapp-status-disconnected' => 'Disconnected',
+    'whatsapp-status-reconnecting' => 'Reconnecting…',
+    'whatsapp-still-linked-hint' => 'WhatsApp may still list this device under Linked devices — the server socket dropped and is reconnecting automatically.',
+    'whatsapp-socket-lost-at' => 'Socket lost at',
+    'whatsapp-disconnected-at-label' => 'Disconnected at',
 
     'invitation-builder' => 'Invitation Builder',
     'invitation-builder-saved' => 'Invitation builder settings saved.',

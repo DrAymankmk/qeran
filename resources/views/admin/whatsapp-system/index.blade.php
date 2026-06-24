@@ -122,6 +122,10 @@
 		connected: @json(__('admin.whatsapp-status-connected')),
 		pendingQr: @json(__('admin.whatsapp-status-pending-qr')),
 		disconnected: @json(__('admin.whatsapp-status-disconnected')),
+		reconnecting: @json(__('admin.whatsapp-status-reconnecting')),
+		stillLinkedHint: @json(__('admin.whatsapp-still-linked-hint')),
+		socketLostAt: @json(__('admin.whatsapp-socket-lost-at')),
+		disconnectedAt: @json(__('admin.whatsapp-disconnected-at-label')),
 		statusLoading: @json(__('admin.whatsapp-status-loading')),
 		gatewayUnreachable: @json(__('admin.whatsapp-gateway-unreachable')),
 		connectionStatus: @json(__('admin.whatsapp-connection-status')),
@@ -240,6 +244,14 @@
 			html += '<p class="mb-1 small text-muted"><strong>' + labels.lastSession + ':</strong> '
 				+ escapeHtml(formatDuration(meta.last_session_seconds)) + '</p>';
 		}
+		if (meta.socket_lost_at_display) {
+			html += '<p class="mb-1 small text-warning"><strong>' + labels.socketLostAt + ':</strong> '
+				+ escapeHtml(meta.socket_lost_at_display) + '</p>';
+		}
+		if (meta.disconnected_at_display) {
+			html += '<p class="mb-1 small text-muted"><strong>' + labels.disconnectedAt + ':</strong> '
+				+ escapeHtml(meta.disconnected_at_display) + '</p>';
+		}
 		if (meta.admin_disconnect_locked) {
 			html += '<p class="mb-0 small text-warning">' + labels.adminLocked + '</p>';
 		} else {
@@ -266,6 +278,13 @@
 			html += '<p class="mb-2 text-muted">' + labels.waitingScan + '</p>';
 			if (qrImage) {
 				html += renderQrImage(qrImage);
+			}
+		} else if (connectionStatus === 'reconnecting') {
+			html += '<span class="badge bg-warning text-dark">' + labels.reconnecting + '</span></p>';
+			html += '<p class="mb-2 text-muted">' + labels.autoReconnect + '</p>';
+			html += renderSessionMeta(sessionMeta);
+			if (sessionMeta && sessionMeta.socket_lost_at_display) {
+				html += '<p class="mb-0 small text-warning">' + labels.stillLinkedHint + '</p>';
 			}
 		} else {
 			const badgeLabel = connectionStatus === 'disconnected' ? labels.disconnected : connectionStatus;

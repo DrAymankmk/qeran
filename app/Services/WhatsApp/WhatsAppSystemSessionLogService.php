@@ -56,6 +56,8 @@ class WhatsAppSystemSessionLogService
         $context = self::gatewaySnapshot($gatewayData);
 
         if (! $wasLive && $isLive) {
+            Cache::forget('whatsapp_socket_lost_at:'.WhatsAppSystemSessionService::sessionId());
+
             self::record(
                 WhatsappSessionLog::EVENT_CONNECTED,
                 __('admin.whatsapp-log-connected', ['phone' => $after->phone ?? '—']),
@@ -70,20 +72,50 @@ class WhatsAppSystemSessionLogService
 
         if ($wasLive && ! $isLive) {
             $reason = self::disconnectReason($gatewayData, $after);
+            $disconnectAt = now();
+            $displayTz = (string) config('app.display_timezone', 'Asia/Riyadh');
+            $stillLinked = (bool) ($gatewayData['registeredOnDisk'] ?? false);
+            $durationSeconds = $before->connected_at
+                ? (int) $before->connected_at->diffInSeconds($disconnectAt)
+                : null;
+
+            $context = array_merge($context, [
+                'reason' => $reason,
+                'previous_phone' => $before->phone,
+                'session_duration_seconds' => $durationSeconds,
+                'session_duration_human' => self::formatDuration($durationSeconds),
+                'connected_at' => $before->connected_at?->toIso8601String(),
+                'connected_at_display' => $before->connected_at?->timezone($displayTz)->format('Y-m-d H:i:s'),
+                'disconnected_at' => $disconnectAt->toIso8601String(),
+                'disconnected_at_display' => $disconnectAt->timezone($displayTz)->format('Y-m-d H:i:s'),
+                'still_linked_on_phone' => $stillLinked,
+                'dashboard_status' => $after->status,
+            ]);
+
+            $event = $stillLinked ? WhatsappSessionLog::EVENT_SOCKET_LOST : WhatsappSessionLog::EVENT_DISCONNECTED;
+            $message = $stillLinked
+                ? __('admin.whatsapp-log-socket-lost', [
+                    'at' => $disconnectAt->timezone($displayTz)->format('Y-m-d H:i:s'),
+                    'duration' => self::formatDuration($durationSeconds),
+                ])
+                : __('admin.whatsapp-log-disconnected', ['reason' => $reason]);
+
             self::record(
-                WhatsappSessionLog::EVENT_DISCONNECTED,
-                __('admin.whatsapp-log-disconnected', ['reason' => $reason]),
-                array_merge($context, [
-                    'reason' => $reason,
-                    'previous_phone' => $before->phone,
-                    'session_duration_seconds' => $before->connected_at
-                        ? (int) $before->connected_at->diffInSeconds(now())
-                        : null,
-                ]),
+                $event,
+                $message,
+                $context,
                 WhatsappSessionLog::LEVEL_WARNING,
                 null,
                 60
             );
+
+            if ($stillLinked) {
+                Cache::put(
+                    'whatsapp_socket_lost_at:'.WhatsAppSystemSessionService::sessionId(),
+                    $disconnectAt->toIso8601String(),
+                    now()->addDays(7)
+                );
+            }
 
             return;
         }
@@ -136,7 +168,7 @@ class WhatsAppSystemSessionLogService
         }
 
         if ($status === 'connected' && ! $socketAlive) {
-            return __('admin.whatsapp-log-reason-socket-closed');
+            return __('admin.whatsapp-log-reason-socket-closed-still-linked');
         }
 
         if ($status === 'disconnected') {
@@ -229,5 +261,31 @@ class WhatsAppSystemSessionLogService
         $admin = auth('admin')->user();
 
         return $admin?->id;
+    }
+
+    protected static function formatDuration(?int $seconds): string
+    {
+        if ($seconds === null || $seconds < 0) {
+            return '—';
+        }
+
+        $hours = intdiv($seconds, 3600);
+        $minutes = intdiv($seconds % 3600, 60);
+        $secs = $seconds % 60;
+
+        if ($hours > 0) {
+            return sprintf('%dh %dm', $hours, $minutes);
+        }
+
+        if ($minutes > 0) {
+            return sprintf('%dm %ds', $minutes, $secs);
+        }
+
+        return sprintf('%ds', $secs);
+    }
+
+    public static function formatDurationPublic(?int $seconds): string
+    {
+        return self::formatDuration($seconds);
     }
 }

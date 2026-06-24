@@ -132,6 +132,14 @@
 	</div>
 </div>
 
+@php
+	$waLogsInitialPage = ($activityLogs ?? null) instanceof \Illuminate\Contracts\Pagination\Paginator
+		? $activityLogs->currentPage()
+		: 1;
+	$waLogsDestroyUrlTemplate = route('admin.whatsapp-system.logs.destroy', ['log' => '__LOG__']);
+	$waLogShowingTemplate = __('admin.whatsapp-activity-log-showing', ['from' => ':from', 'to' => ':to', 'total' => ':total']);
+@endphp
+
 <script>
 (function () {
 	const statusUrl = @json(route('admin.whatsapp-system.status'));
@@ -169,13 +177,9 @@
 	const pollMs = 3000;
 	const logsUrl = @json(route('admin.whatsapp-system.logs'));
 	const logsDestroyAllUrl = @json(route('admin.whatsapp-system.logs.destroy-all'));
-	const logsDestroyUrlTemplate = @json(route('admin.whatsapp-system.logs.destroy', ['log' => '__LOG__']));
+	const logsDestroyUrlTemplate = @json($waLogsDestroyUrlTemplate);
 	const logsPerPage = 15;
-	let logsCurrentPage = @json(
-		($activityLogs ?? null) instanceof \Illuminate\Contracts\Pagination\Paginator
-			? $activityLogs->currentPage()
-			: 1
-	);
+	let logsCurrentPage = @json($waLogsInitialPage);
 	const logLabels = {
 		empty: @json(__('admin.whatsapp-activity-log-empty')),
 		colTime: @json(__('admin.whatsapp-activity-log-col-time')),
@@ -188,7 +192,7 @@
 		delete: @json(__('admin.whatsapp-activity-log-delete')),
 		deleteConfirm: @json(__('admin.whatsapp-activity-log-delete-confirm')),
 		clearAllConfirm: @json(__('admin.whatsapp-activity-log-clear-all-confirm')),
-		showing: @json(__('admin.whatsapp-activity-log-showing', ['from' => ':from', 'to' => ':to', 'total' => ':total'])),
+		showing: @json($waLogShowingTemplate),
 		deleted: @json(__('admin.whatsapp-activity-log-deleted')),
 		cleared: @json(__('admin.whatsapp-activity-log-cleared')),
 		deleteFailed: @json(__('admin.whatsapp-activity-log-delete-failed')),

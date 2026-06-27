@@ -111,9 +111,16 @@ const RECONNECT_BACKOFF_MS = (process.env.RECONNECT_BACKOFF_MS ?? '30000,120000,
 const RECONNECT_BACKOFF_SCHEDULE =
   RECONNECT_BACKOFF_MS.length > 0 ? RECONNECT_BACKOFF_MS : [30_000, 120_000, 600_000];
 /** Periodic check for registered sessions with a dead socket (0 = disabled). */
-const CONNECTED_SESSION_WATCHDOG_MS = Number(process.env.CONNECTED_SESSION_WATCHDOG_MS ?? 45_000);
+const CONNECTED_SESSION_WATCHDOG_MS = Number(process.env.CONNECTED_SESSION_WATCHDOG_MS ?? 30_000);
+/** Keep-alive ping for connected sockets (0 = disabled). Prevents idle linked-device drops. */
+const CONNECTED_SESSION_HEARTBEAT_MS = Number(process.env.CONNECTED_SESSION_HEARTBEAT_MS ?? 45_000);
+/** Retry reconnect before wiping creds on loggedOut (some servers send transient 401). */
+const LOGGED_OUT_RECONNECT_ATTEMPTS = Number(process.env.LOGGED_OUT_RECONNECT_ATTEMPTS ?? 2);
 
 const scheduledReconnects = new Set<string>();
+const reconnectPromises = new Map<string, Promise<void>>();
+const connectedHeartbeatTimers = new Map<string, ReturnType<typeof setInterval>>();
+const loggedOutReconnectAttempts = new Map<string, number>();
 let connectedSessionWatchdogTimer: ReturnType<typeof setInterval> | undefined;
 let connectedSessionWatchdogTickInFlight = false;
 
@@ -364,9 +371,44 @@ async function maintainPairingSocketAlive(sessionId: string, meta: SessionMeta):
   }
 }
 
+function stopConnectedHeartbeat(sessionId: string): void {
+  const timer = connectedHeartbeatTimers.get(sessionId);
+  if (timer) {
+    clearInterval(timer);
+    connectedHeartbeatTimers.delete(sessionId);
+  }
+}
+
+function startConnectedHeartbeat(sessionId: string): void {
+  stopConnectedHeartbeat(sessionId);
+
+  if (CONNECTED_SESSION_HEARTBEAT_MS <= 0) {
+    return;
+  }
+
+  const timer = setInterval(() => {
+    void (async () => {
+      const meta = sessions.get(sessionId);
+      if (!meta?.sock || meta.status !== 'connected') {
+        return;
+      }
+
+      try {
+        await meta.sock.sendPresenceUpdate('available');
+      } catch (err) {
+        logger.warn({ sessionId, err }, 'connected session heartbeat failed');
+      }
+    })();
+  }, CONNECTED_SESSION_HEARTBEAT_MS);
+
+  connectedHeartbeatTimers.set(sessionId, timer);
+}
+
 function wipeSessionAuth(sessionId: string): void {
   scheduledReconnects.delete(sessionId);
   stopPairingKeepalive(sessionId);
+  stopConnectedHeartbeat(sessionId);
+  loggedOutReconnectAttempts.delete(sessionId);
   const meta = sessions.get(sessionId);
   if (meta) {
     endSocket(meta);
@@ -406,6 +448,7 @@ function scheduleReconnectAfterRestart(sessionId: string, delayMs: number): void
 export function clearStaleSessionMeta(sessionId: string): void {
   scheduledReconnects.delete(sessionId);
   stopPairingKeepalive(sessionId);
+  stopConnectedHeartbeat(sessionId);
   finalizingSessions.delete(sessionId);
   startPromises.delete(sessionId);
   const meta = sessions.get(sessionId);
@@ -734,7 +777,7 @@ export async function isAuthRegistered(sessionId: string): Promise<boolean> {
   return (await getPairingProgress(sessionId)).registered;
 }
 
-async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Promise<void> {
+async function reconnectAfterRestartImpl(sessionId: string, meta: SessionMeta): Promise<void> {
   if (isSessionLiveConnected(meta)) {
     return;
   }
@@ -768,11 +811,22 @@ async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Prom
   }
 
   logger.info(
-    { sessionId, previousStatus: meta.status, pairingAccepted: progressBefore.pairingAccepted },
-    'reconnecting after link interrupt (saved auth)'
+    {
+      sessionId,
+      previousStatus: meta.status,
+      pairingAccepted: progressBefore.pairingAccepted,
+      registered: progressBefore.registered,
+    },
+    progressBefore.registered
+      ? 'reconnecting registered session (saved auth on disk)'
+      : 'reconnecting after link interrupt (saved auth)'
   );
   endSocket(meta);
-  meta.status = meta.status === 'pending_qr' ? 'pending_qr' : 'starting';
+  meta.status = progressBefore.registered
+    ? 'starting'
+    : meta.status === 'pending_qr'
+      ? 'pending_qr'
+      : 'starting';
   meta.pairingCode = undefined;
 
   try {
@@ -803,7 +857,9 @@ async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Prom
         return;
       }
 
-      if (progress.pairingAccepted && !progress.registered) {
+      if (progress.registered) {
+        meta.status = 'starting';
+      } else if (progress.pairingAccepted && !progress.registered) {
         meta.status = isSystemSession(sessionId) ? 'pending_qr' : 'pending_pairing';
       } else {
         meta.status = 'disconnected';
@@ -812,6 +868,7 @@ async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Prom
       scheduleReconnectAfterRestart(sessionId, reconnectBackoffMs(meta.reconnectFailures));
     } else {
       meta.reconnectFailures = 0;
+      loggedOutReconnectAttempts.delete(sessionId);
     }
   } catch (err) {
     logger.error({ sessionId, err }, 'reconnect after link failed');
@@ -821,6 +878,9 @@ async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Prom
       wipeSessionAuth(sessionId);
       meta.status = 'disconnected';
       meta.reconnectFailures = 0;
+    } else if (progress.registered) {
+      meta.status = 'starting';
+      scheduleReconnectAfterRestart(sessionId, reconnectBackoffMs(meta.reconnectFailures));
     } else if (progress.pairingAccepted && !progress.registered) {
       meta.status = isSystemSession(sessionId) ? 'pending_qr' : 'pending_pairing';
       scheduleReconnectAfterRestart(sessionId, reconnectBackoffMs(meta.reconnectFailures));
@@ -828,6 +888,23 @@ async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Prom
       meta.status = 'disconnected';
       scheduleReconnectAfterRestart(sessionId, reconnectBackoffMs(meta.reconnectFailures));
     }
+  }
+}
+
+/** Serialize reconnect so Laravel status polls and the watchdog cannot race (Bad MAC). */
+async function reconnectAfterRestart(sessionId: string, meta: SessionMeta): Promise<void> {
+  const inFlight = reconnectPromises.get(sessionId);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const promise = reconnectAfterRestartImpl(sessionId, meta);
+  reconnectPromises.set(sessionId, promise);
+
+  try {
+    await promise;
+  } finally {
+    reconnectPromises.delete(sessionId);
   }
 }
 
@@ -979,6 +1056,7 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
     emitOwnEvents: true,
     connectTimeoutMs: 60_000,
     defaultQueryTimeoutMs: 60_000,
+    keepAliveIntervalMs: Number(process.env.BAILEYS_KEEP_ALIVE_MS ?? 25_000),
   });
 
   meta.sock = sock;
@@ -1035,7 +1113,10 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
       meta.qr = undefined;
       meta.pairingCode = undefined;
       meta.connectedAt = Date.now();
+      meta.reconnectFailures = 0;
+      loggedOutReconnectAttempts.delete(sessionId);
       stopPairingKeepalive(sessionId);
+      startConnectedHeartbeat(sessionId);
       const user = sock.user;
       meta.phone = user?.id?.split(':')[0]?.split('@')[0];
       logger.info({ sessionId, phone: meta.phone }, 'WhatsApp connected');
@@ -1048,57 +1129,74 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
     if (connection === 'close') {
       const loggedOut = statusCode === DisconnectReason.loggedOut;
       const restartRequired = statusCode === DisconnectReason.restartRequired;
-      const wasPairing = meta.status === 'pending_pairing';
-      const wasQrLinking = meta.status === 'pending_qr' || meta.status === 'starting';
 
       logger.warn(
-        { sessionId, statusCode, loggedOut, restartRequired, wasPairing, wasQrLinking, status: meta.status },
+        {
+          sessionId,
+          statusCode,
+          loggedOut,
+          restartRequired,
+          status: meta.status,
+        },
         'connection closed'
       );
 
       meta.sock = undefined;
+      stopConnectedHeartbeat(sessionId);
 
-      if (restartRequired && (wasPairing || wasQrLinking)) {
-        stopPairingKeepalive(sessionId);
-        logger.info(
-          { sessionId, wasPairing, wasQrLinking },
-          'restartRequired after scan/code — reconnecting to complete link'
-        );
-        void reconnectAfterRestart(sessionId, meta);
-        return;
-      }
+      void (async () => {
+        const progress = await getPairingProgress(sessionId);
+        const registered = progress.registered;
+        const wasPairing = meta.status === 'pending_pairing';
+        const wasQrLinking =
+          !registered && (meta.status === 'pending_qr' || meta.status === 'starting');
 
-      if (wasQrLinking) {
-        logger.info(
-          { sessionId, statusCode, loggedOut, restartRequired },
-          'QR link interrupted — reconnecting (401 during scan is normal)'
-        );
-        void reconnectAfterRestart(sessionId, meta);
-        return;
-      }
+        if (restartRequired && (wasPairing || wasQrLinking || (registered && !loggedOut))) {
+          stopPairingKeepalive(sessionId);
+          logger.info(
+            { sessionId, wasPairing, wasQrLinking, registered },
+            'restartRequired — reconnecting to complete or restore session'
+          );
+          await reconnectAfterRestart(sessionId, meta);
+          return;
+        }
 
-      if (loggedOut && wasPairing) {
-        if (isSystemSession(sessionId)) {
+        if (loggedOut && registered) {
+          const attempts = (loggedOutReconnectAttempts.get(sessionId) ?? 0) + 1;
+          loggedOutReconnectAttempts.set(sessionId, attempts);
+
+          if (attempts <= LOGGED_OUT_RECONNECT_ATTEMPTS) {
+            logger.warn(
+              { sessionId, statusCode, attempts, max: LOGGED_OUT_RECONNECT_ATTEMPTS },
+              'loggedOut on registered session — retrying reconnect before wiping creds'
+            );
+            meta.status = 'starting';
+            await reconnectAfterRestart(sessionId, meta);
+            const live = sessions.get(sessionId);
+            if (live?.status === 'connected') {
+              loggedOutReconnectAttempts.delete(sessionId);
+            }
+            return;
+          }
+
           logger.warn(
-            { sessionId, statusCode },
-            'system session: logged out during pairing state — wiping (use QR in admin only)'
+            { sessionId, statusCode, attempts },
+            'logged out from WhatsApp phone — wiping session credentials'
           );
           wipeSessionAuth(sessionId);
           meta.status = 'disconnected';
+          meta.pairingCode = undefined;
+          meta.qr = undefined;
+          meta.connectedAt = undefined;
+          meta.reconnectFailures = 0;
           return;
         }
-        logger.info({ sessionId, statusCode }, 'loggedOut during pairing — reconnecting');
-        void reconnectAfterRestart(sessionId, meta);
-        return;
-      }
 
-      if (loggedOut) {
-        void (async () => {
-          const progress = await getPairingProgress(sessionId);
-          if (progress.registered) {
+        if (loggedOut && !registered) {
+          if (wasPairing && isSystemSession(sessionId)) {
             logger.warn(
               { sessionId, statusCode },
-              'logged out from WhatsApp phone — wiping session credentials'
+              'system session: logged out during pairing state — wiping (use QR in admin only)'
             );
             wipeSessionAuth(sessionId);
           }
@@ -1107,44 +1205,52 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
           meta.qr = undefined;
           meta.connectedAt = undefined;
           meta.reconnectFailures = 0;
-        })();
-        return;
-      }
+          return;
+        }
 
-      if (wasPairing) {
-        void maintainPairingSocketAlive(sessionId, meta);
+        loggedOutReconnectAttempts.delete(sessionId);
 
-        setTimeout(() => {
-          void (async () => {
-            if (meta.status === 'connected') {
-              return;
-            }
-            const progress = await getPairingProgress(sessionId);
-            if (progress.registered && !meta.sock) {
-              logger.info({ sessionId, statusCode }, 'pairing close with registered creds — reconnecting');
-              stopPairingKeepalive(sessionId);
-              await reconnectAfterRestart(sessionId, meta);
-            } else if (progress.pairingAccepted) {
-              logger.info(
-                { sessionId, statusCode, waId: progress.waId },
-                'pairing accepted — keeping session open for Link device confirmation'
-              );
-            } else {
-              void maintainPairingSocketAlive(sessionId, meta);
-            }
-          })();
-        }, 1500);
+        if (wasQrLinking) {
+          logger.info(
+            { sessionId, statusCode, loggedOut, restartRequired },
+            'QR link interrupted — reconnecting (401 during scan is normal)'
+          );
+          await reconnectAfterRestart(sessionId, meta);
+          return;
+        }
 
-        return;
-      }
+        if (wasPairing) {
+          void maintainPairingSocketAlive(sessionId, meta);
 
-      meta.pairingCode = undefined;
+          setTimeout(() => {
+            void (async () => {
+              if (meta.status === 'connected') {
+                return;
+              }
+              const latest = await getPairingProgress(sessionId);
+              if (latest.registered && !meta.sock) {
+                logger.info({ sessionId, statusCode }, 'pairing close with registered creds — reconnecting');
+                stopPairingKeepalive(sessionId);
+                await reconnectAfterRestart(sessionId, meta);
+              } else if (latest.pairingAccepted) {
+                logger.info(
+                  { sessionId, statusCode, waId: latest.waId },
+                  'pairing accepted — keeping session open for Link device confirmation'
+                );
+              } else {
+                void maintainPairingSocketAlive(sessionId, meta);
+              }
+            })();
+          }, 1500);
 
-      void (async () => {
-        const progress = await getPairingProgress(sessionId);
-        if (progress.registered) {
+          return;
+        }
+
+        meta.pairingCode = undefined;
+
+        if (registered) {
           meta.status = 'starting';
-          logger.info({ sessionId }, 'registered session socket closed — reconnecting');
+          logger.info({ sessionId, statusCode }, 'registered session socket closed — reconnecting');
           await reconnectAfterRestart(sessionId, meta);
           return;
         }
@@ -1272,6 +1378,11 @@ async function runPairingFlow(sessionId: string, digits: string, fresh: boolean)
 export async function startSession(sessionId: string): Promise<SessionMeta> {
   clearSessionAbort(sessionId);
   await ensureQrLinkingSession(sessionId);
+
+  const reconnecting = reconnectPromises.get(sessionId);
+  if (reconnecting) {
+    await reconnecting;
+  }
 
   const existing = sessions.get(sessionId);
   if (isSessionLiveConnected(existing)) {
@@ -1444,7 +1555,19 @@ export async function deleteSession(sessionId: string, force = true): Promise<vo
 
   abortSession(sessionId);
   stopPairingKeepalive(sessionId);
+  stopConnectedHeartbeat(sessionId);
+  loggedOutReconnectAttempts.delete(sessionId);
   finalizingSessions.delete(sessionId);
+
+  const reconnecting = reconnectPromises.get(sessionId);
+  if (reconnecting) {
+    try {
+      await Promise.race([reconnecting, sleep(8000)]);
+    } catch {
+      // reconnect aborted by delete
+    }
+  }
+  reconnectPromises.delete(sessionId);
 
   const inFlight = startPromises.get(sessionId);
   if (inFlight) {

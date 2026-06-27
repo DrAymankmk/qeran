@@ -83,7 +83,14 @@ class WhatsAppSystemSessionService
         } elseif ($isReconnecting) {
             $updates['disconnected_at'] = null;
         } elseif ($wasConnected && ! $isLive) {
-            $updates['disconnected_at'] = now();
+            $stillRegistered = (bool) ($gatewayData['registeredOnDisk'] ?? false);
+            $gatewayReconnecting = (bool) ($gatewayData['reconnecting'] ?? false);
+
+            if ($stillRegistered && ($isReconnecting || $gatewayReconnecting)) {
+                // Grace period: creds still on disk — gateway is reconnecting, not a full logout.
+            } else {
+                $updates['disconnected_at'] = now();
+            }
         }
 
         $record->fill($updates);
@@ -183,45 +190,10 @@ class WhatsAppSystemSessionService
             return $data;
         }
 
-        // registered + socket down (disconnected/reconnecting/starting after PM2 restart) — recover
+        // Gateway watchdog + GET /status?quick=1 already reconnect registered sessions.
+        // Calling startSession here races with the gateway and causes Bad MAC / credential loss.
 
-        $reconnectKey = 'whatsapp_status_reconnect:'.$sessionId;
-        if (Cache::has($reconnectKey)) {
-            return $data;
-        }
-
-        Cache::put($reconnectKey, 1, now()->addSeconds(8));
-
-        WhatsAppSystemSessionLogService::record(
-            WhatsappSessionLog::EVENT_AUTO_RECONNECT,
-            __('admin.whatsapp-log-auto-reconnect'),
-            array_merge(
-                WhatsAppSystemSessionLogService::gatewaySnapshot($data),
-                ['trigger' => 'status_poll', 'previous_status' => $connectionStatus]
-            ),
-            WhatsappSessionLog::LEVEL_INFO,
-            null,
-            120
-        );
-
-        BaileysGateway::startSession($sessionId, 45);
-        $retry = BaileysGateway::getStatus($sessionId, true, 30);
-
-        if (! $retry['ok']) {
-            WhatsAppSystemSessionLogService::record(
-                WhatsappSessionLog::EVENT_AUTO_RECONNECT_FAILED,
-                __('admin.whatsapp-log-auto-reconnect-failed'),
-                array_merge(
-                    WhatsAppSystemSessionLogService::gatewaySnapshot($data),
-                    ['error' => $retry['error'] ?? null]
-                ),
-                WhatsappSessionLog::LEVEL_ERROR,
-                null,
-                300
-            );
-        }
-
-        return $retry['ok'] ? ($retry['data'] ?? $data) : $data;
+        return $data;
     }
 
     protected static function resolveDashboardStatus(

@@ -104,7 +104,7 @@ const PAIRING_CODE_TTL_MS = Number(process.env.PAIRING_CODE_TTL_MS ?? 300_000);
 const PAIRING_SOCKET_READY_TIMEOUT_MS = Number(process.env.PAIRING_SOCKET_READY_TIMEOUT_MS ?? 45_000);
 /** 0 = never auto-wipe on reconnect failure (recommended). Set e.g. 12 to wipe after N failures. */
 const RECONNECT_WIPE_THRESHOLD = Number(process.env.RECONNECT_WIPE_THRESHOLD ?? 0);
-const RECONNECT_BACKOFF_MS = (process.env.RECONNECT_BACKOFF_MS ?? '30000,120000,600000')
+const RECONNECT_BACKOFF_MS = (process.env.RECONNECT_BACKOFF_MS ?? '5000,30000,120000')
   .split(',')
   .map((s) => Number(s.trim()))
   .filter((n) => Number.isFinite(n) && n > 0);
@@ -116,6 +116,26 @@ const CONNECTED_SESSION_WATCHDOG_MS = Number(process.env.CONNECTED_SESSION_WATCH
 const CONNECTED_SESSION_HEARTBEAT_MS = Number(process.env.CONNECTED_SESSION_HEARTBEAT_MS ?? 45_000);
 /** Retry reconnect before wiping creds on loggedOut (some servers send transient 401). */
 const LOGGED_OUT_RECONNECT_ATTEMPTS = Number(process.env.LOGGED_OUT_RECONNECT_ATTEMPTS ?? 2);
+/** Wipe client pairing sessions stuck at code-accepted but never registered (prevents infinite reconnect loops). */
+const PAIRING_STUCK_WIPE_FAILURES = Number(process.env.PAIRING_STUCK_WIPE_FAILURES ?? 12);
+/** Max age (ms) for pairing-accepted creds that never reach registered:true before watchdog wipe. */
+const PAIRING_STUCK_MAX_AGE_MS = Number(process.env.PAIRING_STUCK_MAX_AGE_MS ?? 1_800_000);
+/**
+ * When true (default), OTP/system creds are only deleted on admin Disconnect or confirmed
+ * WhatsApp loggedOut (Linked devices removed). Never for reconnect timeouts or Bad MAC.
+ */
+const SYSTEM_PROTECT_AUTO_WIPE = process.env.SYSTEM_PROTECT_AUTO_WIPE !== 'false';
+const SYSTEM_LOGGED_OUT_RECONNECT_ATTEMPTS = Number(
+  process.env.SYSTEM_LOGGED_OUT_RECONNECT_ATTEMPTS ?? 5
+);
+
+type WipeReason =
+  | 'admin'
+  | 'logged_out'
+  | 'incomplete_link'
+  | 'reconnect_failed'
+  | 'pairing_mismatch'
+  | 'stale';
 
 const scheduledReconnects = new Set<string>();
 const reconnectPromises = new Map<string, Promise<void>>();
@@ -192,12 +212,70 @@ export async function cleanupStaleUnregisteredSession(sessionId: string): Promis
   );
 
   if (hasAuthFolder) {
-    wipeSessionAuth(sessionId);
+    wipeSessionAuth(sessionId, 'stale');
   } else if (meta) {
     clearStaleSessionMeta(sessionId);
   }
 
   return true;
+}
+
+/**
+ * Client pairing sessions can get stuck at pairingAccepted + !registered forever
+ * (user never tapped "Link device"). They hammer reconnect and cause Bad MAC noise.
+ */
+export async function cleanupStuckPairingSession(sessionId: string): Promise<boolean> {
+  if (isSystemSession(sessionId) || isSessionAborted(sessionId)) {
+    return false;
+  }
+
+  if (!sessionAuthExists(sessionId)) {
+    return false;
+  }
+
+  const progress = await getPairingProgress(sessionId);
+  if (progress.registered || !progress.pairingAccepted) {
+    return false;
+  }
+
+  const meta = sessions.get(sessionId);
+  const failures = meta?.reconnectFailures ?? 0;
+  const credsPath = path.join(sessionPath(sessionId), 'creds.json');
+  const credsAgeMs = fs.existsSync(credsPath) ? Date.now() - fs.statSync(credsPath).mtimeMs : 0;
+  const pairingAgeMs = meta?.pairingAcceptedAt ? Date.now() - meta.pairingAcceptedAt : credsAgeMs;
+
+  if (failures < PAIRING_STUCK_WIPE_FAILURES && pairingAgeMs < PAIRING_STUCK_MAX_AGE_MS) {
+    return false;
+  }
+
+  logger.warn(
+    { sessionId, failures, pairingAgeMs, waId: progress.waId },
+    'wiping stuck pairing session (code accepted but never registered)'
+  );
+  wipeSessionAuth(sessionId, 'stale');
+  if (meta) {
+    meta.status = 'disconnected';
+    meta.reconnectFailures = 0;
+  }
+
+  return true;
+}
+
+function shouldWipeStuckPairing(
+  sessionId: string,
+  progress: PairingProgress,
+  failures: number,
+  meta: SessionMeta
+): boolean {
+  if (isSystemSession(sessionId) || progress.registered || !progress.pairingAccepted) {
+    return false;
+  }
+
+  const credsPath = path.join(sessionPath(sessionId), 'creds.json');
+  const credsAgeMs = fs.existsSync(credsPath) ? Date.now() - fs.statSync(credsPath).mtimeMs : 0;
+  const pairingAgeMs = meta.pairingAcceptedAt ? Date.now() - meta.pairingAcceptedAt : credsAgeMs;
+
+  return failures >= PAIRING_STUCK_WIPE_FAILURES || pairingAgeMs >= PAIRING_STUCK_MAX_AGE_MS;
 }
 
 function sessionsDir(): string {
@@ -404,7 +482,19 @@ function startConnectedHeartbeat(sessionId: string): void {
   connectedHeartbeatTimers.set(sessionId, timer);
 }
 
-function wipeSessionAuth(sessionId: string): void {
+function wipeSessionAuth(sessionId: string, reason: WipeReason = 'stale'): void {
+  if (isSystemSession(sessionId) && SYSTEM_PROTECT_AUTO_WIPE) {
+    const allowed =
+      reason === 'admin' || reason === 'logged_out' || reason === 'incomplete_link';
+    if (!allowed) {
+      logger.warn(
+        { sessionId, reason },
+        'system OTP session protected — auto-wipe skipped (use admin Disconnect or remove Linked device)'
+      );
+      return;
+    }
+  }
+
   scheduledReconnects.delete(sessionId);
   stopPairingKeepalive(sessionId);
   stopConnectedHeartbeat(sessionId);
@@ -418,7 +508,7 @@ function wipeSessionAuth(sessionId: string): void {
   if (fs.existsSync(dir)) {
     fs.rmSync(dir, { recursive: true, force: true });
   }
-  logger.info({ sessionId }, 'session auth wiped');
+  logger.info({ sessionId, reason }, 'session auth wiped');
 }
 
 function reconnectBackoffMs(failures: number): number {
@@ -585,6 +675,7 @@ async function runConnectedSessionWatchdog(): Promise<void> {
     for (const sessionId of collectKnownSessionIds()) {
       try {
         await cleanupStaleUnregisteredSession(sessionId);
+        await cleanupStuckPairingSession(sessionId);
         await recoverRegisteredSessionIfSocketDown(sessionId);
       } catch (err) {
         logger.warn({ sessionId, err }, 'watchdog session probe failed');
@@ -804,7 +895,7 @@ async function reconnectAfterRestartImpl(sessionId: string, meta: SessionMeta): 
         { sessionId, progress: progressBefore },
         'system session has pairing-code creds — wiping (admin OTP must use QR only)'
       );
-      wipeSessionAuth(sessionId);
+      wipeSessionAuth(sessionId, 'incomplete_link');
       meta.status = 'disconnected';
       return;
     }
@@ -846,12 +937,23 @@ async function reconnectAfterRestartImpl(sessionId: string, meta: SessionMeta): 
         'reconnect after link did not reach connected within timeout'
       );
 
+      if (shouldWipeStuckPairing(sessionId, progress, meta.reconnectFailures, meta)) {
+        logger.error(
+          { sessionId, failures: meta.reconnectFailures },
+          'stuck pairing session — wiping to stop reconnect loop'
+        );
+        wipeSessionAuth(sessionId, 'reconnect_failed');
+        meta.status = 'disconnected';
+        meta.reconnectFailures = 0;
+        return;
+      }
+
       if (RECONNECT_WIPE_THRESHOLD > 0 && meta.reconnectFailures >= RECONNECT_WIPE_THRESHOLD) {
         logger.error(
           { sessionId, failures: meta.reconnectFailures, threshold: RECONNECT_WIPE_THRESHOLD },
           'too many reconnect failures — wiping session'
         );
-        wipeSessionAuth(sessionId);
+        wipeSessionAuth(sessionId, 'reconnect_failed');
         meta.status = 'disconnected';
         meta.reconnectFailures = 0;
         return;
@@ -874,8 +976,12 @@ async function reconnectAfterRestartImpl(sessionId: string, meta: SessionMeta): 
     logger.error({ sessionId, err }, 'reconnect after link failed');
     const progress = await getPairingProgress(sessionId);
     meta.reconnectFailures = failures + 1;
-    if (RECONNECT_WIPE_THRESHOLD > 0 && meta.reconnectFailures >= RECONNECT_WIPE_THRESHOLD) {
-      wipeSessionAuth(sessionId);
+    if (shouldWipeStuckPairing(sessionId, progress, meta.reconnectFailures, meta)) {
+      wipeSessionAuth(sessionId, 'reconnect_failed');
+      meta.status = 'disconnected';
+      meta.reconnectFailures = 0;
+    } else if (RECONNECT_WIPE_THRESHOLD > 0 && meta.reconnectFailures >= RECONNECT_WIPE_THRESHOLD) {
+      wipeSessionAuth(sessionId, 'reconnect_failed');
       meta.status = 'disconnected';
       meta.reconnectFailures = 0;
     } else if (progress.registered) {
@@ -1162,12 +1268,15 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
         }
 
         if (loggedOut && registered) {
+          const maxAttempts = isSystemSession(sessionId)
+            ? SYSTEM_LOGGED_OUT_RECONNECT_ATTEMPTS
+            : LOGGED_OUT_RECONNECT_ATTEMPTS;
           const attempts = (loggedOutReconnectAttempts.get(sessionId) ?? 0) + 1;
           loggedOutReconnectAttempts.set(sessionId, attempts);
 
-          if (attempts <= LOGGED_OUT_RECONNECT_ATTEMPTS) {
+          if (attempts <= maxAttempts) {
             logger.warn(
-              { sessionId, statusCode, attempts, max: LOGGED_OUT_RECONNECT_ATTEMPTS },
+              { sessionId, statusCode, attempts, max: maxAttempts },
               'loggedOut on registered session — retrying reconnect before wiping creds'
             );
             meta.status = 'starting';
@@ -1183,7 +1292,7 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
             { sessionId, statusCode, attempts },
             'logged out from WhatsApp phone — wiping session credentials'
           );
-          wipeSessionAuth(sessionId);
+          wipeSessionAuth(sessionId, 'logged_out');
           meta.status = 'disconnected';
           meta.pairingCode = undefined;
           meta.qr = undefined;
@@ -1198,7 +1307,7 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
               { sessionId, statusCode },
               'system session: logged out during pairing state — wiping (use QR in admin only)'
             );
-            wipeSessionAuth(sessionId);
+            wipeSessionAuth(sessionId, 'incomplete_link');
           }
           meta.status = 'disconnected';
           meta.pairingCode = undefined;
@@ -1306,7 +1415,7 @@ async function requestPairingCodeWithRetry(
 
 async function runPairingFlow(sessionId: string, digits: string, fresh: boolean): Promise<SessionMeta> {
   if (fresh) {
-    wipeSessionAuth(sessionId);
+    wipeSessionAuth(sessionId, 'incomplete_link');
   } else {
     const existing = sessions.get(sessionId);
     if (existing?.sock) {
@@ -1337,7 +1446,7 @@ async function runPairingFlow(sessionId: string, digits: string, fresh: boolean)
       return meta;
     }
     logger.warn({ sessionId }, 'stale registered session — wiping for fresh pairing');
-    wipeSessionAuth(sessionId);
+    wipeSessionAuth(sessionId, 'incomplete_link');
     return runPairingFlow(sessionId, digits, true);
   }
 
@@ -1357,7 +1466,7 @@ async function runPairingFlow(sessionId: string, digits: string, fresh: boolean)
       { sessionId, issued: formatPairingCodeDisplay(code), onDisk: progress.pairingCodeOnDisk },
       'pairing code mismatch on disk — wiping and retrying once'
     );
-    wipeSessionAuth(sessionId);
+    wipeSessionAuth(sessionId, 'pairing_mismatch');
     return runPairingFlow(sessionId, digits, true);
   }
 
@@ -1526,7 +1635,7 @@ export async function ensureQrLinkingSession(sessionId: string): Promise<void> {
         { sessionId, progress, hasPairingCode },
         'system session: removing incomplete auth (OTP number must link via QR only)'
       );
-      wipeSessionAuth(sessionId);
+      wipeSessionAuth(sessionId, 'incomplete_link');
     }
     return;
   }
@@ -1543,7 +1652,7 @@ export async function ensureQrLinkingSession(sessionId: string): Promise<void> {
 
   if (blocksQr) {
     logger.info({ sessionId, progress }, 'wiping stale auth before QR linking');
-    wipeSessionAuth(sessionId);
+    wipeSessionAuth(sessionId, 'incomplete_link');
   }
 }
 

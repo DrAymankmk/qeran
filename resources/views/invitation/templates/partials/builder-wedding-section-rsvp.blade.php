@@ -65,6 +65,7 @@ $rsvpDeclined = ($initialView ?? '') === 'decline';
             @include('invitation.partials.qr-section', [
               'invitation' => $invitation,
               'user' => $user,
+              'contactLog' => $contactLog ?? null,
               'wrapperClass' => 'wi-rsvp-qr',
             ])
             @else

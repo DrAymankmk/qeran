@@ -21,6 +21,7 @@
         'category' => $category ?? null,
         'host_name' => $host_name ?? null,
         'user' => $user ?? null,
+        'contactLog' => $contactLog ?? null,
         'routes' => $routes ?? ['accept' => '#', 'decline' => '#'],
         'initialView' => $initialView ?? 'envelope',
         'isBuilderPreview' => ! empty($isBuilderPreview),

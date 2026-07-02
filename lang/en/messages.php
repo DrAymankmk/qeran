@@ -103,6 +103,9 @@ return [
     'otp_gateway_unreachable' => 'Could not reach the WhatsApp gateway. Try again later.',
     'otp_system_whatsapp_not_connected' => 'Qeran verification WhatsApp is not connected. Try again later or contact support.',
     'otp_whatsapp_send_failed' => 'Could not send verification code via WhatsApp. Make sure the number has WhatsApp.',
+    'otp_sms_not_configured' => 'SMS service is not configured on the server.',
+    'otp_sms_send_failed' => 'Could not send verification code via SMS. Try again later.',
+    'otp_sms_message' => 'Your Qeran verification code is: :code',
     'otp_invalid_phone' => 'Invalid phone number.',
     'otp_email_send_failed' => 'Could not send verification code by email.',
     'otp_unexpected_error' => 'An error occurred while sending the verification code.',
@@ -122,6 +125,7 @@ return [
 
     'otp_code_sent' => 'Verification code sent successfully.',
     'otp_reset_code_sent' => 'Password reset code sent to your WhatsApp.',
+    'otp_reset_code_sent_sms' => 'Password reset code sent via SMS.',
     'otp_reset_user_not_found' => 'No account found for this phone number.',
     'otp_reset_account_incomplete' => 'This phone is not registered yet. Please sign up first.',
     'otp_reset_verified' => 'Code verified. You can set a new password now.',

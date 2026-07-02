@@ -29,6 +29,90 @@
 </div>
 @endif
 
+<div class="row mb-3">
+	<div class="col-12">
+		<div class="card">
+			<div class="card-body">
+				<h5 class="card-title mb-3">{{ __('admin.otp-channel-title') }}</h5>
+				<p class="text-muted small mb-3">{{ __('admin.otp-channel-description') }}</p>
+
+				<form method="post" action="{{ route('admin.whatsapp-system.otp-channel') }}" class="row g-3 align-items-end">
+					@csrf
+					<div class="col-md-8">
+						<div class="form-check mb-2">
+							<input class="form-check-input" type="radio" name="channel" id="otp-channel-whatsapp"
+								value="whatsapp" @checked($otpChannel === 'whatsapp')>
+							<label class="form-check-label" for="otp-channel-whatsapp">
+								{{ __('admin.otp-channel-whatsapp') }}
+								@if($configured)
+								<span class="badge bg-success-subtle text-success ms-1">{{ __('admin.otp-channel-configured') }}</span>
+								@else
+								<span class="badge bg-warning-subtle text-warning ms-1">{{ __('admin.otp-channel-not-configured') }}</span>
+								@endif
+							</label>
+						</div>
+						<div class="form-check">
+							<input class="form-check-input" type="radio" name="channel" id="otp-channel-sms"
+								value="sms" @checked($otpChannel === 'sms')>
+							<label class="form-check-label" for="otp-channel-sms">
+								{{ __('admin.otp-channel-sms') }}
+								@if($smsConfigured)
+								<span class="badge bg-success-subtle text-success ms-1">{{ __('admin.otp-channel-configured') }}</span>
+								@else
+								<span class="badge bg-warning-subtle text-warning ms-1">{{ __('admin.otp-channel-not-configured') }}</span>
+								@endif
+							</label>
+						</div>
+						@if(!$smsConfigured)
+						<p class="text-muted small mt-2 mb-0">FOURJAWALY_API_KEY, FOURJAWALY_API_SECRET, FOURJAWALY_SENDER</p>
+						@else
+						<p class="text-muted small mt-2 mb-0">{{ __('admin.otp-sms-account-hint') }}</p>
+						@endif
+					</div>
+					<div class="col-md-4">
+						<button type="submit" class="btn btn-primary w-100">
+							<i class="mdi mdi-content-save me-1"></i>
+							{{ __('admin.otp-channel-save') }}
+						</button>
+					</div>
+				</form>
+
+				@if(($otpChannel === 'sms' && $smsConfigured) || ($otpChannel === 'whatsapp' && $configured))
+				<hr class="my-4">
+				<h6 class="mb-3">{{ __('admin.whatsapp-test-otp-title') }}</h6>
+				<p class="text-muted small mb-3">
+					@if($otpChannel === 'sms')
+					{{ __('admin.otp-sms-test-otp-description') }}
+					@else
+					{{ __('admin.whatsapp-test-otp-description') }}
+					@endif
+				</p>
+				<div id="wa-test-otp-alert" class="alert d-none mb-3" role="alert"></div>
+				<div class="row g-2 align-items-end mb-0">
+					<div class="col-sm-3">
+						<label for="wa-test-country" class="form-label small mb-1">{{ __('admin.whatsapp-test-otp-country') }}</label>
+						<input type="text" id="wa-test-country" class="form-control" value="966"
+							placeholder="966" maxlength="6" inputmode="numeric">
+					</div>
+					<div class="col-sm-5">
+						<label for="wa-test-phone" class="form-label small mb-1">{{ __('admin.whatsapp-test-otp-phone') }}</label>
+						<input type="text" id="wa-test-phone" class="form-control"
+							placeholder="{{ __('admin.whatsapp-test-otp-phone-placeholder') }}"
+							inputmode="tel" autocomplete="tel">
+					</div>
+					<div class="col-sm-4">
+						<button type="button" id="wa-test-otp-btn" class="btn btn-outline-primary w-100">
+							<i class="mdi mdi-send me-1"></i>
+							<span id="wa-test-otp-label">{{ __('admin.whatsapp-test-otp-send') }}</span>
+						</button>
+					</div>
+				</div>
+				@endif
+			</div>
+		</div>
+	</div>
+</div>
+
 <div class="row">
 	<div class="col-lg-8">
 		<div class="card">
@@ -67,30 +151,6 @@
 							{{ __('admin.whatsapp-disconnect') }}
 						</button>
 					</form>
-				</div>
-
-				<hr>
-				<h6 class="mb-3">{{ __('admin.whatsapp-test-otp-title') }}</h6>
-				<p class="text-muted small mb-3">{{ __('admin.whatsapp-test-otp-description') }}</p>
-				<div id="wa-test-otp-alert" class="alert d-none mb-3" role="alert"></div>
-				<div class="row g-2 align-items-end mb-0">
-					<div class="col-sm-3">
-						<label for="wa-test-country" class="form-label small mb-1">{{ __('admin.whatsapp-test-otp-country') }}</label>
-						<input type="text" id="wa-test-country" class="form-control" value="966"
-							placeholder="966" maxlength="6" inputmode="numeric">
-					</div>
-					<div class="col-sm-5">
-						<label for="wa-test-phone" class="form-label small mb-1">{{ __('admin.whatsapp-test-otp-phone') }}</label>
-						<input type="text" id="wa-test-phone" class="form-control"
-							placeholder="{{ __('admin.whatsapp-test-otp-phone-placeholder') }}"
-							inputmode="tel" autocomplete="tel">
-					</div>
-					<div class="col-sm-4">
-						<button type="button" id="wa-test-otp-btn" class="btn btn-outline-primary w-100">
-							<i class="mdi mdi-send me-1"></i>
-							<span id="wa-test-otp-label">{{ __('admin.whatsapp-test-otp-send') }}</span>
-						</button>
-					</div>
 				</div>
 
 				<hr>
@@ -834,12 +894,27 @@
 	if (logsClearAllBtn) {
 		logsClearAllBtn.addEventListener('click', clearAllActivityLogs);
 	}
+})();
+</script>
+@endif
 
+@php
+	$showTestOtpScript = ($otpChannel === 'sms' && $smsConfigured) || ($otpChannel === 'whatsapp' && $configured);
+@endphp
+@if($showTestOtpScript)
+<script>
+(function () {
+	const testOtpUrl = @json(route('admin.whatsapp-system.test-otp'));
+	const csrfToken = @json(csrf_token());
 	const testOtpBtn = document.getElementById('wa-test-otp-btn');
 	const testOtpPhone = document.getElementById('wa-test-phone');
 	const testOtpCountry = document.getElementById('wa-test-country');
 	const testOtpAlert = document.getElementById('wa-test-otp-alert');
 	const testOtpLabel = document.getElementById('wa-test-otp-label');
+	const labels = {
+		testOtpSending: @json(__('admin.whatsapp-test-otp-sending')),
+		testOtpSend: @json(__('admin.whatsapp-test-otp-send')),
+	};
 
 	function showTestOtpAlert(type, message) {
 		if (!testOtpAlert) {
@@ -886,7 +961,6 @@
 
 			if (payload && payload.ok) {
 				showTestOtpAlert('success', payload.message || @json(__('admin.whatsapp-test-otp-sent-generic')));
-				refreshActivityLogs();
 			} else {
 				showTestOtpAlert('danger', payload?.error || @json(__('admin.whatsapp-test-otp-failed-generic')));
 			}

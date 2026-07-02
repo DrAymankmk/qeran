@@ -7,6 +7,7 @@ use App\Models\HubFile;
 use App\Models\Invitation;
 use App\Models\InvitationBuilderSetting;
 use App\Models\InvitationBuilderTheme;
+use App\Models\InvitationContactLog;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Http\UploadedFile;
@@ -1672,6 +1673,50 @@ class InvitationBuilderService
      * Guest-facing invitation URL for SMS, WhatsApp, and API responses.
      * Uses the builder-rendered page when invitation_builder_settings exist.
      */
+    public function guestDisplayFromContactLog(InvitationContactLog $log): User
+    {
+        $user = new User([
+            'name' => $log->contact_name,
+            'phone' => $log->phone,
+            'country_code' => $log->country_code,
+        ]);
+
+        $user->setRelation('pivot', new Pivot([
+            'name' => $log->contact_name,
+            'seen' => $log->seen,
+            'invited_by' => $log->invited_by,
+        ], 'invitation_user'));
+
+        return $user;
+    }
+
+    public function guestContactInvitationUrl(
+        Invitation $invitation,
+        int $contactLogId,
+        bool $preview = false
+    ): string {
+        $invitation->loadMissing('builderSetting');
+        $builderRow = $invitation->builderSetting;
+
+        if ($builderRow) {
+            $url = route('user.invitation.builder.contact.show', [
+                'invitation_code' => $invitation->code,
+                'contact_log_id' => $contactLogId,
+            ]);
+
+            if ($preview || ! $builderRow->isPublished()) {
+                $url .= (str_contains($url, '?') ? '&' : '?').'builder=1';
+            }
+
+            return $url;
+        }
+
+        return route('user.invitation.contact.show', [
+            'invitation_code' => $invitation->code,
+            'contact_log_id' => $contactLogId,
+        ]);
+    }
+
     public function guestInvitationUrl(
         Invitation $invitation,
         int $userId,

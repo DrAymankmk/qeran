@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\WhatsappSessionLog;
+use App\Services\Auth\OtpDeliveryChannel;
 use App\Services\External\BaileysGateway;
 use App\Services\External\BaileysWhatsApp;
+use App\Services\External\FourJawalySms;
 use App\Services\WhatsApp\WhatsAppSystemSessionLogService;
 use App\Services\WhatsApp\WhatsAppSystemSessionService;
 use Illuminate\Http\JsonResponse;
@@ -24,6 +26,8 @@ class WhatsAppSystemController extends Controller
 
         return view('admin.whatsapp-system.index', [
             'configured' => $configured,
+            'smsConfigured' => FourJawalySms::isConfigured(),
+            'otpChannel' => OtpDeliveryChannel::current(),
             'gatewayUrl' => config('services.baileys.gateway_internal_url')
                 ?: config('services.baileys.gateway_url'),
             'sessionId' => BaileysGateway::systemSessionId(),
@@ -452,7 +456,68 @@ class WhatsAppSystemController extends Controller
         return back()->with('success', __('admin.whatsapp-disconnected'));
     }
 
+    public function updateOtpChannel(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'channel' => ['required', 'in:whatsapp,sms'],
+        ]);
+
+        OtpDeliveryChannel::set($validated['channel']);
+
+        return back()->with('success', __('admin.otp-channel-updated'));
+    }
+
     public function testOtp(Request $request): JsonResponse
+    {
+        if (OtpDeliveryChannel::isSms()) {
+            return $this->testOtpViaSms($request);
+        }
+
+        return $this->testOtpViaWhatsApp($request);
+    }
+
+    protected function testOtpViaSms(Request $request): JsonResponse
+    {
+        if (! FourJawalySms::isConfigured()) {
+            return response()->json([
+                'ok' => false,
+                'error' => __('admin.otp-sms-not-configured'),
+            ], 503);
+        }
+
+        $validated = $request->validate([
+            'phone' => ['required', 'string', 'max:32'],
+            'country_code' => ['nullable', 'string', 'max:6'],
+        ]);
+
+        $countryCode = preg_replace('/\D+/', '', (string) ($validated['country_code'] ?? '966')) ?: '966';
+        $to = PhoneNumber::e164ForWhatsAppPairing($countryCode, $validated['phone'], $validated['phone']);
+
+        if ($to === '' || strlen($to) < 10) {
+            return response()->json([
+                'ok' => false,
+                'error' => __('admin.whatsapp-test-otp-invalid-phone'),
+            ], 422);
+        }
+
+        $masked = str_repeat('*', max(0, strlen($to) - 4)).substr($to, -4);
+        $code = (string) random_int(1000, 9999);
+        $response = FourJawalySms::send($to, __('messages.otp_sms_message', ['code' => $code]));
+
+        if (! $response['ok']) {
+            return response()->json([
+                'ok' => false,
+                'error' => FourJawalySms::friendlyError($response['error'] ?? __('admin.whatsapp-test-otp-failed-generic')),
+            ], 422);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => __('admin.otp-sms-test-sent', ['phone' => $masked]),
+        ]);
+    }
+
+    protected function testOtpViaWhatsApp(Request $request): JsonResponse
     {
         if (! BaileysGateway::isConfigured()) {
             return response()->json([

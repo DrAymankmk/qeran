@@ -1105,6 +1105,37 @@ class InvitationsController extends Controller
         ]);
     }
 
+    private function buildContactInvitationMessage(
+        Invitation $invitation,
+        InvitationContactLog $log,
+        string $templateType = 'invitation_sms_template'
+    ): string {
+        $eventType = $invitation->category ? $invitation->category->name : $invitation->event_name;
+        $hostName = $invitation->host_name;
+
+        if ((int) $invitation->user_id !== (int) auth()->id()) {
+            $admin = $invitation->usersByRole(Constant::INVITATION_USER_ROLE['Admin'])
+                ->wherePivot('user_id', auth()->id())
+                ->first();
+
+            if ($admin && isset($admin->pivot) && ! empty($admin->pivot->host_name)) {
+                $hostName = $admin->pivot->host_name;
+            }
+        }
+
+        $invitationLink = app(InvitationBuilderService::class)->guestContactInvitationUrl(
+            $invitation,
+            (int) $log->id
+        );
+
+        return __('messages.'.$templateType, [
+            'event_type' => $eventType,
+            'host_name' => $hostName,
+            'invitation_link' => $invitationLink,
+            'application_link' => env('APPLICATION_LINK'),
+        ]);
+    }
+
     private function buildStyledInvitationMessage(Invitation $invitation, $messageBody, $templateType = 'styled_invitation_template')
     {
         $eventType = $invitation->category ? $invitation->category->name : $invitation->event_name;
@@ -1681,22 +1712,20 @@ try {
 
         foreach ($persisted['stored'] as $entry) {
             $log = $entry['log'];
-            $guestUser = $entry['user'];
             $contact = $entry['contact'];
-            $referenceId = $log->reference_id ?: $invitation->id.'-contact-'.$guestUser->id.'-'.$log->id;
+            $referenceId = $log->reference_id ?: $invitation->id.'-contact-'.$log->id;
 
             $log->update([
                 'reference_id' => $referenceId,
             ]);
 
-            $message = $this->buildInvitationMessage($invitation, $guestUser->id, 'invitation_sms_template');
+            $message = $this->buildContactInvitationMessage($invitation, $log, 'invitation_sms_template');
             $availableAt = $this->invitationContactDispatchDelay($index, deferBatchesToTenAm: true);
 
             SendBaileysInvitationContactMessage::dispatch(
                 contactLogId: $log->id,
                 hostUserId: $hostId,
                 invitationId: $invitation->id,
-                guestUserId: $guestUser->id,
                 countryCode: $contact['country_code'],
                 phone: $contact['phone'],
                 message: $message,
@@ -1738,12 +1767,8 @@ try {
         $index = 0;
 
         foreach ($contactLogs as $log) {
-            if (! $log->user_id) {
-                continue;
-            }
-
-            $referenceId = $log->reference_id ?: $invitation->id.'-contact-'.$log->user_id.'-'.$log->id;
-            $message = $this->buildInvitationMessage($invitation, $log->user_id, 'invitation_sms_template');
+            $referenceId = $log->reference_id ?: $invitation->id.'-contact-'.$log->id;
+            $message = $this->buildContactInvitationMessage($invitation, $log, 'invitation_sms_template');
             $availableAt = $this->invitationContactDispatchDelay($index, deferBatchesToTenAm: false);
 
             $log->update([
@@ -1757,7 +1782,6 @@ try {
                 contactLogId: $log->id,
                 hostUserId: $hostId,
                 invitationId: $invitation->id,
-                guestUserId: $log->user_id,
                 countryCode: (string) $log->country_code,
                 phone: (string) $log->phone,
                 message: $message,
@@ -1787,7 +1811,7 @@ try {
 
     /**
      * @param  array<int, array{name?: string, phone?: string}>  $contacts
-     * @return array{stored: list<array{log: InvitationContactLog, user: User, contact: array}>, skipped: list<array<string, string>>}
+     * @return array{stored: list<array{log: InvitationContactLog, contact: array}>, skipped: list<array<string, string>>}
      */
     private function persistInvitationContacts(Invitation $invitation, array $contacts): array
     {
@@ -1807,8 +1831,6 @@ try {
                 continue;
             }
 
-            $guestUser = $this->resolveContactGuestUser($invitation, $contact);
-
             $log = InvitationContactLog::query()->updateOrCreate(
                 [
                     'invitation_id' => $invitation->id,
@@ -1817,19 +1839,22 @@ try {
                     'phone' => $contact['phone'],
                 ],
                 [
-                    'user_id' => $guestUser->id,
+                    'user_id' => null,
                     'contact_name' => $contact['name'],
                     'send_status' => Constant::INVITATION_CONTACT_SEND_STATUS['not_sent'],
                     'seen' => Constant::SEEN_STATUS['not in the app'],
-                    'reference_id' => $invitation->id.'-contact-'.$guestUser->id,
+                    'acceptance_status' => null,
                     'error_message' => null,
                     'sent_at' => null,
                 ]
             );
 
+            $log->update([
+                'reference_id' => $invitation->id.'-contact-'.$log->id,
+            ]);
+
             $stored[] = [
-                'log' => $log,
-                'user' => $guestUser,
+                'log' => $log->fresh(),
                 'contact' => $contact,
             ];
         }
@@ -1900,46 +1925,6 @@ try {
         return $normalized;
     }
 
-    /**
-     * @param  array{name: string, phone: string, country_code: string}  $contact
-     */
-    private function resolveContactGuestUser(Invitation $invitation, array $contact): User
-    {
-        $user = User::query()
-            ->where('phone', $contact['phone'])
-            ->where('country_code', $contact['country_code'])
-            ->first();
-
-        if (! $user) {
-            $user = User::query()->create([
-                'phone' => $contact['phone'],
-                'country_code' => $contact['country_code'],
-                'register_type' => Constant::REGISTER_TYPE['Added By User'],
-                'name' => $contact['name'],
-            ]);
-        }
-
-        $pivotExists = $invitation->users()
-            ->where('users.id', $user->id)
-            ->exists();
-
-        if (! $pivotExists) {
-            $invitation->usersByRole(Constant::INVITATION_USER_ROLE['User'])->sync([
-                $user->id => [
-                    'role' => Constant::INVITATION_USER_ROLE['User'],
-                    'invitation_count' => 1,
-                    'invited_by' => auth()->id(),
-                    'seen' => Constant::SEEN_STATUS['not in the app'],
-                    'name' => $contact['name'],
-                ],
-            ], false);
-
-            $this->storeInvitationQrCode($invitation->id, $user->id);
-        }
-
-        return $user;
-    }
-
     // Store invitation QR code
     private function storeInvitationQrCode(int $invitationId, int $userId): void
     {
@@ -1985,6 +1970,9 @@ try {
      */
     private function formatContactLog(InvitationContactLog $log): array
     {
+        $log->loadMissing('invitation');
+        $invitation = $log->invitation;
+
         $sendStatus = match ((int) $log->send_status) {
             Constant::INVITATION_CONTACT_SEND_STATUS['sent'] => 'sent',
             Constant::INVITATION_CONTACT_SEND_STATUS['failed'] => 'failed',
@@ -2011,6 +1999,9 @@ try {
             'phone' => $log->phone,
             'country_code' => $log->country_code,
             'user_id' => $log->user_id,
+            'invitation_link' => $invitation
+                ? app(InvitationBuilderService::class)->guestContactInvitationUrl($invitation, (int) $log->id)
+                : null,
             'send_status' => $sendStatus,
             'whatsapp_status' => $whatsappStatus,
             'whatsapp_delivered' => $log->delivered_at !== null,

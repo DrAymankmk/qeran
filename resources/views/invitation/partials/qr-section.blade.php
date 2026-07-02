@@ -1,7 +1,14 @@
 @php
-	$qrGuestId = $user->id ?? null;
-	$qrUrl = $qrGuestId ? $invitation->qr($invitation->id, $qrGuestId) : null;
-	$qrFilename = 'Qr-' . $invitation->id . '-' . $qrGuestId . '.png';
+	$qrUrl = null;
+	$qrFilename = null;
+	if (!empty($contactLog)) {
+		$qrUrl = $invitation->qrForContact($contactLog->id);
+		$qrFilename = 'Qr-' . $invitation->id . '-contact-' . $contactLog->id . '.png';
+	} else {
+		$qrGuestId = $user->id ?? null;
+		$qrUrl = $qrGuestId ? $invitation->qr($invitation->id, $qrGuestId) : null;
+		$qrFilename = 'Qr-' . $invitation->id . '-' . $qrGuestId . '.png';
+	}
 @endphp
 <div class="qr-section {{ $wrapperClass ?? '' }}">
 	@if($qrUrl)

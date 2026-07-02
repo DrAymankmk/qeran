@@ -5,8 +5,10 @@ namespace App\Services\Auth;
 use App\Helpers\Constant;
 use App\Models\VerificationCode;
 use App\Services\Auth\Exceptions\VerificationOtpDeliveryException;
+use App\Services\Auth\OtpDeliveryChannel;
 use App\Services\External\BaileysGateway;
 use App\Services\External\BaileysWhatsApp;
+use App\Services\External\FourJawalySms;
 use App\Services\WhatsApp\WhatsAppSystemSessionLogService;
 use App\Services\WhatsApp\WhatsAppSystemSessionService;
 use App\Models\WhatsappSessionLog;
@@ -18,7 +20,7 @@ use App\Mail\ActivationMail;
 class VerificationService
 {
     /**
-     * Generate and deliver a verification code (phone via WhatsApp system session).
+     * Generate and deliver a verification code (phone via WhatsApp or SMS).
      *
      * @throws VerificationOtpDeliveryException
      */
@@ -128,6 +130,25 @@ class VerificationService
      * @throws VerificationOtpDeliveryException
      */
     protected static function deliverPhoneOtp(
+        int $userId,
+        string $countryCode,
+        string $phone,
+        string $activationCode,
+        int $objective
+    ): void {
+        if (OtpDeliveryChannel::isSms()) {
+            self::deliverPhoneOtpViaSms($userId, $countryCode, $phone, $activationCode, $objective);
+
+            return;
+        }
+
+        self::deliverPhoneOtpViaWhatsApp($userId, $countryCode, $phone, $activationCode, $objective);
+    }
+
+    /**
+     * @throws VerificationOtpDeliveryException
+     */
+    protected static function deliverPhoneOtpViaWhatsApp(
         int $userId,
         string $countryCode,
         string $phone,
@@ -287,6 +308,68 @@ class VerificationService
             null,
             10
         );
+    }
+
+    /**
+     * @throws VerificationOtpDeliveryException
+     */
+    protected static function deliverPhoneOtpViaSms(
+        int $userId,
+        string $countryCode,
+        string $phone,
+        string $activationCode,
+        int $objective
+    ): void {
+        $context = [
+            'user_id' => $userId,
+            'objective' => $objective,
+            'country_code' => $countryCode,
+            'phone_masked' => self::maskPhone($countryCode, $phone),
+            'channel' => OtpDeliveryChannel::SMS,
+        ];
+
+        if (! FourJawalySms::isConfigured()) {
+            Log::error('OTP SMS: 4jawaly not configured in Laravel .env', $context);
+
+            throw new VerificationOtpDeliveryException(
+                'sms_not_configured',
+                __('messages.otp_sms_not_configured'),
+                $context
+            );
+        }
+
+        $to = BaileysGateway::normalizeUserPhone($countryCode, $phone);
+
+        if ($to === '') {
+            Log::warning('OTP SMS: invalid phone number', $context);
+
+            throw new VerificationOtpDeliveryException(
+                'invalid_phone',
+                __('messages.otp_invalid_phone'),
+                $context
+            );
+        }
+
+        $context['to'] = self::maskDigits($to);
+        $message = __('messages.otp_sms_message', ['code' => $activationCode]);
+        $response = FourJawalySms::send($to, $message);
+
+        if (! $response['ok']) {
+            $errorMessage = $response['error'] ?? 'unknown';
+
+            Log::error('OTP SMS: send failed', array_merge($context, [
+                'gateway_error' => $errorMessage,
+                'gateway_http_status' => $response['status'] ?? null,
+            ]));
+
+            throw new VerificationOtpDeliveryException(
+                'sms_send_failed',
+                FourJawalySms::friendlyError($errorMessage),
+                array_merge($context, ['gateway_error' => $errorMessage])
+            );
+        }
+
+        Log::info('OTP SMS: sent successfully', $context);
     }
 
     /**

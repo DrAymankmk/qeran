@@ -15,6 +15,7 @@ use App\Models\Invitation;
 use App\Models\User;
 use App\Models\VerificationCode;
 use App\Services\Auth\Exceptions\VerificationOtpDeliveryException;
+use App\Services\Auth\OtpDeliveryChannel;
 use App\Services\Auth\VerificationService;
 use App\Services\RespondActive;
 use App\Support\PhoneNumber;
@@ -321,7 +322,9 @@ class AuthController extends Controller
         }
 
         $successMessage = $objective === (int) Constant::VERIFICATION_OBJECTIVE['Reset']
-            ? __('messages.otp_reset_code_sent')
+            ? (OtpDeliveryChannel::isSms()
+                ? __('messages.otp_reset_code_sent_sms')
+                : __('messages.otp_reset_code_sent'))
             : __('messages.otp_code_sent');
 
         Log::info('sendCode: OTP sent', [

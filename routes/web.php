@@ -182,8 +182,12 @@ Route::get('/email', function () {
 });
 // Route::resource('category', CategoryController::class);
 
+Route::get('/invitation-builder/{invitation_code}/contact/{contact_log_id}', [WebsiteInvitationController::class, 'showBuilderContact'])->name('user.invitation.builder.contact.show');
 Route::get('/invitation-builder/{invitation_code}/{user_id?}', [WebsiteInvitationController::class, 'showBuilder'])->name('user.invitation.builder.show');
+Route::get('/invitation/{invitation_code}/contact/{contact_log_id}/{template?}', [WebsiteInvitationController::class, 'showContact'])->name('user.invitation.contact.show');
 Route::get('/invitation/{invitation_code}/{user_id}/{inserted_by?}/{template?}', [WebsiteInvitationController::class, 'show'])->name('user.invitation.show');
+Route::post('/invitation/{invitation_code}/contact/{contact_log_id}/accept', [WebsiteInvitationController::class, 'acceptContact'])->name('user.invitation.contact.accept');
+Route::post('/invitation/{invitation_code}/contact/{contact_log_id}/decline', [WebsiteInvitationController::class, 'declineContact'])->name('user.invitation.contact.decline');
 Route::post('/invitation/{invitation_code}/{user_id}/accept', [WebsiteInvitationController::class, 'accept'])->name('user.invitation.accept');
 Route::post('/invitation/{invitation_code}/{user_id}/decline', [WebsiteInvitationController::class, 'decline'])->name('user.invitation.decline');
 Route::get('/delete-account-instruction', function () {
@@ -224,6 +228,7 @@ Route::group(['prefix' => 'admin', 'middleware' => 'set.admin.locale'], function
             Route::delete('/logs', 'destroyLogs')->name('logs.destroy-all');
             Route::delete('/logs/{log}', 'destroyLog')->name('logs.destroy');
             Route::post('/test-otp', 'testOtp')->name('test-otp');
+            Route::post('/otp-channel', 'updateOtpChannel')->name('otp-channel');
         });
 
         Route::controller(WhatsAppClientsController::class)->prefix('whatsapp-clients')->name('admin.whatsapp-clients.')->group(function () {

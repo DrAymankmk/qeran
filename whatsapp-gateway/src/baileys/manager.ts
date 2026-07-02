@@ -128,6 +128,9 @@ const SYSTEM_PROTECT_AUTO_WIPE = process.env.SYSTEM_PROTECT_AUTO_WIPE !== 'false
 const SYSTEM_LOGGED_OUT_RECONNECT_ATTEMPTS = Number(
   process.env.SYSTEM_LOGGED_OUT_RECONNECT_ATTEMPTS ?? 5
 );
+/** Refresh QR socket before WhatsApp idle timeout (408) while admin is scanning. */
+const QR_KEEPALIVE_MS = Number(process.env.QR_KEEPALIVE_MS ?? 40_000);
+const QR_RECONNECT_MIN_GAP_MS = Number(process.env.QR_RECONNECT_MIN_GAP_MS ?? 4000);
 
 type WipeReason =
   | 'admin'
@@ -140,6 +143,7 @@ type WipeReason =
 const scheduledReconnects = new Set<string>();
 const reconnectPromises = new Map<string, Promise<void>>();
 const connectedHeartbeatTimers = new Map<string, ReturnType<typeof setInterval>>();
+const qrKeepaliveTimers = new Map<string, ReturnType<typeof setInterval>>();
 const loggedOutReconnectAttempts = new Map<string, number>();
 let connectedSessionWatchdogTimer: ReturnType<typeof setInterval> | undefined;
 let connectedSessionWatchdogTickInFlight = false;
@@ -482,6 +486,108 @@ function startConnectedHeartbeat(sessionId: string): void {
   connectedHeartbeatTimers.set(sessionId, timer);
 }
 
+function stopQrKeepalive(sessionId: string): void {
+  const timer = qrKeepaliveTimers.get(sessionId);
+  if (timer) {
+    clearInterval(timer);
+    qrKeepaliveTimers.delete(sessionId);
+  }
+}
+
+function startQrKeepalive(sessionId: string): void {
+  stopQrKeepalive(sessionId);
+
+  if (QR_KEEPALIVE_MS <= 0) {
+    return;
+  }
+
+  const timer = setInterval(() => {
+    void (async () => {
+      const meta = sessions.get(sessionId);
+      if (!meta || meta.status !== 'pending_qr') {
+        stopQrKeepalive(sessionId);
+        return;
+      }
+
+      const progress = await getPairingProgress(sessionId);
+      if (progress.registered) {
+        stopQrKeepalive(sessionId);
+        return;
+      }
+
+      if (meta.sock && isPairingSocketAlive(sessionId)) {
+        return;
+      }
+
+      logger.info({ sessionId }, 'QR keepalive: socket down — refreshing for scan');
+      await reconnectForQrLinking(sessionId, meta);
+    })();
+  }, QR_KEEPALIVE_MS);
+
+  qrKeepaliveTimers.set(sessionId, timer);
+}
+
+/**
+ * While waiting for QR scan: refresh the socket without reconnect-failure backoff.
+ * Using reconnectAfterRestart here waits for connected, increments failures, and
+ * invalidates the QR every ~2 minutes (408 timeout).
+ */
+async function reconnectForQrLinkingImpl(sessionId: string, meta: SessionMeta): Promise<void> {
+  if (isSessionLiveConnected(meta) || isSessionAborted(sessionId)) {
+    return;
+  }
+
+  const progress = await getPairingProgress(sessionId);
+  if (progress.registered) {
+    await reconnectAfterRestart(sessionId, meta);
+    return;
+  }
+
+  const now = Date.now();
+  if (meta.lastReconnectAt && now - meta.lastReconnectAt < QR_RECONNECT_MIN_GAP_MS) {
+    return;
+  }
+  meta.lastReconnectAt = now;
+
+  logger.info({ sessionId, status: meta.status }, 'QR link: refreshing socket (waiting for scan)');
+  endSocket(meta);
+  meta.status = 'pending_qr';
+  meta.pairingCode = undefined;
+
+  try {
+    await createSocket(sessionId, meta);
+    const updated = await waitForQrOrConnected(sessionId, 60_000);
+    if (updated.status === 'connected') {
+      meta.reconnectFailures = 0;
+      stopQrKeepalive(sessionId);
+      loggedOutReconnectAttempts.delete(sessionId);
+    } else {
+      meta.status = 'pending_qr';
+      startQrKeepalive(sessionId);
+      logger.info({ sessionId, hasQr: Boolean(updated.qr) }, 'QR link: ready for scan');
+    }
+  } catch (err) {
+    logger.warn({ sessionId, err }, 'QR link socket refresh failed');
+    meta.status = 'pending_qr';
+  }
+}
+
+async function reconnectForQrLinking(sessionId: string, meta: SessionMeta): Promise<void> {
+  const inFlight = reconnectPromises.get(sessionId);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const promise = reconnectForQrLinkingImpl(sessionId, meta);
+  reconnectPromises.set(sessionId, promise);
+
+  try {
+    await promise;
+  } finally {
+    reconnectPromises.delete(sessionId);
+  }
+}
+
 function wipeSessionAuth(sessionId: string, reason: WipeReason = 'stale'): void {
   if (isSystemSession(sessionId) && SYSTEM_PROTECT_AUTO_WIPE) {
     const allowed =
@@ -498,6 +604,7 @@ function wipeSessionAuth(sessionId: string, reason: WipeReason = 'stale'): void 
   scheduledReconnects.delete(sessionId);
   stopPairingKeepalive(sessionId);
   stopConnectedHeartbeat(sessionId);
+  stopQrKeepalive(sessionId);
   loggedOutReconnectAttempts.delete(sessionId);
   const meta = sessions.get(sessionId);
   if (meta) {
@@ -539,6 +646,7 @@ export function clearStaleSessionMeta(sessionId: string): void {
   scheduledReconnects.delete(sessionId);
   stopPairingKeepalive(sessionId);
   stopConnectedHeartbeat(sessionId);
+  stopQrKeepalive(sessionId);
   finalizingSessions.delete(sessionId);
   startPromises.delete(sessionId);
   const meta = sessions.get(sessionId);
@@ -888,6 +996,15 @@ async function reconnectAfterRestartImpl(sessionId: string, meta: SessionMeta): 
 
   const progressBefore = await getPairingProgress(sessionId);
 
+  if (
+    !progressBefore.registered &&
+    !progressBefore.pairingAccepted &&
+    (meta.status === 'pending_qr' || meta.status === 'starting')
+  ) {
+    await reconnectForQrLinking(sessionId, meta);
+    return;
+  }
+
   if (isSystemSession(sessionId) && progressBefore.pairingAccepted && !progressBefore.registered) {
     const wasQr = meta.status === 'pending_qr' || meta.status === 'starting';
     if (!wasQr) {
@@ -1212,6 +1329,9 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
         logger.info({ sessionId }, 'QR event ignored — saved credentials still registered');
       }
       logger.info({ sessionId, status: meta.status, credsRegistered }, 'QR event');
+      if (meta.status === 'pending_qr' && !credsRegistered) {
+        startQrKeepalive(sessionId);
+      }
     }
 
     if (connection === 'open') {
@@ -1222,6 +1342,7 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
       meta.reconnectFailures = 0;
       loggedOutReconnectAttempts.delete(sessionId);
       stopPairingKeepalive(sessionId);
+      stopQrKeepalive(sessionId);
       startConnectedHeartbeat(sessionId);
       const user = sock.user;
       meta.phone = user?.id?.split(':')[0]?.split('@')[0];
@@ -1257,7 +1378,14 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
         const wasQrLinking =
           !registered && (meta.status === 'pending_qr' || meta.status === 'starting');
 
-        if (restartRequired && (wasPairing || wasQrLinking || (registered && !loggedOut))) {
+        if (restartRequired && wasQrLinking) {
+          stopPairingKeepalive(sessionId);
+          logger.info({ sessionId, wasQrLinking }, 'restartRequired during QR — refreshing for scan');
+          await reconnectForQrLinking(sessionId, meta);
+          return;
+        }
+
+        if (restartRequired && (wasPairing || (registered && !loggedOut))) {
           stopPairingKeepalive(sessionId);
           logger.info(
             { sessionId, wasPairing, wasQrLinking, registered },
@@ -1322,9 +1450,9 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
         if (wasQrLinking) {
           logger.info(
             { sessionId, statusCode, loggedOut, restartRequired },
-            'QR link interrupted — reconnecting (401 during scan is normal)'
+            'QR link interrupted — refreshing socket (scan window stays open)'
           );
-          await reconnectAfterRestart(sessionId, meta);
+          await reconnectForQrLinking(sessionId, meta);
           return;
         }
 
@@ -1622,6 +1750,14 @@ export async function ensureQrLinkingSession(sessionId: string): Promise<void> {
       return;
     }
 
+    if (
+      isLinkingInProgress(sessionId) &&
+      (meta?.status === 'pending_qr' || meta?.status === 'starting')
+    ) {
+      logger.info({ sessionId, status: meta?.status }, 'system session: QR scan in progress — not wiping');
+      return;
+    }
+
     const hasPairingCode = Boolean(progress.pairingCodeOnDisk);
     const midQrScan =
       progress.pairingAccepted && !hasPairingCode && isLinkingInProgress(sessionId);
@@ -1665,6 +1801,7 @@ export async function deleteSession(sessionId: string, force = true): Promise<vo
   abortSession(sessionId);
   stopPairingKeepalive(sessionId);
   stopConnectedHeartbeat(sessionId);
+  stopQrKeepalive(sessionId);
   loggedOutReconnectAttempts.delete(sessionId);
   finalizingSessions.delete(sessionId);
 

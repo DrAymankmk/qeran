@@ -283,6 +283,61 @@ class Invitation extends Model
         return null;
     }
 
+    public function qrForContact(int $contactLogId): ?string
+    {
+        $basePath = 'qr-code/Qr-'.$this->id.'-contact-'.$contactLogId;
+
+        foreach (['png', 'svg'] as $extension) {
+            $relativePath = $basePath.'.'.$extension;
+
+            if (Storage::disk('public')->exists($relativePath)) {
+                return Storage::disk('public')->url($relativePath);
+            }
+        }
+
+        return null;
+    }
+
+    public function ensureQrCodeForContact(int $contactLogId): void
+    {
+        $basePath = 'qr-code/Qr-'.$this->id.'-contact-'.$contactLogId;
+
+        if (Storage::disk('public')->exists($basePath.'.png')
+            || Storage::disk('public')->exists($basePath.'.svg')) {
+            return;
+        }
+
+        $payload = $this->id.'-contact-'.$contactLogId;
+
+        try {
+            $image = QrCode::format('png')
+                ->size(200)
+                ->color(0, 0, 0)
+                ->backgroundColor(255, 255, 255, 0)
+                ->style('square')
+                ->generate($payload);
+
+            Storage::disk('public')->put($basePath.'.png', $image);
+
+            return;
+        } catch (\Throwable $e) {
+            Log::warning('PNG QR generation failed for contact, falling back to SVG', [
+                'invitation_id' => $this->id,
+                'contact_log_id' => $contactLogId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        $svg = QrCode::format('svg')
+            ->size(200)
+            ->color(0, 0, 0)
+            ->backgroundColor(255, 255, 255, 0)
+            ->style('square')
+            ->generate($payload);
+
+        Storage::disk('public')->put($basePath.'.svg', $svg);
+    }
+
     public function ensureQrCodeForUser(int $userId): void
     {
         $basePath = 'qr-code/Qr-'.$this->id.'-'.$userId;

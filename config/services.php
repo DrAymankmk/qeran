@@ -52,4 +52,14 @@ return [
         'system_session' => env('BAILEYS_SYSTEM_SESSION', 'system'),
     ],
 
+    'fourjawaly' => [
+        'api_key' => env('FOURJAWALY_API_KEY'),
+        'api_secret' => env('FOURJAWALY_API_SECRET'),
+        'sender' => env('FOURJAWALY_SENDER'),
+        'api_url' => env(
+            'FOURJAWALY_API_URL',
+            'https://api-sms.4jawaly.com/api/v1/account/area/sms/send'
+        ),
+    ],
+
 ];

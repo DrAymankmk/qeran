@@ -2166,6 +2166,7 @@
 				@include('invitation.partials.qr-section', [
 					'invitation' => $invitation,
 					'user' => $user,
+					'contactLog' => $contactLog ?? null,
 				])
 			</div>
 

@@ -11,7 +11,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class SendBaileysInvitationContactMessage implements ShouldQueue
@@ -26,7 +25,6 @@ class SendBaileysInvitationContactMessage implements ShouldQueue
         public int $contactLogId,
         public int $hostUserId,
         public int $invitationId,
-        public int $guestUserId,
         public string $countryCode,
         public string $phone,
         public string $message,
@@ -95,11 +93,6 @@ class SendBaileysInvitationContactMessage implements ShouldQueue
                 ]);
             }
 
-            DB::table('invitation_user')
-                ->where('invitation_id', $this->invitationId)
-                ->where('user_id', $this->guestUserId)
-                ->update(['seen' => Constant::SEEN_STATUS['Sent']]);
-
             return;
         }
 
@@ -116,7 +109,6 @@ class SendBaileysInvitationContactMessage implements ShouldQueue
             'contact_log_id' => $this->contactLogId,
             'host_user_id' => $this->hostUserId,
             'invitation_id' => $this->invitationId,
-            'guest_user_id' => $this->guestUserId,
             'target_phone' => $targetPhone,
             'error' => $errorMessage,
         ]);

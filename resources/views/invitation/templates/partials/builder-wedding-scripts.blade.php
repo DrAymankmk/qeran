@@ -95,11 +95,8 @@ function wiShowRsvpAccepted(qrUrl) {
   if (actions) actions.classList.add('is-hidden');
   if (declined) declined.classList.add('is-hidden');
   if (accepted) accepted.classList.remove('is-hidden');
-  if (qrUrl) {
-    var img = accepted ? accepted.querySelector('img') : null;
-    var downloadBtn = accepted ? accepted.querySelector('.qr-download-button') : null;
-    if (img) img.src = qrUrl;
-    if (downloadBtn) downloadBtn.dataset.qrUrl = qrUrl;
+  if (qrUrl && typeof window.applyInvitationQrUrl === 'function') {
+    window.applyInvitationQrUrl(accepted, qrUrl);
   }
 }
 

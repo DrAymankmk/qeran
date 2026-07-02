@@ -182,6 +182,9 @@
 			.then(response => response.json())
 			.then(data => {
 				if (data.success) {
+					if (data.qr_url && typeof window.applyInvitationQrUrl === 'function') {
+						window.applyInvitationQrUrl(document.getElementById('successView'), data.qr_url);
+					}
 					currentView = "success";
 					showView("successView");
 				} else {

@@ -782,7 +782,7 @@ class InvitationsController extends Controller
                     'name' => $userArray['name'],
                 ],
             ], false);
-            $this->storeInvitationQrCode($invitation->id, $user->id);
+            $this->storeInvitationQrCode($invitation, $user->id);
             if ($invitation->paid == Constant::PAID_STATUS['Paid']) {
                 Notification::notify('users',
                     Constant::NOTIFICATIONS_TYPE['Invitations'],
@@ -1926,43 +1926,9 @@ try {
     }
 
     // Store invitation QR code
-    private function storeInvitationQrCode(int $invitationId, int $userId): void
+    private function storeInvitationQrCode(Invitation $invitation, int $userId): void
     {
-        $payload = $invitationId.'-'.$userId;
-        $pngPath = 'qr-code/Qr-'.$invitationId.'-'.$userId.'.png';
-        $svgPath = 'qr-code/Qr-'.$invitationId.'-'.$userId.'.svg';
-
-        try {
-            $image = QrCode::format('png')
-                ->size(200)
-                ->color(0, 0, 0)
-                ->backgroundColor(255, 255, 255, 0)
-                ->style('square')
-                ->generate($payload);
-
-            Storage::disk('public')->put($pngPath, $image);
-
-            if (Storage::disk('public')->exists($svgPath)) {
-                Storage::disk('public')->delete($svgPath);
-            }
-
-            return;
-        } catch (\Throwable $e) {
-            Log::warning('PNG QR generation failed, falling back to SVG', [
-                'invitation_id' => $invitationId,
-                'user_id' => $userId,
-                'error' => $e->getMessage(),
-            ]);
-        }
-
-        $svg = QrCode::format('svg')
-            ->size(200)
-            ->color(0, 0, 0)
-            ->backgroundColor(255, 255, 255, 0)
-            ->style('square')
-            ->generate($payload);
-
-        Storage::disk('public')->put($svgPath, $svg);
+        $invitation->ensureQrCodeForUser($userId);
     }
 
     /**

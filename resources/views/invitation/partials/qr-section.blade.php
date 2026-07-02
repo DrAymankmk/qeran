@@ -11,22 +11,59 @@
 	}
 @endphp
 <div class="qr-section {{ $wrapperClass ?? '' }}">
-	@if($qrUrl)
-		<img src="{{ $qrUrl }}" id="invitationQrImage" alt="{{ __('admin.ib-preview-qr-alt') }}" />
-		<p>{{ __('admin.ib-preview-qr-hint') }}</p>
-		<button type="button"
-			class="qr-download-button"
-			data-qr-url="{{ $qrUrl }}"
-			data-qr-filename="{{ $qrFilename }}"
-			onclick="downloadInvitationQr(this)">
-			{{ __('admin.ib-preview-qr-download') }}
-		</button>
-	@else
-		<p>{{ __('admin.ib-preview-qr-missing') }}</p>
-	@endif
+	<img src="{{ $qrUrl ?? '' }}"
+		id="invitationQrImage"
+		alt="{{ __('admin.ib-preview-qr-alt') }}"
+		@if(!$qrUrl) style="display:none" @endif />
+	<p class="qr-missing-message" @if($qrUrl) style="display:none" @endif>{{ __('admin.ib-preview-qr-missing') }}</p>
+	<p class="qr-hint-message" @if(!$qrUrl) style="display:none" @endif>{{ __('admin.ib-preview-qr-hint') }}</p>
+	<button type="button"
+		class="qr-download-button"
+		data-qr-url="{{ $qrUrl ?? '' }}"
+		data-qr-filename="{{ $qrFilename ?? '' }}"
+		onclick="downloadInvitationQr(this)"
+		@if(!$qrUrl) style="display:none" @endif>
+		{{ __('admin.ib-preview-qr-download') }}
+	</button>
 </div>
 @once
 	<script>
+		window.applyInvitationQrUrl = function (container, qrUrl, filename) {
+			if (!container || !qrUrl) {
+				return;
+			}
+
+			var section = container.querySelector('.qr-section') || container;
+			var img = section.querySelector('#invitationQrImage, img');
+			var missing = section.querySelector('.qr-missing-message');
+			var hint = section.querySelector('.qr-hint-message');
+			var downloadBtn = section.querySelector('.qr-download-button');
+
+			if (!img) {
+				img = document.createElement('img');
+				img.id = 'invitationQrImage';
+				img.alt = @json(__('admin.ib-preview-qr-alt'));
+				section.insertBefore(img, section.firstChild);
+			}
+
+			img.src = qrUrl;
+			img.style.display = '';
+
+			if (missing) {
+				missing.style.display = 'none';
+			}
+			if (hint) {
+				hint.style.display = '';
+			}
+			if (downloadBtn) {
+				downloadBtn.dataset.qrUrl = qrUrl;
+				if (filename) {
+					downloadBtn.dataset.qrFilename = filename;
+				}
+				downloadBtn.style.display = '';
+			}
+		};
+
 		function wiQrImageToPngBlob(image) {
 			return new Promise(function (resolve, reject) {
 				var width = image.naturalWidth || image.width || 200;

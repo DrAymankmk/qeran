@@ -1417,7 +1417,7 @@ class InvitationsController extends Controller
             $contactLogs = InvitationContactLog::query()
                 ->where('invitation_id', $invitation->id)
                 ->where('invited_by', auth()->id())
-                ->whereNotNull('user_id')
+                // ->whereNotNull('user_id')
                 ->latest()
                 ->get();
 

@@ -182,7 +182,7 @@ Route::get('/email', function () {
 });
 // Route::resource('category', CategoryController::class);
 
-Route::get('/invitation-builder/{invitation_code}/contact/{contact_log_id}', [WebsiteInvitationController::class, 'showBuilderContact'])->name('user.invitation.builder.contact.show');
+Route::get('/invitation/{invitation_code}/contact/{contact_log_id}', [WebsiteInvitationController::class, 'showBuilderContact'])->name('user.invitation.builder.contact.show');
 Route::get('/invitation-builder/{invitation_code}/{user_id?}', [WebsiteInvitationController::class, 'showBuilder'])->name('user.invitation.builder.show');
 Route::get('/invitation/{invitation_code}/contact/{contact_log_id}/{template?}', [WebsiteInvitationController::class, 'showContact'])->name('user.invitation.contact.show');
 Route::get('/invitation/{invitation_code}/{user_id}/{inserted_by?}/{template?}', [WebsiteInvitationController::class, 'show'])->name('user.invitation.show');

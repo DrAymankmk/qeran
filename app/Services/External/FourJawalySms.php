@@ -2,6 +2,7 @@
 
 namespace App\Services\External;
 
+use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -14,10 +15,79 @@ class FourJawalySms
             && (bool) config('services.fourjawaly.sender');
     }
 
+    public static function formatRecipient(?string $countryCode, string $phone): string
+    {
+        return PhoneNumber::e164ForWhatsAppPairing($countryCode, $phone, $phone);
+    }
+
+    /**
+     * Returns a user-facing error message, or null when the number looks valid.
+     */
+    public static function recipientValidationError(string $e164, ?string $countryCode): ?string
+    {
+        $cc = preg_replace('/\D+/', '', (string) $countryCode);
+
+        if ($e164 === '' || strlen($e164) < 10 || strlen($e164) > 15) {
+            return __('messages.otp_invalid_phone');
+        }
+
+        if ($cc === '966' && ! preg_match('/^9665\d{8}$/', $e164)) {
+            return __('admin.otp-sms-error-invalid-saudi');
+        }
+
+        if ($cc === '20' && ! preg_match('/^20(10|11|12|15)\d{8}$/', $e164)) {
+            return __('admin.otp-sms-error-invalid-egypt');
+        }
+
+        if ($cc !== '' && ! str_starts_with($e164, $cc)) {
+            return __('admin.otp-sms-error-country-mismatch');
+        }
+
+        $allowed = self::allowedCountryCodes();
+        if ($allowed !== [] && ! self::matchesAllowedCountry($e164, $allowed)) {
+            return __('admin.otp-sms-error-country-not-allowed', [
+                'countries' => implode(', ', $allowed),
+            ]);
+        }
+
+        return null;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function allowedCountryCodes(): array
+    {
+        $raw = trim((string) config('services.fourjawaly.allowed_country_codes', ''));
+
+        if ($raw === '') {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(
+            static fn (string $code): string => preg_replace('/\D+/', '', trim($code)) ?: '',
+            explode(',', $raw)
+        )));
+    }
+
+    /**
+     * @param  list<string>  $allowedCountryCodes
+     */
+    protected static function matchesAllowedCountry(string $e164, array $allowedCountryCodes): bool
+    {
+        foreach ($allowedCountryCodes as $code) {
+            if ($code !== '' && str_starts_with($e164, $code)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * @return array{ok: bool, data: ?array, error: ?string, status: int}
      */
-    public static function send(string $to, string $text): array
+    public static function send(string $to, string $text, ?string $countryCode = null): array
     {
         if (! self::isConfigured()) {
             return [
@@ -25,6 +95,16 @@ class FourJawalySms
                 'data' => null,
                 'error' => 'not_configured',
                 'status' => 0,
+            ];
+        }
+
+        $validationError = self::recipientValidationError($to, $countryCode);
+        if ($validationError !== null) {
+            return [
+                'ok' => false,
+                'data' => null,
+                'error' => $validationError,
+                'status' => 422,
             ];
         }
 
@@ -42,7 +122,7 @@ class FourJawalySms
                     'messages' => [
                         [
                             'text' => $text,
-                            'numbers' => [$to],
+                            'numbers' => [(string) $to],
                             'sender' => $sender,
                         ],
                     ],
@@ -52,12 +132,15 @@ class FourJawalySms
             $ok = $response->successful() && self::responseIndicatesSuccess($json);
 
             if (! $ok) {
-                $error = self::friendlyError(self::extractErrorMessage($json) ?? 'send_failed');
+                $rawError = self::extractErrorMessage($json) ?? 'send_failed';
+                $error = self::friendlyError($rawError, $to);
 
                 Log::warning('4jawaly SMS: send failed', [
                     'http_status' => $response->status(),
-                    'error' => $error,
+                    'error' => $rawError,
+                    'friendly_error' => $error,
                     'to_masked' => self::maskDigits($to),
+                    'response' => is_array($json) ? $json : null,
                 ]);
 
                 return [
@@ -112,7 +195,7 @@ class FourJawalySms
         return false;
     }
 
-    public static function friendlyError(?string $message): string
+    public static function friendlyError(?string $message, ?string $recipient = null): string
     {
         $message = trim((string) $message);
 
@@ -121,6 +204,18 @@ class FourJawalySms
         }
 
         $normalized = mb_strtolower($message);
+
+        if (str_contains($normalized, 'valid numbers') || str_contains($normalized, 'no valid')) {
+            if ($recipient !== null && str_starts_with($recipient, '20')) {
+                return __('admin.otp-sms-error-no-valid-numbers-egypt');
+            }
+
+            if ($recipient !== null && str_starts_with($recipient, '966')) {
+                return __('admin.otp-sms-error-no-valid-numbers-saudi');
+            }
+
+            return __('admin.otp-sms-error-no-valid-numbers');
+        }
 
         if (str_contains($normalized, 'باقات') || str_contains($normalized, 'packages')) {
             return __('admin.otp-sms-error-no-packages');
@@ -146,6 +241,20 @@ class FourJawalySms
         foreach (['message', 'error', 'msg'] as $key) {
             if (! empty($json[$key]) && is_string($json[$key])) {
                 return $json[$key];
+            }
+        }
+
+        if (isset($json['messages']) && is_array($json['messages'])) {
+            foreach ($json['messages'] as $message) {
+                if (! is_array($message)) {
+                    continue;
+                }
+
+                foreach (['err_text', 'error', 'message'] as $key) {
+                    if (! empty($message[$key]) && is_string($message[$key])) {
+                        return $message[$key];
+                    }
+                }
             }
         }
 

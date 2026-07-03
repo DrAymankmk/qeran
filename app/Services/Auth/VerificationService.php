@@ -338,21 +338,24 @@ class VerificationService
             );
         }
 
-        $to = BaileysGateway::normalizeUserPhone($countryCode, $phone);
+        $to = FourJawalySms::formatRecipient($countryCode, $phone);
 
-        if ($to === '') {
-            Log::warning('OTP SMS: invalid phone number', $context);
+        $validationError = FourJawalySms::recipientValidationError($to, $countryCode);
+        if ($validationError !== null) {
+            Log::warning('OTP SMS: invalid phone number', array_merge($context, [
+                'validation_error' => $validationError,
+            ]));
 
             throw new VerificationOtpDeliveryException(
                 'invalid_phone',
-                __('messages.otp_invalid_phone'),
+                $validationError,
                 $context
             );
         }
 
         $context['to'] = self::maskDigits($to);
         $message = __('messages.otp_sms_message', ['code' => $activationCode]);
-        $response = FourJawalySms::send($to, $message);
+        $response = FourJawalySms::send($to, $message, $countryCode);
 
         if (! $response['ok']) {
             $errorMessage = $response['error'] ?? 'unknown';
@@ -364,7 +367,7 @@ class VerificationService
 
             throw new VerificationOtpDeliveryException(
                 'sms_send_failed',
-                FourJawalySms::friendlyError($errorMessage),
+                $errorMessage,
                 array_merge($context, ['gateway_error' => $errorMessage])
             );
         }

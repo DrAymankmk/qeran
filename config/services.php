@@ -60,6 +60,8 @@ return [
             'FOURJAWALY_API_URL',
             'https://api-sms.4jawaly.com/api/v1/account/area/sms/send'
         ),
+        // Comma-separated country codes your 4jawaly package supports (e.g. 966,20). Empty = no pre-check.
+        'allowed_country_codes' => env('FOURJAWALY_SMS_COUNTRIES'),
     ],
 
 ];

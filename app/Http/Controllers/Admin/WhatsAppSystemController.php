@@ -491,23 +491,24 @@ class WhatsAppSystemController extends Controller
         ]);
 
         $countryCode = preg_replace('/\D+/', '', (string) ($validated['country_code'] ?? '966')) ?: '966';
-        $to = PhoneNumber::e164ForWhatsAppPairing($countryCode, $validated['phone'], $validated['phone']);
+        $to = FourJawalySms::formatRecipient($countryCode, $validated['phone']);
 
-        if ($to === '' || strlen($to) < 10) {
+        $validationError = FourJawalySms::recipientValidationError($to, $countryCode);
+        if ($validationError !== null) {
             return response()->json([
                 'ok' => false,
-                'error' => __('admin.whatsapp-test-otp-invalid-phone'),
+                'error' => $validationError,
             ], 422);
         }
 
         $masked = str_repeat('*', max(0, strlen($to) - 4)).substr($to, -4);
         $code = (string) random_int(1000, 9999);
-        $response = FourJawalySms::send($to, __('messages.otp_sms_message', ['code' => $code]));
+        $response = FourJawalySms::send($to, __('messages.otp_sms_message', ['code' => $code]), $countryCode);
 
         if (! $response['ok']) {
             return response()->json([
                 'ok' => false,
-                'error' => FourJawalySms::friendlyError($response['error'] ?? __('admin.whatsapp-test-otp-failed-generic')),
+                'error' => $response['error'] ?? __('admin.whatsapp-test-otp-failed-generic'),
             ], 422);
         }
 

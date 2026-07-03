@@ -7,8 +7,11 @@
 			<h4 class="mb-sm-0 font-size-18">{{ __('admin.whatsapp-system-title') }}</h4>
 			<div class="page-title-right">
 				<ol class="breadcrumb m-0">
-					<li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('admin.dashboard') }}</a></li>
-					<li class="breadcrumb-item active">{{ __('admin.whatsapp-system-title') }}</li>
+					<li class="breadcrumb-item"><a
+							href="{{ route('admin.dashboard') }}">{{ __('admin.dashboard') }}</a>
+					</li>
+					<li class="breadcrumb-item active">
+						{{ __('admin.whatsapp-system-title') }}</li>
 				</ol>
 			</div>
 		</div>
@@ -36,37 +39,50 @@
 				<h5 class="card-title mb-3">{{ __('admin.otp-channel-title') }}</h5>
 				<p class="text-muted small mb-3">{{ __('admin.otp-channel-description') }}</p>
 
-				<form method="post" action="{{ route('admin.whatsapp-system.otp-channel') }}" class="row g-3 align-items-end">
+				<form method="post" action="{{ route('admin.whatsapp-system.otp-channel') }}"
+					class="row g-3 align-items-end">
 					@csrf
 					<div class="col-md-8">
 						<div class="form-check mb-2">
-							<input class="form-check-input" type="radio" name="channel" id="otp-channel-whatsapp"
-								value="whatsapp" @checked($otpChannel === 'whatsapp')>
-							<label class="form-check-label" for="otp-channel-whatsapp">
+							<input class="form-check-input" type="radio"
+								name="channel" id="otp-channel-whatsapp"
+								value="whatsapp"
+								@checked($otpChannel==='whatsapp' )>
+							<label class="form-check-label"
+								for="otp-channel-whatsapp">
 								{{ __('admin.otp-channel-whatsapp') }}
 								@if($configured)
-								<span class="badge bg-success-subtle text-success ms-1">{{ __('admin.otp-channel-configured') }}</span>
+								<span
+									class="badge bg-success-subtle text-success ms-1">{{ __('admin.otp-channel-configured') }}</span>
 								@else
-								<span class="badge bg-warning-subtle text-warning ms-1">{{ __('admin.otp-channel-not-configured') }}</span>
+								<span
+									class="badge bg-warning-subtle text-warning ms-1">{{ __('admin.otp-channel-not-configured') }}</span>
 								@endif
 							</label>
 						</div>
 						<div class="form-check">
-							<input class="form-check-input" type="radio" name="channel" id="otp-channel-sms"
-								value="sms" @checked($otpChannel === 'sms')>
-							<label class="form-check-label" for="otp-channel-sms">
+							<input class="form-check-input" type="radio"
+								name="channel" id="otp-channel-sms"
+								value="sms" @checked($otpChannel==='sms'
+								)>
+							<label class="form-check-label"
+								for="otp-channel-sms">
 								{{ __('admin.otp-channel-sms') }}
 								@if($smsConfigured)
-								<span class="badge bg-success-subtle text-success ms-1">{{ __('admin.otp-channel-configured') }}</span>
+								<span
+									class="badge bg-success-subtle text-success ms-1">{{ __('admin.otp-channel-configured') }}</span>
 								@else
-								<span class="badge bg-warning-subtle text-warning ms-1">{{ __('admin.otp-channel-not-configured') }}</span>
+								<span
+									class="badge bg-warning-subtle text-warning ms-1">{{ __('admin.otp-channel-not-configured') }}</span>
 								@endif
 							</label>
 						</div>
 						@if(!$smsConfigured)
-						<p class="text-muted small mt-2 mb-0">FOURJAWALY_API_KEY, FOURJAWALY_API_SECRET, FOURJAWALY_SENDER</p>
+						<p class="text-muted small mt-2 mb-0">FOURJAWALY_API_KEY,
+							FOURJAWALY_API_SECRET, FOURJAWALY_SENDER</p>
 						@else
-						<p class="text-muted small mt-2 mb-0">{{ __('admin.otp-sms-account-hint') }}</p>
+						<p class="text-muted small mt-2 mb-0">
+							{{ __('admin.otp-sms-account-hint') }}</p>
 						@endif
 					</div>
 					<div class="col-md-4">
@@ -77,7 +93,8 @@
 					</div>
 				</form>
 
-				@if(($otpChannel === 'sms' && $smsConfigured) || ($otpChannel === 'whatsapp' && $configured))
+				@if(($otpChannel === 'sms' && $smsConfigured) || ($otpChannel === 'whatsapp' &&
+				$configured))
 				<hr class="my-4">
 				<h6 class="mb-3">{{ __('admin.whatsapp-test-otp-title') }}</h6>
 				<p class="text-muted small mb-3">
@@ -90,20 +107,25 @@
 				<div id="wa-test-otp-alert" class="alert d-none mb-3" role="alert"></div>
 				<div class="row g-2 align-items-end mb-0">
 					<div class="col-sm-3">
-						<label for="wa-test-country" class="form-label small mb-1">{{ __('admin.whatsapp-test-otp-country') }}</label>
-						<input type="text" id="wa-test-country" class="form-control" value="966"
-							placeholder="966" maxlength="6" inputmode="numeric">
+						<label for="wa-test-country"
+							class="form-label small mb-1">{{ __('admin.whatsapp-test-otp-country') }}</label>
+						<input type="text" id="wa-test-country" class="form-control"
+							value="966" placeholder="966" maxlength="6"
+							inputmode="numeric">
 					</div>
 					<div class="col-sm-5">
-						<label for="wa-test-phone" class="form-label small mb-1">{{ __('admin.whatsapp-test-otp-phone') }}</label>
+						<label for="wa-test-phone"
+							class="form-label small mb-1">{{ __('admin.whatsapp-test-otp-phone') }}</label>
 						<input type="text" id="wa-test-phone" class="form-control"
 							placeholder="{{ __('admin.whatsapp-test-otp-phone-placeholder') }}"
 							inputmode="tel" autocomplete="tel">
 					</div>
 					<div class="col-sm-4">
-						<button type="button" id="wa-test-otp-btn" class="btn btn-outline-primary w-100">
+						<button type="button" id="wa-test-otp-btn"
+							class="btn btn-outline-primary w-100">
 							<i class="mdi mdi-send me-1"></i>
-							<span id="wa-test-otp-label">{{ __('admin.whatsapp-test-otp-send') }}</span>
+							<span
+								id="wa-test-otp-label">{{ __('admin.whatsapp-test-otp-send') }}</span>
 						</button>
 					</div>
 				</div>
@@ -113,6 +135,7 @@
 	</div>
 </div>
 
+@if($otpChannel === 'whatsapp' && $configured)
 <div class="row">
 	<div class="col-lg-8">
 		<div class="card">
@@ -120,30 +143,39 @@
 				@if(!$configured)
 				<div class="alert alert-warning mb-0">
 					{{ __('admin.whatsapp-gateway-not-configured') }}
-					<p class="mb-0 mt-2 small">BAILEYS_GATEWAY_URL, BAILEYS_GATEWAY_SECRET</p>
+					<p class="mb-0 mt-2 small">BAILEYS_GATEWAY_URL, BAILEYS_GATEWAY_SECRET
+					</p>
 				</div>
 				@else
 				<p class="text-muted">{{ __('admin.whatsapp-system-description') }}</p>
-				<p class="mb-1"><strong>{{ __('admin.whatsapp-session-id') }}:</strong> <code>{{ $sessionId }}</code></p>
-				<p class="mb-3"><strong>{{ __('admin.whatsapp-gateway-url') }}:</strong> <code>{{ $gatewayUrl }}</code></p>
+				<p class="mb-1"><strong>{{ __('admin.whatsapp-session-id') }}:</strong>
+					<code>{{ $sessionId }}</code>
+				</p>
+				<p class="mb-3"><strong>{{ __('admin.whatsapp-gateway-url') }}:</strong>
+					<code>{{ $gatewayUrl }}</code>
+				</p>
 
 				<div id="wa-status-box" class="mb-4 p-3 rounded border">
 					@include('admin.whatsapp-system._status', [
-						'status' => $status,
-						'qr' => $qr,
+					'status' => $status,
+					'qr' => $qr,
 					])
 				</div>
 
 				<div class="d-flex flex-wrap gap-2">
-					<button type="button" id="wa-reconnect-btn" class="btn btn-success d-none">
+					<button type="button" id="wa-reconnect-btn"
+						class="btn btn-success d-none">
 						<i class="mdi mdi-refresh me-1"></i>
-						<span id="wa-reconnect-label">{{ __('admin.whatsapp-reconnect-saved') }}</span>
+						<span
+							id="wa-reconnect-label">{{ __('admin.whatsapp-reconnect-saved') }}</span>
 					</button>
 					<button type="button" id="wa-generate-btn" class="btn btn-primary">
 						<i class="mdi mdi-qrcode-scan me-1"></i>
-						<span id="wa-generate-label">{{ __('admin.whatsapp-generate-qr') }}</span>
+						<span
+							id="wa-generate-label">{{ __('admin.whatsapp-generate-qr') }}</span>
 					</button>
-					<form method="post" action="{{ route('admin.whatsapp-system.disconnect') }}"
+					<form method="post"
+						action="{{ route('admin.whatsapp-system.disconnect') }}"
 						onsubmit="return confirm(@json(__('admin.whatsapp-disconnect-confirm')));">
 						@csrf
 						<button type="submit" class="btn btn-outline-danger">
@@ -180,38 +212,42 @@
 	</div>
 	@endif
 </div>
+@endif
 
 @if($configured)
 <div class="modal fade" id="wa-log-details-modal" tabindex="-1" aria-hidden="true">
 	<div class="modal-dialog modal-lg modal-dialog-scrollable">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h5 class="modal-title">{{ __('admin.whatsapp-activity-log-details-title') }}</h5>
+				<h5 class="modal-title">{{ __('admin.whatsapp-activity-log-details-title') }}
+				</h5>
 				<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 			</div>
 			<div class="modal-body">
-				<pre id="wa-log-details-body" class="small mb-0 bg-light p-3 rounded" style="white-space: pre-wrap;"></pre>
+				<pre id="wa-log-details-body" class="small mb-0 bg-light p-3 rounded"
+					style="white-space: pre-wrap;"></pre>
 			</div>
 		</div>
 	</div>
 </div>
 
 @php
-	$waLogsInitialPage = ($activityLogs ?? null) instanceof \Illuminate\Contracts\Pagination\Paginator
-		? $activityLogs->currentPage()
-		: 1;
-	$waLogsDestroyUrlTemplate = route('admin.whatsapp-system.logs.destroy', ['log' => '__LOG__']);
-	$waLogShowingTemplate = __('admin.whatsapp-activity-log-showing', ['from' => ':from', 'to' => ':to', 'total' => ':total']);
+$waLogsInitialPage = ($activityLogs ?? null) instanceof \Illuminate\Contracts\Pagination\Paginator
+? $activityLogs->currentPage()
+: 1;
+$waLogsDestroyUrlTemplate = route('admin.whatsapp-system.logs.destroy', ['log' => '__LOG__']);
+$waLogShowingTemplate = __('admin.whatsapp-activity-log-showing', ['from' => ':from', 'to' => ':to', 'total' =>
+':total']);
 @endphp
 
 <script>
-(function () {
+(function() {
 	const statusUrl = @json(route('admin.whatsapp-system.status'));
 	const prepareUrl = @json(route('admin.whatsapp-system.prepare'));
 	const reconnectUrl = @json(route('admin.whatsapp-system.reconnect'));
 	const qrUrl = @json(route('admin.whatsapp-system.qr'));
 	const csrfToken = @json(csrf_token());
-	const autoGenerate = @json((bool) ($autoGenerateQr ?? false));
+	const autoGenerate = @json((bool)($autoGenerateQr ?? false));
 	const labels = {
 		generate: @json(__('admin.whatsapp-generate-qr')),
 		reconnect: @json(__('admin.whatsapp-reconnect-saved')),
@@ -229,7 +265,8 @@
 		disconnectedAt: @json(__('admin.whatsapp-disconnected-at-label')),
 		testOtpSending: @json(__('admin.whatsapp-test-otp-sending')),
 		testOtpSend: @json(__('admin.whatsapp-test-otp-send')),
-		gatewayRestartReconnecting: @json(__('admin.whatsapp-gateway-restart-reconnecting')),
+		gatewayRestartReconnecting: @json(__(
+			'admin.whatsapp-gateway-restart-reconnecting')),
 		gatewayRestartQrLost: @json(__('admin.whatsapp-gateway-restart-qr-lost')),
 		statusLoading: @json(__('admin.whatsapp-status-loading')),
 		gatewayUnreachable: @json(__('admin.whatsapp-gateway-unreachable')),
@@ -286,7 +323,8 @@
 		}
 
 		const registered = Boolean(
-			data?.registeredOnDisk ?? data?.still_registered_on_disk ?? lastRegisteredOnDisk
+			data?.registeredOnDisk ?? data?.still_registered_on_disk ??
+			lastRegisteredOnDisk
 		);
 		if (data && (data.registeredOnDisk != null || data.still_registered_on_disk != null)) {
 			lastRegisteredOnDisk = registered;
@@ -326,17 +364,32 @@
 
 	function startQrRefresh() {
 		stopQrRefresh();
-		qrRefreshTimer = setInterval(async function () {
+		qrRefreshTimer = setInterval(async function() {
 			try {
 				const payload = await fetchQrOnce(8000);
-				if (payload?.ok && payload.data?.status === 'connected') {
-					renderStatusBox('connected', payload.data.phone || null, null, null, null);
+				if (payload?.ok && payload.data
+					?.status === 'connected') {
+					renderStatusBox('connected',
+						payload
+						.data
+						.phone ||
+						null,
+						null,
+						null, null
+					);
 					stopQrRefresh();
 					stopStatusPoll();
 					return;
 				}
-				if (payload?.ok && payload.data?.qrImage) {
-					renderStatusBox('pending_qr', null, payload.data.qrImage, null, null);
+				if (payload?.ok && payload.data
+					?.qrImage) {
+					renderStatusBox('pending_qr',
+						null,
+						payload
+						.data
+						.qrImage,
+						null, null
+					);
 				}
 			} catch (e) {
 				/* ignore — status poll will surface errors */
@@ -355,10 +408,11 @@
 	}
 
 	function renderQrImage(qrImage) {
-		return '<div class="text-center my-3">'
-			+ '<img id="wa-qr-image" src="' + qrImage + '" alt="WhatsApp QR" width="320" class="border rounded">'
-			+ '<p class="text-muted small mt-2 mb-0">' + labels.qrExpires + '</p>'
-			+ '</div>';
+		return '<div class="text-center my-3">' +
+			'<img id="wa-qr-image" src="' + qrImage +
+			'" alt="WhatsApp QR" width="320" class="border rounded">' +
+			'<p class="text-muted small mt-2 mb-0">' + labels.qrExpires + '</p>' +
+			'</div>';
 	}
 
 	function escapeHtml(text) {
@@ -372,9 +426,10 @@
 		if (!box) {
 			return;
 		}
-		box.innerHTML = '<p class="mb-2"><strong>' + labels.connectionStatus + ':</strong> '
-			+ '<span class="badge bg-danger">' + labels.gatewayUnreachable + '</span></p>'
-			+ '<p class="text-danger mb-0 small">' + escapeHtml(errorMsg || labels.gatewayUnreachable) + '</p>';
+		box.innerHTML = '<p class="mb-2"><strong>' + labels.connectionStatus + ':</strong> ' +
+			'<span class="badge bg-danger">' + labels.gatewayUnreachable + '</span></p>' +
+			'<p class="text-danger mb-0 small">' + escapeHtml(errorMsg || labels
+				.gatewayUnreachable) + '</p>';
 	}
 
 	function formatDuration(seconds) {
@@ -399,20 +454,24 @@
 		}
 		let html = '';
 		if (meta.uptime_seconds != null && meta.uptime_seconds >= 0) {
-			html += '<p class="mb-1 small text-muted"><strong>' + labels.uptime + ':</strong> '
-				+ escapeHtml(formatDuration(meta.uptime_seconds)) + '</p>';
+			html += '<p class="mb-1 small text-muted"><strong>' + labels.uptime +
+				':</strong> ' +
+				escapeHtml(formatDuration(meta.uptime_seconds)) + '</p>';
 		}
 		if (meta.last_session_seconds != null && meta.last_session_seconds > 0) {
-			html += '<p class="mb-1 small text-muted"><strong>' + labels.lastSession + ':</strong> '
-				+ escapeHtml(formatDuration(meta.last_session_seconds)) + '</p>';
+			html += '<p class="mb-1 small text-muted"><strong>' + labels.lastSession +
+				':</strong> ' +
+				escapeHtml(formatDuration(meta.last_session_seconds)) + '</p>';
 		}
 		if (meta.socket_lost_at_display) {
-			html += '<p class="mb-1 small text-warning"><strong>' + labels.socketLostAt + ':</strong> '
-				+ escapeHtml(meta.socket_lost_at_display) + '</p>';
+			html += '<p class="mb-1 small text-warning"><strong>' + labels.socketLostAt +
+				':</strong> ' +
+				escapeHtml(meta.socket_lost_at_display) + '</p>';
 		}
 		if (meta.disconnected_at_display) {
-			html += '<p class="mb-1 small text-muted"><strong>' + labels.disconnectedAt + ':</strong> '
-				+ escapeHtml(meta.disconnected_at_display) + '</p>';
+			html += '<p class="mb-1 small text-muted"><strong>' + labels.disconnectedAt +
+				':</strong> ' +
+				escapeHtml(meta.disconnected_at_display) + '</p>';
 		}
 		if (meta.admin_disconnect_locked) {
 			html += '<p class="mb-0 small text-warning">' + labels.adminLocked + '</p>';
@@ -431,27 +490,35 @@
 		let html = '<p class="mb-2"><strong>' + labels.connectionStatus + ':</strong> ';
 		if (connectionStatus === 'connected') {
 			html += '<span class="badge bg-success">' + labels.connected + '</span></p>';
-			html += '<p class="mb-2"><strong>' + labels.linkedPhone + ':</strong> ' + escapeHtml(phone || '—') + '</p>';
+			html += '<p class="mb-2"><strong>' + labels.linkedPhone + ':</strong> ' +
+				escapeHtml(phone || '—') + '</p>';
 			html += renderSessionMeta(sessionMeta);
 			stopStatusPoll();
 			setGenerateBusy(false);
 		} else if (connectionStatus === 'pending_qr') {
-			html += '<span class="badge bg-warning text-dark">' + labels.pendingQr + '</span></p>';
+			html += '<span class="badge bg-warning text-dark">' + labels.pendingQr +
+				'</span></p>';
 			html += '<p class="mb-2 text-muted">' + labels.waitingScan + '</p>';
 			if (qrImage) {
 				html += renderQrImage(qrImage);
 			}
 		} else if (connectionStatus === 'reconnecting') {
-			html += '<span class="badge bg-warning text-dark">' + labels.reconnecting + '</span></p>';
-			html += '<p class="mb-2 text-muted">' + escapeHtml(recoveryHint || labels.autoReconnect) + '</p>';
+			html += '<span class="badge bg-warning text-dark">' + labels.reconnecting +
+				'</span></p>';
+			html += '<p class="mb-2 text-muted">' + escapeHtml(recoveryHint || labels
+				.autoReconnect) + '</p>';
 			html += renderSessionMeta(sessionMeta);
 			if (sessionMeta && sessionMeta.socket_lost_at_display) {
-				html += '<p class="mb-0 small text-warning">' + labels.stillLinkedHint + '</p>';
+				html += '<p class="mb-0 small text-warning">' + labels
+					.stillLinkedHint + '</p>';
 			}
 		} else {
-			const badgeLabel = connectionStatus === 'disconnected' ? labels.disconnected : connectionStatus;
-			html += '<span class="badge bg-secondary">' + escapeHtml(badgeLabel) + '</span></p>';
-			html += '<p class="mb-2 text-muted">' + escapeHtml(recoveryHint || labels.clickGenerate) + '</p>';
+			const badgeLabel = connectionStatus === 'disconnected' ? labels.disconnected :
+				connectionStatus;
+			html += '<span class="badge bg-secondary">' + escapeHtml(badgeLabel) +
+				'</span></p>';
+			html += '<p class="mb-2 text-muted">' + escapeHtml(recoveryHint || labels
+				.clickGenerate) + '</p>';
 			html += renderSessionMeta(sessionMeta);
 			if (qrImage) {
 				html += renderQrImage(qrImage);
@@ -486,7 +553,10 @@
 
 	function fetchStatusOnce() {
 		return fetch(statusUrl, {
-			headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+			headers: {
+				'Accept': 'application/json',
+				'X-Requested-With': 'XMLHttpRequest'
+			}
 		}).then(r => r.json());
 	}
 
@@ -504,7 +574,10 @@
 
 	function fetchQrOnce(waitMs) {
 		return fetch(qrUrl + '?waitMs=' + encodeURIComponent(waitMs), {
-			headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+			headers: {
+				'Accept': 'application/json',
+				'X-Requested-With': 'XMLHttpRequest'
+			}
 		}).then(r => r.json());
 	}
 
@@ -530,12 +603,14 @@
 			const payload = await response.json();
 
 			if (!response.ok || !payload?.ok) {
-				renderStatusError(payload?.error || labels.reconnectNeedsQr);
+				renderStatusError(payload?.error || labels
+					.reconnectNeedsQr);
 				return;
 			}
 
 			for (let attempt = 0; attempt < 25; attempt++) {
-				await new Promise(r => setTimeout(r, attempt === 0 ? 1500 : 3000));
+				await new Promise(r => setTimeout(r, attempt === 0 ? 1500 :
+					3000));
 				const statusPayload = await fetchStatusOnce();
 				if (statusPayload?.ok) {
 					applyStatusPayload(statusPayload);
@@ -579,7 +654,8 @@
 
 		if (lastRegisteredOnDisk) {
 			for (let attempt = 0; attempt < 25; attempt++) {
-				await new Promise(r => setTimeout(r, attempt === 0 ? 1500 : 3000));
+				await new Promise(r => setTimeout(r, attempt === 0 ? 1500 :
+					3000));
 				const statusPayload = await fetchStatusOnce();
 				if (statusPayload?.ok) {
 					applyStatusPayload(statusPayload);
@@ -590,7 +666,8 @@
 						refreshActivityLogs();
 						return;
 					}
-					if (d.status === 'reconnecting' || d.status === 'starting') {
+					if (d.status === 'reconnecting' || d.status ===
+						'starting') {
 						continue;
 					}
 				}
@@ -620,7 +697,8 @@
 
 			const d = payload.data || {};
 			if (d.status === 'connected') {
-				renderStatusBox('connected', d.phone || null, null, null, null);
+				renderStatusBox('connected', d.phone || null, null, null,
+					null);
 				qrRunning = false;
 				setGenerateBusy(false);
 				refreshActivityLogs();
@@ -653,7 +731,7 @@
 		reconnectBtn.addEventListener('click', reconnectSavedSession);
 	}
 
-	loadStatus().then(function () {
+	loadStatus().then(function() {
 		statusTimer = setInterval(pollStatus, pollMs);
 		setInterval(refreshActivityLogs, logsRefreshMs);
 		bindLogDetailButtons();
@@ -663,26 +741,58 @@
 	});
 
 	function bindLogDetailButtons() {
-		document.querySelectorAll('.wa-log-details-btn').forEach(function (btn) {
-			btn.addEventListener('click', function () {
-				const encoded = btn.getAttribute('data-context') || '';
+		document.querySelectorAll('.wa-log-details-btn').forEach(function(btn) {
+			btn.addEventListener('click', function() {
+				const encoded = btn
+					.getAttribute(
+						'data-context'
+					) || '';
 				let parsed = encoded;
 				try {
-					parsed = JSON.stringify(JSON.parse(decodeURIComponent(encoded)), null, 2);
+					parsed = JSON
+						.stringify(
+							JSON
+							.parse(decodeURIComponent(
+								encoded
+							)),
+							null,
+							2
+						);
 				} catch (e) {
 					try {
-						parsed = JSON.stringify(JSON.parse(encoded), null, 2);
+						parsed = JSON
+							.stringify(
+								JSON
+								.parse(
+									encoded
+								),
+								null,
+								2
+							);
 					} catch (e2) {
 						/* keep raw */
 					}
 				}
-				const body = document.getElementById('wa-log-details-body');
+				const body = document
+					.getElementById(
+						'wa-log-details-body'
+					);
 				if (body) {
-					body.textContent = parsed;
+					body.textContent =
+						parsed;
 				}
-				const modalEl = document.getElementById('wa-log-details-modal');
-				if (modalEl && window.bootstrap) {
-					window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+				const modalEl = document
+					.getElementById(
+						'wa-log-details-modal'
+					);
+				if (modalEl && window
+					.bootstrap) {
+					window.bootstrap
+						.Modal
+						.getOrCreateInstance(
+							modalEl
+						)
+						.show();
 				}
 			});
 		});
@@ -704,34 +814,41 @@
 			return '';
 		}
 
-		const summary = '<p class="small text-muted mb-0" id="wa-activity-log-summary">'
-			+ escapeHtml(formatLogShowing(meta.from, meta.to, meta.total)) + '</p>';
+		const summary = '<p class="small text-muted mb-0" id="wa-activity-log-summary">' +
+			escapeHtml(formatLogShowing(meta.from, meta.to, meta.total)) + '</p>';
 
 		if (!meta.last_page || meta.last_page <= 1) {
-			return '<nav class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3" id="wa-activity-log-pagination" aria-label="Activity log pagination">'
-				+ summary + '</nav>';
+			return '<nav class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3" id="wa-activity-log-pagination" aria-label="Activity log pagination">' +
+				summary + '</nav>';
 		}
 
 		let pages = '';
 		for (let page = 1; page <= meta.last_page; page++) {
 			const active = page === meta.current_page ? ' active' : '';
-			pages += '<li class="page-item' + active + '">'
-				+ '<button type="button" class="page-link wa-log-page-btn" data-page="' + page + '">' + page + '</button>'
-				+ '</li>';
+			pages += '<li class="page-item' + active + '">' +
+				'<button type="button" class="page-link wa-log-page-btn" data-page="' +
+				page + '">' + page + '</button>' +
+				'</li>';
 		}
 
 		const prevDisabled = meta.current_page <= 1 ? ' disabled' : '';
 		const nextDisabled = meta.current_page >= meta.last_page ? ' disabled' : '';
 
-		return '<nav class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3" id="wa-activity-log-pagination" aria-label="Activity log pagination">'
-			+ summary
-			+ '<ul class="pagination pagination-sm mb-0">'
-			+ '<li class="page-item' + prevDisabled + '"><button type="button" class="page-link wa-log-page-btn" data-page="' + (meta.current_page - 1) + '"'
-			+ (meta.current_page <= 1 ? ' disabled' : '') + ' aria-label="Previous">&laquo;</button></li>'
-			+ pages
-			+ '<li class="page-item' + nextDisabled + '"><button type="button" class="page-link wa-log-page-btn" data-page="' + (meta.current_page + 1) + '"'
-			+ (meta.current_page >= meta.last_page ? ' disabled' : '') + ' aria-label="Next">&raquo;</button></li>'
-			+ '</ul></nav>';
+		return '<nav class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3" id="wa-activity-log-pagination" aria-label="Activity log pagination">' +
+			summary +
+			'<ul class="pagination pagination-sm mb-0">' +
+			'<li class="page-item' + prevDisabled +
+			'"><button type="button" class="page-link wa-log-page-btn" data-page="' + (meta
+				.current_page - 1) + '"' +
+			(meta.current_page <= 1 ? ' disabled' : '') +
+			' aria-label="Previous">&laquo;</button></li>' +
+			pages +
+			'<li class="page-item' + nextDisabled +
+			'"><button type="button" class="page-link wa-log-page-btn" data-page="' + (meta
+				.current_page + 1) + '"' +
+			(meta.current_page >= meta.last_page ? ' disabled' : '') +
+			' aria-label="Next">&raquo;</button></li>' +
+			'</ul></nav>';
 	}
 
 	function renderActivityLogs(entries, meta) {
@@ -741,50 +858,67 @@
 		}
 
 		if (!meta || !meta.total) {
-			wrap.innerHTML = '<p class="text-muted mb-0" id="wa-activity-log-empty">' + escapeHtml(logLabels.empty) + '</p>';
+			wrap.innerHTML = '<p class="text-muted mb-0" id="wa-activity-log-empty">' +
+				escapeHtml(logLabels.empty) + '</p>';
 			return;
 		}
 
 		let rows = '';
-		entries.forEach(function (entry) {
-			const contextRaw = encodeURIComponent(JSON.stringify(entry.context || {}));
-			const contextBtn = Object.keys(entry.context || {}).length
-				? '<button type="button" class="btn btn-link btn-sm p-0 wa-log-details-btn" data-context="' + contextRaw + '">' + escapeHtml(logLabels.view) + '</button>'
-				: '<span class="text-muted">—</span>';
-			const actor = entry.admin_name
-				? escapeHtml(entry.admin_name)
-				: escapeHtml(logLabels.actorSystem);
-			const created = entry.created_at_display
-				? escapeHtml(entry.created_at_display)
-				: (entry.created_at ? escapeHtml(entry.created_at.replace('T', ' ').slice(0, 19)) : '—');
-			const human = entry.created_at_human ? escapeHtml(entry.created_at_human) : '';
-			const deleteBtn = '<button type="button" class="btn btn-link btn-sm p-0 text-danger wa-log-delete-btn" data-id="' + escapeHtml(String(entry.id)) + '"'
-				+ ' title="' + escapeHtml(logLabels.delete) + '" aria-label="' + escapeHtml(logLabels.delete) + '">'
-				+ '<i class="mdi mdi-delete-outline"></i></button>';
+		entries.forEach(function(entry) {
+			const contextRaw = encodeURIComponent(JSON.stringify(entry
+				.context || {}));
+			const contextBtn = Object.keys(entry.context || {}).length ?
+				'<button type="button" class="btn btn-link btn-sm p-0 wa-log-details-btn" data-context="' +
+				contextRaw + '">' + escapeHtml(logLabels.view) +
+				'</button>' :
+				'<span class="text-muted">—</span>';
+			const actor = entry.admin_name ?
+				escapeHtml(entry.admin_name) :
+				escapeHtml(logLabels.actorSystem);
+			const created = entry.created_at_display ?
+				escapeHtml(entry.created_at_display) :
+				(entry.created_at ? escapeHtml(entry.created_at
+					.replace('T', ' ').slice(0,
+						19)) : '—');
+			const human = entry.created_at_human ? escapeHtml(entry
+				.created_at_human) : '';
+			const deleteBtn =
+				'<button type="button" class="btn btn-link btn-sm p-0 text-danger wa-log-delete-btn" data-id="' +
+				escapeHtml(String(entry.id)) + '"' +
+				' title="' + escapeHtml(logLabels.delete) +
+				'" aria-label="' + escapeHtml(logLabels.delete) +
+				'">' +
+				'<i class="mdi mdi-delete-outline"></i></button>';
 
-			rows += '<tr>'
-				+ '<td class="small text-nowrap"><div>' + created + '</div>'
-				+ (human ? '<div class="text-muted">' + human + '</div>' : '') + '</td>'
-				+ '<td><span class="badge bg-' + escapeHtml(entry.level_badge || 'secondary') + '">'
-				+ escapeHtml(entry.event_label || entry.event || '') + '</span></td>'
-				+ '<td class="small">' + escapeHtml(entry.message || '') + '</td>'
-				+ '<td class="small text-muted">' + actor + '</td>'
-				+ '<td>' + contextBtn + '</td>'
-				+ '<td>' + deleteBtn + '</td>'
-				+ '</tr>';
+			rows += '<tr>' +
+				'<td class="small text-nowrap"><div>' + created +
+				'</div>' +
+				(human ? '<div class="text-muted">' + human +
+					'</div>' : '') + '</td>' +
+				'<td><span class="badge bg-' + escapeHtml(entry
+					.level_badge || 'secondary') + '">' +
+				escapeHtml(entry.event_label || entry.event ||
+					'') + '</span></td>' +
+				'<td class="small">' + escapeHtml(entry.message ||
+					'') + '</td>' +
+				'<td class="small text-muted">' + actor +
+				'</td>' +
+				'<td>' + contextBtn + '</td>' +
+				'<td>' + deleteBtn + '</td>' +
+				'</tr>';
 		});
 
-		wrap.innerHTML = '<div class="table-responsive">'
-			+ '<table class="table table-sm table-hover align-middle mb-0" id="wa-activity-log-table">'
-			+ '<thead class="table-light"><tr>'
-			+ '<th style="width:140px;">' + escapeHtml(logLabels.colTime) + '</th>'
-			+ '<th style="width:120px;">' + escapeHtml(logLabels.colEvent) + '</th>'
-			+ '<th>' + escapeHtml(logLabels.colMessage) + '</th>'
-			+ '<th style="width:120px;">' + escapeHtml(logLabels.colActor) + '</th>'
-			+ '<th style="width:90px;">' + escapeHtml(logLabels.colDetails) + '</th>'
-			+ '<th style="width:70px;">' + escapeHtml(logLabels.colActions) + '</th>'
-			+ '</tr></thead><tbody>' + rows + '</tbody></table></div>'
-			+ buildPaginationHtml(meta);
+		wrap.innerHTML = '<div class="table-responsive">' +
+			'<table class="table table-sm table-hover align-middle mb-0" id="wa-activity-log-table">' +
+			'<thead class="table-light"><tr>' +
+			'<th style="width:140px;">' + escapeHtml(logLabels.colTime) + '</th>' +
+			'<th style="width:120px;">' + escapeHtml(logLabels.colEvent) + '</th>' +
+			'<th>' + escapeHtml(logLabels.colMessage) + '</th>' +
+			'<th style="width:120px;">' + escapeHtml(logLabels.colActor) + '</th>' +
+			'<th style="width:90px;">' + escapeHtml(logLabels.colDetails) + '</th>' +
+			'<th style="width:70px;">' + escapeHtml(logLabels.colActions) + '</th>' +
+			'</tr></thead><tbody>' + rows + '</tbody></table></div>' +
+			buildPaginationHtml(meta);
 
 		bindLogDetailButtons();
 	}
@@ -796,19 +930,29 @@
 
 		const url = logsUrl + '?per_page=' + logsPerPage + '&page=' + logsCurrentPage;
 		return fetch(url, {
-			headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-		})
-			.then(function (r) { return r.json(); })
-			.then(function (payload) {
+				headers: {
+					'Accept': 'application/json',
+					'X-Requested-With': 'XMLHttpRequest'
+				}
+			})
+			.then(function(r) {
+				return r.json();
+			})
+			.then(function(payload) {
 				if (payload && payload.ok) {
 					if (payload.meta) {
-						logsCurrentPage = payload.meta.current_page || logsCurrentPage;
+						logsCurrentPage = payload.meta
+							.current_page ||
+							logsCurrentPage;
 					}
-					renderActivityLogs(payload.data || [], payload.meta || null);
+					renderActivityLogs(payload.data || [], payload
+						.meta || null);
 				}
 				return payload;
 			})
-			.catch(function () { /* ignore */ });
+			.catch(function() {
+				/* ignore */
+			});
 	}
 
 	async function deleteActivityLog(id) {
@@ -866,26 +1010,30 @@
 
 	const logsWrap = document.getElementById('wa-activity-log-wrap');
 	if (logsWrap) {
-		logsWrap.addEventListener('click', function (event) {
+		logsWrap.addEventListener('click', function(event) {
 			const pageBtn = event.target.closest('.wa-log-page-btn');
 			if (pageBtn && !pageBtn.disabled) {
-				const page = parseInt(pageBtn.getAttribute('data-page') || '1', 10);
+				const page = parseInt(pageBtn.getAttribute(
+						'data-page') || '1',
+					10);
 				if (page > 0) {
 					refreshActivityLogs(page);
 				}
 				return;
 			}
 
-			const deleteBtn = event.target.closest('.wa-log-delete-btn');
+			const deleteBtn = event.target.closest(
+				'.wa-log-delete-btn');
 			if (deleteBtn) {
-				deleteActivityLog(deleteBtn.getAttribute('data-id'));
+				deleteActivityLog(deleteBtn.getAttribute(
+					'data-id'));
 			}
 		});
 	}
 
 	const logsRefreshBtn = document.getElementById('wa-logs-refresh');
 	if (logsRefreshBtn) {
-		logsRefreshBtn.addEventListener('click', function () {
+		logsRefreshBtn.addEventListener('click', function() {
 			refreshActivityLogs(logsCurrentPage);
 		});
 	}
@@ -899,11 +1047,11 @@
 @endif
 
 @php
-	$showTestOtpScript = ($otpChannel === 'sms' && $smsConfigured) || ($otpChannel === 'whatsapp' && $configured);
+$showTestOtpScript = ($otpChannel === 'sms' && $smsConfigured) || ($otpChannel === 'whatsapp' && $configured);
 @endphp
 @if($showTestOtpScript)
 <script>
-(function () {
+(function() {
 	const testOtpUrl = @json(route('admin.whatsapp-system.test-otp'));
 	const csrfToken = @json(csrf_token());
 	const testOtpBtn = document.getElementById('wa-test-otp-btn');
@@ -932,7 +1080,9 @@
 
 		const phone = (testOtpPhone.value || '').trim();
 		if (!phone) {
-			showTestOtpAlert('warning', @json(__('admin.whatsapp-test-otp-phone-required')));
+			showTestOtpAlert('warning', @json(__(
+				'admin.whatsapp-test-otp-phone-required'
+			)));
 			testOtpPhone.focus();
 			return;
 		}
@@ -953,19 +1103,28 @@
 				},
 				body: JSON.stringify({
 					phone: phone,
-					country_code: testOtpCountry ? testOtpCountry.value : '966',
+					country_code: testOtpCountry ?
+						testOtpCountry
+						.value :
+						'966',
 				}),
 			});
 
 			const payload = await response.json();
 
 			if (payload && payload.ok) {
-				showTestOtpAlert('success', payload.message || @json(__('admin.whatsapp-test-otp-sent-generic')));
+				showTestOtpAlert('success', payload.message || @json(__(
+					'admin.whatsapp-test-otp-sent-generic'
+				)));
 			} else {
-				showTestOtpAlert('danger', payload?.error || @json(__('admin.whatsapp-test-otp-failed-generic')));
+				showTestOtpAlert('danger', payload?.error || @json(__(
+					'admin.whatsapp-test-otp-failed-generic'
+				)));
 			}
 		} catch (e) {
-			showTestOtpAlert('danger', @json(__('admin.whatsapp-gateway-unreachable')));
+			showTestOtpAlert('danger', @json(__(
+				'admin.whatsapp-gateway-unreachable'
+			)));
 		} finally {
 			testOtpBtn.disabled = false;
 			if (testOtpLabel) {
@@ -978,7 +1137,7 @@
 		testOtpBtn.addEventListener('click', sendTestOtp);
 	}
 	if (testOtpPhone) {
-		testOtpPhone.addEventListener('keydown', function (event) {
+		testOtpPhone.addEventListener('keydown', function(event) {
 			if (event.key === 'Enter') {
 				event.preventDefault();
 				sendTestOtp();

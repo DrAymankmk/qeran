@@ -105,7 +105,7 @@ return [
     'otp_whatsapp_send_failed' => 'Could not send verification code via WhatsApp. Make sure the number has WhatsApp.',
     'otp_sms_not_configured' => 'SMS service is not configured on the server.',
     'otp_sms_send_failed' => 'Could not send verification code via SMS. Try again later.',
-    'otp_sms_message' => 'Your Qeran verification code is: :code',
+    'otp_sms_message' => "Qeran for Smart Invitations\nYour account has been registered successfully. Activation code: :code",
     'otp_invalid_phone' => 'Invalid phone number.',
     'otp_email_send_failed' => 'Could not send verification code by email.',
     'otp_unexpected_error' => 'An error occurred while sending the verification code.',

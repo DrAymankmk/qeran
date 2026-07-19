@@ -4,6 +4,9 @@ return [
     'invitation_notification_template' => "🌟Quran App for Sending Invitations🌟\nWith joy and happiness\n :host_name \n We are honored to invite you to attend :event_type \nPlease show the attached code with the invitation at the following link when entering\n\n:invitation_link\n\nDownload on the App Store 👇🏻\n:apple_link\n\nGet it on Google Play 👇🏻\n:google_play_link",
     
     'invitation_sms_template' => "🌟Quran App for Sending Invitations🌟\nWith joy and happiness\n :host_name \n We are honored to invite you to attend :event_type \nPlease show the attached code with the invitation at the following link when entering\n\n:invitation_link\n\nFor more information about the Quran app, scan the code\n\nThe registered number belongs to the Quran app, and the invitation has been sent to you at the request of Mr./:host_name and under their responsibility.",
+
+    'invitation_contact_reminder_sms_template' => "Friendly reminder 🌷\n:event_type / :host_name\nWe look forward to your attendance and participation",
+    'invitation_contact_reminder_default_event' => 'the event',
     
     'variables' => [
         'event_type' => 'event type',

@@ -8,6 +8,7 @@ use App\Services\Auth\OtpDeliveryChannel;
 use App\Services\External\BaileysGateway;
 use App\Services\External\BaileysWhatsApp;
 use App\Services\External\FourJawalySms;
+use App\Services\Invitation\InvitationContactReminderSettings;
 use App\Services\WhatsApp\WhatsAppSystemSessionLogService;
 use App\Services\WhatsApp\WhatsAppSystemSessionService;
 use Illuminate\Http\JsonResponse;
@@ -28,6 +29,8 @@ class WhatsAppSystemController extends Controller
             'configured' => $configured,
             'smsConfigured' => FourJawalySms::isConfigured(),
             'otpChannel' => OtpDeliveryChannel::current(),
+            'reminderEnabled' => InvitationContactReminderSettings::enabled(),
+            'reminderHoursBefore' => InvitationContactReminderSettings::hoursBefore(),
             'gatewayUrl' => config('services.baileys.gateway_internal_url')
                 ?: config('services.baileys.gateway_url'),
             'sessionId' => BaileysGateway::systemSessionId(),
@@ -465,6 +468,19 @@ class WhatsAppSystemController extends Controller
         OtpDeliveryChannel::set($validated['channel']);
 
         return back()->with('success', __('admin.otp-channel-updated'));
+    }
+
+    public function updateContactReminder(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'enabled' => ['nullable', 'boolean'],
+            'hours_before' => ['required', 'integer', 'min:1', 'max:720'],
+        ]);
+
+        InvitationContactReminderSettings::setEnabled($request->boolean('enabled'));
+        InvitationContactReminderSettings::setHoursBefore((int) $validated['hours_before']);
+
+        return back()->with('success', __('admin.invitation-contact-reminder-updated'));
     }
 
     public function testOtp(Request $request): JsonResponse

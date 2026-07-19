@@ -135,6 +135,55 @@
 	</div>
 </div>
 
+<div class="row mb-3">
+	<div class="col-12">
+		<div class="card">
+			<div class="card-body">
+				<h5 class="card-title mb-3">{{ __('admin.invitation-contact-reminder-title') }}</h5>
+				<p class="text-muted small mb-3">{{ __('admin.invitation-contact-reminder-description') }}</p>
+
+				<form method="post" action="{{ route('admin.whatsapp-system.contact-reminder') }}"
+					class="row g-3 align-items-end">
+					@csrf
+					<div class="col-md-4">
+						<div class="form-check form-switch mb-0">
+							<input class="form-check-input" type="checkbox" role="switch"
+								name="enabled" id="contact-reminder-enabled" value="1"
+								@checked($reminderEnabled)>
+							<label class="form-check-label" for="contact-reminder-enabled">
+								{{ __('admin.invitation-contact-reminder-enabled') }}
+							</label>
+						</div>
+						@if(!$smsConfigured)
+						<p class="text-danger small mt-2 mb-0">{{ __('admin.otp-sms-not-configured') }}</p>
+						@endif
+					</div>
+					<div class="col-md-4">
+						<label for="contact-reminder-hours" class="form-label">
+							{{ __('admin.invitation-contact-reminder-hours-before') }}
+						</label>
+						<input type="number" min="1" max="720" name="hours_before"
+							id="contact-reminder-hours" class="form-control"
+							value="{{ old('hours_before', $reminderHoursBefore) }}" required>
+						<div class="form-text">{{ __('admin.invitation-contact-reminder-hours-hint') }}</div>
+					</div>
+					<div class="col-md-4">
+						<button type="submit" class="btn btn-primary w-100">
+							<i class="mdi mdi-content-save me-1"></i>
+							{{ __('admin.invitation-contact-reminder-save') }}
+						</button>
+					</div>
+				</form>
+
+				<div class="alert alert-light border mt-3 mb-0 small">
+					<strong>{{ __('admin.invitation-contact-reminder-preview-label') }}</strong>
+					<pre class="mb-0 mt-2" style="white-space: pre-wrap; font-family: inherit;">{{ __('messages.invitation_contact_reminder_sms_template', ['event_type' => 'حفل زفاف', 'host_name' => 'اسم صاحب الدعوة']) }}</pre>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
 @if($otpChannel === 'whatsapp' && $configured)
 <div class="row">
 	<div class="col-lg-8">

@@ -26,12 +26,15 @@ class InvitationContactLog extends Model
         'sent_at',
         'delivered_at',
         'read_at',
+        'reminder_sent_at',
+        'reminder_error_message',
     ];
 
     protected $casts = [
         'sent_at' => 'datetime',
         'delivered_at' => 'datetime',
         'read_at' => 'datetime',
+        'reminder_sent_at' => 'datetime',
     ];
 
     public function invitation(): BelongsTo

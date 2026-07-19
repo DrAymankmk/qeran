@@ -12,6 +12,8 @@ return [
 :invitation_link
 \n\nلتحميل التطبيق \n:application_link
 \n\n",
+    'invitation_contact_reminder_sms_template' => "تذكير ودي 🌷\n:event_type / :host_name\nيسرّنا حضوركم ومشاركتكم",
+    'invitation_contact_reminder_default_event' => 'المناسبة',
     'variables' => [
         'event_type' => 'نوع المناسبة',
         'host_name' => 'اسم الداعي',

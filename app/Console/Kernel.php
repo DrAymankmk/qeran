@@ -19,6 +19,11 @@ class Kernel extends ConsoleKernel
             ->everyTwoMinutes()
             ->withoutOverlapping(4)
             ->runInBackground();
+
+        $schedule->command('invitations:send-contact-reminders')
+            ->everyFifteenMinutes()
+            ->withoutOverlapping(20)
+            ->runInBackground();
     }
 
     /**

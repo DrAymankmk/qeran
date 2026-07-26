@@ -91,11 +91,16 @@
 
                                         </td>
                                         <td>
-                                            <a target="_blank" href="{{ $invitationPackage->image()}}">
-                                                <img class=" header-profile-user" src="{{ $invitationPackage->image() }}"
-                                                     alt="Invitation">
-                                            </a>
-
+                                            @php($receiptImage = $invitationPackage->receiptImage())
+                                            @if($receiptImage)
+                                                <a target="_blank" href="{{ $receiptImage }}">
+                                                    <img class="header-profile-user" src="{{ $receiptImage }}"
+                                                         alt="{{ __('admin.receipt-image') }}"
+                                                         style="max-width: 120px; height: auto;">
+                                                </a>
+                                            @else
+                                                {{ __('admin.no-data-available') }}
+                                            @endif
                                         </td>
                                         <td>
                                             @if($invitationPackage->package)

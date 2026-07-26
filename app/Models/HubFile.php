@@ -61,28 +61,63 @@ class HubFile extends Model
         return $this->bucket_name.'/'.$this->path;
     }
 
-    public function get_thumbnail_path()
+    public function get_thumbnail_path(): ?string
     {
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
-        $disk = Storage::disk(mediaDisk());
-        // return $disk->url(trim($this->bucket_name.'/thumbnail/'.$this->path, '/'));
-return $disk->temporaryUrl(trim($this->bucket_name.'/thumbnail/'.$this->path, '/'), now()->addMinutes(30));
+        if (empty($this->path)) {
+            return null;
+        }
+
+        return $this->mediaUrlForKey(trim($this->bucket_name.'/thumbnail/'.$this->path, '/'));
     }
 
-    public function get_medium_path()
+    public function get_medium_path(): ?string
     {
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
-        $disk = Storage::disk(mediaDisk());
-        // return $disk->url(trim($this->bucket_name.'/medium/'.$this->path, '/'));
-return $disk->temporaryUrl(trim($this->bucket_name.'/medium/'.$this->path, '/'), now()->addMinutes(30));
+        if (empty($this->path)) {
+            return null;
+        }
+
+        return $this->mediaUrlForKey(trim($this->bucket_name.'/medium/'.$this->path, '/'));
     }
 
-    public function get_path()
+    public function get_path(): ?string
     {
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
-        $disk = Storage::disk(mediaDisk());
-        // return $disk->url(trim($this->bucket_name.'/'.$this->path, '/'));
-return $disk->temporaryUrl(trim($this->bucket_name.'/'.$this->path, '/'), now()->addMinutes(30));
+        if (empty($this->path)) {
+            return null;
+        }
+
+        return $this->mediaUrlForKey(trim($this->bucket_name.'/'.$this->path, '/'));
+    }
+
+    protected function mediaUrlForKey(string $key): ?string
+    {
+        if ($key === '') {
+            return null;
+        }
+
+        $diskName = mediaDisk();
+        $driver = (string) config("filesystems.disks.{$diskName}.driver", 'local');
+        $disk = Storage::disk($diskName);
+
+        if ($driver === 's3') {
+            try {
+                if ($disk->exists($key)) {
+                    return $disk->temporaryUrl($key, now()->addMinutes(30));
+                }
+            } catch (\Throwable) {
+                // Fall through to public disk lookup below.
+            }
+        } else {
+            if ($disk->exists($key)) {
+                return $disk->url($key);
+            }
+        }
+
+        $publicDisk = Storage::disk('public');
+        if ($publicDisk->exists($key)) {
+            return $publicDisk->url($key);
+        }
+
+        return null;
     }
 
     public function get_size()

@@ -721,7 +721,7 @@ class InvitationsController extends Controller
                 'invitation_id' => 'required|integer|exists:invitations,id',
             ]);
 
-            $invitationPackages = InvitationPackage::with(['package', 'invitation.user'])
+            $invitationPackages = InvitationPackage::with(['package', 'invitation.user', 'hubFiles'])
                 ->where('invitation_id', $validated['invitation_id'])
                 ->orderBy('created_at', 'desc')
                 ->paginate(config('app.pagination.per_page', 15));

@@ -50,7 +50,14 @@ if (!function_exists('storeImage')) {
                 ];
             }
 
-            $options['model']->hubFiles()->updateOrCreate($hubFile + ['path' => $filename]);
+            $options['model']->hubFiles()->updateOrCreate(
+                [
+                    'bucket_name' => $options['folderName'],
+                    'file_type' => $options['file_type'] ?? Constant::FILE_TYPE['Image'],
+                    'file_key' => $options['file_key'] ?? Constant::FILE_KEY['Not Main'],
+                ],
+                $hubFile + ['path' => $filename]
+            );
         }
 
         return $options['folderName'] . '/' . $filename;

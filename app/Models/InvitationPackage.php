@@ -19,13 +19,29 @@ class InvitationPackage extends Model
         'price'
     ];
 
-    public function image()
+    public function image(): ?string
     {
-        $this->load('hubFiles');
-        return $this->hubFiles()->where([
-            'file_type' => Constant::FILE_TYPE['Image'],
-            'file_key' => Constant::FILE_KEY['Receipt']
-        ])->first()?->get_path();
+        if ($this->relationLoaded('hubFiles')) {
+            $file = $this->hubFiles
+                ->where('file_type', Constant::FILE_TYPE['Image'])
+                ->where('file_key', Constant::FILE_KEY['Receipt'])
+                ->sortByDesc('created_at')
+                ->first();
+
+            return $file?->get_path();
+        }
+
+        return $this->hubFiles()
+            ->where([
+                'file_type' => Constant::FILE_TYPE['Image'],
+                'file_key' => Constant::FILE_KEY['Receipt'],
+            ])
+            ->first()?->get_path();
+    }
+
+    public function receiptImage(): ?string
+    {
+        return $this->image();
     }
 
     public function imageMimeType()

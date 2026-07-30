@@ -222,7 +222,7 @@ class InvitationsController extends Controller
                 'user_seen' => $updatedUser->pivot->seen,
                 'qr_url' => $invitation->qr($invitation->id, $userId),
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => 'حدث خطأ أثناء قبول الدعوة: '.$e->getMessage()], 500);
         }
     }
@@ -258,7 +258,7 @@ class InvitationsController extends Controller
                 'status' => 'declined',
                 'user_seen' => $updatedUser->pivot->seen,
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => 'حدث خطأ أثناء رفض الدعوة: '.$e->getMessage()], 500);
         }
     }
@@ -293,7 +293,7 @@ class InvitationsController extends Controller
                 'acceptance_status' => Constant::ACCEPTANCE_STATUS['accepted'],
                 'qr_url' => $invitation->qrForContact((int) $contactLog->id),
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => 'حدث خطأ أثناء قبول الدعوة: '.$e->getMessage()], 500);
         }
     }
@@ -323,7 +323,7 @@ class InvitationsController extends Controller
                 'contact_log_id' => (int) $contactLog->id,
                 'acceptance_status' => Constant::ACCEPTANCE_STATUS['declined'],
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => 'حدث خطأ أثناء رفض الدعوة: '.$e->getMessage()], 500);
         }
     }

@@ -324,35 +324,43 @@ class Invitation extends Model
 
     protected function writeQrCodeFiles(string $basePath, string $payload): void
     {
-        if (extension_loaded('imagick')) {
-            try {
-                $image = QrCode::format('png')
-                    ->size(200)
-                    ->color(0, 0, 0)
-                    ->backgroundColor(255, 255, 255, 0)
-                    ->style('square')
-                    ->generate($payload);
+        try {
+            if (extension_loaded('imagick')) {
+                try {
+                    $image = QrCode::format('png')
+                        ->size(200)
+                        ->color(0, 0, 0)
+                        ->backgroundColor(255, 255, 255, 0)
+                        ->style('square')
+                        ->generate($payload);
 
-                Storage::disk('public')->put($basePath.'.png', $image);
+                    Storage::disk('public')->put($basePath.'.png', $image);
 
-                return;
-            } catch (\Throwable $e) {
-                Log::warning('PNG QR generation failed, falling back to SVG', [
-                    'invitation_id' => $this->id,
-                    'payload' => $payload,
-                    'error' => $e->getMessage(),
-                ]);
+                    return;
+                } catch (\Throwable $e) {
+                    Log::warning('PNG QR generation failed, falling back to SVG', [
+                        'invitation_id' => $this->id,
+                        'payload' => $payload,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
+
+            $svg = QrCode::format('svg')
+                ->size(200)
+                ->color(0, 0, 0)
+                ->backgroundColor(255, 255, 255, 0)
+                ->style('square')
+                ->generate($payload);
+
+            Storage::disk('public')->put($basePath.'.svg', $svg);
+        } catch (\Throwable $e) {
+            Log::error('QR code generation failed', [
+                'invitation_id' => $this->id,
+                'payload' => $payload,
+                'error' => $e->getMessage(),
+            ]);
         }
-
-        $svg = QrCode::format('svg')
-            ->size(200)
-            ->color(0, 0, 0)
-            ->backgroundColor(255, 255, 255, 0)
-            ->style('square')
-            ->generate($payload);
-
-        Storage::disk('public')->put($basePath.'.svg', $svg);
     }
 
     public function category()

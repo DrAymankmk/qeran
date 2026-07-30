@@ -6,6 +6,8 @@
     "license": "MIT",
    "require": {
         "php": "^8.2",
+        "ext-dom": "*",
+        "ext-xml": "*",
         "astrotomic/laravel-translatable": "^11.10",
         "giggsey/libphonenumber-for-php": "^8.13",
         "guzzlehttp/guzzle": "^7.2",

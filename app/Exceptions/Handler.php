@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -46,5 +47,40 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+    }
+
+    /**
+     * Avoid cascading "A facade root has not been set" when bootstrap failed early.
+     */
+    protected function registerErrorViewPaths()
+    {
+        if (! $this->container->bound('view')) {
+            return;
+        }
+
+        parent::registerErrorViewPaths();
+    }
+
+    /**
+     * When the app did not finish booting, return plain text instead of crashing again.
+     */
+    protected function renderExceptionResponse($request, Throwable $e)
+    {
+        if (! $this->container->bound('view')) {
+            $status = $e instanceof HttpExceptionInterface ? $e->getStatusCode() : 500;
+            $debug = $this->container->bound('config')
+                ? (bool) $this->container->make('config')->get('app.debug')
+                : false;
+
+            $message = $debug
+                ? $e->getMessage()."\n\n".$e->getTraceAsString()
+                : 'Service Unavailable';
+
+            return response($message, $status, [
+                'Content-Type' => 'text/plain; charset=UTF-8',
+            ]);
+        }
+
+        return parent::renderExceptionResponse($request, $e);
     }
 }

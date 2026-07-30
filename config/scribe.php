@@ -260,7 +260,7 @@ return [
             // ...Defaults::BODY_PARAMETERS_STRATEGIES,
         ],
         'responses' => configureStrategy(
-            // Defaults::RESPONSES_STRATEGIES,
+            Defaults::RESPONSES_STRATEGIES,
             Strategies\Responses\ResponseCalls::withSettings(
                 only: ['GET *'],
                 // Recommended: disable debug mode in response calls to avoid error stack traces in responses

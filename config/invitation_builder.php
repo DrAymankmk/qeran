@@ -752,6 +752,13 @@ return [
                 'loop' => ['type' => 'checkbox', 'label_ar' => 'تكرار الموسيقى', 'default' => true],
             ],
         ],
+        'footer' => [
+            'fields' => [
+                'names' => ['type' => 'text', 'label_ar' => 'أسماء العروسين', 'default' => ''],
+                'message' => ['type' => 'textarea', 'label_ar' => 'رسالة الشكر', 'default' => "Thank you for being part of our love story.\nWe can't wait to celebrate with you."],
+                'date_line' => ['type' => 'text', 'label_ar' => 'سطر التاريخ والمكان', 'default' => ''],
+            ],
+        ],
     ],
 
     'information_blocks' => [
@@ -771,6 +778,7 @@ return [
         'menu' => ['label_ar' => 'قائمة الطعام', 'icon' => '🍽', 'description_ar' => 'أطباق الحفل'],
         // 'transport' => ['label_ar' => 'المواصلات', 'icon' => '🚌', 'description_ar' => 'باصات الضيوف'],
         'wishes' => ['label_ar' => 'تهاني', 'icon' => '💬', 'description_ar' => 'رسائل من الضيوف'],
+        'footer' => ['label_ar' => 'قسم الشكر', 'icon' => '🙏', 'description_ar' => 'أسماء العروسين ورسالة الشكر في أسفل الدعوة'],
         'background_music' => ['label_ar' => 'موسيقى خلفية', 'icon' => '🎵', 'description_ar' => 'تشغيل موسيقى عند فتح الظرف'],
     ],
 

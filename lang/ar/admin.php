@@ -1322,6 +1322,8 @@ return[
     'ib-blocks-drag-hint' => 'اسحب ⋮⋮ لإعادة الترتيب',
     'ib-blocks-add' => 'إضافة قسم',
     'ib-blocks-all-added' => 'تمت إضافة كل الأقسام المتاحة.',
+    'ib-footer-section' => 'قسم الشكر',
+    'ib-footer-section-desc' => 'يظهر دائماً في أسفل الدعوة. الأسماء تُؤخذ من العروسين افتراضياً؛ سطر التاريخ من تاريخ المناسبة والمكان.',
     'ib-block-icon-upload' => 'رفع صورة',
     'ib-block-icon-clear' => 'إزالة الصورة',
     'ib-block-icon-uploading' => 'جاري الرفع…',

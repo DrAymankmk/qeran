@@ -1324,87 +1324,87 @@ class InvitationsController extends Controller
 
 	public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invitation)
 	{
-        DB::beginTransaction();
-        $invitationPackage = InvitationPackage::query()
-        ->where('invitation_id', '=', $invitation->id)
-            //   ->where('status', '=', Constant::PAID_STATUS['Not Paid'])
-        ->first();
+		DB::beginTransaction();
+		$invitationPackage = InvitationPackage::query()
+		->where('invitation_id', '=', $invitation->id)
+			//   ->where('status', '=', Constant::PAID_STATUS['Not Paid'])
+		->first();
 
-            //     if (! $invitationPackage) {
-            //         return RespondActive::clientError('Sorry, there are existing unpaid invitation packages.');
-            //     }
+			//     if (! $invitationPackage) {
+			//         return RespondActive::clientError('Sorry, there are existing unpaid invitation packages.');
+			//     }
 
-        $invitationPackage->update([
-        'status' => Constant::PAID_STATUS['Pending Admin Payment'],
-        ]);
+		$invitationPackage->update([
+		'status' => Constant::PAID_STATUS['Pending Admin Payment'],
+		]);
 
-        $invitation->update([
-        'paid' => Constant::PAID_STATUS['Pending Admin Payment'],
-        ]);
+		$invitation->update([
+		'paid' => Constant::PAID_STATUS['Pending Admin Payment'],
+		]);
 
-        storeImage(['value' => $request->image,
-        'folderName' => Constant::INVITATION_RECEIPT_FOLDER_NAME,
-        'file_key' => Constant::FILE_KEY['Receipt'],
-        'file_type' => Constant::FILE_TYPE['Image'],
-        'model' => $invitationPackage,
-        'saveInDatabase' => true]);
-        try {
-            Mail::send('emails.payment-receipt', ['invitationPackage' => $invitationPackage, 'invitation' => $invitation], function ($message) {
-                $message->to(env('MAIL_TO_ADDRESS', 'moderninvitation420@gmail.com'), 'دفع باقة جديدة')
-                    ->from(config('mail.from.address', 'info@modern-invitation.com'), config('mail.from.name', 'Modern Invitation'))
-                    ->subject('دفع باقة جديدة');
-            });
-        } catch (\Throwable $e) {
-            Log::warning('Payment receipt email send failed', [
-                'invitation_id' => $invitation->id,
-                'package_id' => $invitationPackage->id ?? null,
-                'error' => $e->getMessage(),
-            ]);
-        }
+		storeImage(['value' => $request->image,
+		'folderName' => Constant::INVITATION_RECEIPT_FOLDER_NAME,
+		'file_key' => Constant::FILE_KEY['Receipt'],
+		'file_type' => Constant::FILE_TYPE['Image'],
+		'model' => $invitationPackage,
+		'saveInDatabase' => true]);
+		try {
+			Mail::send('emails.payment-receipt', ['invitationPackage' => $invitationPackage, 'invitation' => $invitation], function ($message) {
+			$message->to(env('MAIL_TO_ADDRESS', 'moderninvitation420@gmail.com'), 'دفع باقة جديدة')
+				->from(config('mail.from.address', 'info@modern-invitation.com'), config('mail.from.name', 'Modern Invitation'))
+				->subject('دفع باقة جديدة');
+			});
+		} catch (\Throwable $e) {
+			Log::warning('Payment receipt email send failed', [
+			'invitation_id' => $invitation->id,
+			'package_id' => $invitationPackage->id ?? null,
+			'error' => $e->getMessage(),
+			]);
+		}
 
-        $user = User::findOrFail(auth()->id());
+		$user = User::findOrFail(auth()->id());
 
-        // send notification to admin
-            try {
-                $this->sendAdminNotification(
-                notificationKey: 'payment_receipt_uploaded',
-                targetId: $invitation->id,
-                params: [
-                    'invitation_id' => $invitation->id,
-                    'invitation_name' => $invitation->event_name ?? $invitation->name,
-                    'user_name' => $user->name ?? 'User',
-                    'user_id' => $user->id,
-                    'invitation_type' => $invitation->invitation_type,
-                    'status' => 'Pending Admin Approval',
-                    'step' => 'Choose Package',
+		// send notification to admin
+			try {
+			$this->sendAdminNotification(
+			notificationKey: 'payment_receipt_uploaded',
+			targetId: $invitation->id,
+			params: [
+				'invitation_id' => $invitation->id,
+				'invitation_name' => $invitation->event_name ?? $invitation->name,
+				'user_name' => $user->name ?? 'User',
+				'user_id' => $user->id,
+				'invitation_type' => $invitation->invitation_type,
+				'status' => 'Pending Admin Approval',
+				'step' => 'Choose Package',
 
-                ],
-                category: Constant::NOTIFICATION_CATEGORY['Order'] ?? 1,
-                notificationType: Constant::NOTIFICATION_ORDER_TYPES['Order Modified or Canceled'] ?? 1,
-                emailSubject: 'Payment Receipt Uploaded - '.($invitation->event_name ?? $invitation->name),
-                emailView: 'emails.order.payment_receipt_uploaded',
-                emailTo: env('MAIL_TO_ADDRESS'),
-                emailData: [
-                'invitation' => $invitation,
-                'user' => $user,
-                'invitation_type' => $invitation->invitation_type,
-                'status' => 'Pending Admin Approval',
-                'step' => 'Choose Package',
-                'package' => $invitationPackage,
-                ]
-            );
-            } catch (\Exception $e) {
-                DB::rollBack();
-                Log::error('Failed to send extra packages added notification: '.$e->getMessage(), [
-                'invitation_id' => $invitation->id,
-                'error' => $e->getTraceAsString(),
-                ]);
-            }
+			],
+			category: Constant::NOTIFICATION_CATEGORY['Order'] ?? 1,
+			notificationType: Constant::NOTIFICATION_ORDER_TYPES['Order Modified or Canceled'] ?? 1,
+			emailSubject: 'Payment Receipt Uploaded - '.($invitation->event_name ?? $invitation->name),
+			emailView: 'emails.order.payment_receipt_uploaded',
+			emailTo: env('MAIL_TO_ADDRESS'),
+			emailData: [
+			'invitation' => $invitation,
+			'user' => $user,
+			'invitation_type' => $invitation->invitation_type,
+			'status' => 'Pending Admin Approval',
+			'step' => 'Choose Package',
+			'package' => $invitationPackage,
+			]
+			);
+			} catch (\Exception $e) {
+			DB::rollBack();
+			Log::error('Failed to send extra packages added notification: '.$e->getMessage(), [
+			'invitation_id' => $invitation->id,
+			'error' => $e->getTraceAsString(),
+			]);
+			}
 
 
-        DB::commit();
+		DB::commit();
 
-        return RespondActive::success(__('action ran successfully'));
+        		return RespondActive::success(__('action ran successfully'));
 	}
 
     public function shareInvitation(ShareInvitationRequest $request, $invitationId)

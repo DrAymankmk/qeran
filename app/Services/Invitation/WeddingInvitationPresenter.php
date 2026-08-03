@@ -388,6 +388,7 @@ class WeddingInvitationPresenter
             'rsvp' => 'builder-wedding-section-rsvp',
             'wishes' => 'builder-wedding-section-wishes',
             'menu' => 'builder-wedding-section-menu',
+            'footer' => 'builder-wedding-section-footer',
         ];
     }
 

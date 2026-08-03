@@ -40,13 +40,9 @@
     $bodyHtml = WeddingInvitationPresenter::replaceBetweenMarkers(
         $bodyHtml,
         '<!-- ② Countdown -->',
-        '<!-- ⑭ Thank You Footer -->',
+        '<!-- /⑭ Thank You Footer -->',
         $sectionsHtml
     );
-
-    if ($wiNamesFooter) {
-        $bodyHtml = preg_replace('/<p class="wi-footer-names">.*?<\/p>/s', '<p class="wi-footer-names">'.e($wiNamesFooter).'</p>', $bodyHtml, 1);
-    }
 
     $gateMain = $showEnvelope && ! in_array($initialView ?? '', ['success', 'decline'], true);
     if (! empty($isBuilderPreview)) {
@@ -67,7 +63,8 @@
 .wi-block-custom .wi-section-title,
 .wi-block-custom .wi-detail-main,
 .wi-block-custom .wi-sch-title,
-.wi-block-custom .wi-count-num {
+.wi-block-custom .wi-count-num,
+.wi-block-custom .wi-footer-names {
   font-family: var(--wi-block-headline-font, var(--ib-headline-font, 'Cormorant Garamond')), serif;
   font-size: var(--wi-block-title-size, inherit);
   font-weight: var(--wi-block-title-weight, inherit);
@@ -83,7 +80,9 @@
 .wi-block-custom .wi-section-body,
 .wi-block-custom .wi-detail-sub,
 .wi-block-custom .wi-count-unit,
-.wi-block-custom .wi-sch-place {
+.wi-block-custom .wi-sch-place,
+.wi-block-custom .wi-footer-msg,
+.wi-block-custom .wi-footer-date {
   font-family: inherit;
   font-size: var(--wi-block-body-size, inherit);
   font-weight: var(--wi-block-body-weight, inherit);

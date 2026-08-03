@@ -1059,6 +1059,8 @@ return[
     'ib-blocks-drag-hint' => 'Drag ⋮⋮ to reorder',
     'ib-blocks-add' => 'Add a block',
     'ib-blocks-all-added' => 'All available blocks have been added.',
+    'ib-footer-section' => 'Thank you footer',
+    'ib-footer-section-desc' => 'Always shown at the bottom of the invitation. Names default to the couple; date line defaults from event date and venue.',
     'ib-block-icon-upload' => 'Upload image',
     'ib-block-icon-clear' => 'Remove image',
     'ib-block-icon-uploading' => 'Uploading…',

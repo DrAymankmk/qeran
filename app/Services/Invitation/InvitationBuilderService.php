@@ -1465,6 +1465,11 @@ class InvitationBuilderService
                     if ($blockKey === 'venue' && $fieldKey === 'title' && $invitation && $value === '') {
                         $value = $invitation->event_name ?? '';
                     }
+                    if ($blockKey === 'footer' && $fieldKey === 'names' && $invitation && $value === '') {
+                        $name1 = trim((string) ($invitation->bride ?: $invitation->groom ?: ''));
+                        $name2 = trim((string) ($invitation->groom && $invitation->bride ? $invitation->groom : ($invitation->host_name ?? '')));
+                        $value = trim($name1.($name2 !== '' ? ' & '.$name2 : ''), ' &');
+                    }
                 }
                 $blockOut[$fieldKey] = $this->normalizeBlockFieldValue($fieldType, $value, $fieldDef);
             }

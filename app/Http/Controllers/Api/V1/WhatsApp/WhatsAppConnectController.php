@@ -141,7 +141,8 @@ class WhatsAppConnectController extends Controller
         }
 
         // Wipe before pairing so disk pairingCode always matches the code shown in the app
-        BaileysGateway::deleteSession($sessionId);
+        $deleteTimeout = ($existingConnection === 'disconnected' && ! $registeredOnDisk) ? 10 : 35;
+        BaileysGateway::deleteSession($sessionId, $deleteTimeout);
         Log::info('WhatsApp connect: fresh pairing code requested', [
             'user_id' => $user->id,
             'previous_status' => $existingConnection,
@@ -221,6 +222,8 @@ class WhatsAppConnectController extends Controller
             'session_id' => $sessionId,
             'link_phone' => $phone,
             'pairing_code' => $pairingCode,
+            'auth_on_disk' => (bool) ($data['authOnDisk'] ?? false),
+            'gateway_status' => $status,
         ]);
 
         return RespondActive::success(__('messages.whatsapp_pairing_code_ready'), $this->pairingPayload(

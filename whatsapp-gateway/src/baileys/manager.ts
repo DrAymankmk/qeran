@@ -102,12 +102,13 @@ export function disconnectedStatusPayload(sessionId: string): Record<string, unk
   };
 }
 
-const PAIRING_READY_DELAY_MS = Number(process.env.PAIRING_READY_DELAY_MS ?? 3000);
+const PAIRING_READY_DELAY_MS = Number(process.env.PAIRING_READY_DELAY_MS ?? 1500);
 const PAIRING_KEEPALIVE_MS = Number(process.env.PAIRING_KEEPALIVE_MS ?? 15_000);
 const PAIRING_CODE_TTL_MS = Number(process.env.PAIRING_CODE_TTL_MS ?? 300_000);
 /** Wait for user to tap "Link device" on WhatsApp before forcing reconnect to complete registration. */
 const PAIRING_LINK_DEVICE_WAIT_MS = Number(process.env.PAIRING_LINK_DEVICE_WAIT_MS ?? 25_000);
-const PAIRING_SOCKET_READY_TIMEOUT_MS = Number(process.env.PAIRING_SOCKET_READY_TIMEOUT_MS ?? 45_000);
+const PAIRING_SOCKET_READY_TIMEOUT_MS = Number(process.env.PAIRING_SOCKET_READY_TIMEOUT_MS ?? 25_000);
+const PAIRING_CODE_MAX_ATTEMPTS = Number(process.env.PAIRING_CODE_MAX_ATTEMPTS ?? 3);
 /** 0 = never auto-wipe on reconnect failure (recommended). Set e.g. 12 to wipe after N failures. */
 const RECONNECT_WIPE_THRESHOLD = Number(process.env.RECONNECT_WIPE_THRESHOLD ?? 0);
 const RECONNECT_BACKOFF_MS = (process.env.RECONNECT_BACKOFF_MS ?? '5000,30000,120000')
@@ -148,6 +149,9 @@ type WipeReason =
 
 const scheduledReconnects = new Set<string>();
 const reconnectPromises = new Map<string, Promise<void>>();
+const pairingReconnectPromises = new Map<string, Promise<void>>();
+let cachedBaileysVersion: [number, number, number] | null = null;
+let baileysVersionFetchPromise: Promise<[number, number, number]> | null = null;
 const connectedHeartbeatTimers = new Map<string, ReturnType<typeof setInterval>>();
 const qrKeepaliveTimers = new Map<string, ReturnType<typeof setInterval>>();
 const loggedOutReconnectAttempts = new Map<string, number>();
@@ -158,6 +162,19 @@ export function isLinkingInProgress(sessionId: string): boolean {
   const meta = sessions.get(sessionId);
   if (!meta) {
     return false;
+  }
+
+  if (isPhonePairingFlow(meta)) {
+    if (meta.pairingCode) {
+      return true;
+    }
+    if (meta.pairingRequestedAt && Date.now() - meta.pairingRequestedAt < PAIRING_CODE_TTL_MS) {
+      return true;
+    }
+  }
+
+  if (startPromises.has(sessionId) || finalizingSessions.has(sessionId)) {
+    return true;
   }
 
   if (meta.status === 'pending_pairing') {
@@ -194,6 +211,11 @@ export function isLinkingInProgress(sessionId: string): boolean {
   return false;
 }
 
+/** Client mobile pairing (linkPhone) — must never be treated as admin QR linking. */
+function isPhonePairingFlow(meta: SessionMeta): boolean {
+  return Boolean(meta.linkPhone) || meta.status === 'pending_pairing';
+}
+
 /**
  * Drop orphan sockets / partial auth folders that never completed registration.
  * Returns true when stale state was removed.
@@ -203,12 +225,16 @@ export async function cleanupStaleUnregisteredSession(sessionId: string): Promis
     return false;
   }
 
+  const meta = sessions.get(sessionId);
+  if (meta && isPhonePairingFlow(meta)) {
+    return false;
+  }
+
   const progress = await getPairingProgress(sessionId);
   if (progress.registered || progress.pairingAccepted) {
     return false;
   }
 
-  const meta = sessions.get(sessionId);
   const hasLiveSocket = Boolean(meta?.sock);
   const hasAuthFolder = sessionAuthExists(sessionId);
 
@@ -289,12 +315,45 @@ function shouldWipeStuckPairing(
 }
 
 function sessionsDir(): string {
-  return process.env.SESSIONS_DIR ?? path.join(process.cwd(), 'sessions');
+  const raw = process.env.SESSIONS_DIR?.trim() || path.join(process.cwd(), 'sessions');
+
+  return path.isAbsolute(raw) ? raw : path.resolve(process.cwd(), raw);
+}
+
+export function getSessionsDirPath(): string {
+  return sessionsDir();
+}
+
+/** Ensure the sessions root exists and is writable (call once at gateway startup). */
+export function ensureSessionsDir(): void {
+  const dir = sessionsDir();
+  fs.mkdirSync(dir, { recursive: true });
+
+  try {
+    fs.accessSync(dir, fs.constants.W_OK);
+  } catch {
+    logger.error({ dir }, 'SESSIONS_DIR is not writable — pairing/QR auth files cannot be saved');
+  }
+}
+
+/** List session folder names that have creds.json on disk. */
+export function listPersistedSessionIds(): string[] {
+  const root = sessionsDir();
+  if (!fs.existsSync(root)) {
+    return [];
+  }
+
+  return fs
+    .readdirSync(root, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .filter((name) => fs.existsSync(path.join(root, name, 'creds.json')));
 }
 
 function sessionPath(sessionId: string): string {
   const safe = sessionId.replace(/[^a-zA-Z0-9_-]/g, '_');
-  return path.join(sessionsDir(), safe);
+
+  return path.resolve(sessionsDir(), safe);
 }
 
 export function sessionAuthExists(sessionId: string): boolean {
@@ -400,9 +459,8 @@ function startPairingKeepalive(sessionId: string, meta: SessionMeta): void {
 }
 
 /**
- * Pairing codes only work while the gateway socket is online. Recreate it if WA closed it.
- * After the code is accepted, keep the same socket open until the user taps "Link device"
- * on WhatsApp's confirmation screen — reconnecting early breaks the link.
+ * Keep the original pairing socket alive while the user enters the code.
+ * Never recreate the socket after requestPairingCode — WhatsApp binds the code to that session's keys.
  */
 async function maintainPairingSocketAlive(sessionId: string, meta: SessionMeta): Promise<void> {
   if (isSessionAborted(sessionId)) {
@@ -427,15 +485,31 @@ async function maintainPairingSocketAlive(sessionId: string, meta: SessionMeta):
     return;
   }
 
-  // Code accepted — user may be on "This may be a scam" screen; do not replace the socket
+  // Code accepted — user may be on "This may be a scam" screen; reconnect if socket dropped (515 expected)
   if (progress.pairingAccepted && !progress.registered) {
     if (meta.sock) {
       return;
     }
     logger.info(
       { sessionId, waId: progress.waId },
-      'pairing accepted but socket closed before Link device — waiting for restartRequired or recovery'
+      'pairing accepted but socket closed — reconnecting to complete Link device'
     );
+    await reconnectAfterRestart(sessionId, meta);
+    return;
+  }
+
+  // Awaiting code entry — reconnect with saved creds if socket dropped (code is bound to creds, not TCP)
+  if (meta.pairingCode && !progress.pairingAccepted) {
+    if (meta.sock) {
+      try {
+        await meta.sock.sendPresenceUpdate('available');
+      } catch {
+        // ignore — will reconnect on next tick
+      }
+      return;
+    }
+
+    await reconnectPairingAwaitingCode(sessionId, meta);
     return;
   }
 
@@ -447,16 +521,8 @@ async function maintainPairingSocketAlive(sessionId: string, meta: SessionMeta):
     return;
   }
 
-  logger.info(
-    { sessionId, code: meta.pairingCode ? formatPairingCodeDisplay(meta.pairingCode) : null },
-    'reopening socket so pairing code stays valid'
-  );
-
-  try {
-    await createSocket(sessionId, meta);
-  } catch (err) {
-    logger.error({ sessionId, err }, 'maintainPairingSocketAlive failed');
-  }
+  logger.info({ sessionId }, 'pairing socket missing after code accepted — recovering');
+  await reconnectAfterRestart(sessionId, meta);
 }
 
 function stopConnectedHeartbeat(sessionId: string): void {
@@ -887,16 +953,9 @@ async function waitUntilReadyForPairing(sock: WASocket, sessionId: string): Prom
     const deadline = Date.now() + PAIRING_SOCKET_READY_TIMEOUT_MS;
 
     const onUpdate = (update: Partial<ConnectionState>) => {
-      const { connection, qr } = update;
+      const { connection } = update;
 
-      if (connection === 'open') {
-        cleanup();
-        resolve();
-        return;
-      }
-
-      if (connection === 'connecting' || qr) {
-        logger.info({ sessionId, connection, hasQr: Boolean(qr) }, 'socket ready for pairing request');
+      if (connection === 'open' || connection === 'connecting') {
         cleanup();
         resolve();
         return;
@@ -904,10 +963,12 @@ async function waitUntilReadyForPairing(sock: WASocket, sessionId: string): Prom
 
       if (connection === 'close') {
         const code = (update.lastDisconnect?.error as Boom | undefined)?.output?.statusCode;
+        cleanup();
         if (code === DisconnectReason.loggedOut) {
-          cleanup();
           reject(new Error('WhatsApp logged out this session'));
+          return;
         }
+        reject(new Error(`Connection closed before pairing ready (${code ?? 'unknown'})`));
       }
     };
 
@@ -996,6 +1057,75 @@ export async function isAuthRegistered(sessionId: string): Promise<boolean> {
   return (await getPairingProgress(sessionId)).registered;
 }
 
+async function reconnectPairingAwaitingCodeImpl(sessionId: string, meta: SessionMeta): Promise<void> {
+  if (isSessionAborted(sessionId)) {
+    return;
+  }
+
+  const progress = await getPairingProgress(sessionId);
+  if (progress.registered) {
+    await reconnectAfterRestart(sessionId, meta);
+    return;
+  }
+
+  if (progress.pairingAccepted) {
+    await reconnectAfterRestart(sessionId, meta);
+    return;
+  }
+
+  const codeOnDisk = progress.pairingCodeOnDisk;
+  if (!meta.pairingCode && codeOnDisk) {
+    meta.pairingCode = formatPairingCodeRaw(codeOnDisk);
+  }
+
+  if (!meta.pairingCode && !codeOnDisk) {
+    logger.warn({ sessionId }, 'cannot reconnect pairing — no code on disk');
+    return;
+  }
+
+  const now = Date.now();
+  const minGap = 2000;
+  if (meta.lastReconnectAt && now - meta.lastReconnectAt < minGap) {
+    await sleep(minGap - (now - meta.lastReconnectAt));
+  }
+  meta.lastReconnectAt = Date.now();
+
+  logger.info(
+    {
+      sessionId,
+      code: meta.pairingCode ? formatPairingCodeDisplay(meta.pairingCode) : null,
+    },
+    'reconnecting pairing socket with saved creds (awaiting code entry on phone)'
+  );
+
+  endSocket(meta);
+  meta.status = 'pending_pairing';
+  meta.linkPhone = meta.linkPhone ?? progress.waId?.split('@')[0]?.replace(/\D/g, '') ?? undefined;
+
+  try {
+    await createSocket(sessionId, meta);
+  } catch (err) {
+    logger.error({ sessionId, err }, 'reconnectPairingAwaitingCode failed');
+  }
+}
+
+/** Reopen socket with existing pairing creds — safe while user enters code (does not wipe keys). */
+async function reconnectPairingAwaitingCode(sessionId: string, meta: SessionMeta): Promise<void> {
+  const inFlight = pairingReconnectPromises.get(sessionId);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const promise = reconnectPairingAwaitingCodeImpl(sessionId, meta);
+  pairingReconnectPromises.set(sessionId, promise);
+
+  try {
+    await promise;
+  } finally {
+    pairingReconnectPromises.delete(sessionId);
+  }
+}
+
 async function reconnectAfterRestartImpl(sessionId: string, meta: SessionMeta): Promise<void> {
   if (isSessionLiveConnected(meta)) {
     return;
@@ -1019,6 +1149,7 @@ async function reconnectAfterRestartImpl(sessionId: string, meta: SessionMeta): 
   if (
     !progressBefore.registered &&
     !progressBefore.pairingAccepted &&
+    !meta.linkPhone &&
     (meta.status === 'pending_qr' || meta.status === 'starting')
   ) {
     await reconnectForQrLinking(sessionId, meta);
@@ -1050,15 +1181,41 @@ async function reconnectAfterRestartImpl(sessionId: string, meta: SessionMeta): 
       : 'reconnecting after link interrupt (saved auth)'
   );
   endSocket(meta);
-  meta.status = progressBefore.registered
-    ? 'starting'
-    : meta.status === 'pending_qr'
-      ? 'pending_qr'
-      : 'starting';
-  meta.pairingCode = undefined;
+  const phonePairingAwaitingCode =
+    Boolean(meta.linkPhone) &&
+    !progressBefore.registered &&
+    !progressBefore.pairingAccepted &&
+    Boolean(meta.pairingCode || progressBefore.pairingCodeOnDisk);
+
+  if (phonePairingAwaitingCode) {
+    meta.status = 'pending_pairing';
+    if (!meta.pairingCode && progressBefore.pairingCodeOnDisk) {
+      meta.pairingCode = formatPairingCodeRaw(progressBefore.pairingCodeOnDisk);
+    }
+  } else if (progressBefore.registered) {
+    meta.status = 'starting';
+    meta.pairingCode = undefined;
+  } else if (meta.status === 'pending_qr') {
+    meta.status = 'pending_qr';
+    meta.pairingCode = undefined;
+  } else if (progressBefore.pairingAccepted && !progressBefore.registered) {
+    meta.status = isSystemSession(sessionId) ? 'pending_qr' : 'pending_pairing';
+    meta.pairingCode = undefined;
+  } else if (meta.linkPhone) {
+    meta.status = 'pending_pairing';
+  } else {
+    meta.status = 'starting';
+    meta.pairingCode = undefined;
+  }
 
   try {
     await createSocket(sessionId, meta);
+
+    if (phonePairingAwaitingCode) {
+      logger.info({ sessionId }, 'pairing socket reopened — waiting for user to enter code on phone');
+      return;
+    }
+
     const ok = await waitForConnected(sessionId, isSystemSession(sessionId) ? 120_000 : 90_000);
     if (!ok) {
       const progress = await getPairingProgress(sessionId);
@@ -1272,42 +1429,84 @@ export async function ensurePairingFinalized(sessionId: string): Promise<Session
   }
 }
 
-/** WhatsApp is picky about browser fingerprints for QR / linked devices. */
+/** WhatsApp rejects WEB/Desktop (DARWIN) fingerprints — use macOS Chrome for all linking flows. */
 function browserConfigForSession(sessionId: string, meta: SessionMeta): [string, string, string] {
-  if (meta.status === 'pending_pairing' || meta.linkPhone) {
-    return Browsers.ubuntu('Chrome');
+  if (
+    meta.linkPhone ||
+    meta.status === 'pending_pairing' ||
+    meta.status === 'pending_qr' ||
+    meta.status === 'starting' ||
+    sessionId.startsWith('user_') ||
+    sessionId === 'system'
+  ) {
+    return Browsers.macOS('Chrome');
   }
 
-  if (sessionId === 'system' || meta.status === 'pending_qr' || meta.status === 'starting') {
-    return Browsers.macOS('Desktop');
-  }
-
-  return Browsers.macOS('Desktop');
+  return Browsers.macOS('Chrome');
 }
 
 async function resolveSocketVersion(): Promise<[number, number, number]> {
-  const raw = process.env.BAILEYS_VERSION?.trim();
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw) as unknown;
-      if (Array.isArray(parsed) && parsed.length === 3) {
-        return [Number(parsed[0]), Number(parsed[1]), Number(parsed[2])];
-      }
-    } catch {
-      logger.warn('BAILEYS_VERSION env invalid JSON — using fetchLatestBaileysVersion');
-    }
+  if (cachedBaileysVersion) {
+    return cachedBaileysVersion;
   }
 
-  const { version } = await fetchLatestBaileysVersion();
-  return version;
+  if (baileysVersionFetchPromise) {
+    return baileysVersionFetchPromise;
+  }
+
+  baileysVersionFetchPromise = (async (): Promise<[number, number, number]> => {
+    const raw = process.env.BAILEYS_VERSION?.trim();
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as unknown;
+        if (Array.isArray(parsed) && parsed.length === 3) {
+          cachedBaileysVersion = [Number(parsed[0]), Number(parsed[1]), Number(parsed[2])];
+          return cachedBaileysVersion;
+        }
+      } catch {
+        logger.warn('BAILEYS_VERSION env invalid JSON — using fetchLatestBaileysVersion');
+      }
+    }
+
+    const { version } = await fetchLatestBaileysVersion();
+    cachedBaileysVersion = version;
+    logger.info({ version }, 'Baileys WA Web version resolved');
+    return version;
+  })();
+
+  try {
+    return await baileysVersionFetchPromise;
+  } finally {
+    baileysVersionFetchPromise = null;
+  }
+}
+
+/** Pre-fetch WA version at gateway boot so first pairing code is faster. */
+export async function warmBaileysVersion(): Promise<void> {
+  await resolveSocketVersion();
+}
+
+async function flushSessionCreds(sessionId: string, meta: SessionMeta): Promise<void> {
+  const authPath = sessionPath(sessionId);
+  fs.mkdirSync(authPath, { recursive: true });
+
+  if (meta.saveCreds) {
+    await meta.saveCreds();
+    return;
+  }
+
+  const { saveCreds } = await useMultiFileAuthState(authPath);
+  await saveCreds();
 }
 
 async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASocket> {
   const authPath = sessionPath(sessionId);
   fs.mkdirSync(authPath, { recursive: true });
+  logger.info({ sessionId, authPath }, 'createSocket');
+  const version = await resolveSocketVersion();
+  logger.info({ sessionId, version, browser: browserConfigForSession(sessionId, meta) }, 'createSocket config');
 
   const { state, saveCreds } = await useMultiFileAuthState(authPath);
-  const version = await resolveSocketVersion();
 
   const sock = makeWASocket({
     version,
@@ -1329,7 +1528,12 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
 
   sock.ev.on('creds.update', () => {
     void (async () => {
-      await saveCreds();
+      try {
+        await flushSessionCreds(sessionId, meta);
+      } catch (err) {
+        logger.error({ sessionId, authPath: sessionPath(sessionId), err }, 'creds.update save failed');
+      }
+
       if (meta.status !== 'pending_pairing' && meta.status !== 'starting') {
         return;
       }
@@ -1372,17 +1576,21 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
     }
 
     if (qr) {
-      meta.qr = qr;
-      meta.qrGeneratedAt = Date.now();
-      const credsRegistered = Boolean(sock.authState.creds.registered);
-      if (!credsRegistered && meta.status !== 'pending_pairing') {
-        meta.status = 'pending_qr';
-      } else if (credsRegistered) {
-        logger.info({ sessionId }, 'QR event ignored — saved credentials still registered');
-      }
-      logger.info({ sessionId, status: meta.status, credsRegistered }, 'QR event');
-      if (meta.status === 'pending_qr' && !credsRegistered) {
-        startQrKeepalive(sessionId);
+      if (isPhonePairingFlow(meta)) {
+        logger.info({ sessionId, status: meta.status }, 'QR event ignored during phone pairing flow');
+      } else {
+        meta.qr = qr;
+        meta.qrGeneratedAt = Date.now();
+        const credsRegistered = Boolean(sock.authState.creds.registered);
+        if (!credsRegistered && meta.status !== 'pending_pairing') {
+          meta.status = 'pending_qr';
+        } else if (credsRegistered) {
+          logger.info({ sessionId }, 'QR event ignored — saved credentials still registered');
+        }
+        logger.info({ sessionId, status: meta.status, credsRegistered }, 'QR event');
+        if (meta.status === 'pending_qr' && !credsRegistered) {
+          startQrKeepalive(sessionId);
+        }
       }
     }
 
@@ -1426,9 +1634,11 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
       void (async () => {
         const progress = await getPairingProgress(sessionId);
         const registered = progress.registered;
-        const wasPairing = meta.status === 'pending_pairing';
+        const wasPairing = isPhonePairingFlow(meta) || meta.status === 'pending_pairing';
         const wasQrLinking =
-          !registered && (meta.status === 'pending_qr' || meta.status === 'starting');
+          !registered &&
+          !wasPairing &&
+          (meta.status === 'pending_qr' || (meta.status === 'starting' && !meta.linkPhone));
 
         if (restartRequired && wasQrLinking) {
           stopPairingKeepalive(sessionId);
@@ -1439,6 +1649,18 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
 
         if (restartRequired && (wasPairing || (registered && !loggedOut))) {
           stopPairingKeepalive(sessionId);
+          const awaitingCode = Boolean(meta.pairingCode) && !progress.pairingAccepted;
+
+          if (wasPairing && awaitingCode) {
+            logger.info(
+              { sessionId, wasPairing, registered },
+              'restartRequired while awaiting pairing code — reconnecting with saved creds'
+            );
+            await reconnectPairingAwaitingCode(sessionId, meta);
+            startPairingKeepalive(sessionId, meta);
+            return;
+          }
+
           logger.info(
             { sessionId, wasPairing, wasQrLinking, registered },
             'restartRequired — reconnecting to complete or restore session'
@@ -1509,6 +1731,22 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
         }
 
         if (wasPairing) {
+          const awaitingCode = Boolean(meta.pairingCode) && !progress.pairingAccepted;
+
+          if (awaitingCode) {
+            logger.info(
+              {
+                sessionId,
+                statusCode,
+                code: meta.pairingCode ? formatPairingCodeDisplay(meta.pairingCode) : null,
+              },
+              'pairing socket closed while awaiting code — reconnecting with saved creds'
+            );
+            await reconnectPairingAwaitingCode(sessionId, meta);
+            startPairingKeepalive(sessionId, meta);
+            return;
+          }
+
           void maintainPairingSocketAlive(sessionId, meta);
 
           setTimeout(() => {
@@ -1526,7 +1764,7 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
                   { sessionId, statusCode, waId: latest.waId },
                   'pairing accepted — keeping session open for Link device confirmation'
                 );
-              } else {
+              } else if (!meta.pairingCode) {
                 void maintainPairingSocketAlive(sessionId, meta);
               }
             })();
@@ -1579,7 +1817,7 @@ async function requestPairingCodeWithRetry(
 ): Promise<string> {
   let lastError: unknown;
 
-  for (let attempt = 1; attempt <= 4; attempt++) {
+  for (let attempt = 1; attempt <= PAIRING_CODE_MAX_ATTEMPTS; attempt++) {
     if (!meta.sock) {
       logger.info({ sessionId, attempt }, 'creating fresh socket for requestPairingCode');
       await createSocket(sessionId, meta);
@@ -1588,7 +1826,7 @@ async function requestPairingCodeWithRetry(
     const sock = meta.sock;
     if (!sock) {
       lastError = new Error('Failed to create WhatsApp socket for pairing');
-      await sleep(attempt * 2000);
+      await sleep(Math.min(attempt * 1000, 3000));
       continue;
     }
 
@@ -1613,7 +1851,7 @@ async function requestPairingCodeWithRetry(
         endSocket(meta);
       }
 
-      await sleep(attempt * 2000);
+      await sleep(Math.min(attempt * 1000, 3000));
     }
   }
 
@@ -1626,10 +1864,10 @@ async function persistPairingCredsOrThrow(sessionId: string, meta: SessionMeta, 
   const credsFile = path.join(authPath, 'creds.json');
   const expectedRaw = formatPairingCodeRaw(code);
 
-  for (let attempt = 1; attempt <= 8; attempt++) {
-    if (meta.saveCreds) {
-      await meta.saveCreds();
-    }
+  fs.mkdirSync(authPath, { recursive: true });
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    await flushSessionCreds(sessionId, meta);
 
     if (fs.existsSync(credsFile)) {
       const progress = await getPairingProgress(sessionId);
@@ -1640,7 +1878,9 @@ async function persistPairingCredsOrThrow(sessionId: string, meta: SessionMeta, 
       }
     }
 
-    await sleep(250);
+    if (attempt < 3) {
+      await sleep(150);
+    }
   }
 
   logger.error(
@@ -1664,7 +1904,7 @@ async function runPairingFlow(sessionId: string, digits: string, fresh: boolean)
 
   const meta: SessionMeta = {
     sessionId,
-    status: 'starting',
+    status: 'pending_pairing',
     qr: undefined,
     pairingCode: undefined,
     linkPhone: digits,
@@ -1692,9 +1932,12 @@ async function runPairingFlow(sessionId: string, digits: string, fresh: boolean)
   const code = await requestPairingCodeWithRetry(meta, digits, sessionId);
   await persistPairingCredsOrThrow(sessionId, meta, code);
   meta.pairingCode = code;
-  meta.status = 'pending_pairing';
   meta.pairingRequestedAt = Date.now();
   startPairingKeepalive(sessionId, meta);
+
+  if (!meta.sock) {
+    await reconnectPairingAwaitingCode(sessionId, meta);
+  }
 
   const progress = await getPairingProgress(sessionId);
   const diskRaw = progress.pairingCodeOnDisk

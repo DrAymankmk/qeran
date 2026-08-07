@@ -7,6 +7,7 @@ import {
   cleanupStaleUnregisteredSession,
   deleteSession,
   disconnectedStatusPayload,
+  ensureSessionsDir,
   getPairingCode,
   getPairingCodeAgeSeconds,
   getPairingProgress,
@@ -27,6 +28,8 @@ import {
   isSystemSession,
   normalizePhoneDigits,
   restorePersistedSessions,
+  getSessionsDirPath,
+  listPersistedSessionIds,
   sessionAuthExists,
   startConnectedSessionWatchdog,
   startSession,
@@ -34,6 +37,7 @@ import {
   waitForConnected,
   waitForPairingOrConnected,
   waitForQrOrConnected,
+  warmBaileysVersion,
 } from './baileys/manager.js';
 import { sendText } from './baileys/send.js';
 import { probeReceiptWebhook, receiptWebhookConfig } from './baileys/receipts.js';
@@ -154,9 +158,13 @@ async function respondWithQrSnapshot(
 
 app.get('/health', (_req, res) => {
   const receipt = receiptWebhookConfig();
+  const sessionsDirPath = getSessionsDirPath();
   res.json({
     ok: true,
-    version: '1.4.0',
+    version: '1.4.6',
+    cwd: process.cwd(),
+    sessionsDir: sessionsDirPath,
+    persistedSessions: listPersistedSessionIds(),
     qrSetupPage: QR_SETUP_PAGE_ENABLED,
     secretConfigured: Boolean(SECRET),
     receiptWebhooks: {
@@ -612,9 +620,14 @@ app.delete('/sessions/:id', async (req, res) => {
 });
 
 app.listen(PORT, HOST, () => {
-  logger.info(`WhatsApp gateway listening on http://${HOST}:${PORT}`);
+  ensureSessionsDir();
+  logger.info(
+    { cwd: process.cwd(), sessionsDir: getSessionsDirPath(), host: HOST, port: PORT },
+    'WhatsApp gateway listening'
+  );
   void (async () => {
     try {
+      await warmBaileysVersion();
       await restorePersistedSessions();
     } catch (err) {
       logger.error({ err }, 'failed to restore persisted WhatsApp sessions on startup');

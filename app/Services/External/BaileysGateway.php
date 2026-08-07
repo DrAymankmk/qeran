@@ -43,7 +43,7 @@ class BaileysGateway
             'sessionId' => $sessionId,
             'phone' => preg_replace('/\D+/', '', $phone),
             'linkMethod' => 'pairing',
-        ]);
+        ], 75);
     }
 
     public static function gatewaySupportsPairing(): bool

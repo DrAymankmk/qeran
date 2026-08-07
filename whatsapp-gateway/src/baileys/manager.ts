@@ -42,6 +42,8 @@ export interface SessionMeta {
   lastReconnectAt?: number;
   /** Unix ms when the socket last reached `open` (for uptime reporting). */
   connectedAt?: number;
+  /** Bound to the active socket auth state — use to flush creds.json after pairing code issue. */
+  saveCreds?: () => Promise<void>;
 }
 
 const sessions = new Map<string, SessionMeta>();
@@ -1322,6 +1324,7 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
   });
 
   meta.sock = sock;
+  meta.saveCreds = saveCreds;
   attachMessageReceiptListener(sock, sessionId);
 
   sock.ev.on('creds.update', () => {
@@ -1618,6 +1621,37 @@ async function requestPairingCodeWithRetry(
   throw new Error(message);
 }
 
+async function persistPairingCredsOrThrow(sessionId: string, meta: SessionMeta, code: string): Promise<void> {
+  const authPath = sessionPath(sessionId);
+  const credsFile = path.join(authPath, 'creds.json');
+  const expectedRaw = formatPairingCodeRaw(code);
+
+  for (let attempt = 1; attempt <= 8; attempt++) {
+    if (meta.saveCreds) {
+      await meta.saveCreds();
+    }
+
+    if (fs.existsSync(credsFile)) {
+      const progress = await getPairingProgress(sessionId);
+      const diskRaw = progress.pairingCodeOnDisk ? formatPairingCodeRaw(progress.pairingCodeOnDisk) : null;
+      if (diskRaw === expectedRaw) {
+        logger.info({ sessionId, authPath, attempt }, 'pairing creds.json persisted');
+        return;
+      }
+    }
+
+    await sleep(250);
+  }
+
+  logger.error(
+    { sessionId, authPath, credsExists: fs.existsSync(credsFile) },
+    'pairing creds.json missing or code mismatch after issue — phone linking will fail'
+  );
+  throw new Error(
+    `Pairing credentials were not saved (${authPath}). Check SESSIONS_DIR permissions and redeploy gateway.`
+  );
+}
+
 async function runPairingFlow(sessionId: string, digits: string, fresh: boolean): Promise<SessionMeta> {
   if (fresh) {
     wipeSessionAuth(sessionId, 'incomplete_link');
@@ -1656,6 +1690,7 @@ async function runPairingFlow(sessionId: string, digits: string, fresh: boolean)
   }
 
   const code = await requestPairingCodeWithRetry(meta, digits, sessionId);
+  await persistPairingCredsOrThrow(sessionId, meta, code);
   meta.pairingCode = code;
   meta.status = 'pending_pairing';
   meta.pairingRequestedAt = Date.now();
@@ -1680,6 +1715,7 @@ async function runPairingFlow(sessionId: string, digits: string, fresh: boolean)
       sessionId,
       status: meta.status,
       display: formatPairingCodeDisplay(code),
+      authPath: sessionPath(sessionId),
       registeredOnDisk: progress.registered,
       diskCode: progress.pairingCodeOnDisk,
     },

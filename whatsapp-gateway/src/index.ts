@@ -251,6 +251,7 @@ app.post('/sessions', async (req, res) => {
       pairingCode: meta.pairingCode ? formatPairingCodeDisplay(meta.pairingCode) : null,
       linkPhone: meta.linkPhone ?? null,
       linkMethod: usePairing ? 'pairing' : 'qr',
+      authOnDisk: sessionAuthExists(sessionId),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to start session';

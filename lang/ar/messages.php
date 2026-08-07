@@ -88,6 +88,7 @@ return [
     'whatsapp_pairing_socket_down' => 'انقطع جلسة الربط. اضغط ربط مرة أخرى للحصول على رمز جديد.',
     'whatsapp_pairing_finishing' => 'واتساب قبل الرمز. جاري إكمال الاتصال…',
     'whatsapp_pairing_tap_link_device' => 'واتساب قبل الرمز. في شاشة التحذير اضغط ربط الجهاز (وليس عدم الربط). أبقِ التطبيق مفتوحاً وانتظر.',
+    'whatsapp_pairing_in_progress' => 'ربط واتساب جاري بالفعل. أبقِ هذه الشاشة مفتوحة وانتظر التحديث — لا تضغط ربط مرة أخرى.',
     'whatsapp_pairing_step_4_scam' => 'إذا ظهر "قد يكون احتيالاً"، اضغط ربط الجهاز للمتابعة.',
     'whatsapp_invitations_queued' => 'تم جدولة إرسال الدعوات عبر واتساب.',
     'whatsapp_contact_invitations_queued' => 'تم جدولة إرسال دعوات جهات الاتصال عبر واتساب.',

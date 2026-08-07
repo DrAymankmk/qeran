@@ -126,6 +126,20 @@ class WhatsAppConnectController extends Controller
             ]);
         }
 
+        if (! $request->boolean('force')) {
+            $resumeResponse = $this->resumeActivePairingConnect(
+                $sessionId,
+                $user,
+                $phone,
+                $phoneDisplay,
+                $existingStatus
+            );
+
+            if ($resumeResponse !== null) {
+                return $resumeResponse;
+            }
+        }
+
         // Wipe before pairing so disk pairingCode always matches the code shown in the app
         BaileysGateway::deleteSession($sessionId);
         Log::info('WhatsApp connect: fresh pairing code requested', [
@@ -265,6 +279,112 @@ class WhatsAppConnectController extends Controller
                 __('messages.whatsapp_qr_step_2'),
             ],
         ]);
+    }
+
+    /**
+     * Do not wipe an in-progress pairing when the client calls connect again (poll status instead).
+     */
+    protected function resumeActivePairingConnect(
+        string $sessionId,
+        $user,
+        string $phone,
+        string $phoneDisplay,
+        array $existingStatus
+    ): ?JsonResponse {
+        if (! ($existingStatus['ok'] ?? false)) {
+            return null;
+        }
+
+        $existingData = is_array($existingStatus['data'] ?? null) ? $existingStatus['data'] : [];
+        $existingConnection = (string) ($existingData['status'] ?? 'disconnected');
+
+        if (! in_array($existingConnection, ['pending_pairing', 'starting'], true)) {
+            return null;
+        }
+
+        $pairingAccepted = (bool) ($existingData['pairingAccepted'] ?? false);
+        $registeredOnDisk = (bool) ($existingData['registeredOnDisk'] ?? false);
+        $pairingCode = $this->formatPairingCodeForDisplay($existingData['pairingCode'] ?? null);
+        $codeAge = isset($existingData['pairingCodeAgeSeconds']) ? (int) $existingData['pairingCodeAgeSeconds'] : null;
+        $codeExpired = $codeAge !== null && $codeAge >= 300;
+
+        if ($pairingAccepted && ! $registeredOnDisk) {
+            Log::info('WhatsApp connect: pairing already accepted — not issuing new code', [
+                'user_id' => $user->id,
+                'session_id' => $sessionId,
+                'wa_id' => $existingData['waId'] ?? null,
+            ]);
+
+            BaileysGateway::finalizePairing($sessionId, true);
+
+            return RespondActive::success(__('messages.whatsapp_pairing_tap_link_device'), array_merge(
+                $this->pairingAcceptedPayload($sessionId, $phone, $phoneDisplay),
+                ['wa_id' => $existingData['waId'] ?? null]
+            ));
+        }
+
+        if ($pairingCode && ! $codeExpired) {
+            Log::info('WhatsApp connect: pairing already in progress — returning existing code', [
+                'user_id' => $user->id,
+                'session_id' => $sessionId,
+                'pairing_code' => $pairingCode,
+            ]);
+
+            return RespondActive::success(__('messages.whatsapp_pairing_code_ready'), $this->pairingPayload(
+                $sessionId,
+                $pairingCode,
+                $phone,
+                $phoneDisplay,
+                (string) $user->country_code
+            ));
+        }
+
+        if ($existingConnection === 'pending_pairing') {
+            Log::info('WhatsApp connect: pairing in progress — not wiping session', [
+                'user_id' => $user->id,
+                'session_id' => $sessionId,
+                'pairing_code' => $pairingCode,
+                'code_expired' => $codeExpired,
+            ]);
+
+            return RespondActive::success(__('messages.whatsapp_pairing_in_progress'), [
+                'status' => 'pending_pairing',
+                'session_id' => $sessionId,
+                'link_phone' => $phone,
+                'link_phone_display' => $phoneDisplay,
+                'pairing_code' => $pairingCode,
+                'poll_status' => true,
+                'poll_interval_seconds' => 3,
+                'do_not_connect_again' => true,
+                'action' => $pairingCode ? 'enter_code_in_whatsapp' : 'poll_status',
+                'message' => __('messages.whatsapp_pairing_in_progress'),
+            ]);
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function pairingAcceptedPayload(string $sessionId, string $linkPhoneE164, string $linkPhoneDisplay): array
+    {
+        return [
+            'status' => 'pending_pairing',
+            'session_id' => $sessionId,
+            'link_phone' => $linkPhoneE164,
+            'link_phone_display' => $linkPhoneDisplay,
+            'pairing_accepted' => true,
+            'pairing_progress' => 'code_accepted',
+            'link_method' => 'pairing',
+            'poll_status' => true,
+            'poll_interval_seconds' => 3,
+            'do_not_connect_again' => true,
+            'action' => 'tap_link_device_in_whatsapp',
+            'instructions' => [
+                __('messages.whatsapp_pairing_step_4_scam'),
+            ],
+        ];
     }
 
     /**

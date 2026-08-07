@@ -31,7 +31,9 @@ export interface SessionMeta {
   phone?: string;
   sock?: WASocket;
   pairingRequestedAt?: number;
-  /** Set when WhatsApp accepts the code (me.id saved) — user may still need to tap "Link device". */
+  /** Set when WhatsApp pair-success fires (user entered code on phone) — not when requestPairingCode runs. */
+  pairingConfirmedByPhone?: boolean;
+  /** Set when phone confirms pairing (pair-success) — user may still need to tap "Link device". */
   pairingAcceptedAt?: number;
   /** When the current QR string was issued (do not wipe session while user may be scanning). */
   qrGeneratedAt?: number;
@@ -934,6 +936,18 @@ export type PairingProgress = {
   pairingCodeOnDisk: string | null;
 };
 
+/** True after pair-success on the phone — NOT when requestPairingCode pre-fills creds.me. */
+function isPairingConfirmedOnPhone(
+  creds: { registered?: boolean; account?: unknown },
+  meta?: SessionMeta
+): boolean {
+  if (creds.registered) {
+    return false;
+  }
+
+  return Boolean(creds.account) || Boolean(meta?.pairingConfirmedByPhone);
+}
+
 export async function getPairingProgress(sessionId: string): Promise<PairingProgress> {
   if (!sessionAuthExists(sessionId)) {
     return {
@@ -946,17 +960,19 @@ export async function getPairingProgress(sessionId: string): Promise<PairingProg
 
   try {
     const { state } = await useMultiFileAuthState(sessionPath(sessionId));
+    const meta = sessions.get(sessionId);
     const creds = state.creds as {
       registered?: boolean;
       me?: { id?: string };
       pairingCode?: string;
       pairingEphemeralKeyPair?: unknown;
+      account?: unknown;
     };
 
     const registered = Boolean(creds.registered);
     const waId = creds.me?.id ?? null;
-    // me.id is set only after WhatsApp accepts the pairing code — not when the code is merely issued
-    const pairingAccepted = Boolean(waId) && !registered;
+    // requestPairingCode() always sets me.id — only creds.account (pair-success) means the phone accepted the code.
+    const pairingAccepted = isPairingConfirmedOnPhone(creds, meta);
 
     return {
       registered,
@@ -1162,7 +1178,7 @@ export function ensureSessionMeta(sessionId: string): SessionMeta {
 }
 
 /**
- * After user enters pairing code, complete the link (registered:true OR me.id in creds).
+ * After user enters pairing code on phone (pair-success / creds.account), complete registration.
  */
 export async function ensurePairingFinalized(sessionId: string): Promise<SessionMeta | undefined> {
   if (finalizingSessions.has(sessionId)) {
@@ -1323,12 +1339,13 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
           setTimeout(() => void reconnectAfterRestart(sessionId, meta), 500);
         }
       } else if (progress.pairingAccepted) {
+        meta.pairingConfirmedByPhone = true;
         if (!meta.pairingAcceptedAt) {
           meta.pairingAcceptedAt = Date.now();
         }
         logger.info(
           { sessionId, waId: progress.waId },
-          'creds.update: code accepted — waiting for user to tap Link device (do not reconnect yet)'
+          'creds.update: pair-success from phone — waiting for user to tap Link device (do not reconnect yet)'
         );
       }
     })();
@@ -1338,7 +1355,16 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
     const { connection, lastDisconnect, qr, isNewLogin } = update;
     const statusCode = (lastDisconnect?.error as Boom | undefined)?.output?.statusCode;
 
-    if (isNewLogin && (meta.status === 'pending_pairing' || meta.status === 'pending_qr')) {
+    if (isNewLogin && (meta.status === 'pending_pairing' || meta.status === 'starting')) {
+      meta.pairingConfirmedByPhone = true;
+      if (!meta.pairingAcceptedAt) {
+        meta.pairingAcceptedAt = Date.now();
+      }
+      logger.info(
+        { sessionId, status: meta.status },
+        'isNewLogin — phone confirmed pairing (pair-success); expect restartRequired close'
+      );
+    } else if (isNewLogin && meta.status === 'pending_qr') {
       logger.info({ sessionId, status: meta.status }, 'isNewLogin — will reconnect on restartRequired close');
     }
 

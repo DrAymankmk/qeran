@@ -189,7 +189,7 @@ class BaileysGateway
     public static function finalizePairing(string $sessionId, bool $quick = true): array
     {
         $path = "/sessions/{$sessionId}/finalize".($quick ? '?quick=1' : '');
-        $timeout = $quick ? 25 : 60;
+        $timeout = $quick ? 90 : 120;
 
         return self::request('post', $path, [], $timeout);
     }

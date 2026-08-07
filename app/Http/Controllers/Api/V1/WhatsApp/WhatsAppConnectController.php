@@ -376,11 +376,16 @@ class WhatsAppConnectController extends Controller
             'link_phone_display' => $linkPhoneDisplay,
             'pairing_accepted' => true,
             'pairing_progress' => 'code_accepted',
+            'ui_phase' => 'tap_link_device',
+            'show_pairing_code' => false,
+            'pairing_code' => null,
             'link_method' => 'pairing',
             'poll_status' => true,
             'poll_interval_seconds' => 3,
             'do_not_connect_again' => true,
             'action' => 'tap_link_device_in_whatsapp',
+            'message' => __('messages.whatsapp_pairing_tap_link_device'),
+            'warning' => __('messages.whatsapp_pairing_code_already_used'),
             'instructions' => [
                 __('messages.whatsapp_pairing_step_4_scam'),
             ],
@@ -405,6 +410,8 @@ class WhatsAppConnectController extends Controller
             'status' => 'pending_pairing',
             'session_id' => $sessionId,
             'pairing_code' => $pairingCode,
+            'ui_phase' => 'enter_code',
+            'show_pairing_code' => true,
             'link_phone' => $linkPhoneE164,
             'link_phone_display' => $linkPhoneDisplay,
             'phone' => $linkPhoneE164,
@@ -746,7 +753,6 @@ class WhatsAppConnectController extends Controller
             $connectionStatus === 'connected'
             || $registeredOnDisk
             || ! $pairingAccepted
-            || $socketAlive
         ) {
             return $data;
         }
@@ -756,7 +762,7 @@ class WhatsAppConnectController extends Controller
             return $data;
         }
 
-        Cache::put($finalizeKey, 1, now()->addSeconds(12));
+        Cache::put($finalizeKey, 1, now()->addSeconds($socketAlive ? 8 : 15));
 
         Log::info('WhatsApp status: finalizing link after pairing code accepted', [
             'session_id' => $sessionId,
@@ -981,11 +987,48 @@ class WhatsAppConnectController extends Controller
             'pairing_accepted' => $pairingAccepted,
             'pairing_progress' => $pairingProgress,
             'pairing_code_age_seconds' => $codeAge,
+            'ui_phase' => $this->resolvePairingUiPhase($connectionStatus, $registeredOnDisk, $pairingAccepted, $pairingProgress),
+            'show_pairing_code' => $this->shouldShowPairingCode($connectionStatus, $registeredOnDisk, $pairingAccepted),
             'awaiting_user' => $this->isEnteringPairingCode($connectionStatus, $registeredOnDisk, $pairingAccepted),
             'action' => $this->statusAction($connectionStatus, $registeredOnDisk, $pairingAccepted),
             'link_phone_display' => $linkDisplay,
             'message' => $this->statusMessage($connectionStatus, $registeredOnDisk, $pairingAccepted, $socketAlive),
         ];
+    }
+
+    protected function resolvePairingUiPhase(
+        string $connectionStatus,
+        bool $registeredOnDisk,
+        bool $pairingAccepted,
+        string $pairingProgress
+    ): string {
+        if ($connectionStatus === 'connected' && $registeredOnDisk) {
+            return 'connected';
+        }
+
+        if ($pairingAccepted || $pairingProgress === 'code_accepted') {
+            return 'tap_link_device';
+        }
+
+        if ($connectionStatus === 'pending_pairing') {
+            return 'enter_code';
+        }
+
+        if ($connectionStatus === 'pending_qr') {
+            return 'scan_qr';
+        }
+
+        return 'idle';
+    }
+
+    protected function shouldShowPairingCode(
+        string $connectionStatus,
+        bool $registeredOnDisk,
+        bool $pairingAccepted
+    ): bool {
+        return $connectionStatus === 'pending_pairing'
+            && ! $registeredOnDisk
+            && ! $pairingAccepted;
     }
 
     /**

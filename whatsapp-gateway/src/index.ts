@@ -489,7 +489,7 @@ app.get('/sessions/:id/status', async (req, res) => {
 app.post('/sessions/:id/finalize', async (req, res) => {
   const sessionId = req.params.id;
   const quick = req.query.quick === '1' || req.query.quick === 'true';
-  const waitMs = quick ? 18_000 : 45_000;
+  const waitMs = quick ? 45_000 : 90_000;
 
   try {
     await ensurePairingFinalized(sessionId);

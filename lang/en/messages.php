@@ -84,6 +84,7 @@ return [
     'whatsapp_pairing_socket_down' => 'Pairing session was interrupted. Tap Connect again to get a new code.',
     'whatsapp_pairing_finishing' => 'WhatsApp accepted the code. Finishing connection…',
     'whatsapp_pairing_tap_link_device' => 'WhatsApp accepted the code. On the warning screen tap Link device (not Don\'t link). Keep the app open and wait.',
+    'whatsapp_pairing_code_already_used' => 'This code was already used. Do not enter it again in WhatsApp — open WhatsApp and tap Link device on the warning screen, or disconnect and request a new code.',
     'whatsapp_pairing_in_progress' => 'WhatsApp linking is already in progress. Keep this screen open and poll status — do not tap Connect again.',
     'whatsapp_pairing_step_4_scam' => 'If WhatsApp shows "This may be a scam", tap Link device to continue.',
     'whatsapp_invitations_queued' => 'Invitations queued for WhatsApp delivery.',

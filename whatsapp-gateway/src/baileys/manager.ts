@@ -101,6 +101,8 @@ export function disconnectedStatusPayload(sessionId: string): Record<string, unk
 const PAIRING_READY_DELAY_MS = Number(process.env.PAIRING_READY_DELAY_MS ?? 3000);
 const PAIRING_KEEPALIVE_MS = Number(process.env.PAIRING_KEEPALIVE_MS ?? 15_000);
 const PAIRING_CODE_TTL_MS = Number(process.env.PAIRING_CODE_TTL_MS ?? 300_000);
+/** Wait for user to tap "Link device" on WhatsApp before forcing reconnect to complete registration. */
+const PAIRING_LINK_DEVICE_WAIT_MS = Number(process.env.PAIRING_LINK_DEVICE_WAIT_MS ?? 25_000);
 const PAIRING_SOCKET_READY_TIMEOUT_MS = Number(process.env.PAIRING_SOCKET_READY_TIMEOUT_MS ?? 45_000);
 /** 0 = never auto-wipe on reconnect failure (recommended). Set e.g. 12 to wipe after N failures. */
 const RECONNECT_WIPE_THRESHOLD = Number(process.env.RECONNECT_WIPE_THRESHOLD ?? 0);
@@ -1178,15 +1180,34 @@ export async function ensurePairingFinalized(sessionId: string): Promise<Session
 
     let progress = await getPairingProgress(sessionId);
 
-    // User is on WhatsApp's "Link device" / scam-warning screen — keep socket open
+    const pairingAcceptedAgeMs =
+      meta.pairingAcceptedAt && progress.pairingAccepted ? Date.now() - meta.pairingAcceptedAt : 0;
+    const linkDeviceWaitExpired =
+      progress.pairingAccepted &&
+      !progress.registered &&
+      pairingAcceptedAgeMs >= PAIRING_LINK_DEVICE_WAIT_MS;
+
+    // User is on WhatsApp's "Link device" / scam-warning screen — keep socket open briefly
     if (
       meta.status === 'pending_pairing' &&
       progress.pairingAccepted &&
       !progress.registered &&
-      meta.sock
+      meta.sock &&
+      !linkDeviceWaitExpired
     ) {
-      logger.info({ sessionId, waId: progress.waId }, 'awaiting user tap on Link device — not reconnecting');
+      logger.info(
+        { sessionId, waId: progress.waId, pairingAcceptedAgeMs },
+        'awaiting user tap on Link device — not reconnecting yet'
+      );
       return meta;
+    }
+
+    if (linkDeviceWaitExpired && meta.sock) {
+      logger.warn(
+        { sessionId, waId: progress.waId, pairingAcceptedAgeMs },
+        'Link device wait expired — closing socket and forcing reconnect to complete registration'
+      );
+      endSocket(meta);
     }
 
     if (meta.status === 'pending_pairing' && meta.pairingCode && !progress.pairingAccepted) {
@@ -1199,7 +1220,9 @@ export async function ensurePairingFinalized(sessionId: string): Promise<Session
     }
 
     const needsRecovery =
-      progress.registered || (progress.pairingAccepted && !meta.sock);
+      progress.registered ||
+      (progress.pairingAccepted && !meta.sock) ||
+      linkDeviceWaitExpired;
 
     if (needsRecovery) {
       stopPairingKeepalive(sessionId);

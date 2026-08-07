@@ -253,6 +253,11 @@ class BaileysGateway
         return rtrim((string) config('services.baileys.gateway_url'), '/');
     }
 
+    public static function mapErrorMessage(string $message): string
+    {
+        return self::friendlyError($message);
+    }
+
     protected static function friendlyError(string $message): string
     {
         if (str_contains($message, 'cURL error 28')
@@ -270,6 +275,10 @@ class BaileysGateway
         if (str_contains($message, 'Could not resolve host')
             || str_contains($message, 'Connection refused')) {
             return __('admin.whatsapp-gateway-unreachable-hint', ['url' => self::baseUrl()]);
+        }
+
+        if (str_contains(strtolower($message), 'connection closed')) {
+            return __('messages.whatsapp_pairing_connection_closed');
         }
 
         return $message;

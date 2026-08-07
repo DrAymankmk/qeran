@@ -1509,19 +1509,42 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
   return sock;
 }
 
+function isPairingSocketError(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes('connection closed') ||
+    normalized.includes('connection lost') ||
+    normalized.includes('socket closed') ||
+    normalized.includes('not connected') ||
+    normalized.includes('socket not ready')
+  );
+}
+
 async function requestPairingCodeWithRetry(
-  sock: WASocket,
+  meta: SessionMeta,
   digits: string,
   sessionId: string
 ): Promise<string> {
-  await waitUntilReadyForPairing(sock, sessionId);
-  logger.info({ sessionId, delayMs: PAIRING_READY_DELAY_MS }, 'waiting before requestPairingCode');
-  await sleep(PAIRING_READY_DELAY_MS);
-
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= 4; attempt++) {
+    if (!meta.sock) {
+      logger.info({ sessionId, attempt }, 'creating fresh socket for requestPairingCode');
+      await createSocket(sessionId, meta);
+    }
+
+    const sock = meta.sock;
+    if (!sock) {
+      lastError = new Error('Failed to create WhatsApp socket for pairing');
+      await sleep(attempt * 2000);
+      continue;
+    }
+
     try {
+      await waitUntilReadyForPairing(sock, sessionId);
+      logger.info({ sessionId, delayMs: PAIRING_READY_DELAY_MS, attempt }, 'waiting before requestPairingCode');
+      await sleep(PAIRING_READY_DELAY_MS);
+
       const raw = await sock.requestPairingCode(digits);
       const code = formatPairingCodeRaw(raw);
       logger.info(
@@ -1533,6 +1556,11 @@ async function requestPairingCodeWithRetry(
       lastError = err;
       const message = err instanceof Error ? err.message : String(err);
       logger.warn({ sessionId, attempt, message }, 'requestPairingCode attempt failed');
+
+      if (isPairingSocketError(message) || !meta.sock) {
+        endSocket(meta);
+      }
+
       await sleep(attempt * 2000);
     }
   }
@@ -1578,7 +1606,7 @@ async function runPairingFlow(sessionId: string, digits: string, fresh: boolean)
     return runPairingFlow(sessionId, digits, true);
   }
 
-  const code = await requestPairingCodeWithRetry(sock, digits, sessionId);
+  const code = await requestPairingCodeWithRetry(meta, digits, sessionId);
   meta.pairingCode = code;
   meta.status = 'pending_pairing';
   meta.pairingRequestedAt = Date.now();

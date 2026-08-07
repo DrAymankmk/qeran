@@ -71,6 +71,7 @@ return [
     'whatsapp_pairing_phone_invalid' => 'Phone number format is invalid for WhatsApp linking. Update your profile phone or pass the correct phone in the request.',
     'whatsapp_connect_failed' => 'Could not start WhatsApp linking.',
     'whatsapp_pairing_code_failed' => 'Could not get pairing code. Try again.',
+    'whatsapp_pairing_connection_closed' => 'WhatsApp closed the connection before a code was issued. Wait 1–2 minutes (too many attempts), then try again once — or use link_method=qr.',
     'whatsapp_pairing_code_ready' => 'Enter the pairing code in WhatsApp on the same phone.',
     'whatsapp_already_connected' => 'WhatsApp is already connected.',
     'whatsapp_connected' => 'WhatsApp connected successfully.',

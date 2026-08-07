@@ -76,6 +76,7 @@ return [
     'whatsapp_pairing_phone_invalid' => 'صيغة رقم الهاتف غير صالحة لربط واتساب. حدّث رقمك في الملف الشخصي أو أرسل الرقم الصحيح في الطلب.',
     'whatsapp_connect_failed' => 'تعذر بدء ربط واتساب.',
     'whatsapp_pairing_code_failed' => 'تعذر الحصول على رمز الربط. حاول مرة أخرى.',
+    'whatsapp_pairing_connection_closed' => 'أغلق واتساب الاتصال قبل إصدار الرمز. انتظر 1–2 دقيقة (محاولات كثيرة) ثم حاول مرة واحدة — أو استخدم link_method=qr.',
     'whatsapp_pairing_code_ready' => 'أدخل رمز الربط في واتساب على نفس الهاتف.',
     'whatsapp_already_connected' => 'واتساب مربوط بالفعل.',
     'whatsapp_connected' => 'تم ربط واتساب بنجاح.',

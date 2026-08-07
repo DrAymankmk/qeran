@@ -658,6 +658,12 @@ class WhatsAppConnectController extends Controller
             return $fallback;
         }
 
+        $friendly = BaileysGateway::mapErrorMessage($gatewayError);
+
+        if ($friendly !== $gatewayError) {
+            return $friendly;
+        }
+
         if (config('app.debug')) {
             return $fallback.' ('.$gatewayError.')';
         }

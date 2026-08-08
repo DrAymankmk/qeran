@@ -2,6 +2,14 @@
 
 Node service that Laravel (`qeran`) calls to send WhatsApp messages and manage linked-device sessions.
 
+**Documentation:**
+
+| Doc | Description |
+|-----|-------------|
+| [docs/GATEWAY_COMPLETE_GUIDE.md](docs/GATEWAY_COMPLETE_GUIDE.md) | Full gateway reference — architecture, setup, API, env, PM2, troubleshooting |
+| [docs/PAIRING_CODE_PROBLEM_AND_SOLUTION.md](docs/PAIRING_CODE_PROBLEM_AND_SOLUTION.md) | Pairing code bugs (A–Z) and all fixes applied |
+| [docs/API.md](docs/API.md) | HTTP API contract for Laravel |
+
 **This folder is the source of those files** referenced in [docs/baileys/baileys_setup_implementation_guide.md](../docs/baileys/baileys_setup_implementation_guide.md) (`src/index.ts`, `src/baileys/manager.ts`, etc.).
 
 ## Deploy on server

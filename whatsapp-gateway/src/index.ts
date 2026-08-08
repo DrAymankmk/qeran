@@ -161,7 +161,7 @@ app.get('/health', (_req, res) => {
   const sessionsDirPath = getSessionsDirPath();
   res.json({
     ok: true,
-    version: '1.4.6',
+    version: '1.4.7',
     cwd: process.cwd(),
     sessionsDir: sessionsDirPath,
     persistedSessions: listPersistedSessionIds(),

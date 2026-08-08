@@ -2,6 +2,7 @@ import makeWASocket, {
   Browsers,
   DisconnectReason,
   fetchLatestBaileysVersion,
+  fetchLatestWaWebVersion,
   useMultiFileAuthState,
   type ConnectionState,
   type WASocket,
@@ -109,6 +110,8 @@ const PAIRING_CODE_TTL_MS = Number(process.env.PAIRING_CODE_TTL_MS ?? 300_000);
 const PAIRING_LINK_DEVICE_WAIT_MS = Number(process.env.PAIRING_LINK_DEVICE_WAIT_MS ?? 25_000);
 const PAIRING_SOCKET_READY_TIMEOUT_MS = Number(process.env.PAIRING_SOCKET_READY_TIMEOUT_MS ?? 25_000);
 const PAIRING_CODE_MAX_ATTEMPTS = Number(process.env.PAIRING_CODE_MAX_ATTEMPTS ?? 3);
+/** WhatsApp 405 = client_too_old (stale WA version or WEB platform rejected). */
+const WA_CLIENT_TOO_OLD_STATUS = 405;
 /** 0 = never auto-wipe on reconnect failure (recommended). Set e.g. 12 to wipe after N failures. */
 const RECONNECT_WIPE_THRESHOLD = Number(process.env.RECONNECT_WIPE_THRESHOLD ?? 0);
 const RECONNECT_BACKOFF_MS = (process.env.RECONNECT_BACKOFF_MS ?? '5000,30000,120000')
@@ -1445,8 +1448,8 @@ function browserConfigForSession(sessionId: string, meta: SessionMeta): [string,
   return Browsers.macOS('Chrome');
 }
 
-async function resolveSocketVersion(): Promise<[number, number, number]> {
-  if (cachedBaileysVersion) {
+async function resolveSocketVersion(forceRefresh = false): Promise<[number, number, number]> {
+  if (!forceRefresh && cachedBaileysVersion) {
     return cachedBaileysVersion;
   }
 
@@ -1461,16 +1464,26 @@ async function resolveSocketVersion(): Promise<[number, number, number]> {
         const parsed = JSON.parse(raw) as unknown;
         if (Array.isArray(parsed) && parsed.length === 3) {
           cachedBaileysVersion = [Number(parsed[0]), Number(parsed[1]), Number(parsed[2])];
+          logger.info({ version: cachedBaileysVersion, source: 'BAILEYS_VERSION env' }, 'WA Web version resolved');
           return cachedBaileysVersion;
         }
       } catch {
-        logger.warn('BAILEYS_VERSION env invalid JSON — using fetchLatestBaileysVersion');
+        logger.warn('BAILEYS_VERSION env invalid JSON — fetching live WA Web version');
       }
+    }
+
+    try {
+      const { version } = await fetchLatestWaWebVersion();
+      cachedBaileysVersion = version;
+      logger.info({ version, source: 'fetchLatestWaWebVersion' }, 'WA Web version resolved');
+      return version;
+    } catch (err) {
+      logger.warn({ err }, 'fetchLatestWaWebVersion failed — falling back to fetchLatestBaileysVersion');
     }
 
     const { version } = await fetchLatestBaileysVersion();
     cachedBaileysVersion = version;
-    logger.info({ version }, 'Baileys WA Web version resolved');
+    logger.info({ version, source: 'fetchLatestBaileysVersion' }, 'WA Web version resolved');
     return version;
   })();
 
@@ -1481,9 +1494,16 @@ async function resolveSocketVersion(): Promise<[number, number, number]> {
   }
 }
 
+export function invalidateCachedWaVersion(reason?: string): void {
+  if (cachedBaileysVersion) {
+    logger.warn({ previous: cachedBaileysVersion, reason }, 'invalidating cached WA Web version');
+  }
+  cachedBaileysVersion = null;
+}
+
 /** Pre-fetch WA version at gateway boot so first pairing code is faster. */
 export async function warmBaileysVersion(): Promise<void> {
-  await resolveSocketVersion();
+  await resolveSocketVersion(true);
 }
 
 async function flushSessionCreds(sessionId: string, meta: SessionMeta): Promise<void> {
@@ -1734,6 +1754,11 @@ async function createSocket(sessionId: string, meta: SessionMeta): Promise<WASoc
           const awaitingCode = Boolean(meta.pairingCode) && !progress.pairingAccepted;
 
           if (awaitingCode) {
+            if (statusCode === WA_CLIENT_TOO_OLD_STATUS) {
+              invalidateCachedWaVersion('405 while awaiting pairing code');
+              await resolveSocketVersion(true);
+            }
+
             logger.info(
               {
                 sessionId,
@@ -1849,6 +1874,12 @@ async function requestPairingCodeWithRetry(
 
       if (isPairingSocketError(message) || !meta.sock) {
         endSocket(meta);
+      }
+
+      const status405 = err instanceof Boom && err.output?.statusCode === WA_CLIENT_TOO_OLD_STATUS;
+      if (status405 || message.includes('405')) {
+        invalidateCachedWaVersion('405 during requestPairingCode');
+        await resolveSocketVersion(true);
       }
 
       await sleep(Math.min(attempt * 1000, 3000));

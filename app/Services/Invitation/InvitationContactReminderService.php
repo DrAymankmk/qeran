@@ -30,7 +30,7 @@ class InvitationContactReminderService
         }
 
         $hoursBefore ??= InvitationContactReminderSettings::hoursBefore();
-        $now = Carbon::now();
+        $now = Carbon::now($this->displayTimezone());
 
         $invitations = Invitation::query()
             ->with(['category', 'builderSetting', 'contactLogs'])
@@ -169,12 +169,31 @@ class InvitationContactReminderService
             return null;
         }
 
+        $tz = $this->displayTimezone();
+
         try {
-            return $invitation->time
-                ? Carbon::parse($invitation->date.' '.$invitation->time)
-                : Carbon::parse($invitation->date)->startOfDay();
+            $date = $invitation->date instanceof Carbon
+                ? $invitation->date->toDateString()
+                : substr((string) $invitation->date, 0, 10);
+
+            if ($invitation->time) {
+                $time = substr((string) $invitation->time, 0, 8);
+
+                return Carbon::parse($date.' '.$time, $tz);
+            }
+
+            return Carbon::parse($date, $tz)->startOfDay();
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * Invitation date/time are stored as local event wall-clock (Saudi Arabia).
+     * Reminder windows must not use app timezone (UTC) or sends shift by +3 hours.
+     */
+    protected function displayTimezone(): string
+    {
+        return (string) config('app.display_timezone', 'Asia/Riyadh');
     }
 }

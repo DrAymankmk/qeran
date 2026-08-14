@@ -767,6 +767,8 @@ return [
             'skip_block_styles' => true,
             'fields' => [
                 'enabled' => ['type' => 'checkbox', 'label_ar' => 'إظهار قسم التشريف', 'default' => false],
+                'party1_enabled' => ['type' => 'checkbox', 'label_ar' => 'إظهار العمود الأول', 'default' => true],
+                'party2_enabled' => ['type' => 'checkbox', 'label_ar' => 'إظهار العمود الثاني', 'default' => true],
             ],
             'groups' => [
                 [

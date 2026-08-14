@@ -299,16 +299,20 @@ class WeddingInvitationPresenter
         $footer = $line('footer_text', 'footer');
 
         $enabled = filter_var($data['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $party1Enabled = filter_var($data['party1_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $party2Enabled = filter_var($data['party2_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $party1Visible = $party1Enabled && ($party1Title['text'] !== '' || $party1Name['text'] !== '');
+        $party2Visible = $party2Enabled && ($party2Title['text'] !== '' || $party2Name['text'] !== '');
         $hasContent = $intro['text'] !== ''
-            || $party1Title['text'] !== ''
-            || $party1Name['text'] !== ''
-            || $party2Title['text'] !== ''
-            || $party2Name['text'] !== ''
+            || $party1Visible
+            || $party2Visible
             || $footer['text'] !== '';
 
         return [
             'visible' => $enabled && $hasContent,
             'intro' => $intro,
+            'party1_visible' => $party1Visible,
+            'party2_visible' => $party2Visible,
             'party1_title' => $party1Title,
             'party1_name' => $party1Name,
             'party2_title' => $party2Title,

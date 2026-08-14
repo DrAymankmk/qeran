@@ -56,13 +56,17 @@
   		</p>
   		@endif
 
-  		@if(
-  			($wiHonorific['party1_title']['text'] ?? '') !== ''
-  			|| ($wiHonorific['party1_name']['text'] ?? '') !== ''
-  			|| ($wiHonorific['party2_title']['text'] ?? '') !== ''
-  			|| ($wiHonorific['party2_name']['text'] ?? '') !== ''
-  		)
-  		<div class="wi-honorific-parties">
+  		@php
+  			$wiHonorificParty1 = ! empty($wiHonorific['party1_visible']);
+  			$wiHonorificParty2 = ! empty($wiHonorific['party2_visible']);
+  			$wiHonorificPartiesClass = 'wi-honorific-parties';
+  			if ($wiHonorificParty1 xor $wiHonorificParty2) {
+  				$wiHonorificPartiesClass .= ' wi-honorific-parties-one';
+  			}
+  		@endphp
+  		@if($wiHonorificParty1 || $wiHonorificParty2)
+  		<div class="{{ $wiHonorificPartiesClass }}">
+  			@if($wiHonorificParty1)
   			<div class="wi-honorific-party">
   				@if(($wiHonorific['party1_title']['text'] ?? '') !== '')
   				<span class="wi-honorific-title" @if(($wiHonorific['party1_title']['style'] ?? '') !== '') style="{{ $wiHonorific['party1_title']['style'] }}" @endif>
@@ -75,14 +79,13 @@
   				</span>
   				@endif
   			</div>
+  			@endif
 
-  			@if(
-  				(($wiHonorific['party1_title']['text'] ?? '') !== '' || ($wiHonorific['party1_name']['text'] ?? '') !== '')
-  				&& (($wiHonorific['party2_title']['text'] ?? '') !== '' || ($wiHonorific['party2_name']['text'] ?? '') !== '')
-  			)
+  			@if($wiHonorificParty1 && $wiHonorificParty2)
   			<div class="wi-honorific-sep" aria-hidden="true"></div>
   			@endif
 
+  			@if($wiHonorificParty2)
   			<div class="wi-honorific-party">
   				@if(($wiHonorific['party2_title']['text'] ?? '') !== '')
   				<span class="wi-honorific-title" @if(($wiHonorific['party2_title']['style'] ?? '') !== '') style="{{ $wiHonorific['party2_title']['style'] }}" @endif>
@@ -95,6 +98,7 @@
   				</span>
   				@endif
   			</div>
+  			@endif
   		</div>
   		@endif
 

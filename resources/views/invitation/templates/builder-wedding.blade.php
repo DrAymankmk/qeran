@@ -195,6 +195,9 @@
   gap: 0.75rem 1.1rem;
   width: 100%;
 }
+.wi-honorific-parties-one {
+  grid-template-columns: 1fr;
+}
 .wi-honorific-party {
   display: flex;
   flex-direction: column;

@@ -136,4 +136,16 @@
 		</select>
 		@error('date_position')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
 	</div>
+
+	<div class="col-12">
+		<hr class="my-1">
+		<h6 class="text-muted">{{ __('admin.ib-honorific-section') }}</h6>
+		<p class="small text-muted mb-2">{{ __('admin.ib-honorific-section-hint') }}</p>
+		@include('admin.invitation-builder.partials.block-fields', [
+			'blockKey' => 'hero_honorific',
+			'blockData' => $config['block_data'] ?? [],
+			'schemas' => $catalog['block_field_schemas'] ?? config('invitation_builder.block_field_schemas', []),
+			'catalog' => $catalog,
+		])
+	</div>
 </div>

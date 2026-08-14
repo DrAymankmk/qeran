@@ -170,6 +170,7 @@ class WeddingInvitationPresenter
             'wiSealStyle' => $bc['seal_style'] ?? 'wax_classic',
             ...self::sealViewVars($bc['seal_style'] ?? 'wax_classic', $bc['seal_color'] ?? null),
             'wiDatePosition' => $bc['date_position'] ?? 'center',
+            'wiHonorific' => self::heroHonorific($bc),
             'wiHeroVideoUrl' => $heroVideoUrl,
             'wiHeroHasVideo' => $heroVideoUrl !== '',
             'wiHeroImageUrl' => $heroImageUrl,
@@ -256,6 +257,91 @@ class WeddingInvitationPresenter
         }
 
         return $value;
+    }
+
+    /**
+     * @return array{
+     *     visible: bool,
+     *     intro: array{text: string, style: string},
+     *     party1_title: array{text: string, style: string},
+     *     party1_name: array{text: string, style: string},
+     *     party2_title: array{text: string, style: string},
+     *     party2_name: array{text: string, style: string},
+     *     footer: array{text: string, style: string}
+     * }
+     */
+    public static function heroHonorific(array $bc): array
+    {
+        $schema = config('invitation_builder.block_field_schemas.hero_honorific', []);
+        $defaults = [];
+        foreach (app(InvitationBuilderService::class)->blockSchemaFields($schema) as $key => $def) {
+            $defaults[$key] = $def['default'] ?? '';
+        }
+
+        $data = is_array($bc['block_data']['hero_honorific'] ?? null)
+            ? array_merge($defaults, $bc['block_data']['hero_honorific'])
+            : $defaults;
+
+        $line = function (string $textKey, string $prefix) use ($data): array {
+            $text = trim((string) ($data[$textKey] ?? ''));
+
+            return [
+                'text' => $text,
+                'style' => self::honorificLineStyle($data, $prefix),
+            ];
+        };
+
+        $intro = $line('intro_text', 'intro');
+        $party1Title = $line('party1_title', 'party1_title');
+        $party1Name = $line('party1_name', 'party1_name');
+        $party2Title = $line('party2_title', 'party2_title');
+        $party2Name = $line('party2_name', 'party2_name');
+        $footer = $line('footer_text', 'footer');
+
+        $enabled = filter_var($data['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $hasContent = $intro['text'] !== ''
+            || $party1Title['text'] !== ''
+            || $party1Name['text'] !== ''
+            || $party2Title['text'] !== ''
+            || $party2Name['text'] !== ''
+            || $footer['text'] !== '';
+
+        return [
+            'visible' => $enabled && $hasContent,
+            'intro' => $intro,
+            'party1_title' => $party1Title,
+            'party1_name' => $party1Name,
+            'party2_title' => $party2Title,
+            'party2_name' => $party2Name,
+            'footer' => $footer,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public static function honorificLineStyle(array $data, string $prefix): string
+    {
+        $parts = [];
+        $allowedFonts = array_keys(config('invitation_builder.fonts', []));
+
+        $color = trim((string) ($data[$prefix.'_color'] ?? ''));
+        if ($color !== '' && preg_match('/^#?[0-9A-Fa-f]{6}$/i', $color)) {
+            $hex = str_starts_with($color, '#') ? $color : '#'.$color;
+            $parts[] = 'color: '.$hex;
+        }
+
+        $font = trim((string) ($data[$prefix.'_font'] ?? ''));
+        if ($font !== '' && in_array($font, $allowedFonts, true)) {
+            $parts[] = "font-family: '{$font}', 'Cairo', sans-serif";
+        }
+
+        $size = trim((string) ($data[$prefix.'_font_size'] ?? ''));
+        if ($size !== '' && preg_match('/^\d+(?:\.\d+)?px$/', $size)) {
+            $parts[] = 'font-size: '.$size;
+        }
+
+        return implode('; ', $parts);
     }
 
     public static function detailCardIcon(array $bc, string $card, string $default): string

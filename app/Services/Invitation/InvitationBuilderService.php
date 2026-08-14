@@ -1416,6 +1416,10 @@ class InvitationBuilderService
             return array_key_exists($value, $options) ? $value : '';
         }
 
+        if (in_array($type, ['optional_color', 'font', 'font_size', 'font_weight'], true)) {
+            return $this->normalizeBlockStyleFieldValue($type, $value);
+        }
+
         if ($type === 'url' || $type === 'icon_upload' || $type === 'audio_upload') {
             if (preg_match('#^(https?://|/)#i', $value)) {
                 return $value;
@@ -1474,10 +1478,12 @@ class InvitationBuilderService
                 $blockOut[$fieldKey] = $this->normalizeBlockFieldValue($fieldType, $value, $fieldDef);
             }
 
-            foreach (config('invitation_builder.block_style_fields', []) as $styleKey => $styleDef) {
-                $styleType = $styleDef['type'] ?? 'text';
-                $styleValue = $blockInput[$styleKey] ?? '';
-                $blockOut[$styleKey] = $this->normalizeBlockStyleFieldValue($styleType, $styleValue);
+            if (empty($schema['skip_block_styles'])) {
+                foreach (config('invitation_builder.block_style_fields', []) as $styleKey => $styleDef) {
+                    $styleType = $styleDef['type'] ?? 'text';
+                    $styleValue = $blockInput[$styleKey] ?? '';
+                    $blockOut[$styleKey] = $this->normalizeBlockStyleFieldValue($styleType, $styleValue);
+                }
             }
 
             foreach ($schema['repeaters'] ?? [] as $repeaterKey => $repeaterDef) {

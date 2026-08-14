@@ -1342,6 +1342,8 @@ return[
     'ib-block-audio-invalid-extension' => 'صيغة غير مدعومة. استخدم MP3 أو OGG أو WAV أو M4A أو WebM.',
     'ib-block-audio-invalid-mime' => 'نوع الملف الصوتي غير مدعوم.',
     'ib-couple-section' => 'العروسان وذووهم',
+    'ib-honorific-section' => 'نص التشريف (أعلى البطاقة)',
+    'ib-honorific-section-hint' => 'يظهر قبل شارة التاريخ: نص علوي مثل «تتشرف»، عمودان للأسماء، ثم نص أسفل العمودين. يمكن تعديل النص واللون ونوع الخط والحجم لكل سطر.',
     'ib-bride-father-line' => 'ابنة :name',
     'ib-groom-father-line' => 'ابن :name',
     'ib-details-cards-section' => 'بطاقات التفاصيل (قسم The Wedding)',

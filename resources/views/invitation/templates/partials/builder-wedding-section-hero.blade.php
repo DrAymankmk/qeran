@@ -1,5 +1,6 @@
   <!-- ① Hero (dynamic) -->
-  <section class="wi-hero wi-date-pos-{{ $wiDatePosition }}@if(!empty($wiHeroHasVideo) || !empty($wiHeroHasImage)) wi-hero-has-video @endif">
+  <section
+  	class="wi-hero wi-date-pos-{{ $wiDatePosition }}@if(!empty($wiHeroHasVideo) || !empty($wiHeroHasImage)) wi-hero-has-video @endif">
   	@if(!empty($wiHeroHasVideo) && !empty($wiHeroVideoUrl))
   	<div class="wi-hero-media" aria-hidden="true">
   		<video class="wi-hero-video" autoplay muted loop playsinline webkit-playsinline preload="auto"
@@ -34,6 +35,67 @@
   		<circle cx="4" cy="4" r="2.5" fill="currentColor" />
   	</svg> -->
 
+
+
+  	@php $wiHonorific = $wiHonorific ?? ['visible' => false]; @endphp
+  	@if(!empty($wiHonorific['visible']))
+  	<div class="wi-honorific wi-fade-in d0">
+  		@if(($wiHonorific['intro']['text'] ?? '') !== '')
+  		<p class="wi-honorific-intro" @if(($wiHonorific['intro']['style'] ?? '') !== '') style="{{ $wiHonorific['intro']['style'] }}" @endif>
+  			{{ $wiHonorific['intro']['text'] }}
+  		</p>
+  		@endif
+
+  		@if(
+  			($wiHonorific['party1_title']['text'] ?? '') !== ''
+  			|| ($wiHonorific['party1_name']['text'] ?? '') !== ''
+  			|| ($wiHonorific['party2_title']['text'] ?? '') !== ''
+  			|| ($wiHonorific['party2_name']['text'] ?? '') !== ''
+  		)
+  		<div class="wi-honorific-parties">
+  			<div class="wi-honorific-party">
+  				@if(($wiHonorific['party1_title']['text'] ?? '') !== '')
+  				<span class="wi-honorific-title" @if(($wiHonorific['party1_title']['style'] ?? '') !== '') style="{{ $wiHonorific['party1_title']['style'] }}" @endif>
+  					{{ $wiHonorific['party1_title']['text'] }}
+  				</span>
+  				@endif
+  				@if(($wiHonorific['party1_name']['text'] ?? '') !== '')
+  				<span class="wi-honorific-name" @if(($wiHonorific['party1_name']['style'] ?? '') !== '') style="{{ $wiHonorific['party1_name']['style'] }}" @endif>
+  					{{ $wiHonorific['party1_name']['text'] }}
+  				</span>
+  				@endif
+  			</div>
+
+  			@if(
+  				(($wiHonorific['party1_title']['text'] ?? '') !== '' || ($wiHonorific['party1_name']['text'] ?? '') !== '')
+  				&& (($wiHonorific['party2_title']['text'] ?? '') !== '' || ($wiHonorific['party2_name']['text'] ?? '') !== '')
+  			)
+  			<div class="wi-honorific-sep" aria-hidden="true"></div>
+  			@endif
+
+  			<div class="wi-honorific-party">
+  				@if(($wiHonorific['party2_title']['text'] ?? '') !== '')
+  				<span class="wi-honorific-title" @if(($wiHonorific['party2_title']['style'] ?? '') !== '') style="{{ $wiHonorific['party2_title']['style'] }}" @endif>
+  					{{ $wiHonorific['party2_title']['text'] }}
+  				</span>
+  				@endif
+  				@if(($wiHonorific['party2_name']['text'] ?? '') !== '')
+  				<span class="wi-honorific-name" @if(($wiHonorific['party2_name']['style'] ?? '') !== '') style="{{ $wiHonorific['party2_name']['style'] }}" @endif>
+  					{{ $wiHonorific['party2_name']['text'] }}
+  				</span>
+  				@endif
+  			</div>
+  		</div>
+  		@endif
+
+  		@if(($wiHonorific['footer']['text'] ?? '') !== '')
+  		<p class="wi-honorific-footer" @if(($wiHonorific['footer']['style'] ?? '') !== '') style="{{ $wiHonorific['footer']['style'] }}" @endif>
+  			{{ $wiHonorific['footer']['text'] }}
+  		</p>
+  		@endif
+  	</div>
+  	@endif
+
   	@if($wiDateBadge || $wiHostLabel)
   	<p class="wi-date-badge wi-fade-in d1">
   		@if($wiHostLabel && $wiDateBadge){{ $wiHostLabel }} ·
@@ -48,7 +110,8 @@
   			<span class="wi-couple-name">{{ $wiGroom }}</span>
   			@endif
   			@if(!empty($wiGroomFather))
-  			<span class="wi-parent-line">{{ __('admin.ib-groom-father-line', ['name' => $wiGroomFather]) }}</span>
+  			<span
+  				class="wi-parent-line">{{ __('admin.ib-groom-father-line', ['name' => $wiGroomFather]) }}</span>
   			@endif
   		</span>
   		@endif
@@ -63,7 +126,8 @@
   			<span class="wi-couple-name">{{ $wiBride }}</span>
   			@endif
   			@if(!empty($wiBrideFather))
-  			<span class="wi-parent-line">{{ __('admin.ib-bride-father-line', ['name' => $wiBrideFather]) }}</span>
+  			<span
+  				class="wi-parent-line">{{ __('admin.ib-bride-father-line', ['name' => $wiBrideFather]) }}</span>
   			@endif
   		</span>
   		@elseif(empty($wiGroom) && empty($wiGroomFather))

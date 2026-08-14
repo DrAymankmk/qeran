@@ -759,6 +759,72 @@ return [
                 'date_line' => ['type' => 'text', 'label_ar' => 'سطر التاريخ والمكان', 'default' => ''],
             ],
         ],
+        /**
+         * Hero honorific (above the date badge). Not listed in information_blocks —
+         * edited from the Details tab, stored in block_data.hero_honorific.
+         */
+        'hero_honorific' => [
+            'skip_block_styles' => true,
+            'fields' => [
+                'enabled' => ['type' => 'checkbox', 'label_ar' => 'إظهار قسم التشريف', 'default' => false],
+            ],
+            'groups' => [
+                [
+                    'label_ar' => 'النص العلوي',
+                    'fields' => [
+                        'intro_text' => ['type' => 'text', 'label_ar' => 'النص', 'default' => 'تتشرف', 'placeholder' => 'تتشرف'],
+                        'intro_color' => ['type' => 'optional_color', 'label_ar' => 'لون النص', 'default' => ''],
+                        'intro_font' => ['type' => 'font', 'label_ar' => 'نوع الخط', 'default' => ''],
+                        'intro_font_size' => ['type' => 'font_size', 'label_ar' => 'حجم الخط', 'default' => '', 'min' => 10, 'max' => 72],
+                    ],
+                ],
+                [
+                    'label_ar' => 'العمود الأول — اللقب',
+                    'fields' => [
+                        'party1_title' => ['type' => 'text', 'label_ar' => 'اللقب', 'default' => 'السيد', 'placeholder' => 'السيد'],
+                        'party1_title_color' => ['type' => 'optional_color', 'label_ar' => 'لون النص', 'default' => ''],
+                        'party1_title_font' => ['type' => 'font', 'label_ar' => 'نوع الخط', 'default' => ''],
+                        'party1_title_font_size' => ['type' => 'font_size', 'label_ar' => 'حجم الخط', 'default' => '', 'min' => 8, 'max' => 48],
+                    ],
+                ],
+                [
+                    'label_ar' => 'العمود الأول — الاسم',
+                    'fields' => [
+                        'party1_name' => ['type' => 'text', 'label_ar' => 'الاسم', 'default' => 'كريم', 'placeholder' => 'كريم'],
+                        'party1_name_color' => ['type' => 'optional_color', 'label_ar' => 'لون النص', 'default' => ''],
+                        'party1_name_font' => ['type' => 'font', 'label_ar' => 'نوع الخط', 'default' => ''],
+                        'party1_name_font_size' => ['type' => 'font_size', 'label_ar' => 'حجم الخط', 'default' => '', 'min' => 12, 'max' => 96],
+                    ],
+                ],
+                [
+                    'label_ar' => 'العمود الثاني — اللقب',
+                    'fields' => [
+                        'party2_title' => ['type' => 'text', 'label_ar' => 'اللقب', 'default' => 'السيد', 'placeholder' => 'السيد'],
+                        'party2_title_color' => ['type' => 'optional_color', 'label_ar' => 'لون النص', 'default' => ''],
+                        'party2_title_font' => ['type' => 'font', 'label_ar' => 'نوع الخط', 'default' => ''],
+                        'party2_title_font_size' => ['type' => 'font_size', 'label_ar' => 'حجم الخط', 'default' => '', 'min' => 8, 'max' => 48],
+                    ],
+                ],
+                [
+                    'label_ar' => 'العمود الثاني — الاسم',
+                    'fields' => [
+                        'party2_name' => ['type' => 'text', 'label_ar' => 'الاسم', 'default' => 'أحمد', 'placeholder' => 'أحمد'],
+                        'party2_name_color' => ['type' => 'optional_color', 'label_ar' => 'لون النص', 'default' => ''],
+                        'party2_name_font' => ['type' => 'font', 'label_ar' => 'نوع الخط', 'default' => ''],
+                        'party2_name_font_size' => ['type' => 'font_size', 'label_ar' => 'حجم الخط', 'default' => '', 'min' => 12, 'max' => 96],
+                    ],
+                ],
+                [
+                    'label_ar' => 'النص أسفل العمودين',
+                    'fields' => [
+                        'footer_text' => ['type' => 'textarea', 'label_ar' => 'النص', 'default' => 'بدعوتكم لحضور حفل زفاف ولديهما', 'placeholder' => 'بدعوتكم لحضور حفل زفاف ولديهما', 'rows' => 2],
+                        'footer_color' => ['type' => 'optional_color', 'label_ar' => 'لون النص', 'default' => ''],
+                        'footer_font' => ['type' => 'font', 'label_ar' => 'نوع الخط', 'default' => ''],
+                        'footer_font_size' => ['type' => 'font_size', 'label_ar' => 'حجم الخط', 'default' => '', 'min' => 8, 'max' => 48],
+                    ],
+                ],
+            ],
+        ],
     ],
 
     'information_blocks' => [

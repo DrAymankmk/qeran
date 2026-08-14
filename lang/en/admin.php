@@ -1079,6 +1079,8 @@ return[
     'ib-block-audio-invalid-extension' => 'Unsupported format. Use MP3, OGG, WAV, M4A, or WebM.',
     'ib-block-audio-invalid-mime' => 'Unsupported audio file type.',
     'ib-couple-section' => 'Couple & parents',
+    'ib-honorific-section' => 'Honorific text (above the date)',
+    'ib-honorific-section-hint' => 'Shown before the date badge: an intro line (e.g. “تتشرف”), two name columns, then a line below. Each line has its own text, color, font, and size.',
     'ib-bride-father-line' => 'Daughter of :name',
     'ib-groom-father-line' => 'Son of :name',
     'ib-details-cards-section' => 'Detail cards (The Wedding section)',

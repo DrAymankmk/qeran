@@ -1,6 +1,7 @@
   <!-- ① Hero (dynamic) -->
   <section
-  	class="wi-hero wi-date-pos-{{ $wiDatePosition }}@if(!empty($wiHeroHasVideo) || !empty($wiHeroHasImage)) wi-hero-has-video @endif">
+  	class="wi-hero wi-date-pos-{{ $wiDatePosition }}@if(!empty($wiHeroHasVideo)) wi-hero-has-video @endif@if(!empty($wiHeroHasImage) && !empty($wiHeroImageUrl)) wi-hero-has-image @endif"
+  	@if(!empty($wiHeroHasImage) && !empty($wiHeroImageUrl)) style="--wi-hero-image: url('{{ $wiHeroImageUrl }}')" @endif>
   	@if(!empty($wiHeroHasVideo) && !empty($wiHeroVideoUrl))
   	<div class="wi-hero-media" aria-hidden="true">
   		<video class="wi-hero-video" autoplay muted loop playsinline webkit-playsinline preload="auto"

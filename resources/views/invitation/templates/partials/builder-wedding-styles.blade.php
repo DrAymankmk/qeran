@@ -19,7 +19,6 @@ align-items: center;
 justify-content: center;
 text-align: center;
 padding: 60px 24px;
-<!-- background: #faf7f2; -->
 position: relative;
 }
 .wi-hero::before {

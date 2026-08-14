@@ -1,16 +1,16 @@
   <!-- ① Hero (dynamic) -->
   @php
-  	$wiHeroClasses = 'wi-hero wi-date-pos-'.($wiDatePosition ?? 'center');
-  	if (! empty($wiHeroHasVideo)) {
-  		$wiHeroClasses .= ' wi-hero-has-video';
-  	}
-  	$wiHeroImageStyle = '';
-  	if (! empty($wiHeroHasImage) && ! empty($wiHeroImageUrl)) {
-  		$wiHeroClasses .= ' wi-hero-has-image';
-  		$wiHeroImageStyle = '--wi-hero-image: url('.e($wiHeroImageUrl).')';
-  	}
+  $wiHeroClasses = 'wi-hero wi-date-pos-'.($wiDatePosition ?? 'center');
+  if (! empty($wiHeroHasVideo)) {
+  $wiHeroClasses .= ' wi-hero-has-video';
+  }
+  $wiHeroImageStyle = '';
+  if (! empty($wiHeroHasImage) && ! empty($wiHeroImageUrl)) {
+  $wiHeroClasses .= ' wi-hero-has-image';
+  $wiHeroImageStyle = '--wi-hero-image: url('.e($wiHeroImageUrl).')';
+  }
   @endphp
-  <section class="{{ $wiHeroClasses }}" @if($wiHeroImageStyle !== '') style="{{ $wiHeroImageStyle }}" @endif>
+  <section class="{{ $wiHeroClasses }}" @if($wiHeroImageStyle !=='' ) style="{{ $wiHeroImageStyle }}" @endif>
   	@if(!empty($wiHeroHasVideo) && !empty($wiHeroVideoUrl))
   	<div class="wi-hero-media" aria-hidden="true">
   		<video class="wi-hero-video" autoplay muted loop playsinline webkit-playsinline preload="auto"
@@ -51,30 +51,35 @@
   	@if(!empty($wiHonorific['visible']))
   	<div class="wi-honorific wi-fade-in d0">
   		@if(($wiHonorific['intro']['text'] ?? '') !== '')
-  		<p class="wi-honorific-intro" @if(($wiHonorific['intro']['style'] ?? '') !== '') style="{{ $wiHonorific['intro']['style'] }}" @endif>
+  		<p class="wi-honorific-intro" @if(($wiHonorific['intro']['style'] ?? '' ) !=='' )
+  			style="{{ $wiHonorific['intro']['style'] }}" @endif>
   			{{ $wiHonorific['intro']['text'] }}
   		</p>
   		@endif
 
   		@php
-  			$wiHonorificParty1 = ! empty($wiHonorific['party1_visible']);
-  			$wiHonorificParty2 = ! empty($wiHonorific['party2_visible']);
-  			$wiHonorificPartiesClass = 'wi-honorific-parties';
-  			if ($wiHonorificParty1 xor $wiHonorificParty2) {
-  				$wiHonorificPartiesClass .= ' wi-honorific-parties-one';
-  			}
+  		$wiHonorificParty1 = ! empty($wiHonorific['party1_visible']);
+  		$wiHonorificParty2 = ! empty($wiHonorific['party2_visible']);
+  		$wiHonorificPartiesClass = 'wi-honorific-parties';
+  		if ($wiHonorificParty1 xor $wiHonorificParty2) {
+  		$wiHonorificPartiesClass .= ' wi-honorific-parties-one';
+  		}
   		@endphp
   		@if($wiHonorificParty1 || $wiHonorificParty2)
   		<div class="{{ $wiHonorificPartiesClass }}">
   			@if($wiHonorificParty1)
   			<div class="wi-honorific-party">
   				@if(($wiHonorific['party1_title']['text'] ?? '') !== '')
-  				<span class="wi-honorific-title" @if(($wiHonorific['party1_title']['style'] ?? '') !== '') style="{{ $wiHonorific['party1_title']['style'] }}" @endif>
+  				<span class="wi-honorific-title" @if(($wiHonorific['party1_title']['style']
+  					?? '' ) !=='' ) style="{{ $wiHonorific['party1_title']['style'] }}"
+  					@endif>
   					{{ $wiHonorific['party1_title']['text'] }}
   				</span>
   				@endif
   				@if(($wiHonorific['party1_name']['text'] ?? '') !== '')
-  				<span class="wi-honorific-name" @if(($wiHonorific['party1_name']['style'] ?? '') !== '') style="{{ $wiHonorific['party1_name']['style'] }}" @endif>
+  				<span class="wi-honorific-name" @if(($wiHonorific['party1_name']['style']
+  					?? '' ) !=='' ) style="{{ $wiHonorific['party1_name']['style'] }}"
+  					@endif>
   					{{ $wiHonorific['party1_name']['text'] }}
   				</span>
   				@endif
@@ -88,12 +93,16 @@
   			@if($wiHonorificParty2)
   			<div class="wi-honorific-party">
   				@if(($wiHonorific['party2_title']['text'] ?? '') !== '')
-  				<span class="wi-honorific-title" @if(($wiHonorific['party2_title']['style'] ?? '') !== '') style="{{ $wiHonorific['party2_title']['style'] }}" @endif>
+  				<span class="wi-honorific-title" @if(($wiHonorific['party2_title']['style']
+  					?? '' ) !=='' ) style="{{ $wiHonorific['party2_title']['style'] }}"
+  					@endif>
   					{{ $wiHonorific['party2_title']['text'] }}
   				</span>
   				@endif
   				@if(($wiHonorific['party2_name']['text'] ?? '') !== '')
-  				<span class="wi-honorific-name" @if(($wiHonorific['party2_name']['style'] ?? '') !== '') style="{{ $wiHonorific['party2_name']['style'] }}" @endif>
+  				<span class="wi-honorific-name" @if(($wiHonorific['party2_name']['style']
+  					?? '' ) !=='' ) style="{{ $wiHonorific['party2_name']['style'] }}"
+  					@endif>
   					{{ $wiHonorific['party2_name']['text'] }}
   				</span>
   				@endif
@@ -103,19 +112,20 @@
   		@endif
 
   		@if(($wiHonorific['footer']['text'] ?? '') !== '')
-  		<p class="wi-honorific-footer" @if(($wiHonorific['footer']['style'] ?? '') !== '') style="{{ $wiHonorific['footer']['style'] }}" @endif>
+  		<p class="wi-honorific-footer" @if(($wiHonorific['footer']['style'] ?? '' ) !=='' )
+  			style="{{ $wiHonorific['footer']['style'] }}" @endif>
   			{{ $wiHonorific['footer']['text'] }}
   		</p>
   		@endif
   	</div>
   	@endif
-
+  	<!--
   	@if($wiDateBadge || $wiHostLabel)
   	<p class="wi-date-badge wi-fade-in d1">
   		@if($wiHostLabel && $wiDateBadge){{ $wiHostLabel }} ·
   		{{ $wiDateBadge }}@elseif($wiDateBadge){{ $wiDateBadge }}@else{{ $wiHostLabel }}@endif
   	</p>
-  	@endif
+  	@endif -->
 
   	<h1 class="wi-names wi-couple-stack wi-fade-in d2">
   		@if(!empty($wiGroom) || !empty($wiGroomFather))

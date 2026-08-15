@@ -508,6 +508,12 @@ class WeddingInvitationPresenter
         string $endMarker,
         string $insert
     ): string {
+        $startNeedle = trim($startNeedle);
+        $endMarker = trim($endMarker);
+        if ($startNeedle === '' || $endMarker === '') {
+            return $html;
+        }
+
         $start = strpos($html, $startNeedle);
         if ($start === false) {
             return $html;

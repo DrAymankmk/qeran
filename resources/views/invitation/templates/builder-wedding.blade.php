@@ -30,22 +30,18 @@ $viewData = array_merge($present, [
 
 $heroHtml = view('invitation.templates.partials.builder-wedding-section-hero', $viewData)->render();
 $bodyHtml = WeddingInvitationPresenter::replaceBetweenMarkers(
-$bodyHtml,
-'
-<!-- ① Hero -->',
-'
-<!-- ② Countdown -->',
-$heroHtml
+    $bodyHtml,
+    '<!-- ① Hero -->',
+    '<!-- ② Countdown -->',
+    $heroHtml
 );
 
 $sectionsHtml = WeddingInvitationPresenter::composeOrderedBlockSections($blocks, $viewData);
 $bodyHtml = WeddingInvitationPresenter::replaceBetweenMarkers(
-$bodyHtml,
-'
-<!-- ② Countdown -->',
-'
-<!-- /⑭ Thank You Footer -->',
-$sectionsHtml
+    $bodyHtml,
+    '<!-- ② Countdown -->',
+    '<!-- /⑭ Thank You Footer -->',
+    $sectionsHtml
 );
 
 $gateMain = $showEnvelope && ! in_array($initialView ?? '', ['success', 'decline'], true);
@@ -55,7 +51,8 @@ $gateMain = false;
 @endphp
 
 <style>
-@include('invitation.templates.partials.builder-wedding-styles'):root {
+@include('invitation.templates.partials.builder-wedding-styles')
+:root {
 	--wi-gold: var(--ib-primary, #c8a97a);
 	--wi-accent: var(--ib-secondary, #e8b4b8);
 	--wi-bg: var(--ib-bg, #faf7f2);

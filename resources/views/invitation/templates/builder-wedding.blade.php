@@ -146,6 +146,7 @@ $gateMain = false;
 .wi-hero {
 	overflow: hidden;
 	isolation: isolate;
+	position: relative;
 }
 
 .wi-hero-has-video::before,
@@ -203,10 +204,10 @@ $gateMain = false;
 .wi-hero-video-overlay {
 	position: absolute;
 	inset: 0;
-	background: linear-gradient(180deg,
+	/* background: linear-gradient(180deg,
 			color-mix(in srgb, var(--wi-bg, #1a1520) 35%, transparent) 0%,
 			color-mix(in srgb, var(--wi-bg, #1a1520) 55%, transparent) 45%,
-			color-mix(in srgb, var(--wi-bg, #1a1520) 75%, transparent) 100%);
+			color-mix(in srgb, var(--wi-bg, #1a1520) 75%, transparent) 100%); */
 }
 
 .wi-hero-has-video> :not(.wi-hero-media),

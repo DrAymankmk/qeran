@@ -21,13 +21,13 @@ text-align: center;
 padding: 60px 24px;
 position: relative;
 }
-<!-- .wi-hero::before {
+.wi-hero::before {
 content: '';
 position: absolute;
 inset: 0;
 background: radial-gradient(ellipse at 50% 40%, rgba(212,185,150,0.18) 0%, transparent 70%);
 pointer-events: none;
-} -->
+}
 .wi-corner { position: absolute; opacity: 0.25; }
 .wi-corner.tl { top: 20px; left: 20px; }
 .wi-corner.tr { top: 20px; right: 20px; transform: scaleX(-1); }

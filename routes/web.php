@@ -182,6 +182,10 @@ Route::get('/email', function () {
 });
 // Route::resource('category', CategoryController::class);
 
+Route::get('/m/{invitation_code}/qr/{kind}/{id}.png', [WebsiteInvitationController::class, 'showQr'])
+    ->where('kind', 'contact|user')
+    ->whereNumber('id')
+    ->name('user.invitation.qr');
 Route::get('/m/{invitation_code}/{filename?}', [WebsiteInvitationController::class, 'showMedia'])
     ->where('filename', '[A-Za-z0-9._-]+')
     ->name('user.invitation.media');

@@ -14,6 +14,7 @@ return [
 \n\n",
     'invitation_contact_reminder_sms_template' => "تذكير ودي 🌷\n:event_type / :host_name\nيسرّنا حضوركم ومشاركتكم",
     'invitation_contact_reminder_default_event' => 'المناسبة',
+    'invitation_qr_caption' => "الرجاء ابراز هذا الرمز عند الدخول",
     'variables' => [
         'event_type' => 'نوع المناسبة',
         'host_name' => 'اسم الداعي',

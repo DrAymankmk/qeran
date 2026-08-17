@@ -21,7 +21,7 @@ class SendBaileysInvitationContactMessage implements ShouldQueue
 
     public int $tries = 3;
 
-    public int $timeout = 120;
+    public int $timeout = 180;
 
     public function __construct(
         public int $contactLogId,
@@ -104,6 +104,29 @@ class SendBaileysInvitationContactMessage implements ShouldQueue
                 'whatsapp_message_id' => $messageId,
                 'error_message' => null,
             ]);
+
+            try {
+                $qrUrl = app(InvitationBuilderService::class)->guestQrShareUrl(
+                    Invitation::query()->find($this->invitationId),
+                    $this->contactLogId
+                );
+                if (is_string($qrUrl) && $qrUrl !== '') {
+                    BaileysWhatsApp::sendFromSession(
+                        'user_'.$this->hostUserId,
+                        $targetPhone,
+                        __('messages.invitation_qr_caption'),
+                        $this->referenceId !== '' ? $this->referenceId.'-qr' : '',
+                        $qrUrl,
+                        'image'
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to send invitation QR to contact', [
+                    'contact_log_id' => $this->contactLogId,
+                    'invitation_id' => $this->invitationId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             Log::info('Baileys contact invitation sent — awaiting delivery/read webhooks', [
                 'contact_log_id' => $this->contactLogId,

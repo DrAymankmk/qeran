@@ -48,6 +48,39 @@ class InvitationsController extends Controller
         }
     }
 
+    public function showQr(string $invitation_code, string $kind, int $id)
+    {
+        $invitation = Invitation::where('code', $invitation_code)->first();
+
+        if (! $invitation || ! $this->invitationBuilder->usesUploadedGuestMedia($invitation)) {
+            abort(404);
+        }
+
+        if ($kind === 'contact') {
+            $exists = InvitationContactLog::query()
+                ->where('invitation_id', $invitation->id)
+                ->where('id', $id)
+                ->exists();
+            if (! $exists) {
+                abort(404);
+            }
+        }
+
+        $relativePath = $kind === 'contact'
+            ? $invitation->publicQrPngPathForContact($id)
+            : $invitation->publicQrPngPathForUser($id);
+
+        if (! $relativePath) {
+            abort(404);
+        }
+
+        return Storage::disk('public')->response($relativePath, basename($relativePath), [
+            'Content-Type' => 'image/png',
+            'Content-Disposition' => 'inline; filename="'.basename($relativePath).'"',
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
+    }
+
     public function showBuilder(string $invitation_code, $user_id = null)
     {
         $invitation = Invitation::with('builderSetting')->where('code', $invitation_code)->first();

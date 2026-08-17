@@ -74,6 +74,30 @@ class SendBaileysInvitationMessage implements ShouldQueue
                 ->where('user_id', $this->guestUserId)
                 ->update(['seen' => Constant::SEEN_STATUS['Sent']]);
 
+            try {
+                $qrUrl = app(InvitationBuilderService::class)->guestQrShareUrl(
+                    Invitation::query()->find($this->invitationId),
+                    null,
+                    $this->guestUserId
+                );
+                if (is_string($qrUrl) && $qrUrl !== '') {
+                    BaileysWhatsApp::sendFromSession(
+                        'user_'.$this->hostUserId,
+                        $this->countryCode.$this->phone,
+                        __('messages.invitation_qr_caption'),
+                        $this->referenceId !== '' ? $this->referenceId.'-qr' : '',
+                        $qrUrl,
+                        'image'
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to send invitation QR to guest', [
+                    'invitation_id' => $this->invitationId,
+                    'guest_user_id' => $this->guestUserId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
             return;
         }
 

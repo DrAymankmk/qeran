@@ -7,6 +7,7 @@ return [
 
     'invitation_contact_reminder_sms_template' => "Friendly reminder 🌷\n:event_type / :host_name\nWe look forward to your attendance and participation",
     'invitation_contact_reminder_default_event' => 'the event',
+    'invitation_qr_caption' => "Please show this code when entering",
     
     'variables' => [
         'event_type' => 'event type',

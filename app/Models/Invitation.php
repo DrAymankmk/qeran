@@ -358,8 +358,7 @@ class Invitation extends Model
     {
         $basePath = 'qr-code/Qr-'.$this->id.'-contact-'.$contactLogId;
 
-        if (Storage::disk('public')->exists($basePath.'.png')
-            || Storage::disk('public')->exists($basePath.'.svg')) {
+        if (Storage::disk('public')->exists($basePath.'.png')) {
             return;
         }
 
@@ -370,36 +369,50 @@ class Invitation extends Model
     {
         $basePath = 'qr-code/Qr-'.$this->id.'-'.$userId;
 
-        if (Storage::disk('public')->exists($basePath.'.png')
-            || Storage::disk('public')->exists($basePath.'.svg')) {
+        if (Storage::disk('public')->exists($basePath.'.png')) {
             return;
         }
 
         $this->writeQrCodeFiles($basePath, $this->id.'-'.$userId);
     }
 
+    public function publicQrPngPathForContact(int $contactLogId): ?string
+    {
+        $this->ensureQrCodeForContact($contactLogId);
+        $relativePath = 'qr-code/Qr-'.$this->id.'-contact-'.$contactLogId.'.png';
+
+        return Storage::disk('public')->exists($relativePath) ? $relativePath : null;
+    }
+
+    public function publicQrPngPathForUser(int $userId): ?string
+    {
+        $this->ensureQrCodeForUser($userId);
+        $relativePath = 'qr-code/Qr-'.$this->id.'-'.$userId.'.png';
+
+        return Storage::disk('public')->exists($relativePath) ? $relativePath : null;
+    }
+
     protected function writeQrCodeFiles(string $basePath, string $payload): void
     {
         try {
-            if (extension_loaded('imagick')) {
-                try {
-                    $image = QrCode::format('png')
-                        ->size(200)
-                        ->color(0, 0, 0)
-                        ->backgroundColor(255, 255, 255, 0)
-                        ->style('square')
-                        ->generate($payload);
+            try {
+                $image = QrCode::format('png')
+                    ->size(400)
+                    ->margin(2)
+                    ->color(0, 0, 0)
+                    ->backgroundColor(255, 255, 255, 0)
+                    ->style('square')
+                    ->generate($payload);
 
-                    Storage::disk('public')->put($basePath.'.png', $image);
+                Storage::disk('public')->put($basePath.'.png', $image);
 
-                    return;
-                } catch (\Throwable $e) {
-                    Log::warning('PNG QR generation failed, falling back to SVG', [
-                        'invitation_id' => $this->id,
-                        'payload' => $payload,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
+                return;
+            } catch (\Throwable $e) {
+                Log::warning('PNG QR generation failed, falling back to SVG', [
+                    'invitation_id' => $this->id,
+                    'payload' => $payload,
+                    'error' => $e->getMessage(),
+                ]);
             }
 
             $svg = QrCode::format('svg')

@@ -1743,6 +1743,41 @@ class InvitationBuilderService
         }
     }
 
+    public function guestQrShareUrl(Invitation $invitation, ?int $contactLogId = null, ?int $userId = null): ?string
+    {
+        if (! $this->usesUploadedGuestMedia($invitation)) {
+            return null;
+        }
+
+        $kind = null;
+        $id = 0;
+        $pngPath = null;
+
+        if ($contactLogId && $contactLogId > 0) {
+            $kind = 'contact';
+            $id = $contactLogId;
+            $pngPath = $invitation->publicQrPngPathForContact($contactLogId);
+        } elseif ($userId && $userId > 0) {
+            $kind = 'user';
+            $id = $userId;
+            $pngPath = $invitation->publicQrPngPathForUser($userId);
+        }
+
+        if (! $kind || ! $pngPath) {
+            return null;
+        }
+
+        try {
+            return route('user.invitation.qr', [
+                'invitation_code' => $invitation->code,
+                'kind' => $kind,
+                'id' => $id,
+            ]);
+        } catch (\Throwable) {
+            return rtrim((string) config('app.url'), '/').'/m/'.$invitation->code.'/qr/'.$kind.'/'.$id.'.png';
+        }
+    }
+
     /**
      * @return array{url: string, type: 'image'|'video'}|null
      */

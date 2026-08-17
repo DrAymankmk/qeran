@@ -395,15 +395,17 @@ class Invitation extends Model
     public function qrPngBinaryForContact(int $contactLogId): ?string
     {
         $path = $this->publicQrPngPathForContact($contactLogId);
+        $bytes = $this->readPublicPng($path);
 
-        return $this->readPublicPng($path);
+        return $bytes ?: $this->encodeQrPngWithGd($this->id.'-contact-'.$contactLogId);
     }
 
     public function qrPngBinaryForUser(int $userId): ?string
     {
         $path = $this->publicQrPngPathForUser($userId);
+        $bytes = $this->readPublicPng($path);
 
-        return $this->readPublicPng($path);
+        return $bytes ?: $this->encodeQrPngWithGd($this->id.'-'.$userId);
     }
 
     protected function readPublicPng(?string $relativePath): ?string
@@ -424,6 +426,10 @@ class Invitation extends Model
     protected function writeQrCodeFiles(string $basePath, string $payload): void
     {
         try {
+            if ($this->writeQrPngWithGd($basePath, $payload)) {
+                return;
+            }
+
             try {
                 $image = QrCode::format('png')
                     ->size(400)
@@ -437,15 +443,11 @@ class Invitation extends Model
 
                 return;
             } catch (\Throwable $e) {
-                Log::warning('PNG QR generation failed, trying GD', [
+                Log::warning('PNG QR generation failed, falling back to SVG', [
                     'invitation_id' => $this->id,
                     'payload' => $payload,
                     'error' => $e->getMessage(),
                 ]);
-            }
-
-            if ($this->writeQrPngWithGd($basePath, $payload)) {
-                return;
             }
 
             $svg = QrCode::format('svg')
@@ -467,8 +469,20 @@ class Invitation extends Model
 
     protected function writeQrPngWithGd(string $basePath, string $payload): bool
     {
-        if (! function_exists('imagecreatetruecolor') || ! function_exists('imagepng')) {
+        $png = $this->encodeQrPngWithGd($payload);
+        if (! is_string($png) || $png === '') {
             return false;
+        }
+
+        Storage::disk('public')->put($basePath.'.png', $png);
+
+        return true;
+    }
+
+    protected function encodeQrPngWithGd(string $payload): ?string
+    {
+        if (! function_exists('imagecreatetruecolor') || ! function_exists('imagepng')) {
+            return null;
         }
 
         try {
@@ -484,7 +498,7 @@ class Invitation extends Model
             $size = ($modules + (2 * $margin)) * $scale;
             $image = imagecreatetruecolor($size, $size);
             if ($image === false) {
-                return false;
+                return null;
             }
 
             $white = imagecolorallocate($image, 255, 255, 255);
@@ -513,13 +527,7 @@ class Invitation extends Model
             $png = ob_get_clean();
             imagedestroy($image);
 
-            if (! is_string($png) || $png === '') {
-                return false;
-            }
-
-            Storage::disk('public')->put($basePath.'.png', $png);
-
-            return true;
+            return is_string($png) && $png !== '' ? $png : null;
         } catch (\Throwable $e) {
             Log::warning('GD QR generation failed', [
                 'invitation_id' => $this->id,
@@ -527,7 +535,7 @@ class Invitation extends Model
                 'error' => $e->getMessage(),
             ]);
 
-            return false;
+            return null;
         }
     }
 

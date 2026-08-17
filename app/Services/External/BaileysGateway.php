@@ -235,17 +235,15 @@ class BaileysGateway
             $payload['referenceId'] = $referenceId;
         }
 
-        if (is_string($mediaUrl) && $mediaUrl !== '') {
+        if (is_string($mediaBase64) && $mediaBase64 !== '') {
+            $payload['mediaBase64'] = $mediaBase64;
+            $payload['mediaType'] = $mediaType === 'video' ? 'video' : 'image';
+        } elseif (is_string($mediaUrl) && $mediaUrl !== '') {
             $payload['mediaUrl'] = $mediaUrl;
             $payload['mediaType'] = $mediaType === 'video' ? 'video' : 'image';
         }
 
-        if (is_string($mediaBase64) && $mediaBase64 !== '') {
-            $payload['mediaBase64'] = $mediaBase64;
-            $payload['mediaType'] = $mediaType === 'video' ? 'video' : 'image';
-        }
-
-        return self::request('post', '/send', $payload, ($mediaUrl || $mediaBase64) ? 120 : 90);
+        return self::request('post', '/send', $payload, isset($payload['mediaUrl']) || isset($payload['mediaBase64']) ? 120 : 90);
     }
 
     protected static function http(int $timeoutSeconds = 90): PendingRequest

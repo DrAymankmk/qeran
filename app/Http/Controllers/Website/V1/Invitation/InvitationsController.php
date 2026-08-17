@@ -50,35 +50,46 @@ class InvitationsController extends Controller
 
     public function showQr(string $invitation_code, string $kind, int $id)
     {
-        $invitation = Invitation::where('code', $invitation_code)->first();
+        try {
+            $invitation = Invitation::where('code', $invitation_code)->first();
 
-        if (! $invitation || ! $this->invitationBuilder->usesUploadedGuestMedia($invitation)) {
-            abort(404);
-        }
-
-        if ($kind === 'contact') {
-            $exists = InvitationContactLog::query()
-                ->where('invitation_id', $invitation->id)
-                ->where('id', $id)
-                ->exists();
-            if (! $exists) {
+            if (! $invitation || ! $this->invitationBuilder->usesUploadedGuestMedia($invitation)) {
                 abort(404);
             }
-        }
 
-        $relativePath = $kind === 'contact'
-            ? $invitation->publicQrPngPathForContact($id)
-            : $invitation->publicQrPngPathForUser($id);
+            if ($kind === 'contact') {
+                $exists = InvitationContactLog::query()
+                    ->where('invitation_id', $invitation->id)
+                    ->where('id', $id)
+                    ->exists();
+                if (! $exists) {
+                    abort(404);
+                }
+            }
 
-        if (! $relativePath) {
+            $bytes = $kind === 'contact'
+                ? $invitation->qrPngBinaryForContact($id)
+                : $invitation->qrPngBinaryForUser($id);
+
+            if (! is_string($bytes) || $bytes === '') {
+                abort(404);
+            }
+
+            return response($bytes, 200, [
+                'Content-Type' => 'image/png',
+                'Content-Disposition' => 'inline; filename="invitation-qr.png"',
+                'Cache-Control' => 'public, max-age=86400',
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Invitation QR download failed', [
+                'invitation_code' => $invitation_code,
+                'kind' => $kind,
+                'id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+
             abort(404);
         }
-
-        return Storage::disk('public')->response($relativePath, basename($relativePath), [
-            'Content-Type' => 'image/png',
-            'Content-Disposition' => 'inline; filename="'.basename($relativePath).'"',
-            'Cache-Control' => 'public, max-age=86400',
-        ]);
     }
 
     public function showBuilder(string $invitation_code, $user_id = null)

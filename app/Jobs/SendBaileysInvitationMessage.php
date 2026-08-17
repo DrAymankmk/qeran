@@ -80,15 +80,16 @@ class SendBaileysInvitationMessage implements ShouldQueue
                     null,
                     $this->guestUserId
                 );
-                if (is_array($qrMedia) && (($qrMedia['base64'] ?? null) || ($qrMedia['url'] ?? null))) {
+                $qrBase64 = is_array($qrMedia) ? ($qrMedia['base64'] ?? null) : null;
+                if (is_string($qrBase64) && $qrBase64 !== '') {
                     $qrResponse = BaileysWhatsApp::sendFromSession(
                         'user_'.$this->hostUserId,
                         $this->countryCode.$this->phone,
                         __('messages.invitation_qr_caption'),
                         $this->referenceId !== '' ? $this->referenceId.'-qr' : '',
-                        $qrMedia['url'] ?? null,
+                        null,
                         'image',
-                        $qrMedia['base64'] ?? null
+                        $qrBase64
                     );
                     if (! isset($qrResponse->sent) || $qrResponse->sent !== 'true') {
                         Log::warning('Invitation QR WhatsApp send failed', [

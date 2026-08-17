@@ -32,18 +32,41 @@ class SendBaileysInvitationMessage implements ShouldQueue
 
     public function handle(): void
     {
-        $media = app(InvitationBuilderService::class)->guestShareMedia(
-            Invitation::query()->find($this->invitationId)
-        );
+        $mediaUrl = null;
+        $mediaType = null;
+
+        try {
+            $media = app(InvitationBuilderService::class)->guestShareMedia(
+                Invitation::query()->find($this->invitationId)
+            );
+            if (is_array($media)) {
+                $mediaUrl = $media['url'] ?? null;
+                $mediaType = $media['type'] ?? null;
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to resolve invitation share media', [
+                'invitation_id' => $this->invitationId,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         $response = BaileysWhatsApp::sendFromSession(
             'user_'.$this->hostUserId,
             $this->countryCode.$this->phone,
             $this->message,
             $this->referenceId,
-            $media['url'] ?? null,
-            $media['type'] ?? null
+            $mediaUrl,
+            $mediaType
         );
+
+        if ((! isset($response->sent) || $response->sent !== 'true') && $mediaUrl) {
+            $response = BaileysWhatsApp::sendFromSession(
+                'user_'.$this->hostUserId,
+                $this->countryCode.$this->phone,
+                $this->message,
+                $this->referenceId
+            );
+        }
 
         if (isset($response->sent) && $response->sent === 'true') {
             DB::table('invitation_user')

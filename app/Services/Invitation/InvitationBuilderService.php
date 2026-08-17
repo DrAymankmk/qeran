@@ -1728,10 +1728,14 @@ class InvitationBuilderService
         $extension = strtolower((string) ($file->extension ?: pathinfo((string) $file->path, PATHINFO_EXTENSION)));
         $filename = $extension !== '' ? 'invitation.'.$extension : 'invitation';
 
-        return route('user.invitation.media', [
-            'invitation_code' => $invitation->code,
-            'filename' => $filename,
-        ]);
+        try {
+            return route('user.invitation.media', [
+                'invitation_code' => $invitation->code,
+                'filename' => $filename,
+            ]);
+        } catch (\Throwable) {
+            return rtrim((string) config('app.url'), '/').'/m/'.$invitation->code.'/'.$filename;
+        }
     }
 
     /**

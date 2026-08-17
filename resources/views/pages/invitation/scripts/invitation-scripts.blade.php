@@ -295,6 +295,7 @@ window.showInvitationDetails = function(invitationId) {
 			return response.json();
 		})
 		.then(data => {
+			window.lastInvitationDetails = data;
 			// Restore original modal body structure first
 			modalBody.innerHTML = originalContent;
 
@@ -424,6 +425,58 @@ window.showInvitationDetails = function(invitationId) {
 			</div>`;
 		});
 };
+
+window.fillContactMessageModal = function(data) {
+	const textEl = document.getElementById('contactMessageText');
+	if (textEl) {
+		textEl.textContent = data.contact_message || '{{ __("admin.no-data-available") }}';
+	}
+};
+
+window.openContactMessageModal = function(data) {
+	window.fillContactMessageModal(data);
+	const modalElement = document.getElementById('contactMessageModal');
+	if (modalElement) {
+		bootstrap.Modal.getOrCreateInstance(modalElement).show();
+	}
+};
+
+window.showContactMessage = function(invitationId) {
+	fetch('{{ route("invitations.details", ":id") }}'.replace(':id', invitationId), {
+			method: 'GET',
+			headers: {
+				'X-Requested-With': 'XMLHttpRequest',
+				'Accept': 'application/json',
+				'Content-Type': 'application/json'
+			}
+		})
+		.then(response => {
+			if (!response.ok) {
+				throw new Error('Network response was not ok');
+			}
+			return response.json();
+		})
+		.then(data => {
+			window.lastInvitationDetails = data;
+			window.openContactMessageModal(data);
+		})
+		.catch(error => {
+			console.error('Error:', error);
+			alert('{{ __("admin.invitation-not-found") }}');
+		});
+};
+
+document.addEventListener('click', function(event) {
+	const button = event.target.closest('#btnShowContactMessage');
+	if (!button) {
+		return;
+	}
+	if (window.lastInvitationDetails) {
+		window.openContactMessageModal(window.lastInvitationDetails);
+		return;
+	}
+	alert('{{ __("admin.loading") }}');
+});
 </script>
 
 @endsection

@@ -528,6 +528,8 @@ return[
     'all-time' => 'All Time',
     'most-used-categories' => 'Most Used Categories',
     'invitation-details' => 'Invitation Details',
+    'invitation-show-contact-message' => 'Show contact message',
+    'invitation-contact-message' => 'Message sent to contacts',
     'invitation-code' => 'Invitation Code',
     'invitation-status-1' => 'Pending Admin',
     'invitation-status-2' => 'Approved',

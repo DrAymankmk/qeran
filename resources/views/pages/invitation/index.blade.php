@@ -217,6 +217,33 @@
 				</div>
 			</div>
 			<div class="modal-footer">
+				<button type="button" class="btn btn-primary" id="btnShowContactMessage">
+					<i class="mdi mdi-message-text-outline"></i>
+					{{__('admin.invitation-show-contact-message')}}
+				</button>
+				<button type="button" class="btn btn-secondary"
+					data-bs-dismiss="modal">{{__('admin.close')}}</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Contact message preview modal -->
+<div class="modal fade" id="contactMessageModal" tabindex="-1" aria-labelledby="contactMessageModalLabel"
+	aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="contactMessageModalLabel">
+					{{__('admin.invitation-contact-message')}}</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal"
+					aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<pre id="contactMessageText" class="bg-light p-3 mb-0"
+					style="white-space: pre-wrap; word-break: break-word; font-family: inherit; direction: rtl; text-align: right;"></pre>
+			</div>
+			<div class="modal-footer">
 				<button type="button" class="btn btn-secondary"
 					data-bs-dismiss="modal">{{__('admin.close')}}</button>
 			</div>

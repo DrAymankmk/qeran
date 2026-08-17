@@ -555,6 +555,8 @@ return[
     'all-time' => 'كل الوقت',
     'most-used-categories' => 'الفئات الأكثر استخداماً',
     'invitation-details' => 'تفاصيل الدعوة',
+    'invitation-show-contact-message' => 'عرض رسالة جهات الاتصال',
+    'invitation-contact-message' => 'الرسالة المرسلة لجهات الاتصال',
     'invitation-code' => 'رمز الدعوة',
     'invitation-status-2' => 'في انتظار موافقة الأدمن',
     'invitation-status-1' => 'موافق عليه',

@@ -1721,12 +1721,17 @@ class InvitationBuilderService
         }
 
         $file = $invitation->uploadedInvitationMediaFile();
-        if (! $file) {
-            return null;
+        $extension = 'webp';
+        if ($file) {
+            $fromFile = strtolower((string) ($file->extension ?: pathinfo((string) $file->path, PATHINFO_EXTENSION)));
+            if ($fromFile !== '') {
+                $extension = $fromFile;
+            }
+        } elseif ((int) $invitation->invitation_media_type === Constant::FILE_TYPE['Video']) {
+            $extension = 'mp4';
         }
 
-        $extension = strtolower((string) ($file->extension ?: pathinfo((string) $file->path, PATHINFO_EXTENSION)));
-        $filename = $extension !== '' ? 'invitation.'.$extension : 'invitation';
+        $filename = 'invitation.'.$extension;
 
         try {
             return route('user.invitation.media', [
@@ -1770,15 +1775,8 @@ class InvitationBuilderService
         bool $preview = false
     ): string {
         if ($this->usesUploadedGuestMedia($invitation)) {
-            $mediaUrl = $this->guestUploadedMediaShareUrl($invitation);
-            if ($mediaUrl) {
-                return $mediaUrl;
-            }
-
-            return route('user.invitation.contact.show', [
-                'invitation_code' => $invitation->code,
-                'contact_log_id' => $contactLogId,
-            ]);
+            return $this->guestUploadedMediaShareUrl($invitation)
+                ?: rtrim((string) config('app.url'), '/').'/m/'.$invitation->code.'/invitation.webp';
         }
 
         $invitation->loadMissing('builderSetting');
@@ -1810,12 +1808,8 @@ class InvitationBuilderService
         bool $preview = false
     ): string {
         if ($this->usesUploadedGuestMedia($invitation)) {
-            $mediaUrl = $this->guestUploadedMediaShareUrl($invitation);
-            if ($mediaUrl) {
-                return $mediaUrl;
-            }
-
-            return $this->classicGuestInvitationUrl($invitation, $userId, $insertedBy);
+            return $this->guestUploadedMediaShareUrl($invitation)
+                ?: rtrim((string) config('app.url'), '/').'/m/'.$invitation->code.'/invitation.webp';
         }
 
         $invitation->loadMissing('builderSetting');
@@ -1837,6 +1831,20 @@ class InvitationBuilderService
         }
 
         return $this->classicGuestInvitationUrl($invitation, $userId, $insertedBy);
+    }
+
+    public function contactInvitationPreviewMessage(Invitation $invitation, ?int $contactLogId = null): string
+    {
+        $invitation->loadMissing('category');
+        $eventType = $invitation->category?->name ?: $invitation->event_name;
+        $invitationLink = $this->guestContactInvitationUrl($invitation, (int) ($contactLogId ?? 0));
+
+        return __('messages.invitation_sms_template', [
+            'event_type' => $eventType ?: '',
+            'host_name' => $invitation->host_name,
+            'invitation_link' => $invitationLink,
+            'application_link' => env('APPLICATION_LINK'),
+        ]);
     }
 
     protected function classicGuestInvitationUrl(

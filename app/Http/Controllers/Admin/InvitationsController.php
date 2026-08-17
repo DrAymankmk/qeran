@@ -8,9 +8,11 @@ use App\Http\Requests\Admin\InvitationRequest;
 use App\Models\Admin;
 use App\Models\HubFile;
 use App\Models\Invitation;
+use App\Models\InvitationContactLog;
 use App\Models\InvitationPackage;
 use App\Models\User;
 use App\Services\External\Notification;
+use App\Services\Invitation\InvitationBuilderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -234,7 +236,8 @@ class InvitationsController extends Controller
 
             $actionsHtml = '<div class="d-flex gap-3">'.
                 '<a href="'.e($whatsappUrl).'" title="'.__('admin.whatsapp').'" class="text-success" target="_blank"><i class="mdi mdi-whatsapp font-size-18"></i></a>'.
-                '<a href="javascript:void(0);" onclick="showInvitationDetails('.$invitation->id.')" title="'.__('admin.show').'" class="text-info"><i class="mdi mdi-eye font-size-22"></i></a>';
+                '<a href="javascript:void(0);" onclick="showInvitationDetails('.$invitation->id.')" title="'.__('admin.show').'" class="text-info"><i class="mdi mdi-eye font-size-22"></i></a>'.
+                '<a href="javascript:void(0);" onclick="showContactMessage('.$invitation->id.')" title="'.e(__('admin.invitation-show-contact-message')).'" class="text-primary"><i class="mdi mdi-message-text-outline font-size-22"></i></a>';
 
             // Check permission for edit
             if (Gate::allows('edit-invitations')) {
@@ -355,6 +358,16 @@ class InvitationsController extends Controller
                 ];
             })->values()->all();
 
+            $latestContactLogId = InvitationContactLog::query()
+                ->where('invitation_id', $invitation->id)
+                ->latest('id')
+                ->value('id');
+            $builderService = app(InvitationBuilderService::class);
+            $contactInvitationLink = $builderService->guestContactInvitationUrl(
+                $invitation,
+                (int) ($latestContactLogId ?? 0)
+            );
+
             $data = [
                 'invitation_id' => $invitation->id,
                 'code' => $invitation->code ?? '',
@@ -383,6 +396,11 @@ class InvitationsController extends Controller
                 'receipt_image' => $invitation->receiptImage() ?? '',
                 'category_name' => $invitation->category?->name ?? '',
                 'hub_files' => $hubFilesPayload,
+                'contact_message' => $builderService->contactInvitationPreviewMessage(
+                    $invitation,
+                    $latestContactLogId ? (int) $latestContactLogId : null
+                ),
+                'contact_invitation_link' => $contactInvitationLink,
             ];
 
             return response()->json($data);

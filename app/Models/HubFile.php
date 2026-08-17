@@ -88,6 +88,41 @@ class HubFile extends Model
         return $this->mediaUrlForKey(trim($this->bucket_name.'/'.$this->path, '/'));
     }
 
+    /**
+     * Public URL that does not depend on Storage::exists() (often false on S3/Wasabi).
+     */
+    public function durablePublicUrl(): ?string
+    {
+        if (empty($this->path) || empty($this->bucket_name)) {
+            return null;
+        }
+
+        $key = trim($this->bucket_name.'/'.$this->path, '/');
+        $resolved = $this->mediaUrlForKey($key);
+        if (is_string($resolved) && $resolved !== '') {
+            return $resolved;
+        }
+
+        $diskName = mediaDisk();
+        $driver = (string) config("filesystems.disks.{$diskName}.driver", 'local');
+        $configuredUrl = rtrim((string) config("filesystems.disks.{$diskName}.url", ''), '/');
+
+        if ($configuredUrl !== '') {
+            return $configuredUrl.'/'.ltrim($key, '/');
+        }
+
+        try {
+            $disk = Storage::disk($diskName);
+            if ($driver === 's3') {
+                return $disk->temporaryUrl($key, now()->addDays(7));
+            }
+
+            return $disk->url($key);
+        } catch (\Throwable) {
+            return Storage::disk('public')->url($key);
+        }
+    }
+
     protected function mediaUrlForKey(string $key): ?string
     {
         if ($key === '') {

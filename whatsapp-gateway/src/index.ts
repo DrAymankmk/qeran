@@ -39,7 +39,7 @@ import {
   waitForQrOrConnected,
   warmBaileysVersion,
 } from './baileys/manager.js';
-import { sendText } from './baileys/send.js';
+import { sendMessage } from './baileys/send.js';
 import { probeReceiptWebhook, receiptWebhookConfig } from './baileys/receipts.js';
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
@@ -588,15 +588,22 @@ app.post('/send', async (req, res) => {
   const sessionId = String(req.body?.sessionId ?? '').trim();
   const to = String(req.body?.to ?? '').trim();
   const message = String(req.body?.message ?? '').trim();
+  const mediaUrl = String(req.body?.mediaUrl ?? '').trim();
+  const mediaType = String(req.body?.mediaType ?? '').trim() === 'video' ? 'video' : 'image';
 
-  if (!sessionId || !to || !message) {
-    res.status(400).json({ error: 'sessionId, to, and message are required' });
+  if (!sessionId || !to || (!message && !mediaUrl)) {
+    res.status(400).json({ error: 'sessionId, to, and message (or mediaUrl) are required' });
     return;
   }
 
   try {
     const referenceId = String(req.body?.referenceId ?? '').trim() || undefined;
-    const result = await sendText(sessionId, to, message, referenceId);
+    const result = await sendMessage(sessionId, to, {
+      text: message,
+      mediaUrl: mediaUrl || undefined,
+      mediaType: mediaUrl ? mediaType : undefined,
+      referenceId,
+    });
     res.json({
       sent: result.sent,
       idMessage: result.idMessage ?? null,

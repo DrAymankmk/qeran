@@ -1710,6 +1710,32 @@ class InvitationBuilderService
         return (int) $invitation->invitation_type === Constant::INVITATION_TYPE['User Design'];
     }
 
+    /**
+     * @return array{url: string, type: 'image'|'video'}|null
+     */
+    public function guestShareMedia(?Invitation $invitation): ?array
+    {
+        if (! $invitation || ! $this->usesUploadedGuestMedia($invitation)) {
+            return null;
+        }
+
+        $file = $invitation->uploadedInvitationMediaFile();
+        $url = $file?->durablePublicUrl();
+        if (! $file || ! is_string($url) || $url === '') {
+            return null;
+        }
+
+        $extension = strtolower((string) $file->extension);
+        $isVideo = (int) $file->file_type === Constant::FILE_TYPE['Video']
+            || (int) $invitation->invitation_media_type === Constant::FILE_TYPE['Video']
+            || in_array($extension, ['mp4', 'webm', 'ogg', 'ogv', 'mov', 'avi', 'm4v', 'mkv'], true);
+
+        return [
+            'url' => $url,
+            'type' => $isVideo ? 'video' : 'image',
+        ];
+    }
+
     public function guestContactInvitationUrl(
         Invitation $invitation,
         int $contactLogId,

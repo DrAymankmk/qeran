@@ -268,58 +268,59 @@ class Invitation extends Model
     }
 
     /**
+     * Hub file used as the guest-facing User Design invitation (image/video).
+     */
+    public function uploadedInvitationMediaFile(): ?HubFile
+    {
+        $this->unsetRelation('hubFiles');
+        $this->load('hubFiles');
+
+        $files = $this->hubFiles
+            ->filter(fn ($file) => (int) $file->file_key !== Constant::FILE_KEY['Receipt'])
+            ->filter(fn ($file) => filled($file->path));
+
+        if ($files->isEmpty()) {
+            return null;
+        }
+
+        $preferVideo = (int) $this->invitation_media_type === Constant::FILE_TYPE['Video'];
+        $mediaTypes = [
+            Constant::FILE_TYPE['Image'],
+            Constant::FILE_TYPE['Video'],
+            Constant::FILE_TYPE['Gif'],
+        ];
+
+        if ($preferVideo) {
+            $video = $files->first(fn ($file) => (int) $file->file_type === Constant::FILE_TYPE['Video']);
+            if ($video) {
+                return $video;
+            }
+        }
+
+        $main = $files->first(function ($file) use ($mediaTypes) {
+            return (int) $file->file_key === Constant::FILE_KEY['Main']
+                && in_array((int) $file->file_type, $mediaTypes, true);
+        });
+        if ($main) {
+            return $main;
+        }
+
+        $typed = $files->first(fn ($file) => in_array((int) $file->file_type, $mediaTypes, true));
+        if ($typed) {
+            return $typed;
+        }
+
+        return $files->first();
+    }
+
+    /**
      * Public URL of the guest-uploaded invitation image or video (User Design).
      */
     public function uploadedInvitationMediaUrl(): ?string
     {
-        $this->loadMissing('hubFiles');
+        $url = $this->uploadedInvitationMediaFile()?->durablePublicUrl();
 
-        $files = $this->hubFiles->filter(function ($file) {
-            return (int) $file->file_key !== Constant::FILE_KEY['Receipt'];
-        });
-
-        $preferVideo = (int) $this->invitation_media_type === Constant::FILE_TYPE['Video'];
-
-        $pickUrl = static function ($file): ?string {
-            if (! $file) {
-                return null;
-            }
-
-            $url = $file->get_path();
-
-            return is_string($url) && $url !== '' ? $url : null;
-        };
-
-        if ($preferVideo) {
-            $videoUrl = $pickUrl($files->first(
-                fn ($file) => (int) $file->file_type === Constant::FILE_TYPE['Video']
-            ));
-            if ($videoUrl) {
-                return $videoUrl;
-            }
-        }
-
-        $mainImageUrl = $pickUrl($files->first(function ($file) {
-            return (int) $file->file_type === Constant::FILE_TYPE['Image']
-                && (int) $file->file_key === Constant::FILE_KEY['Main'];
-        }));
-        if ($mainImageUrl) {
-            return $mainImageUrl;
-        }
-
-        $videoUrl = $pickUrl($files->first(
-            fn ($file) => (int) $file->file_type === Constant::FILE_TYPE['Video']
-        ));
-        if ($videoUrl) {
-            return $videoUrl;
-        }
-
-        return $pickUrl($files->first(function ($file) {
-            return in_array((int) $file->file_type, [
-                Constant::FILE_TYPE['Image'],
-                Constant::FILE_TYPE['Gif'],
-            ], true);
-        }));
+        return is_string($url) && $url !== '' ? $url : null;
     }
 
     public function qr($invitation_id, $user_id = null)

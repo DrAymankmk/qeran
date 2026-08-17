@@ -3,9 +3,11 @@
 namespace App\Jobs;
 
 use App\Helpers\Constant;
+use App\Models\Invitation;
 use App\Models\InvitationContactLog;
 use App\Support\PhoneNumber;
 use App\Services\External\BaileysWhatsApp;
+use App\Services\Invitation\InvitationBuilderService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -56,11 +58,17 @@ class SendBaileysInvitationContactMessage implements ShouldQueue
             $log->update(['reference_id' => $this->referenceId]);
         }
 
+        $media = app(InvitationBuilderService::class)->guestShareMedia(
+            Invitation::query()->find($this->invitationId)
+        );
+
         $response = BaileysWhatsApp::sendFromSession(
             'user_'.$this->hostUserId,
             $targetPhone,
             $this->message,
-            $this->referenceId
+            $this->referenceId,
+            $media['url'] ?? null,
+            $media['type'] ?? null
         );
 
         if (isset($response->sent) && $response->sent === 'true') {

@@ -171,6 +171,7 @@ class WeddingInvitationPresenter
             ...self::sealViewVars($bc['seal_style'] ?? 'wax_classic', $bc['seal_color'] ?? null),
             'wiDatePosition' => $bc['date_position'] ?? 'center',
             'wiHonorific' => self::heroHonorific($bc),
+            'wiHeroAccents' => self::heroAccents($bc),
             'wiHeroVideoUrl' => $heroVideoUrl,
             'wiHeroHasVideo' => $heroVideoUrl !== '',
             'wiHeroImageUrl' => $heroImageUrl,
@@ -259,6 +260,13 @@ class WeddingInvitationPresenter
         return $value;
     }
 
+    public static function blockLineStyle(array $bc, string $block, string $prefix): string
+    {
+        $data = is_array($bc['block_data'][$block] ?? null) ? $bc['block_data'][$block] : [];
+
+        return self::honorificLineStyle($data, $prefix);
+    }
+
     /**
      * @return array{
      *     visible: bool,
@@ -343,6 +351,75 @@ class WeddingInvitationPresenter
         $size = trim((string) ($data[$prefix.'_font_size'] ?? ''));
         if ($size !== '' && preg_match('/^\d+(?:\.\d+)?px$/', $size)) {
             $parts[] = 'font-size: '.$size;
+        }
+
+        $weight = trim((string) ($data[$prefix.'_font_weight'] ?? ''));
+        if ($weight !== '' && in_array($weight, array_keys(config('invitation_builder.font_weights', [])), true)) {
+            $parts[] = 'font-weight: '.$weight;
+        }
+
+        return implode('; ', $parts);
+    }
+
+    /**
+     * @return array{
+     *     ampersand_style: string,
+     *     divider_style: string,
+     *     groom_name_style: string,
+     *     groom_father_style: string,
+     *     bride_name_style: string,
+     *     bride_father_style: string,
+     *     groom_inline: bool,
+     *     bride_inline: bool
+     * }
+     */
+    public static function heroAccents(array $bc): array
+    {
+        $data = is_array($bc['block_data']['hero_accents'] ?? null)
+            ? $bc['block_data']['hero_accents']
+            : [];
+
+        return [
+            'ampersand_style' => self::honorificLineStyle($data, 'ampersand'),
+            'divider_style' => self::heroDividerStyle($data),
+            'groom_name_style' => self::honorificLineStyle($data, 'groom'),
+            'groom_father_style' => self::honorificLineStyle($data, 'groom_father'),
+            'bride_name_style' => self::honorificLineStyle($data, 'bride'),
+            'bride_father_style' => self::honorificLineStyle($data, 'bride_father'),
+            'groom_inline' => ($data['groom_layout'] ?? 'two_lines') === 'one_line',
+            'bride_inline' => ($data['bride_layout'] ?? 'two_lines') === 'one_line',
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public static function heroDividerStyle(array $data): string
+    {
+        $parts = [];
+
+        $color = trim((string) ($data['divider_color'] ?? ''));
+        if ($color !== '' && preg_match('/^#?[0-9A-Fa-f]{6}$/i', $color)) {
+            $hex = str_starts_with($color, '#') ? $color : '#'.$color;
+            $parts[] = '--wi-hero-divider-color: '.$hex;
+        }
+
+        $weight = trim((string) ($data['divider_font_weight'] ?? ''));
+        $weightMap = [
+            '300' => ['0.5px', '5px'],
+            '400' => ['1px', '7px'],
+            '500' => ['1.5px', '8px'],
+            '600' => ['2px', '10px'],
+            '700' => ['3px', '12px'],
+        ];
+        if (isset($weightMap[$weight])) {
+            $parts[] = '--wi-hero-divider-weight: '.$weightMap[$weight][0];
+            $parts[] = '--wi-hero-divider-diamond: '.$weightMap[$weight][1];
+        }
+
+        $size = trim((string) ($data['divider_font_size'] ?? ''));
+        if ($size !== '' && preg_match('/^\d+(?:\.\d+)?px$/', $size)) {
+            $parts[] = '--wi-hero-divider-width: '.$size;
         }
 
         return implode('; ', $parts);

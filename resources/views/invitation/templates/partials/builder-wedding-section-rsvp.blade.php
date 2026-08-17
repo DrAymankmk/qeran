@@ -12,6 +12,10 @@ $body = WeddingInvitationPresenter::blockValue($bc, 'rsvp', 'body', '');
 
 $bs = WeddingInvitationPresenter::blockStyleAttributes($bc, 'rsvp');
 
+$acceptBtnStyle = WeddingInvitationPresenter::blockLineStyle($bc, 'rsvp', 'accept');
+
+$declineBtnStyle = WeddingInvitationPresenter::blockLineStyle($bc, 'rsvp', 'decline');
+
 $rsvpAccepted = ($initialView ?? '') === 'success';
 
 $rsvpDeclined = ($initialView ?? '') === 'decline';
@@ -40,13 +44,13 @@ $rsvpDeclined = ($initialView ?? '') === 'decline';
 
         <div class="wi-rsvp-actions @if($rsvpAccepted || $rsvpDeclined) is-hidden @endif" id="wiRsvpActions">
 
-          <button type="button" class="wi-rsvp-btn wi-rsvp-btn-accept" id="wiRsvpAcceptBtn">
+          <button type="button" class="wi-rsvp-btn wi-rsvp-btn-accept" id="wiRsvpAcceptBtn"@if($acceptBtnStyle !== '') style="{{ $acceptBtnStyle }}"@endif>
 
             {{ __('admin.accept-invitation') }}
 
           </button>
 
-          <button type="button" class="wi-rsvp-btn wi-rsvp-btn-decline" id="wiRsvpDeclineBtn">
+          <button type="button" class="wi-rsvp-btn wi-rsvp-btn-decline" id="wiRsvpDeclineBtn"@if($declineBtnStyle !== '') style="{{ $declineBtnStyle }}"@endif>
 
             {{ __('admin.refuse-invitation') }}
 

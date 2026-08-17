@@ -62,6 +62,9 @@
 			placeholder="{{ __('admin.ib-block-style-inherit') }}">
 		<span class="input-group-text">px</span>
 	</div>
+	@if(!empty($fieldDef['hint']))
+	<small class="text-muted d-block mt-1">{{ __($fieldDef['hint']) }}</small>
+	@endif
 	@break
 	@case('font_weight')
 	<select name="{{ $name }}" id="{{ $inputId }}" class="form-select form-select-sm {{ $inputClass }}">
@@ -86,6 +89,9 @@
 		<option value="{{ $optionKey }}" @selected((string) ($value ?? ($fieldDef['default'] ?? '')) === (string) $optionKey)>{{ $optionLabel }}</option>
 		@endforeach
 	</select>
+	@if(!empty($fieldDef['hint']))
+	<small class="text-muted d-block mt-1">{{ __($fieldDef['hint']) }}</small>
+	@endif
 	@break
 	@case('number')
 	<input type="number" name="{{ $name }}" id="{{ $inputId }}"

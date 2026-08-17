@@ -127,38 +127,56 @@
   	</p>
   	@endif -->
 
+  	@php
+  	$wiHeroAccents = $wiHeroAccents ?? [
+  		'ampersand_style' => '',
+  		'divider_style' => '',
+  		'groom_name_style' => '',
+  		'groom_father_style' => '',
+  		'bride_name_style' => '',
+  		'bride_father_style' => '',
+  		'groom_inline' => false,
+  		'bride_inline' => false,
+  	];
+  	$wiAmpersandStyle = $wiHeroAccents['ampersand_style'] ?? '';
+  	$wiDividerStyle = $wiHeroAccents['divider_style'] ?? '';
+  	$wiGroomNameStyle = $wiHeroAccents['groom_name_style'] ?? '';
+  	$wiGroomFatherStyle = $wiHeroAccents['groom_father_style'] ?? '';
+  	$wiBrideNameStyle = $wiHeroAccents['bride_name_style'] ?? '';
+  	$wiBrideFatherStyle = $wiHeroAccents['bride_father_style'] ?? '';
+  	$wiGroomBlockClass = 'wi-couple-block wi-couple-groom'.(! empty($wiHeroAccents['groom_inline']) ? ' wi-couple-inline' : '');
+  	$wiBrideBlockClass = 'wi-couple-block wi-couple-bride'.(! empty($wiHeroAccents['bride_inline']) ? ' wi-couple-inline' : '');
+  	@endphp
   	<h1 class="wi-names wi-couple-stack wi-fade-in d2">
   		@if(!empty($wiGroom) || !empty($wiGroomFather))
-  		<span class="wi-couple-block wi-couple-groom">
+  		<span class="{{ $wiGroomBlockClass }}">
   			@if(!empty($wiGroom))
-  			<span class="wi-couple-name">{{ $wiGroom }}</span>
+  			<span class="wi-couple-name"@if($wiGroomNameStyle !== '') style="{{ $wiGroomNameStyle }}"@endif>{{ $wiGroom }}</span>
   			@endif
   			@if(!empty($wiGroomFather))
-  			<span
-  				class="wi-parent-line">{{ __('admin.ib-groom-father-line', ['name' => $wiGroomFather]) }}</span>
+  			<span class="wi-parent-line"@if($wiGroomFatherStyle !== '') style="{{ $wiGroomFatherStyle }}"@endif>{{ __('admin.ib-groom-father-line', ['name' => $wiGroomFather]) }}</span>
   			@endif
   		</span>
   		@endif
 
   		@if((!empty($wiGroom) || !empty($wiGroomFather)) && (!empty($wiBride) || !empty($wiBrideFather)))
-  		<span class="wi-ampersand">&</span>
+  		<span class="wi-ampersand"@if($wiAmpersandStyle !== '') style="{{ $wiAmpersandStyle }}"@endif>&</span>
   		@endif
 
   		@if(!empty($wiBride) || !empty($wiBrideFather))
-  		<span class="wi-couple-block wi-couple-bride">
+  		<span class="{{ $wiBrideBlockClass }}">
   			@if(!empty($wiBride))
-  			<span class="wi-couple-name">{{ $wiBride }}</span>
+  			<span class="wi-couple-name"@if($wiBrideNameStyle !== '') style="{{ $wiBrideNameStyle }}"@endif>{{ $wiBride }}</span>
   			@endif
   			@if(!empty($wiBrideFather))
-  			<span
-  				class="wi-parent-line">{{ __('admin.ib-bride-father-line', ['name' => $wiBrideFather]) }}</span>
+  			<span class="wi-parent-line"@if($wiBrideFatherStyle !== '') style="{{ $wiBrideFatherStyle }}"@endif>{{ __('admin.ib-bride-father-line', ['name' => $wiBrideFather]) }}</span>
   			@endif
   		</span>
   		@elseif(empty($wiGroom) && empty($wiGroomFather))
   		<span class="wi-couple-block">
   			<span class="wi-couple-name">{{ $wiName1 }}</span>
   			@if(!empty($wiName2))
-  			<span class="wi-ampersand">&</span>
+  			<span class="wi-ampersand"@if($wiAmpersandStyle !== '') style="{{ $wiAmpersandStyle }}"@endif>&</span>
   			<span class="wi-couple-name">{{ $wiName2 }}</span>
   			@endif
   		</span>
@@ -167,7 +185,7 @@
 
   	<p class="wi-subtitle wi-fade-in d3">{{ $wiSubtitle }}</p>
 
-  	<div class="wi-divider wi-fade-in d4">
+  	<div class="wi-divider wi-fade-in d4"@if($wiDividerStyle !== '') style="{{ $wiDividerStyle }}"@endif>
   		<div class="wi-divider-diamond"></div>
   	</div>
 

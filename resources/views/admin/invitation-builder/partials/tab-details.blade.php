@@ -36,6 +36,19 @@
 			value="{{ old('groom_father', $invitation->groom_father) }}"
 			placeholder="{{ __('admin.groom_father') }}">
 	</div>
+
+	<div class="col-12">
+		<hr class="my-1">
+		<h6 class="text-muted">{{ __('admin.ib-hero-accents-section') }}</h6>
+		<p class="small text-muted mb-2">{{ __('admin.ib-hero-accents-section-hint') }}</p>
+		@include('admin.invitation-builder.partials.block-fields', [
+			'blockKey' => 'hero_accents',
+			'blockData' => $config['block_data'] ?? [],
+			'schemas' => $catalog['block_field_schemas'] ?? config('invitation_builder.block_field_schemas', []),
+			'catalog' => $catalog,
+		])
+	</div>
+
 	<div class="col-md-6">
 		<label class="form-label">{{ __('admin.ib-event-date') }}</label>
 		<input type="date" name="event_date" class="form-control ib-preview-field mb-2"

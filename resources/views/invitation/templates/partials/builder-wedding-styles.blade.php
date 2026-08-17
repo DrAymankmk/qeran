@@ -74,17 +74,18 @@ display: flex;
 align-items: center;
 gap: 14px;
 margin: 0 auto 36px;
-width: 220px;
+width: var(--wi-hero-divider-width, 220px);
 }
 .wi-divider::before, .wi-divider::after {
 content: '';
 flex: 1;
-height: 0.5px;
-background: #c8a97a;
+height: var(--wi-hero-divider-weight, 0.5px);
+background: var(--wi-hero-divider-color, #c8a97a);
 }
 .wi-divider-diamond {
-width: 7px; height: 7px;
-background: #c8a97a;
+width: var(--wi-hero-divider-diamond, 7px);
+height: var(--wi-hero-divider-diamond, 7px);
+background: var(--wi-hero-divider-color, #c8a97a);
 transform: rotate(45deg);
 flex-shrink: 0;
 }

@@ -1190,10 +1190,10 @@ class InvitationBuilderService
             'textarea' => 'col-12',
             'checkbox' => 'col-md-6',
             'color', 'optional_color' => 'col-md-4',
-            'font', 'font_weight', 'select', 'icon_upload', 'audio_upload' => 'col-md-6',
+            'font', 'font_weight', 'select', 'icon_upload', 'audio_upload' => 'col-md-4',
             'font_size' => 'col-md-4',
             'date', 'time', 'datetime-local' => 'col-md-4',
-            default => 'col-md-6',
+            default => 'col-md-4',
         };
     }
 
@@ -1354,7 +1354,7 @@ class InvitationBuilderService
         }
     }
 
-    public function normalizeBlockStyleFieldValue(string $type, mixed $value): string
+    public function normalizeBlockStyleFieldValue(string $type, mixed $value, array $fieldDef = []): string
     {
         $value = trim((string) ($value ?? ''));
         if ($value === '') {
@@ -1383,7 +1383,9 @@ class InvitationBuilderService
                 return '';
             }
             $px = (float) $value;
-            if ($px < 8 || $px > 120) {
+            $min = isset($fieldDef['min']) ? (float) $fieldDef['min'] : 8;
+            $max = isset($fieldDef['max']) ? (float) $fieldDef['max'] : 120;
+            if ($px < $min || $px > $max) {
                 return '';
             }
 
@@ -1417,7 +1419,7 @@ class InvitationBuilderService
         }
 
         if (in_array($type, ['optional_color', 'font', 'font_size', 'font_weight'], true)) {
-            return $this->normalizeBlockStyleFieldValue($type, $value);
+            return $this->normalizeBlockStyleFieldValue($type, $value, $fieldDef);
         }
 
         if ($type === 'url' || $type === 'icon_upload' || $type === 'audio_upload') {
@@ -1482,7 +1484,7 @@ class InvitationBuilderService
                 foreach (config('invitation_builder.block_style_fields', []) as $styleKey => $styleDef) {
                     $styleType = $styleDef['type'] ?? 'text';
                     $styleValue = $blockInput[$styleKey] ?? '';
-                    $blockOut[$styleKey] = $this->normalizeBlockStyleFieldValue($styleType, $styleValue);
+                    $blockOut[$styleKey] = $this->normalizeBlockStyleFieldValue($styleType, $styleValue, $styleDef);
                 }
             }
 
@@ -1681,8 +1683,7 @@ class InvitationBuilderService
     }
 
     /**
-     * Guest-facing invitation URL for SMS, WhatsApp, and API responses.
-     * Uses the builder-rendered page when invitation_builder_settings exist.
+     * Guest-facing user model used to render a contact invitation page.
      */
     public function guestDisplayFromContactLog(InvitationContactLog $log): User
     {
@@ -1701,11 +1702,31 @@ class InvitationBuilderService
         return $user;
     }
 
+    /**
+     * User Design (type 3): guests receive the uploaded image/video, not an admin builder page.
+     */
+    public function usesUploadedGuestMedia(Invitation $invitation): bool
+    {
+        return (int) $invitation->invitation_type === Constant::INVITATION_TYPE['User Design'];
+    }
+
     public function guestContactInvitationUrl(
         Invitation $invitation,
         int $contactLogId,
         bool $preview = false
     ): string {
+        if ($this->usesUploadedGuestMedia($invitation)) {
+            $mediaUrl = $invitation->uploadedInvitationMediaUrl();
+            if ($mediaUrl) {
+                return $mediaUrl;
+            }
+
+            return route('user.invitation.contact.show', [
+                'invitation_code' => $invitation->code,
+                'contact_log_id' => $contactLogId,
+            ]);
+        }
+
         $invitation->loadMissing('builderSetting');
         $builderRow = $invitation->builderSetting;
 
@@ -1734,6 +1755,15 @@ class InvitationBuilderService
         ?int $insertedBy = null,
         bool $preview = false
     ): string {
+        if ($this->usesUploadedGuestMedia($invitation)) {
+            $mediaUrl = $invitation->uploadedInvitationMediaUrl();
+            if ($mediaUrl) {
+                return $mediaUrl;
+            }
+
+            return $this->classicGuestInvitationUrl($invitation, $userId, $insertedBy);
+        }
+
         $invitation->loadMissing('builderSetting');
         $builderRow = $invitation->builderSetting;
 
@@ -1752,6 +1782,14 @@ class InvitationBuilderService
             return $url;
         }
 
+        return $this->classicGuestInvitationUrl($invitation, $userId, $insertedBy);
+    }
+
+    protected function classicGuestInvitationUrl(
+        Invitation $invitation,
+        int $userId,
+        ?int $insertedBy = null
+    ): string {
         $routeParams = array_filter([
             'invitation_code' => $invitation->code,
             'user_id' => $userId,

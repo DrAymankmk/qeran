@@ -556,6 +556,11 @@ return [
         'bottom' => ['label_ar' => 'أسفل البطاقة', 'label_en' => 'Bottom'],
     ],
 
+    'couple_name_layouts' => [
+        'two_lines' => ['label_ar' => 'سطران', 'label_en' => 'Two lines'],
+        'one_line' => ['label_ar' => 'سطر واحد', 'label_en' => 'One line'],
+    ],
+
     'font_weights' => [
         '300' => 'خفيف (300)',
         '400' => 'عادي (400)',
@@ -737,6 +742,22 @@ return [
                 'title' => ['type' => 'text', 'label_ar' => 'عنوان القسم', 'default' => 'هل ستشاركنا؟'],
                 'body' => ['type' => 'textarea', 'label_ar' => 'نص الدعوة للرد', 'default' => ''],
             ],
+            'groups' => [
+                [
+                    'label_ar' => 'زر القبول',
+                    'fields' => [
+                        'accept_color' => ['type' => 'optional_color', 'label_ar' => 'لون النص', 'default' => ''],
+                        'accept_font_size' => ['type' => 'font_size', 'label_ar' => 'حجم الخط', 'default' => '', 'min' => 8, 'max' => 48],
+                    ],
+                ],
+                [
+                    'label_ar' => 'زر الرفض',
+                    'fields' => [
+                        'decline_color' => ['type' => 'optional_color', 'label_ar' => 'لون النص', 'default' => ''],
+                        'decline_font_size' => ['type' => 'font_size', 'label_ar' => 'حجم الخط', 'default' => '', 'min' => 8, 'max' => 48],
+                    ],
+                ],
+            ],
         ],
         'wishes' => [
             'fields' => [
@@ -757,6 +778,59 @@ return [
                 'names' => ['type' => 'text', 'label_ar' => 'أسماء العروسين', 'default' => ''],
                 'message' => ['type' => 'textarea', 'label_ar' => 'رسالة الشكر', 'default' => "Thank you for being part of our love story.\nWe can't wait to celebrate with you."],
                 'date_line' => ['type' => 'text', 'label_ar' => 'سطر التاريخ والمكان', 'default' => ''],
+            ],
+        ],
+        /**
+         * Hero names “&” and divider (below couple names). Not listed in
+         * information_blocks — edited from the Details tab, stored in block_data.hero_accents.
+         */
+        'hero_accents' => [
+            'skip_block_styles' => true,
+            'groups' => [
+                [
+                    'label_ar' => 'العريس ووالده',
+                    'fields' => [
+                        'groom_font_size' => ['type' => 'font_size', 'label_ar' => 'حجم اسم العريس', 'default' => '', 'min' => 16, 'max' => 160, 'hint' => 'admin.ib-hero-groom-size-hint'],
+                        'groom_father_font_size' => ['type' => 'font_size', 'label_ar' => 'حجم اسم والد العريس', 'default' => '', 'min' => 8, 'max' => 72, 'hint' => 'admin.ib-hero-groom-father-size-hint'],
+                        'groom_layout' => [
+                            'type' => 'select',
+                            'label_ar' => 'عرض العريس ووالده',
+                            'default' => 'two_lines',
+                            'options' => 'couple_name_layouts',
+                            'hint' => 'admin.ib-hero-groom-layout-hint',
+                        ],
+                    ],
+                ],
+                [
+                    'label_ar' => 'العروس ووالدها',
+                    'fields' => [
+                        'bride_font_size' => ['type' => 'font_size', 'label_ar' => 'حجم اسم العروس', 'default' => '', 'min' => 16, 'max' => 160, 'hint' => 'admin.ib-hero-bride-size-hint'],
+                        'bride_father_font_size' => ['type' => 'font_size', 'label_ar' => 'حجم اسم والد العروس', 'default' => '', 'min' => 8, 'max' => 72, 'hint' => 'admin.ib-hero-bride-father-size-hint'],
+                        'bride_layout' => [
+                            'type' => 'select',
+                            'label_ar' => 'عرض العروس ووالدها',
+                            'default' => 'two_lines',
+                            'options' => 'couple_name_layouts',
+                            'hint' => 'admin.ib-hero-bride-layout-hint',
+                        ],
+                    ],
+                ],
+                [
+                    'label_ar' => 'علامة & بين الأسماء',
+                    'fields' => [
+                        'ampersand_color' => ['type' => 'optional_color', 'label_ar' => 'لون علامة &', 'default' => ''],
+                        'ampersand_font_weight' => ['type' => 'font_weight', 'label_ar' => 'سُمك علامة &', 'default' => ''],
+                        'ampersand_font_size' => ['type' => 'font_size', 'label_ar' => 'حجم علامة &', 'default' => '', 'min' => 12, 'max' => 160, 'hint' => 'admin.ib-hero-ampersand-size-hint'],
+                    ],
+                ],
+                [
+                    'label_ar' => 'الفاصل أسفل الأسماء',
+                    'fields' => [
+                        'divider_color' => ['type' => 'optional_color', 'label_ar' => 'لون الفاصل', 'default' => ''],
+                        'divider_font_weight' => ['type' => 'font_weight', 'label_ar' => 'سُمك الفاصل', 'default' => ''],
+                        'divider_font_size' => ['type' => 'font_size', 'label_ar' => 'عرض الفاصل', 'default' => '', 'min' => 80, 'max' => 480, 'hint' => 'admin.ib-hero-divider-size-hint'],
+                    ],
+                ],
             ],
         ],
         /**

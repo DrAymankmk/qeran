@@ -126,7 +126,7 @@ $gateMain = false;
 .wi-divider-diamond,
 .wi-divider::before,
 .wi-divider::after {
-	background: var(--wi-gold);
+	background: var(--wi-hero-divider-color, var(--wi-gold));
 }
 
 .wi-section-label,
@@ -328,6 +328,19 @@ $gateMain = false;
 	flex-direction: column;
 	align-items: center;
 	gap: 0.2rem;
+}
+
+.wi-couple-block.wi-couple-inline {
+	flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: baseline;
+	gap: 0.25em 0.55em;
+}
+
+.wi-couple-block.wi-couple-inline .wi-couple-name,
+.wi-couple-block.wi-couple-inline .wi-parent-line {
+	display: inline;
 }
 
 .wi-couple-name {

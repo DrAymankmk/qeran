@@ -23,6 +23,14 @@ class InvitationsController extends Controller
             return view('invitation-error', ['message' => 'الدعوة غير موجودة أو قد تم حذفها.']);
         }
 
+        if ($this->invitationBuilder->usesUploadedGuestMedia($invitation)) {
+            $userId = ($user_id !== null && $user_id !== '') ? (int) $user_id : 0;
+
+            return redirect()->away(
+                $this->invitationBuilder->guestInvitationUrl($invitation, $userId)
+            );
+        }
+
         $builderRow = $invitation->builderSetting;
         if (! $builderRow) {
             return view('invitation-error', ['message' => 'هذه الدعوة لا تستخدم منشئ الدعوات.']);
@@ -144,7 +152,9 @@ class InvitationsController extends Controller
 
         $builderConfig = null;
         $builderRow = $invitation->builderSetting;
-        $useBuilder = $builderRow && ($builderRow->isPublished() || $builderPreview);
+        $useBuilder = $builderRow
+            && ! $this->invitationBuilder->usesUploadedGuestMedia($invitation)
+            && ($builderRow->isPublished() || $builderPreview);
 
         $builderView = null;
         if ($useBuilder) {
@@ -363,7 +373,8 @@ class InvitationsController extends Controller
         $builderConfig = null;
         $builderView = null;
 
-        if ($builder || ($builderRow && ($builderRow->isPublished() || $builderPreview))) {
+        if (! $this->invitationBuilder->usesUploadedGuestMedia($invitation)
+            && ($builder || ($builderRow && ($builderRow->isPublished() || $builderPreview)))) {
             $builderConfig = $this->invitationBuilder->resolve($invitation, $builder ? 0 : $template);
             $builderView = $builderConfig['view'] ?? null;
             $template = (int) ($builderConfig['template'] ?? ($builder ? 0 : $template));

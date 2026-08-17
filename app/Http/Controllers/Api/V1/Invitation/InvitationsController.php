@@ -790,7 +790,11 @@ class InvitationsController extends Controller
                     $invitation->id,
                     'invitation_received');
             }
-            $user['invitation_link'] = route('user.invitation.show', ['invitation_code' => $invitation->code, 'user_id' => $user->id, 'inserted_by' => auth()->id()]);
+            $user['invitation_link'] = app(InvitationBuilderService::class)->guestInvitationUrl(
+                $invitation,
+                (int) $user->id,
+                auth()->id() ? (int) auth()->id() : null
+            );
         }
 
         return RespondActive::success('Action ran successfully', (UserResource::collection($invitation->users)));

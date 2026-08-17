@@ -4,6 +4,7 @@ import { registerOutboundMessage } from './receipts.js';
 type SendOptions = {
   text?: string;
   mediaUrl?: string;
+  mediaBase64?: string;
   mediaType?: 'image' | 'video';
   referenceId?: string;
 };
@@ -45,10 +46,24 @@ export async function sendMessage(
   const jid = `${digits}@s.whatsapp.net`;
   const caption = (options.text ?? '').trim();
   const mediaUrl = (options.mediaUrl ?? '').trim();
+  const mediaBase64 = (options.mediaBase64 ?? '').replace(/^data:[^;]+;base64,/, '').trim();
   const mediaType = options.mediaType === 'video' ? 'video' : 'image';
 
   let result;
-  if (mediaUrl) {
+  if (mediaBase64) {
+    const buffer = Buffer.from(mediaBase64, 'base64');
+    result =
+      mediaType === 'video'
+        ? await sock.sendMessage(jid, {
+            video: buffer,
+            caption: caption || undefined,
+          })
+        : await sock.sendMessage(jid, {
+            image: buffer,
+            caption: caption || undefined,
+            mimetype: 'image/png',
+          });
+  } else if (mediaUrl) {
     result =
       mediaType === 'video'
         ? await sock.sendMessage(jid, {

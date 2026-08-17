@@ -106,19 +106,32 @@ class SendBaileysInvitationContactMessage implements ShouldQueue
             ]);
 
             try {
-                $qrUrl = app(InvitationBuilderService::class)->guestQrShareUrl(
+                $qrMedia = app(InvitationBuilderService::class)->guestQrShareMedia(
                     Invitation::query()->find($this->invitationId),
                     $this->contactLogId
                 );
-                if (is_string($qrUrl) && $qrUrl !== '') {
-                    BaileysWhatsApp::sendFromSession(
+                if (is_array($qrMedia) && (($qrMedia['base64'] ?? null) || ($qrMedia['url'] ?? null))) {
+                    $qrResponse = BaileysWhatsApp::sendFromSession(
                         'user_'.$this->hostUserId,
                         $targetPhone,
                         __('messages.invitation_qr_caption'),
                         $this->referenceId !== '' ? $this->referenceId.'-qr' : '',
-                        $qrUrl,
-                        'image'
+                        $qrMedia['url'] ?? null,
+                        'image',
+                        $qrMedia['base64'] ?? null
                     );
+                    if (! isset($qrResponse->sent) || $qrResponse->sent !== 'true') {
+                        Log::warning('Invitation QR WhatsApp send failed', [
+                            'contact_log_id' => $this->contactLogId,
+                            'invitation_id' => $this->invitationId,
+                            'error' => $qrResponse->error ?? null,
+                        ]);
+                    }
+                } else {
+                    Log::warning('Invitation QR PNG was not generated', [
+                        'contact_log_id' => $this->contactLogId,
+                        'invitation_id' => $this->invitationId,
+                    ]);
                 }
             } catch (\Throwable $e) {
                 Log::warning('Failed to send invitation QR to contact', [

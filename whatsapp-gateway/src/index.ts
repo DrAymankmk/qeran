@@ -589,10 +589,11 @@ app.post('/send', async (req, res) => {
   const to = String(req.body?.to ?? '').trim();
   const message = String(req.body?.message ?? '').trim();
   const mediaUrl = String(req.body?.mediaUrl ?? '').trim();
+  const mediaBase64 = String(req.body?.mediaBase64 ?? '').trim();
   const mediaType = String(req.body?.mediaType ?? '').trim() === 'video' ? 'video' : 'image';
 
-  if (!sessionId || !to || (!message && !mediaUrl)) {
-    res.status(400).json({ error: 'sessionId, to, and message (or mediaUrl) are required' });
+  if (!sessionId || !to || (!message && !mediaUrl && !mediaBase64)) {
+    res.status(400).json({ error: 'sessionId, to, and message (or mediaUrl/mediaBase64) are required' });
     return;
   }
 
@@ -601,7 +602,8 @@ app.post('/send', async (req, res) => {
     const result = await sendMessage(sessionId, to, {
       text: message,
       mediaUrl: mediaUrl || undefined,
-      mediaType: mediaUrl ? mediaType : undefined,
+      mediaBase64: mediaBase64 || undefined,
+      mediaType: mediaUrl || mediaBase64 ? mediaType : undefined,
       referenceId,
     });
     res.json({

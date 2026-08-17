@@ -75,20 +75,33 @@ class SendBaileysInvitationMessage implements ShouldQueue
                 ->update(['seen' => Constant::SEEN_STATUS['Sent']]);
 
             try {
-                $qrUrl = app(InvitationBuilderService::class)->guestQrShareUrl(
+                $qrMedia = app(InvitationBuilderService::class)->guestQrShareMedia(
                     Invitation::query()->find($this->invitationId),
                     null,
                     $this->guestUserId
                 );
-                if (is_string($qrUrl) && $qrUrl !== '') {
-                    BaileysWhatsApp::sendFromSession(
+                if (is_array($qrMedia) && (($qrMedia['base64'] ?? null) || ($qrMedia['url'] ?? null))) {
+                    $qrResponse = BaileysWhatsApp::sendFromSession(
                         'user_'.$this->hostUserId,
                         $this->countryCode.$this->phone,
                         __('messages.invitation_qr_caption'),
                         $this->referenceId !== '' ? $this->referenceId.'-qr' : '',
-                        $qrUrl,
-                        'image'
+                        $qrMedia['url'] ?? null,
+                        'image',
+                        $qrMedia['base64'] ?? null
                     );
+                    if (! isset($qrResponse->sent) || $qrResponse->sent !== 'true') {
+                        Log::warning('Invitation QR WhatsApp send failed', [
+                            'invitation_id' => $this->invitationId,
+                            'guest_user_id' => $this->guestUserId,
+                            'error' => $qrResponse->error ?? null,
+                        ]);
+                    }
+                } else {
+                    Log::warning('Invitation QR PNG was not generated', [
+                        'invitation_id' => $this->invitationId,
+                        'guest_user_id' => $this->guestUserId,
+                    ]);
                 }
             } catch (\Throwable $e) {
                 Log::warning('Failed to send invitation QR to guest', [

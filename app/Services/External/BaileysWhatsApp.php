@@ -28,10 +28,11 @@ class BaileysWhatsApp
         string $message,
         string $referenceId = '',
         ?string $mediaUrl = null,
-        ?string $mediaType = null
+        ?string $mediaType = null,
+        ?string $mediaBase64 = null
     ): object {
         return self::mapSendResponse(
-            BaileysGateway::send($to, $message, $sessionId, $referenceId, $mediaUrl, $mediaType)
+            BaileysGateway::send($to, $message, $sessionId, $referenceId, $mediaUrl, $mediaType, $mediaBase64)
         );
     }
 

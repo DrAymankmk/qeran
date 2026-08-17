@@ -1779,6 +1779,33 @@ class InvitationBuilderService
     }
 
     /**
+     * @return array{url: ?string, base64: ?string}|null
+     */
+    public function guestQrShareMedia(Invitation $invitation, ?int $contactLogId = null, ?int $userId = null): ?array
+    {
+        if (! $this->usesUploadedGuestMedia($invitation)) {
+            return null;
+        }
+
+        $url = $this->guestQrShareUrl($invitation, $contactLogId, $userId);
+        $binary = null;
+        if ($contactLogId && $contactLogId > 0) {
+            $binary = $invitation->qrPngBinaryForContact($contactLogId);
+        } elseif ($userId && $userId > 0) {
+            $binary = $invitation->qrPngBinaryForUser($userId);
+        }
+
+        if ((! is_string($url) || $url === '') && ! is_string($binary)) {
+            return null;
+        }
+
+        return [
+            'url' => is_string($url) && $url !== '' ? $url : null,
+            'base64' => is_string($binary) && $binary !== '' ? base64_encode($binary) : null,
+        ];
+    }
+
+    /**
      * @return array{url: string, type: 'image'|'video'}|null
      */
     public function guestShareMedia(?Invitation $invitation): ?array

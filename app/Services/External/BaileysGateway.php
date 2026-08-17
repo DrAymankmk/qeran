@@ -222,7 +222,8 @@ class BaileysGateway
         ?string $sessionId = null,
         string $referenceId = '',
         ?string $mediaUrl = null,
-        ?string $mediaType = null
+        ?string $mediaType = null,
+        ?string $mediaBase64 = null
     ): array {
         $payload = [
             'sessionId' => $sessionId ?? self::systemSessionId(),
@@ -239,7 +240,12 @@ class BaileysGateway
             $payload['mediaType'] = $mediaType === 'video' ? 'video' : 'image';
         }
 
-        return self::request('post', '/send', $payload, $mediaUrl ? 120 : 90);
+        if (is_string($mediaBase64) && $mediaBase64 !== '') {
+            $payload['mediaBase64'] = $mediaBase64;
+            $payload['mediaType'] = $mediaType === 'video' ? 'video' : 'image';
+        }
+
+        return self::request('post', '/send', $payload, ($mediaUrl || $mediaBase64) ? 120 : 90);
     }
 
     protected static function http(int $timeoutSeconds = 90): PendingRequest

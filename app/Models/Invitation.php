@@ -392,6 +392,35 @@ class Invitation extends Model
         return Storage::disk('public')->exists($relativePath) ? $relativePath : null;
     }
 
+    public function qrPngBinaryForContact(int $contactLogId): ?string
+    {
+        $path = $this->publicQrPngPathForContact($contactLogId);
+
+        return $this->readPublicPng($path);
+    }
+
+    public function qrPngBinaryForUser(int $userId): ?string
+    {
+        $path = $this->publicQrPngPathForUser($userId);
+
+        return $this->readPublicPng($path);
+    }
+
+    protected function readPublicPng(?string $relativePath): ?string
+    {
+        if (! $relativePath) {
+            return null;
+        }
+
+        try {
+            $bytes = Storage::disk('public')->get($relativePath);
+
+            return is_string($bytes) && $bytes !== '' ? $bytes : null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
     protected function writeQrCodeFiles(string $basePath, string $payload): void
     {
         try {
@@ -408,11 +437,15 @@ class Invitation extends Model
 
                 return;
             } catch (\Throwable $e) {
-                Log::warning('PNG QR generation failed, falling back to SVG', [
+                Log::warning('PNG QR generation failed, trying GD', [
                     'invitation_id' => $this->id,
                     'payload' => $payload,
                     'error' => $e->getMessage(),
                 ]);
+            }
+
+            if ($this->writeQrPngWithGd($basePath, $payload)) {
+                return;
             }
 
             $svg = QrCode::format('svg')
@@ -429,6 +462,72 @@ class Invitation extends Model
                 'payload' => $payload,
                 'error' => $e->getMessage(),
             ]);
+        }
+    }
+
+    protected function writeQrPngWithGd(string $basePath, string $payload): bool
+    {
+        if (! function_exists('imagecreatetruecolor') || ! function_exists('imagepng')) {
+            return false;
+        }
+
+        try {
+            $ecClass = \BaconQrCode\Common\ErrorCorrectionLevel::class;
+            $level = enum_exists($ecClass)
+                ? constant($ecClass.'::H')
+                : $ecClass::H();
+            $qrCode = \BaconQrCode\Encoder\Encoder::encode($payload, $level);
+            $matrix = $qrCode->getMatrix();
+            $modules = $matrix->getWidth();
+            $scale = 10;
+            $margin = 4;
+            $size = ($modules + (2 * $margin)) * $scale;
+            $image = imagecreatetruecolor($size, $size);
+            if ($image === false) {
+                return false;
+            }
+
+            $white = imagecolorallocate($image, 255, 255, 255);
+            $black = imagecolorallocate($image, 0, 0, 0);
+            imagefill($image, 0, 0, $white);
+
+            for ($y = 0; $y < $modules; $y++) {
+                for ($x = 0; $x < $modules; $x++) {
+                    if ((int) $matrix->get($x, $y) === 1) {
+                        $left = ($margin + $x) * $scale;
+                        $top = ($margin + $y) * $scale;
+                        imagefilledrectangle(
+                            $image,
+                            $left,
+                            $top,
+                            $left + $scale - 1,
+                            $top + $scale - 1,
+                            $black
+                        );
+                    }
+                }
+            }
+
+            ob_start();
+            imagepng($image);
+            $png = ob_get_clean();
+            imagedestroy($image);
+
+            if (! is_string($png) || $png === '') {
+                return false;
+            }
+
+            Storage::disk('public')->put($basePath.'.png', $png);
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning('GD QR generation failed', [
+                'invitation_id' => $this->id,
+                'payload' => $payload,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
         }
     }
 

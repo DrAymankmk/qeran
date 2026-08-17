@@ -8,12 +8,45 @@ use App\Models\InvitationContactLog;
 use App\Helpers\Constant;
 use App\Models\Category;
 use App\Services\Invitation\InvitationBuilderService;
+use Illuminate\Support\Facades\Storage;
 
 class InvitationsController extends Controller
 {
     public function __construct(
         protected InvitationBuilderService $invitationBuilder
     ) {}
+
+    public function showMedia(string $invitation_code)
+    {
+        $invitation = Invitation::where('code', $invitation_code)->first();
+
+        if (! $invitation || ! $this->invitationBuilder->usesUploadedGuestMedia($invitation)) {
+            return view('invitation-error', ['message' => 'الدعوة غير موجودة أو قد تم حذفها.']);
+        }
+
+        $file = $invitation->uploadedInvitationMediaFile();
+        if (! $file) {
+            return view('invitation-error', ['message' => 'ملف الدعوة غير موجود.']);
+        }
+
+        $key = trim($file->bucket_name.'/'.$file->path, '/');
+        $downloadName = $file->original_name ?: basename((string) $file->path);
+        $headers = [
+            'Content-Type' => $file->getMimeType ?: 'application/octet-stream',
+            'Content-Disposition' => 'inline; filename="'.$downloadName.'"',
+            'Cache-Control' => 'public, max-age=86400',
+        ];
+
+        try {
+            return Storage::disk(mediaDisk())->response($key, $downloadName, $headers);
+        } catch (\Throwable) {
+            try {
+                return Storage::disk('public')->response($key, $downloadName, $headers);
+            } catch (\Throwable) {
+                return view('invitation-error', ['message' => 'ملف الدعوة غير موجود.']);
+            }
+        }
+    }
 
     public function showBuilder(string $invitation_code, $user_id = null)
     {

@@ -1711,6 +1711,30 @@ class InvitationBuilderService
     }
 
     /**
+     * Short public URL for User Design media, suitable for WhatsApp/SMS.
+     * Example: https://qeran.app/m/XNR34O5V/invitation.webp
+     */
+    public function guestUploadedMediaShareUrl(Invitation $invitation): ?string
+    {
+        if (! $this->usesUploadedGuestMedia($invitation)) {
+            return null;
+        }
+
+        $file = $invitation->uploadedInvitationMediaFile();
+        if (! $file) {
+            return null;
+        }
+
+        $extension = strtolower((string) ($file->extension ?: pathinfo((string) $file->path, PATHINFO_EXTENSION)));
+        $filename = $extension !== '' ? 'invitation.'.$extension : 'invitation';
+
+        return route('user.invitation.media', [
+            'invitation_code' => $invitation->code,
+            'filename' => $filename,
+        ]);
+    }
+
+    /**
      * @return array{url: string, type: 'image'|'video'}|null
      */
     public function guestShareMedia(?Invitation $invitation): ?array
@@ -1720,7 +1744,7 @@ class InvitationBuilderService
         }
 
         $file = $invitation->uploadedInvitationMediaFile();
-        $url = $file?->durablePublicUrl();
+        $url = $this->guestUploadedMediaShareUrl($invitation) ?: $file?->durablePublicUrl();
         if (! $file || ! is_string($url) || $url === '') {
             return null;
         }
@@ -1742,7 +1766,7 @@ class InvitationBuilderService
         bool $preview = false
     ): string {
         if ($this->usesUploadedGuestMedia($invitation)) {
-            $mediaUrl = $invitation->uploadedInvitationMediaUrl();
+            $mediaUrl = $this->guestUploadedMediaShareUrl($invitation);
             if ($mediaUrl) {
                 return $mediaUrl;
             }
@@ -1782,7 +1806,7 @@ class InvitationBuilderService
         bool $preview = false
     ): string {
         if ($this->usesUploadedGuestMedia($invitation)) {
-            $mediaUrl = $invitation->uploadedInvitationMediaUrl();
+            $mediaUrl = $this->guestUploadedMediaShareUrl($invitation);
             if ($mediaUrl) {
                 return $mediaUrl;
             }

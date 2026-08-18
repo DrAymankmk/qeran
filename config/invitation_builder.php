@@ -41,6 +41,7 @@ return [
         'reception_note' => '',
         'details_section_title' => '',
         'details_section_label' => 'جميع التفاصيل',
+        'hero_enabled' => true,
     ],
 
     /** When false, built-in themes below are hidden from the admin picker (still work for saved invitations). */
@@ -610,7 +611,8 @@ return [
     /**
      * Editable fields per information block (stored in settings.block_data).
      * Supported field types: text, textarea, url, email, tel, number, date, time,
-     * datetime-local, color, optional_color, font, select, icon_upload, checkbox (repeaters).
+     * datetime-local, color, optional_color, font, select, icon_upload, audio_upload,
+     * media_upload, checkbox (repeaters).
      */
     'block_field_schemas' => [
         'countdown' => [
@@ -682,6 +684,12 @@ return [
                         'place' => ['type' => 'text', 'label_ar' => 'المكان / الوصف'],
                     ],
                 ],
+            ],
+        ],
+        'media' => [
+            'skip_block_styles' => true,
+            'fields' => [
+                'media_url' => ['type' => 'media_upload', 'label_ar' => 'صورة أو فيديو', 'default' => ''],
             ],
         ],
         'gallery' => [
@@ -912,6 +920,7 @@ return [
         'gift_list' => ['label_ar' => 'قائمة الهدايا', 'icon' => '🎁', 'description_ar' => 'سجل الهدايا أو التبرعات'],
         'our_story' => ['label_ar' => 'قصتنا', 'icon' => '💕', 'description_ar' => 'قصة العروسين'],
         'gallery' => ['label_ar' => 'معرض صور', 'icon' => '🖼', 'description_ar' => 'صور مميزة'],
+        'media' => ['label_ar' => 'وسائط', 'icon' => '🎬', 'description_ar' => 'صورة أو فيديو بعرض كامل بدون نصوص'],
         'rsvp' => ['label_ar' => 'تأكيد الحضور', 'icon' => '✉️', 'description_ar' => 'قبول أو رفض الدعوة'],
         // 'parking' => ['label_ar' => 'مواقف السيارات', 'icon' => '🚗', 'description_ar' => 'معلومات المواقف'],
         // 'accommodation' => ['label_ar' => 'الإقامة', 'icon' => '🏨', 'description_ar' => 'فنادق قريبة'],

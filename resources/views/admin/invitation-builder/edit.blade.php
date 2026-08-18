@@ -31,6 +31,19 @@ body {
 	object-fit: contain;
 }
 
+.ib-media-upload-preview {
+	width: 100%;
+	height: 140px;
+}
+
+.ib-media-upload-img,
+.ib-media-upload-video {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
 .ib-preview-device.is-live-updating iframe {
 	opacity: 0.94;
 	transition: opacity 0.15s ease;

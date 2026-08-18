@@ -177,6 +177,9 @@ class WeddingInvitationPresenter
             'wiHeroImageUrl' => $heroImageUrl,
             'wiHeroHasImage' => $heroImageUrl !== '',
             'wiHeroMediaType' => $heroMediaType,
+            'wiHeroEnabled' => array_key_exists('hero_enabled', $bc)
+                ? filter_var($bc['hero_enabled'], FILTER_VALIDATE_BOOLEAN)
+                : true,
             'showEnvelope' => ($bc['opening_type'] ?? 'envelope') === 'envelope',
         ];
     }
@@ -534,6 +537,33 @@ class WeddingInvitationPresenter
         return is_array($rows) ? array_values($rows) : [];
     }
 
+    /**
+     * @return array{url: string, type: string, hasVideo: bool, hasImage: bool}
+     */
+    public static function mediaSection(array $bc): array
+    {
+        $url = trim((string) self::blockValue($bc, 'media', 'media_url', ''));
+        $type = self::mediaTypeFromUrl($url);
+        $isVideo = $type === 'video';
+
+        return [
+            'url' => $url,
+            'type' => $isVideo ? 'video' : 'image',
+            'hasVideo' => $isVideo && $url !== '',
+            'hasImage' => ! $isVideo && $url !== '',
+        ];
+    }
+
+    public static function mediaTypeFromUrl(string $url): string
+    {
+        $path = strtolower((string) (parse_url($url, PHP_URL_PATH) ?: $url));
+        if (preg_match('/\.(mp4|webm|mov|m4v|ogg|ogv)(?:\?.*)?$/i', $path)) {
+            return 'video';
+        }
+
+        return 'image';
+    }
+
     public static function formatBlockDisplay(string $type, mixed $value): string
     {
         return app(InvitationBuilderService::class)->formatBlockFieldForDisplay($type, $value);
@@ -549,6 +579,7 @@ class WeddingInvitationPresenter
             'our_story' => 'builder-wedding-section-our-story',
             'event_details' => 'builder-wedding-section-details',
             'gallery' => 'builder-wedding-section-gallery',
+            'media' => 'builder-wedding-section-media',
             'timeline' => 'builder-wedding-section-timeline',
             'venue' => 'builder-wedding-section-venue',
             'gift_list' => 'builder-wedding-section-gift-list',

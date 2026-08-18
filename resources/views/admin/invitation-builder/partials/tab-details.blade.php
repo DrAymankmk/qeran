@@ -12,7 +12,15 @@
 
 <div class="row g-3">
 	<div class="col-12">
-		<h6 class="text-muted mb-0">{{ __('admin.ib-couple-section') }}</h6>
+		<div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+			<h6 class="text-muted mb-0">{{ __('admin.ib-couple-section') }}</h6>
+			<div class="form-check mb-0">
+				<input class="form-check-input ib-preview-field" type="checkbox" name="hero_enabled" value="1"
+					id="hero_enabled" @checked(filter_var(old('hero_enabled', $config['hero_enabled'] ?? true), FILTER_VALIDATE_BOOLEAN))>
+				<label class="form-check-label" for="hero_enabled">{{ __('admin.ib-hero-section-toggle') }}</label>
+			</div>
+		</div>
+		<p class="small text-muted mb-0 mt-1">{{ __('admin.ib-hero-section-toggle-hint') }}</p>
 	</div>
 	<div class="col-md-6">
 		<label class="form-label">{{ __('admin.bride') }}</label>

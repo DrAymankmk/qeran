@@ -341,6 +341,9 @@ class InvitationBuilderService
             'reception_note' => $json['reception_note'] ?? '',
             'details_section_title' => $json['details_section_title'] ?? $invitation->event_name ?? '',
             'details_section_label' => $json['details_section_label'] ?? $defaults['details_section_label'] ?? 'جميع التفاصيل',
+            'hero_enabled' => array_key_exists('hero_enabled', $json)
+                ? filter_var($json['hero_enabled'], FILTER_VALIDATE_BOOLEAN)
+                : (bool) ($defaults['hero_enabled'] ?? true),
         ]);
     }
 
@@ -452,6 +455,7 @@ class InvitationBuilderService
             'reception_note' => $this->draftString($data, $base, 'reception_note'),
             'details_section_title' => $this->draftString($data, $base, 'details_section_title'),
             'details_section_label' => $this->draftString($data, $base, 'details_section_label'),
+            'hero_enabled' => $bool('hero_enabled'),
         ]);
     }
 
@@ -513,6 +517,7 @@ class InvitationBuilderService
             'reception_note' => $data['reception_note'] ?? null,
             'details_section_title' => $data['details_section_title'] ?? null,
             'details_section_label' => $data['details_section_label'] ?? null,
+            'hero_enabled' => filter_var($data['hero_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN),
         ];
 
         $openingType = ! empty($data['opening_type'])
@@ -1191,6 +1196,7 @@ class InvitationBuilderService
             'checkbox' => 'col-md-6',
             'color', 'optional_color' => 'col-md-4',
             'font', 'font_weight', 'select', 'icon_upload', 'audio_upload' => 'col-md-4',
+            'media_upload' => 'col-12',
             'font_size' => 'col-md-4',
             'date', 'time', 'datetime-local' => 'col-md-4',
             default => 'col-md-4',
@@ -1213,6 +1219,34 @@ class InvitationBuilderService
         $extension = strtolower($file->getClientOriginalExtension() ?: 'mp3');
         $filename = 'audio-'.Str::uuid()->toString().'.'.$extension;
         $directory = 'invitation-builder/block-audio/'.$invitation->id;
+
+        Storage::disk('public')->putFileAs($directory, $file, $filename);
+
+        return Storage::disk('public')->url($directory.'/'.$filename);
+    }
+
+    public function detectBlockMediaType(UploadedFile $file): string
+    {
+        $extension = strtolower((string) $file->getClientOriginalExtension());
+        $mime = strtolower((string) $file->getMimeType());
+        $videoExtensions = ['mp4', 'webm', 'mov', 'm4v', 'ogg', 'ogv'];
+
+        if (str_starts_with($mime, 'video/') || in_array($extension, $videoExtensions, true)) {
+            return 'video';
+        }
+
+        if ($extension === 'gif' || $mime === 'image/gif') {
+            return 'gif';
+        }
+
+        return 'image';
+    }
+
+    public function storeBlockMedia(Invitation $invitation, UploadedFile $file): string
+    {
+        $extension = strtolower($file->getClientOriginalExtension() ?: 'bin');
+        $filename = 'media-'.Str::uuid()->toString().'.'.$extension;
+        $directory = 'invitation-builder/block-media/'.$invitation->id;
 
         Storage::disk('public')->putFileAs($directory, $file, $filename);
 
@@ -1422,7 +1456,7 @@ class InvitationBuilderService
             return $this->normalizeBlockStyleFieldValue($type, $value, $fieldDef);
         }
 
-        if ($type === 'url' || $type === 'icon_upload' || $type === 'audio_upload') {
+        if ($type === 'url' || $type === 'icon_upload' || $type === 'audio_upload' || $type === 'media_upload') {
             if (preg_match('#^(https?://|/)#i', $value)) {
                 return $value;
             }

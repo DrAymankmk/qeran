@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\InvitationBuilderPreviewRequest;
 use App\Http\Requests\Admin\InvitationBuilderRequest;
 use App\Http\Requests\Admin\StoreInvitationBuilderBlockAudioRequest;
 use App\Http\Requests\Admin\StoreInvitationBuilderBlockIconRequest;
+use App\Http\Requests\Admin\StoreInvitationBuilderBlockMediaRequest;
 use App\Models\Invitation;
 use App\Services\Invitation\InvitationBuilderService;
 use Illuminate\Http\JsonResponse;
@@ -154,6 +155,19 @@ class InvitationBuilderController extends Controller
             'ok' => true,
             'url' => $url,
             'message' => __('admin.ib-block-audio-upload-success'),
+        ]);
+    }
+
+    public function uploadBlockMedia(StoreInvitationBuilderBlockMediaRequest $request, Invitation $invitation): JsonResponse
+    {
+        $file = $request->file('media');
+        $url = $this->builder->storeBlockMedia($invitation, $file);
+
+        return response()->json([
+            'ok' => true,
+            'url' => $url,
+            'type' => $this->builder->detectBlockMediaType($file),
+            'message' => __('admin.ib-block-media-upload-success'),
         ]);
     }
 }

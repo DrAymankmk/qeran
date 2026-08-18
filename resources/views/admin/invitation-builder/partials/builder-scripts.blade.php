@@ -7,6 +7,7 @@
 	const previewPostUrl = @json($previewPostUrl);
 	const blockIconUploadUrl = @json(route('admin.invitation-builder.block-icon.store', $invitation));
 	const blockAudioUploadUrl = @json(route('admin.invitation-builder.block-audio.store', $invitation));
+	const blockMediaUploadUrl = @json(route('admin.invitation-builder.block-media.store', $invitation));
 	const themeUploadUrl = @json(route('admin.invitation-builder.themes.store'));
 	const themeDeleteUrlTemplate = @json(route('admin.invitation-builder.themes.destroy', ['theme' => '__SLUG__']));
 	const csrf = @json(csrf_token());
@@ -554,6 +555,7 @@
 		if (fieldType === 'font_size') return 'col-md-4';
 		if (fieldType === 'date' || fieldType === 'time' || fieldType === 'datetime-local') return 'col-md-4';
 		if (fieldType === 'icon_upload' || fieldType === 'audio_upload') return 'col-md-6';
+		if (fieldType === 'media_upload') return 'col-12';
 		return 'col-md-6';
 	}
 
@@ -760,6 +762,107 @@
 		});
 	}
 
+	function ibMediaTypeFromUrl(url) {
+		if (!url) return 'image';
+		try {
+			url = new URL(url, window.location.origin).pathname;
+		} catch (e) {}
+		return /\.(mp4|webm|mov|m4v|ogg|ogv)$/i.test(url) ? 'video' : 'image';
+	}
+
+	function bindMediaUploadControls(root) {
+		root = root || document;
+		root.querySelectorAll('[data-ib-media-upload]').forEach(function (wrap) {
+			if (wrap.dataset.bound === '1') return;
+			wrap.dataset.bound = '1';
+
+			var urlInput = wrap.querySelector('.ib-media-upload-url');
+			var fileInput = wrap.querySelector('.ib-media-upload-file');
+			var uploadBtn = wrap.querySelector('.ib-media-upload-btn');
+			var clearBtn = wrap.querySelector('.ib-media-upload-clear');
+			var statusEl = wrap.querySelector('.ib-media-upload-status');
+			var preview = wrap.querySelector('.ib-media-upload-preview');
+
+			function updatePreview(url, type) {
+				if (!preview) return;
+				type = type || ibMediaTypeFromUrl(url);
+				if (url && type === 'video') {
+					preview.innerHTML = '<video class="ib-media-upload-video" src="' + url.replace(/"/g, '&quot;') + '" muted playsinline preload="metadata"></video>';
+				} else if (url) {
+					preview.innerHTML = '<img src="' + url.replace(/"/g, '&quot;') + '" alt="" class="ib-media-upload-img">';
+				} else {
+					preview.innerHTML = '<span class="ib-media-upload-placeholder text-muted small">' + @json(__('admin.ib-block-media-empty')) + '</span>';
+				}
+				if (clearBtn) clearBtn.disabled = !url;
+			}
+
+			if (uploadBtn) {
+				uploadBtn.addEventListener('click', function () {
+					var file = fileInput && fileInput.files ? fileInput.files[0] : null;
+					if (!file) {
+						if (statusEl) statusEl.textContent = @json(__('admin.ib-block-media-file-required'));
+						return;
+					}
+
+					var formData = new FormData();
+					formData.append('media', file);
+					formData.append('_token', csrf);
+
+					uploadBtn.disabled = true;
+					if (statusEl) statusEl.textContent = @json(__('admin.ib-block-media-uploading'));
+
+					fetch(blockMediaUploadUrl, {
+						method: 'POST',
+						body: formData,
+						headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+					})
+						.then(function (response) {
+							return response.json().then(function (data) {
+								if (!response.ok) throw data;
+								return data;
+							});
+						})
+						.then(function (data) {
+							if (!urlInput) return;
+							urlInput.value = data.url || '';
+							urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+							updatePreview(urlInput.value, data.type);
+							if (fileInput) fileInput.value = '';
+							if (statusEl) statusEl.textContent = @json(__('admin.ib-block-media-upload-success'));
+							schedulePreview();
+						})
+						.catch(function (error) {
+							var message = @json(__('admin.ib-block-media-upload-failed'));
+							if (error && error.errors) {
+								var firstKey = Object.keys(error.errors)[0];
+								if (firstKey && error.errors[firstKey][0]) {
+									message = error.errors[firstKey][0];
+								}
+							} else if (error && error.message) {
+								message = error.message;
+							}
+							if (statusEl) statusEl.textContent = message;
+						})
+						.finally(function () {
+							uploadBtn.disabled = false;
+						});
+				});
+			}
+
+			if (clearBtn) {
+				clearBtn.addEventListener('click', function () {
+					if (!urlInput) return;
+					urlInput.value = '';
+					urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+					updatePreview('');
+					if (fileInput) fileInput.value = '';
+					if (statusEl) statusEl.textContent = '';
+					schedulePreview();
+				});
+			}
+		});
+	}
+
 	function bindOptionalColorControls(root) {
 		root = root || document;
 		root.querySelectorAll('.ib-optional-color-picker').forEach(function (picker) {
@@ -915,10 +1018,12 @@
 		bindRepeater(wrap);
 		bindIconUploadControls(wrap);
 		bindAudioUploadControls(wrap);
+		bindMediaUploadControls(wrap);
 	});
 	bindOptionalColorControls(document);
 	bindIconUploadControls(document);
 	bindAudioUploadControls(document);
+	bindMediaUploadControls(document);
 
 	/* Blocks drag & drop */
 	const sortable = document.getElementById('ibBlocksSortable');
@@ -1033,6 +1138,7 @@
 				bindOptionalColorControls(fieldsWrap);
 				bindIconUploadControls(fieldsWrap);
 				bindAudioUploadControls(fieldsWrap);
+				bindMediaUploadControls(fieldsWrap);
 			}
 			schedulePreview();
 		});

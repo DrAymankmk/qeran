@@ -66,6 +66,7 @@ class InvitationBuilderPreviewRequest extends FormRequest
             'details_section_label' => ['nullable', 'string', 'max:255'],
             'block_accent_color' => ['nullable', 'string', 'max:20'],
             'block_floral_border' => ['nullable', 'boolean'],
+            'hero_enabled' => ['nullable', 'boolean'],
             'blocks' => ['nullable', 'array'],
             'blocks.*' => ['string', Rule::in($blockKeys)],
             'block_data' => ['nullable', 'array'],
@@ -80,6 +81,7 @@ class InvitationBuilderPreviewRequest extends FormRequest
             'video_background',
             'intro_video_enabled',
             'block_floral_border',
+            'hero_enabled',
         ];
 
         $merge = [];

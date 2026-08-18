@@ -28,7 +28,9 @@ $viewData = array_merge($present, [
 'previewQrUrl' => $previewQrUrl ?? null,
 ]);
 
-$heroHtml = view('invitation.templates.partials.builder-wedding-section-hero', $viewData)->render();
+$heroHtml = ! empty($present['wiHeroEnabled'])
+    ? view('invitation.templates.partials.builder-wedding-section-hero', $viewData)->render()
+    : '';
 $bodyHtml = WeddingInvitationPresenter::replaceBetweenMarkers(
     $bodyHtml,
     '<!-- ① Hero -->',
@@ -391,6 +393,16 @@ $gateMain = false;
 
 .wi-hero.wi-date-pos-bottom .wi-hero-detail {
 	margin-top: 12px;
+}
+
+.wi-media-section {
+	padding: 0;
+	min-height: 100vh;
+}
+
+.wi-media-section.wi-hero-has-video::before,
+.wi-media-section.wi-hero-has-image::before {
+	display: none;
 }
 
 .wi-detail-card {

@@ -21,6 +21,7 @@
 		'event_date' => ['tab' => 'ibTabDetails', 'label' => __('admin.ib-tab-details')],
 		'event_time' => ['tab' => 'ibTabDetails', 'label' => __('admin.ib-tab-details')],
 		'date_position' => ['tab' => 'ibTabDetails', 'label' => __('admin.ib-tab-details')],
+		'hero_enabled' => ['tab' => 'ibTabDetails', 'label' => __('admin.ib-tab-details')],
 		'venue_name' => ['tab' => 'ibTabDetails', 'label' => __('admin.ib-tab-details')],
 		'venue_location' => ['tab' => 'ibTabDetails', 'label' => __('admin.ib-tab-details')],
 		'blocks' => ['tab' => 'ibTabBlocks', 'label' => __('admin.ib-tab-blocks')],

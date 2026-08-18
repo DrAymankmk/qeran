@@ -164,6 +164,34 @@
 		</div>
 	</div>
 	@break
+	@case('media_upload')
+	@php
+		$mediaIsVideo = (bool) preg_match('/\.(mp4|webm|mov|m4v|ogg|ogv)(?:\?.*)?$/i', (string) (parse_url($displayValue, PHP_URL_PATH) ?: $displayValue));
+	@endphp
+	<div class="ib-media-upload" data-ib-media-upload>
+		<input type="hidden" name="{{ $name }}" id="{{ $inputId }}"
+			class="{{ $inputClass }} ib-media-upload-url" value="{{ $displayValue }}">
+		<div class="ib-media-upload-preview border rounded bg-dark d-flex align-items-center justify-content-center overflow-hidden mb-2">
+			@if($displayValue !== '' && $mediaIsVideo)
+			<video class="ib-media-upload-video" src="{{ $displayValue }}" muted playsinline preload="metadata"></video>
+			@elseif($displayValue !== '')
+			<img src="{{ $displayValue }}" alt="" class="ib-media-upload-img">
+			@else
+			<span class="ib-media-upload-placeholder text-muted small">{{ __('admin.ib-block-media-empty') }}</span>
+			@endif
+		</div>
+		<input type="file" class="form-control form-control-sm ib-media-upload-file"
+			accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm,video/quicktime,.png,.jpg,.jpeg,.webp,.gif,.mp4,.webm,.mov,.m4v">
+		<div class="d-flex gap-1 mt-1 flex-wrap">
+			<button type="button" class="btn btn-sm btn-outline-primary ib-media-upload-btn">
+				<i class="mdi mdi-upload"></i> {{ __('admin.ib-block-media-upload') }}
+			</button>
+			<button type="button" class="btn btn-sm btn-outline-secondary ib-media-upload-clear"
+				@if($displayValue === '') disabled @endif title="{{ __('admin.ib-block-media-clear') }}">×</button>
+		</div>
+		<small class="text-muted d-block ib-media-upload-status"></small>
+	</div>
+	@break
 	@default
 	@php $htmlType = match ($type) {
 		'url' => 'url',

@@ -29,8 +29,8 @@ class AppServiceProvider extends ServiceProvider
         ini_set('precision', 14);
 
     LogViewer::auth(function ($request) {
-        return $request->user()
-            && $request->user()->email === 'admin@admin.com';
+        return $request->user('admin')
+            && $request->user('admin')->email === 'admin@admin.com';
     });
 
     }

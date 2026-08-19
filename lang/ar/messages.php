@@ -18,8 +18,8 @@ return [
 🌟برنامج قران لارسال الدعوات🌟
 \nبكل فرح وسرور\n :host_name \n نتشرف بدعوتكم لحضور :event_type \n
 عدد الدعوات: :invitation_count (الضيف الرئيسي + المرافقين)
-\nالرجاء فتح الرابط التالي لعرض الدعوة وتحميل أكواد الدخول (QR) لكل ضيف\n\n
-:invitation_link
+\nرابط الدعوة:\n:invitation_link
+\nرابط أكواد الدخول (QR) لكل ضيف:\n:qr_codes_link
 \n\nلتحميل التطبيق \n:application_link
 \n\n",
     'invitation_contact_reminder_sms_template' => "تذكير ودي 🌷\n:event_type / :host_name\nيسرّنا حضوركم ومشاركتكم",
@@ -28,6 +28,10 @@ return [
     'invitation_qr_codes_heading' => 'أكواد الدخول (QR)',
     'invitation_qr_primary_guest' => 'الضيف الرئيسي',
     'invitation_qr_companion_guest' => 'مرافق',
+    'invitation_qr_codes_page_subtitle' => 'يرجى تحميل رمز الدخول (QR) لكل ضيف وإبرازه عند البوابة',
+    'invitation_qr_codes_page_count' => 'عدد أكواد الدخول: :count',
+    'invitation_qr_codes_view_invitation' => '← العودة إلى صفحة الدعوة',
+    'invitation_qr_codes_download_link' => 'تحميل أكواد الدخول (QR)',
     'variables' => [
         'event_type' => 'نوع المناسبة',
         'host_name' => 'اسم الداعي',

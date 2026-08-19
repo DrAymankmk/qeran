@@ -175,6 +175,29 @@ class InvitationsController extends Controller
         return $this->renderContactInvitation($invitation_code, (int) $contact_log_id, builder: true);
     }
 
+    public function showContactQrCodes(string $invitation_code, $contact_log_id)
+    {
+        $contactLog = $this->resolveContactLog($invitation_code, (int) $contact_log_id);
+
+        if (! $contactLog) {
+            return view('invitation-error', ['message' => 'الدعوة غير موجودة أو جهة الاتصال غير صالحة.']);
+        }
+
+        $invitation = $contactLog->invitation;
+        $invitation->ensureQrCodesForContactLog($contactLog);
+        $guestQrCards = $invitation->guestQrCardsForContactLog($contactLog);
+        $user = $this->invitationBuilder->guestDisplayFromContactLog($contactLog);
+        $invitationLink = $this->invitationBuilder->guestContactInvitationUrl($invitation, (int) $contactLog->id);
+
+        return view('invitation.contact-qr-codes', compact(
+            'invitation',
+            'contactLog',
+            'guestQrCards',
+            'user',
+            'invitationLink'
+        ));
+    }
+
     public function show($invitation_code, $user_id, $inserted_by = null, $template = 1)
     {
         $invitation = Invitation::with('builderSetting')->where('code', $invitation_code)->first();
@@ -371,7 +394,7 @@ class InvitationsController extends Controller
             ]);
 
             $invitation->ensureQrCodesForContactLog($contactLog);
-            $guestQrCards = $invitation->guestQrCardsForContactLog($contactLog->fresh());
+            $qrCodesLink = $this->invitationBuilder->guestContactQrCodesUrl($invitation, (int) $contactLog->id);
 
             return response()->json([
                 'success' => true,
@@ -380,8 +403,7 @@ class InvitationsController extends Controller
                 'contact_log_id' => (int) $contactLog->id,
                 'acceptance_status' => Constant::ACCEPTANCE_STATUS['accepted'],
                 'invitation_count' => max(1, (int) ($contactLog->invitation_count ?? 1)),
-                'qr_url' => $guestQrCards[0]['qr_url'] ?? $invitation->qrForContact((int) $contactLog->id),
-                'guest_qr_cards' => $guestQrCards,
+                'qr_codes_link' => $qrCodesLink,
             ]);
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => 'حدث خطأ أثناء قبول الدعوة: '.$e->getMessage()], 500);
@@ -477,7 +499,7 @@ class InvitationsController extends Controller
         ];
 
         $initialView = $this->resolveContactInitialView($invitation, $contactLog);
-        $guestQrCards = $invitation->guestQrCardsForContactLog($contactLog);
+        $qrCodesUrl = $this->invitationBuilder->guestContactQrCodesUrl($invitation, (int) $contactLog->id);
         $uploadedMediaUrl = $this->invitationBuilder->usesUploadedGuestMedia($invitation)
             ? $this->invitationBuilder->guestUploadedMediaShareUrl($invitation)
             : null;
@@ -486,7 +508,7 @@ class InvitationsController extends Controller
             'invitation',
             'user',
             'contactLog',
-            'guestQrCards',
+            'qrCodesUrl',
             'uploadedMediaUrl',
             'routes',
             'category',

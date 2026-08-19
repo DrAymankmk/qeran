@@ -65,12 +65,15 @@ $rsvpDeclined = ($initialView ?? '') === 'decline';
           <p class="wi-rsvp-result-title">{{ __('admin.invitation-accepted-thanks') }}</p>
 
           <div class="wi-rsvp-qr-wrap">
-            @if(!empty($user) && !empty($invitation))
-            @include('invitation.partials.qr-guests-section', [
+            @if(!empty($qrCodesUrl))
+            <a href="{{ $qrCodesUrl }}" class="wi-rsvp-btn wi-rsvp-btn-accept" style="display:inline-block;text-decoration:none;margin-top:12px;">
+              {{ __('messages.invitation_qr_codes_download_link') }}
+            </a>
+            @elseif(!empty($user) && !empty($invitation))
+            @include('invitation.partials.qr-section', [
               'invitation' => $invitation,
               'user' => $user,
-              'contactLog' => $contactLog ?? null,
-              'guestQrCards' => $guestQrCards ?? [],
+              'contactLog' => null,
               'wrapperClass' => 'wi-rsvp-qr',
             ])
             @else

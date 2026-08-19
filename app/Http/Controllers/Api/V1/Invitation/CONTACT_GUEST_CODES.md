@@ -162,17 +162,15 @@ Queues WhatsApp messages to stored `invitation_contact_logs` for the authenticat
 
 ### Invitation types
 
-| Type | Constant | Guest link behavior |
-|------|----------|---------------------|
-| Contact Design | `INVITATION_TYPE['Contact Design']` (2) | Builder contact page: `/invitation/{code}/contact/{contact_log_id}` |
-| User Design | `INVITATION_TYPE['User Design']` (3) | Classic contact page with uploaded image/video + QR section: `/invitation/{code}/contact/{contact_log_id}/{template?}` |
+| Type | Constant | Invitation link | QR codes link |
+|------|----------|-----------------|---------------|
+| Contact Design | `INVITATION_TYPE['Contact Design']` (2) | Builder page: `/invitation/{code}/contact/{id}` | `/invitation/{code}/contact/{id}/qr-codes` |
+| User Design | `INVITATION_TYPE['User Design']` (3) | Classic page: `/invitation/{code}/contact/{id}/{template?}` | `/invitation/{code}/contact/{id}/qr-codes` |
 
-Both types use the **same contact invitation page URL** (not the raw media file URL). The page shows:
+**Important:** QR codes are **not** shown on the invitation or builder page. They live on a **separate dedicated page** (`qr-codes` route).
 
-1. Invitation design (builder or uploaded media for type 3)
-2. Guest info and **invitation count** (contact + companions)
-3. **QR codes** — primary contact first, then companion slots
-4. **Download button** per QR code
+- **Invitation link** → view design, accept/decline RSVP
+- **QR codes link** → download entry QR for main guest + each companion
 
 ### WhatsApp message template
 
@@ -182,35 +180,39 @@ Includes:
 
 - Event type and host name
 - **`invitation_count`** — total slots (main guest + companions)
-- **`invitation_link`** — contact invitation page where QR codes can be viewed/downloaded
+- **`invitation_link`** — invitation / builder page (design only)
+- **`qr_codes_link`** — dedicated QR download page
 
 Example (Arabic):
 
 ```
 عدد الدعوات: 3 (الضيف الرئيسي + المرافقين)
-الرجاء فتح الرابط التالي لعرض الدعوة وتحميل أكواد الدخول (QR) لكل ضيف
-{invitation_link}
+رابط الدعوة:
+https://qeran.app/invitation/{code}/contact/{id}
+رابط أكواد الدخول (QR) لكل ضيف:
+https://qeran.app/invitation/{code}/contact/{id}/qr-codes
 ```
 
 ### Share flow (backend)
 
 1. `shareInvitation()` loads contact logs for the invitation
 2. `prepareContactLogForShare()` ensures `guest_codes` + QR PNG files exist for every slot
-3. `buildContactInvitationMessage()` builds the WhatsApp text with count + link
+3. `buildContactInvitationMessage()` builds the WhatsApp text with count + **two links**
 4. `SendBaileysInvitationContactMessage` job sends:
-   - Text message with link and invitation count
+   - Text message with invitation link + QR codes link
    - Uploaded design media (image/video) for **User Design** invitations when available
-   - QR codes are **not** sent as separate WhatsApp images — they are on the invitation link page
+   - QR codes are **not** on the invitation page and **not** sent as separate WhatsApp images
 
-### Contact page QR display
+### QR codes page
+
+Route: `GET /invitation/{invitation_code}/contact/{contact_log_id}/qr-codes`  
+View: `resources/views/invitation/contact-qr-codes.blade.php`
 
 Partial: `resources/views/invitation/partials/qr-guests-section.blade.php`
 
-- Renders one card per guest slot from `guestQrCards`
-- Primary guest (slot 1) appears first
-- Each card has image + download button (`downloadInvitationQr`)
-
-Website controller passes `guestQrCards` from `Invitation::guestQrCardsForContactLog()`.
+- One card per guest slot (primary first)
+- Download button per QR code
+- Link back to invitation page
 
 ### Related methods
 

@@ -6,7 +6,7 @@ return [
     'invalid_scan_code' => 'Invalid scan code',
     'user_scanned_successfully' => 'Guest scanned successfully',
 
-    'invitation_contact_share_template' => "🌟Quran App for Sending Invitations🌟\nWith joy and happiness\n :host_name \n We are honored to invite you to attend :event_type \nNumber of invitations: :invitation_count (main guest + companions)\nPlease open the following link to view the invitation and download entry QR codes for each guest\n\n:invitation_link\n\nDownload the app\n:application_link\n",
+    'invitation_contact_share_template' => "🌟Quran App for Sending Invitations🌟\nWith joy and happiness\n :host_name \n We are honored to invite you to attend :event_type \nNumber of invitations: :invitation_count (main guest + companions)\nInvitation link:\n:invitation_link\nQR codes link (one per guest):\n:qr_codes_link\n\nDownload the app\n:application_link\n",
 
     'invitation_notification_template' => "🌟Quran App for Sending Invitations🌟\nWith joy and happiness\n :host_name \n We are honored to invite you to attend :event_type \nPlease show the attached code with the invitation at the following link when entering\n\n:invitation_link\n\nDownload on the App Store 👇🏻\n:apple_link\n\nGet it on Google Play 👇🏻\n:google_play_link",
     
@@ -18,6 +18,10 @@ return [
     'invitation_qr_codes_heading' => 'Entry QR codes',
     'invitation_qr_primary_guest' => 'Main guest',
     'invitation_qr_companion_guest' => 'Companion',
+    'invitation_qr_codes_page_subtitle' => 'Download the entry QR code for each guest and show it at the gate',
+    'invitation_qr_codes_page_count' => 'Number of QR codes: :count',
+    'invitation_qr_codes_view_invitation' => '← Back to invitation page',
+    'invitation_qr_codes_download_link' => 'Download entry QR codes',
     
     'variables' => [
         'event_type' => 'event type',

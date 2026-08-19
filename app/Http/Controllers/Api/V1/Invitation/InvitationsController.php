@@ -1184,11 +1184,16 @@ class InvitationsController extends Controller
             $invitation,
             (int) $log->id
         );
+        $qrCodesLink = app(InvitationBuilderService::class)->guestContactQrCodesUrl(
+            $invitation,
+            (int) $log->id
+        );
 
         return __('messages.'.$templateType, [
             'event_type' => $eventType,
             'host_name' => $hostName,
             'invitation_link' => $invitationLink,
+            'qr_codes_link' => $qrCodesLink,
             'application_link' => env('APPLICATION_LINK'),
             'invitation_count' => max(1, (int) ($log->invitation_count ?? 1)),
         ]);
@@ -2269,6 +2274,9 @@ try {
             })->values()->all(),
             'invitation_link' => $invitation
                 ? app(InvitationBuilderService::class)->guestContactInvitationUrl($invitation, (int) $log->id)
+                : null,
+            'qr_codes_link' => $invitation
+                ? app(InvitationBuilderService::class)->guestContactQrCodesUrl($invitation, (int) $log->id)
                 : null,
             'send_status' => $sendStatus,
             'whatsapp_status' => $whatsappStatus,

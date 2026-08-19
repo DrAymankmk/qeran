@@ -1893,6 +1893,14 @@ class InvitationBuilderService
         ]);
     }
 
+    public function guestContactQrCodesUrl(Invitation $invitation, int $contactLogId): string
+    {
+        return route('user.invitation.contact.qr-codes', [
+            'invitation_code' => $invitation->code,
+            'contact_log_id' => $contactLogId,
+        ]);
+    }
+
     public function guestInvitationUrl(
         Invitation $invitation,
         int $userId,

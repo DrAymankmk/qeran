@@ -2174,12 +2174,19 @@
 					</div>
 				@endif
 
-				@include('invitation.partials.qr-guests-section', [
-					'invitation' => $invitation,
-					'user' => $user,
-					'contactLog' => $contactLog ?? null,
-					'guestQrCards' => $guestQrCards ?? [],
-				])
+				@if(!empty($contactLog) && !empty($qrCodesUrl))
+					<div class="qr-codes-link-section" style="text-align:center;margin-top:1.5rem;">
+						<a href="{{ $qrCodesUrl }}" class="qr-download-button" style="display:inline-block;text-decoration:none;">
+							{{ __('messages.invitation_qr_codes_download_link') }}
+						</a>
+					</div>
+				@elseif(empty($contactLog))
+					@include('invitation.partials.qr-section', [
+						'invitation' => $invitation,
+						'user' => $user,
+						'contactLog' => null,
+					])
+				@endif
 			</div>
 
 			<!-- Decline View -->

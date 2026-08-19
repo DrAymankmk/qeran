@@ -165,11 +165,11 @@ Queues WhatsApp messages to stored `invitation_contact_logs` for the authenticat
 | Type | Constant | Invitation link | QR codes link |
 |------|----------|-----------------|---------------|
 | Contact Design | `INVITATION_TYPE['Contact Design']` (2) | Builder page: `/invitation/{code}/contact/{id}` | `/invitation/{code}/contact/{id}/qr-codes` |
-| User Design | `INVITATION_TYPE['User Design']` (3) | Classic page: `/invitation/{code}/contact/{id}/{template?}` | `/invitation/{code}/contact/{id}/qr-codes` |
+| User Design | `INVITATION_TYPE['User Design']` (3) | **Uploaded media URL**: `/m/{code}/invitation.{webp\|mp4\|...}` | `/invitation/{code}/contact/{id}/qr-codes` |
 
 **Important:** QR codes are **not** shown on the invitation or builder page. They live on a **separate dedicated page** (`qr-codes` route).
 
-- **Invitation link** → view design, accept/decline RSVP
+- **Invitation link** → view design (builder page for Contact Design, **direct uploaded image/video URL** for User Design), accept/decline on contact page if opened there
 - **QR codes link** → download entry QR for main guest + each companion
 
 ### WhatsApp message template

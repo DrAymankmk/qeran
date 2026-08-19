@@ -130,6 +130,7 @@ Route::prefix('/v1')->group(function () {
             Route::post('add-user/{invitation}', 'addUser');
             // Old route: Route::post('edit-user/{user}', 'editUser');
             Route::post('edit-contact/{contactLog}', 'editUser');
+            Route::post('edit-user/{contactLog}', 'editUser');
             Route::post('/{invitation}/update-admin-invitation-count/{admin}', 'updateAdminInvitationCount');
             Route::post('send-notification/{invitation}', 'sendNotificationToUser');
             Route::post('update-admin-host-name/{invitation}', 'updateAdminHostName');

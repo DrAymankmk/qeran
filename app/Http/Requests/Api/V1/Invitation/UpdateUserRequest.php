@@ -38,8 +38,14 @@ class UpdateUserRequest extends FormRequest
         ];
     }
 
-    protected function failedValidation(Validator $validator)
+    protected function failedValidation(Validator $validator): void
     {
+        \Illuminate\Support\Facades\Log::warning('editUser (edit-contact) validation failed', [
+            'errors' => $validator->errors()->toArray(),
+            'payload' => $this->except(['password']),
+            'contact_log_id' => $this->route('contactLog')?->id,
+        ]);
+
         throw new HttpResponseException(RespondActive::clientError(
             RespondActive::stringifyErrors($validator->errors())
         ));

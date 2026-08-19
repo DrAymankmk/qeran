@@ -1871,6 +1871,12 @@ class InvitationBuilderService
         int $contactLogId,
         bool $preview = false
     ): string {
+        // User Design (type 3): invitation link is the client-uploaded image/video.
+        if ($this->usesUploadedGuestMedia($invitation)) {
+            return $this->guestUploadedMediaShareUrl($invitation)
+                ?: rtrim((string) config('app.url'), '/').'/m/'.$invitation->code.'/invitation.webp';
+        }
+
         $invitation->loadMissing('builderSetting');
         $builderRow = $invitation->builderSetting;
 

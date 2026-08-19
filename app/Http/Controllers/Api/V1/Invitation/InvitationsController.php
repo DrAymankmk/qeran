@@ -892,42 +892,97 @@ class InvitationsController extends Controller
 
     public function editUser(UpdateUserRequest $request, InvitationContactLog $contactLog)
     {
+        Log::info('editUser (edit-contact) started', [
+            'auth_id' => auth()->id(),
+            'contact_log_id' => $contactLog->id,
+            'invitation_id' => $request->invitation_id,
+            'requested_invitation_count' => $request->invitation_count,
+            'requested_name' => $request->name,
+            'requested_phone' => $request->phone,
+            'requested_country_code' => $request->country_code,
+            'before_invitation_count' => $contactLog->invitation_count,
+            'before_guest_codes_count' => count($contactLog->guestEntries()),
+        ]);
+
         $invitation = Invitation::findOrFail($request->invitation_id);
 
         if ((int) $contactLog->invitation_id !== (int) $invitation->id) {
+            Log::warning('editUser contact log invitation mismatch', [
+                'contact_log_id' => $contactLog->id,
+                'contact_log_invitation_id' => $contactLog->invitation_id,
+                'request_invitation_id' => $invitation->id,
+            ]);
+
             return RespondActive::clientError(__('messages.sorry_user_not_invited'));
         }
 
         if ($invitation->user_id == auth()->id()) {
             if (! checkPackageCountForContactLog($invitation, $request->invitation_count, $contactLog->id)) {
+                Log::warning('editUser package quota exceeded (owner)', [
+                    'contact_log_id' => $contactLog->id,
+                    'invitation_id' => $invitation->id,
+                    'requested_count' => $request->invitation_count,
+                ]);
+
                 return RespondActive::clientError(__('validation.exceeded_number_of_invited_users'));
             }
         } else {
             if (! checkPackageCountForAdminContactLog($invitation, $request->invitation_count, auth()->id(), 'update', $contactLog->id)) {
+                Log::warning('editUser package quota exceeded (admin)', [
+                    'contact_log_id' => $contactLog->id,
+                    'invitation_id' => $invitation->id,
+                    'admin_id' => auth()->id(),
+                    'requested_count' => $request->invitation_count,
+                ]);
+
                 return RespondActive::clientError(__('validation.exceeded_number_of_invited_users'));
             }
         }
 
-        $phone = checkCountryCode(str_replace(' ', '', $request->phone));
-        $contactName = $request->name ?? $contactLog->contact_name;
-        $guestCodes = $this->syncGuestCodes(
-            $invitation,
-            $contactLog,
-            (int) $request->invitation_count,
-            $contactName
-        );
+        try {
+            $phone = checkCountryCode(str_replace(' ', '', $request->phone));
+            $contactName = $request->name ?? $contactLog->contact_name;
+            $guestCodes = $this->syncGuestCodes(
+                $invitation,
+                $contactLog,
+                (int) $request->invitation_count,
+                $contactName
+            );
 
-        $contactLog->update([
-            'contact_name' => $contactName,
-            'phone' => $phone['phone'],
-            'country_code' => $phone['country_code'],
-            'invitation_count' => (int) $request->invitation_count,
-            'guest_codes' => $guestCodes,
-            'reference_id' => $invitation->id.'-contact-'.$contactLog->id,
-        ]);
+            Log::info('editUser guest codes prepared', [
+                'contact_log_id' => $contactLog->id,
+                'guest_slots' => collect($guestCodes['guests'] ?? [])->pluck('slot')->all(),
+                'guest_codes' => $guestCodes,
+            ]);
 
-        $contactLog = $contactLog->fresh();
-        $this->ensureGuestQrCodes($invitation, $contactLog);
+            $contactLog->update([
+                'contact_name' => $contactName,
+                'phone' => $phone['phone'],
+                'country_code' => $phone['country_code'],
+                'invitation_count' => (int) $request->invitation_count,
+                'guest_codes' => $guestCodes,
+                'reference_id' => $invitation->id.'-contact-'.$contactLog->id,
+            ]);
+
+            $contactLog = $contactLog->fresh();
+            $this->ensureGuestQrCodes($invitation, $contactLog);
+
+            Log::info('editUser (edit-contact) completed', [
+                'contact_log_id' => $contactLog->id,
+                'invitation_count' => $contactLog->invitation_count,
+                'guest_codes_count' => count($contactLog->guestEntries()),
+                'guest_codes' => $contactLog->guest_codes,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('editUser (edit-contact) failed', [
+                'contact_log_id' => $contactLog->id,
+                'invitation_id' => $invitation->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            throw $e;
+        }
 
         if ($invitation->paid == Constant::PAID_STATUS['Paid'] && $contactLog->user_id) {
             Notification::notify('users',
@@ -1407,9 +1462,27 @@ class InvitationsController extends Controller
 
     public function checkInvitation(CheckInvitationRequest $request)
     {
-        $parsed = $this->parseGuestScanCode($request->code);
+        $rawCode = (string) $request->code;
+        $normalizedCode = $this->normalizeGuestScanCode($rawCode);
+
+        Log::info('checkInvitation started', [
+            'guard_id' => auth()->id(),
+            'invitation_id' => $request->invitation_id,
+            'raw_code' => $rawCode,
+            'normalized_code' => $normalizedCode,
+            'legacy_user_id_sent' => $request->input('user_id'),
+        ]);
+
+        $parsed = $this->parseGuestScanCode($normalizedCode);
 
         if (! $parsed) {
+            Log::warning('checkInvitation invalid scan code', [
+                'guard_id' => auth()->id(),
+                'invitation_id' => $request->invitation_id,
+                'raw_code' => $rawCode,
+                'normalized_code' => $normalizedCode,
+            ]);
+
             return RespondActive::clientError(__('messages.invalid_scan_code'), [
                 'status' => false,
                 'message' => __('messages.invalid_scan_code'),
@@ -1418,6 +1491,12 @@ class InvitationsController extends Controller
         }
 
         if ((int) $parsed['invitation_id'] !== (int) $request->invitation_id) {
+            Log::warning('checkInvitation invitation_id mismatch', [
+                'guard_id' => auth()->id(),
+                'request_invitation_id' => $request->invitation_id,
+                'parsed' => $parsed,
+            ]);
+
             return RespondActive::clientError(__('messages.sorry_user_not_invited'), [
                 'status' => false,
                 'message' => __('messages.sorry_user_not_invited'),
@@ -1428,6 +1507,11 @@ class InvitationsController extends Controller
         $invitation = Invitation::find($request->invitation_id);
 
         if (! $invitation) {
+            Log::warning('checkInvitation invitation not found', [
+                'invitation_id' => $request->invitation_id,
+                'parsed' => $parsed,
+            ]);
+
             return RespondActive::clientError(__('messages.sorry_user_not_invited'), [
                 'status' => false,
                 'message' => __('messages.sorry_user_not_invited'),
@@ -1436,6 +1520,11 @@ class InvitationsController extends Controller
         }
 
         if (! $invitation->guards()->where('user_id', auth()->id())->exists()) {
+            Log::warning('checkInvitation guard not assigned to invitation', [
+                'guard_id' => auth()->id(),
+                'invitation_id' => $invitation->id,
+            ]);
+
             return RespondActive::clientError(__('messages.sorry_user_not_invited'));
         }
 
@@ -1445,6 +1534,11 @@ class InvitationsController extends Controller
             ->first();
 
         if (! $contactLog) {
+            Log::warning('checkInvitation contact log not found', [
+                'invitation_id' => $invitation->id,
+                'parsed' => $parsed,
+            ]);
+
             return RespondActive::clientError(__('messages.sorry_user_not_invited'), [
                 'status' => false,
                 'message' => __('messages.sorry_user_not_invited'),
@@ -1452,9 +1546,19 @@ class InvitationsController extends Controller
             ]);
         }
 
+        $contactLog = $this->ensureContactLogHasGuestCodes($invitation, $contactLog);
+
         $guest = $this->findGuestInContactLog($contactLog, $parsed['slot']);
 
         if (! $guest) {
+            Log::warning('checkInvitation guest slot not found', [
+                'contact_log_id' => $contactLog->id,
+                'slot' => $parsed['slot'],
+                'guest_codes' => $contactLog->guest_codes,
+                'invitation_count' => $contactLog->invitation_count,
+                'parsed' => $parsed,
+            ]);
+
             return RespondActive::clientError(__('messages.sorry_user_not_invited'), [
                 'status' => false,
                 'message' => __('messages.sorry_user_not_invited'),
@@ -1463,6 +1567,12 @@ class InvitationsController extends Controller
         }
 
         if (($guest['is_scanned'] ?? false) === true) {
+            Log::info('checkInvitation already scanned', [
+                'contact_log_id' => $contactLog->id,
+                'slot' => $parsed['slot'],
+                'code' => $guest['code'] ?? null,
+            ]);
+
             return RespondActive::success(__('messages.already_scanned'), [
                 'status' => false,
                 'message' => __('messages.already_scanned'),
@@ -1477,6 +1587,15 @@ class InvitationsController extends Controller
 
         $contactLog = $this->markGuestScanned($contactLog, $parsed['slot']);
         $guest = $this->findGuestInContactLog($contactLog, $parsed['slot']);
+
+        Log::info('checkInvitation scan success', [
+            'guard_id' => auth()->id(),
+            'contact_log_id' => $contactLog->id,
+            'slot' => $parsed['slot'],
+            'code' => $guest['code'] ?? null,
+            'scanned_count' => $contactLog->scannedGuestsCount(),
+            'invitation_count' => $contactLog->invitation_count,
+        ]);
 
         return RespondActive::success('Action ran successfully', [
             'status' => true,
@@ -2151,11 +2270,45 @@ try {
         return "{$invitationId}-contact-{$contactLogId}-{$slot}";
     }
 
+    private function normalizeGuestScanCode(string $rawCode): string
+    {
+        $code = trim(urldecode($rawCode));
+
+        if (preg_match('/Qr-(\d+-contact-\d+(?:-\d+)?)(?:\.png)?/i', $code, $matches)) {
+            return $matches[1];
+        }
+
+        if (preg_match('/(\d+-contact-\d+(?:-\d+)?)/', $code, $matches)) {
+            return $matches[1];
+        }
+
+        return $code;
+    }
+
+    private function ensureContactLogHasGuestCodes(
+        Invitation $invitation,
+        InvitationContactLog $contactLog
+    ): InvitationContactLog {
+        if ($contactLog->guestEntries() !== []) {
+            return $contactLog;
+        }
+
+        Log::info('ensureContactLogHasGuestCodes rebuilding missing guest_codes', [
+            'contact_log_id' => $contactLog->id,
+            'invitation_id' => $invitation->id,
+            'invitation_count' => $contactLog->invitation_count,
+        ]);
+
+        return $this->prepareContactLogForShare($invitation, $contactLog);
+    }
+
     /**
      * @return array{invitation_id: int, contact_log_id: int, slot: int}|null
      */
     private function parseGuestScanCode(string $code): ?array
     {
+        $code = $this->normalizeGuestScanCode($code);
+
         if (preg_match('/^(\d+)-contact-(\d+)-(\d+)$/', $code, $matches)) {
             return [
                 'invitation_id' => (int) $matches[1],

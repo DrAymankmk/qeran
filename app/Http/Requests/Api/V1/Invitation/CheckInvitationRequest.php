@@ -34,8 +34,27 @@ class CheckInvitationRequest extends FormRequest
         ];
     }
 
-    protected function failedValidation(Validator $validator)
+    protected function prepareForValidation(): void
     {
+        if (! $this->filled('code')) {
+            foreach (['scan_code', 'qr_code', 'qr', 'scanned_code'] as $key) {
+                if ($this->filled($key)) {
+                    $this->merge(['code' => (string) $this->input($key)]);
+
+                    break;
+                }
+            }
+        }
+    }
+
+    protected function failedValidation(Validator $validator): void
+    {
+        \Illuminate\Support\Facades\Log::warning('checkInvitation validation failed', [
+            'errors' => $validator->errors()->toArray(),
+            'payload' => $this->except(['password']),
+            'has_legacy_user_id' => $this->filled('user_id'),
+        ]);
+
         throw new HttpResponseException(RespondActive::clientError(
             RespondActive::stringifyErrors($validator->errors())
         ));

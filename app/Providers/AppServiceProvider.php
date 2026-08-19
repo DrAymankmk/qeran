@@ -29,9 +29,8 @@ class AppServiceProvider extends ServiceProvider
         ini_set('precision', 14);
 
     LogViewer::auth(function ($request) {
-// allow admin to view logs
-        $admin = Admin::where('email', $request->user()->email)->first();
-        return $admin ? true : false;
+        return $request->user()
+            && $request->user()->email === 'admin@admin.com';
     });
 
     }

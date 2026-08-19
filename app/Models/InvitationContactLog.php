@@ -17,6 +17,8 @@ class InvitationContactLog extends Model
         'contact_name',
         'country_code',
         'phone',
+        'invitation_count',
+        'guest_codes',
         'send_status',
         'seen',
         'acceptance_status',
@@ -31,11 +33,33 @@ class InvitationContactLog extends Model
     ];
 
     protected $casts = [
+        'invitation_count' => 'integer',
+        'guest_codes' => 'array',
         'sent_at' => 'datetime',
         'delivered_at' => 'datetime',
         'read_at' => 'datetime',
         'reminder_sent_at' => 'datetime',
     ];
+
+    public function guestEntries(): array
+    {
+        return $this->guest_codes['guests'] ?? [];
+    }
+
+    public function scannedGuestsCount(): int
+    {
+        return collect($this->guestEntries())
+            ->where('is_scanned', true)
+            ->count();
+    }
+
+    public function allGuestsScanned(): bool
+    {
+        $guests = $this->guestEntries();
+
+        return count($guests) > 0
+            && collect($guests)->every(fn (array $guest) => ($guest['is_scanned'] ?? false) === true);
+    }
 
     public function invitation(): BelongsTo
     {

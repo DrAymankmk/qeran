@@ -3,6 +3,7 @@
 use App\Helpers\Constant;
 use \Illuminate\Support\Facades\Storage;
 use Intervention\Image\Facades\Image;
+use App\Models\InvitationContactLog;
 use App\Models\Setting;
 use libphonenumber\PhoneNumberUtil;
 use Propaganistas\LaravelPhone\PhoneNumber;
@@ -496,6 +497,63 @@ if(!function_exists('checkPackageCountForAdmin')){
         return false;
 
     }
+    }
+}
+
+if (! function_exists('checkPackageCountForContactLog')) {
+    function checkPackageCountForContactLog($invitation, $count, $contactLogId)
+    {
+        $package_invitation = 0;
+        $contactInvitationCount = InvitationContactLog::query()
+            ->where('invitation_id', $invitation->id)
+            ->where('id', '!=', $contactLogId)
+            ->sum('invitation_count');
+        $adminInvitationCount = $invitation->admins()->sum('invitation_user.invitation_count');
+        $invitationPackages = $invitation->invitationPackages;
+
+        if (count($invitationPackages) > 0) {
+            foreach ($invitationPackages as $invitationPackage) {
+                $package_invitation += ($invitationPackage->package->count + $invitationPackage->package->free_invitations_count + $invitationPackage->count);
+            }
+        }
+
+        if ($package_invitation < ($adminInvitationCount + $contactInvitationCount + $count)) {
+            return false;
+        }
+
+        return true;
+    }
+}
+
+if (! function_exists('checkPackageCountForAdminContactLog')) {
+    function checkPackageCountForAdminContactLog($invitation, $count, $admin_id, $type = 'check', $contactLogId = null)
+    {
+        if ($type == 'check') {
+            $totalInvitationCount = $invitation->admins()->where('user_id', $admin_id)->first()?->pivot?->invitation_count;
+            $contactInvitationCount = InvitationContactLog::query()
+                ->where('invitation_id', $invitation->id)
+                ->where('invited_by', $admin_id)
+                ->sum('invitation_count');
+
+            if ($totalInvitationCount >= ($contactInvitationCount + $count)) {
+                return true;
+            }
+
+            return false;
+        } elseif ($type == 'update') {
+            $totalInvitationCount = $invitation->admins()->where('user_id', $admin_id)->first()?->pivot?->invitation_count;
+            $contactInvitationCount = InvitationContactLog::query()
+                ->where('invitation_id', $invitation->id)
+                ->where('invited_by', $admin_id)
+                ->when($contactLogId, fn ($query) => $query->where('id', '!=', $contactLogId))
+                ->sum('invitation_count');
+
+            if ($totalInvitationCount >= ($contactInvitationCount + (int) $count)) {
+                return true;
+            }
+
+            return false;
+        }
     }
 }
 

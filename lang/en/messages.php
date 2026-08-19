@@ -1,6 +1,13 @@
 <?php
 
 return [
+    'already_scanned' => 'Already scanned',
+    'sorry_user_not_invited' => 'Sorry, this guest is not invited',
+    'invalid_scan_code' => 'Invalid scan code',
+    'user_scanned_successfully' => 'Guest scanned successfully',
+
+    'invitation_contact_share_template' => "🌟Quran App for Sending Invitations🌟\nWith joy and happiness\n :host_name \n We are honored to invite you to attend :event_type \nNumber of invitations: :invitation_count (main guest + companions)\nPlease open the following link to view the invitation and download entry QR codes for each guest\n\n:invitation_link\n\nDownload the app\n:application_link\n",
+
     'invitation_notification_template' => "🌟Quran App for Sending Invitations🌟\nWith joy and happiness\n :host_name \n We are honored to invite you to attend :event_type \nPlease show the attached code with the invitation at the following link when entering\n\n:invitation_link\n\nDownload on the App Store 👇🏻\n:apple_link\n\nGet it on Google Play 👇🏻\n:google_play_link",
     
     'invitation_sms_template' => "🌟Quran App for Sending Invitations🌟\nWith joy and happiness\n :host_name \n We are honored to invite you to attend :event_type \nPlease show the attached code with the invitation at the following link when entering\n\n:invitation_link\n\nFor more information about the Quran app, scan the code\n\nThe registered number belongs to the Quran app, and the invitation has been sent to you at the request of Mr./:host_name and under their responsibility.",
@@ -8,6 +15,9 @@ return [
     'invitation_contact_reminder_sms_template' => "Friendly reminder 🌷\n:event_type / :host_name\nWe look forward to your attendance and participation",
     'invitation_contact_reminder_default_event' => 'the event',
     'invitation_qr_caption' => "Please show this code when entering",
+    'invitation_qr_codes_heading' => 'Entry QR codes',
+    'invitation_qr_primary_guest' => 'Main guest',
+    'invitation_qr_companion_guest' => 'Companion',
     
     'variables' => [
         'event_type' => 'event type',

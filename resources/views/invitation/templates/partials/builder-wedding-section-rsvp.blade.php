@@ -66,10 +66,11 @@ $rsvpDeclined = ($initialView ?? '') === 'decline';
 
           <div class="wi-rsvp-qr-wrap">
             @if(!empty($user) && !empty($invitation))
-            @include('invitation.partials.qr-section', [
+            @include('invitation.partials.qr-guests-section', [
               'invitation' => $invitation,
               'user' => $user,
               'contactLog' => $contactLog ?? null,
+              'guestQrCards' => $guestQrCards ?? [],
               'wrapperClass' => 'wi-rsvp-qr',
             ])
             @else

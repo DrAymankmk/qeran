@@ -851,6 +851,8 @@ class InvitationsController extends Controller
         return RespondActive::success('Action ran successfully');
     }
 
+    /*
+    // --- Old editUser (invitation_user pivot) ---
     public function editUser(UpdateUserRequest $request, User $user)
     {
         $invitation = Invitation::whereId($request->invitation_id)->first();
@@ -885,6 +887,57 @@ class InvitationsController extends Controller
         }
 
         return RespondActive::success('Action ran successfully', (new UserResource($user)));
+    }
+    */
+
+    public function editUser(UpdateUserRequest $request, InvitationContactLog $contactLog)
+    {
+        $invitation = Invitation::findOrFail($request->invitation_id);
+
+        if ((int) $contactLog->invitation_id !== (int) $invitation->id) {
+            return RespondActive::clientError(__('messages.sorry_user_not_invited'));
+        }
+
+        if ($invitation->user_id == auth()->id()) {
+            if (! checkPackageCountForContactLog($invitation, $request->invitation_count, $contactLog->id)) {
+                return RespondActive::clientError(__('validation.exceeded_number_of_invited_users'));
+            }
+        } else {
+            if (! checkPackageCountForAdminContactLog($invitation, $request->invitation_count, auth()->id(), 'update', $contactLog->id)) {
+                return RespondActive::clientError(__('validation.exceeded_number_of_invited_users'));
+            }
+        }
+
+        $phone = checkCountryCode(str_replace(' ', '', $request->phone));
+        $contactName = $request->name ?? $contactLog->contact_name;
+        $guestCodes = $this->syncGuestCodes(
+            $invitation,
+            $contactLog,
+            (int) $request->invitation_count,
+            $contactName
+        );
+
+        $contactLog->update([
+            'contact_name' => $contactName,
+            'phone' => $phone['phone'],
+            'country_code' => $phone['country_code'],
+            'invitation_count' => (int) $request->invitation_count,
+            'guest_codes' => $guestCodes,
+            'reference_id' => $invitation->id.'-contact-'.$contactLog->id,
+        ]);
+
+        $contactLog = $contactLog->fresh();
+        $this->ensureGuestQrCodes($invitation, $contactLog);
+
+        if ($invitation->paid == Constant::PAID_STATUS['Paid'] && $contactLog->user_id) {
+            Notification::notify('users',
+                Constant::NOTIFICATIONS_TYPE['Invitations'],
+                [$contactLog->user_id],
+                $invitation->id,
+                'invitation_received');
+        }
+
+        return RespondActive::success('Action ran successfully', $this->formatContactLog($contactLog));
     }
 
     public function addAdmin(StoreAdminRequest $request, Invitation $invitation)
@@ -1112,7 +1165,7 @@ class InvitationsController extends Controller
     private function buildContactInvitationMessage(
         Invitation $invitation,
         InvitationContactLog $log,
-        string $templateType = 'invitation_sms_template'
+        string $templateType = 'invitation_contact_share_template'
     ): string {
         $eventType = $invitation->category ? $invitation->category->name : $invitation->event_name;
         $hostName = $invitation->host_name;
@@ -1137,7 +1190,32 @@ class InvitationsController extends Controller
             'host_name' => $hostName,
             'invitation_link' => $invitationLink,
             'application_link' => env('APPLICATION_LINK'),
+            'invitation_count' => max(1, (int) ($log->invitation_count ?? 1)),
         ]);
+    }
+
+    private function prepareContactLogForShare(Invitation $invitation, InvitationContactLog $log): InvitationContactLog
+    {
+        if (empty($log->guest_codes['guests'])) {
+            $guestCodes = $this->syncGuestCodes(
+                $invitation,
+                $log,
+                max(1, (int) ($log->invitation_count ?? 1)),
+                (string) $log->contact_name
+            );
+
+            $log->update([
+                'invitation_count' => max(1, (int) ($log->invitation_count ?? 1)),
+                'guest_codes' => $guestCodes,
+                'reference_id' => $invitation->id.'-contact-'.$log->id,
+            ]);
+
+            $log = $log->fresh();
+        }
+
+        $this->ensureGuestQrCodes($invitation, $log);
+
+        return $log->fresh();
     }
 
     private function buildStyledInvitationMessage(Invitation $invitation, $messageBody, $templateType = 'styled_invitation_template')
@@ -1292,38 +1370,122 @@ class InvitationsController extends Controller
         return RespondActive::success('Action ran successfully');
     }
 
+    /*
+    // --- Old checkInvitation (invitation_user pivot + user_id) ---
     public function checkInvitation(CheckInvitationRequest $request)
     {
         $invitation = Invitation::where('id', $request->invitation_id)->first();
-
-        //Invitation include to this guard
 
         if (! $invitation->guards()->where('user_id', auth()->id())->exists()) {
             return RespondActive::clientError(__('messages.sorry_user_not_invited'));
         }
 
         if ($invitation) {
-            // First check if user exists in this invitation at all
             $userInInvitation = $invitation->users()->where('user_id', $request->user_id)->first();
 
             if (! $userInInvitation) {
-                // User doesn't exist in this invitation
                 return RespondActive::clientError(__('messages.sorry_user_not_invited'), ['status' => false, 'message' => __('messages.sorry_user_not_invited'), 'invitation_count' => 0]);
             }
 
-            // Check if user is already scanned
             if ($userInInvitation->pivot->seen == Constant::SEEN_STATUS['scanned']) {
-                // User is already scanned
                 return RespondActive::success(__('messages.already_scanned'), ['status' => false, 'message' => __('messages.already_scanned'), 'invitation_count' => 0]);
             }
 
-            // User exists and is not scanned yet - mark as scanned
             $invitation->users()->where('user_id', $request->user_id)->update(['seen' => Constant::SEEN_STATUS['scanned']]);
 
             return RespondActive::success('Action ran successfully', ['status' => true, 'message' => __('messages.user_scanned_successfully'), 'invitation_count' => $userInInvitation->pivot->invitation_count, 'guest_name' => $userInInvitation->pivot->name, 'guest_phone' => $userInInvitation->country_code.$userInInvitation->phone]);
         } else {
             return RespondActive::clientError(__('messages.sorry_user_not_invited'), ['status' => false, 'message' => __('messages.sorry_user_not_invited'), 'invitation_count' => 0]);
         }
+    }
+    */
+
+    public function checkInvitation(CheckInvitationRequest $request)
+    {
+        $parsed = $this->parseGuestScanCode($request->code);
+
+        if (! $parsed) {
+            return RespondActive::clientError(__('messages.invalid_scan_code'), [
+                'status' => false,
+                'message' => __('messages.invalid_scan_code'),
+                'invitation_count' => 0,
+            ]);
+        }
+
+        if ((int) $parsed['invitation_id'] !== (int) $request->invitation_id) {
+            return RespondActive::clientError(__('messages.sorry_user_not_invited'), [
+                'status' => false,
+                'message' => __('messages.sorry_user_not_invited'),
+                'invitation_count' => 0,
+            ]);
+        }
+
+        $invitation = Invitation::find($request->invitation_id);
+
+        if (! $invitation) {
+            return RespondActive::clientError(__('messages.sorry_user_not_invited'), [
+                'status' => false,
+                'message' => __('messages.sorry_user_not_invited'),
+                'invitation_count' => 0,
+            ]);
+        }
+
+        if (! $invitation->guards()->where('user_id', auth()->id())->exists()) {
+            return RespondActive::clientError(__('messages.sorry_user_not_invited'));
+        }
+
+        $contactLog = InvitationContactLog::query()
+            ->where('id', $parsed['contact_log_id'])
+            ->where('invitation_id', $invitation->id)
+            ->first();
+
+        if (! $contactLog) {
+            return RespondActive::clientError(__('messages.sorry_user_not_invited'), [
+                'status' => false,
+                'message' => __('messages.sorry_user_not_invited'),
+                'invitation_count' => 0,
+            ]);
+        }
+
+        $guest = $this->findGuestInContactLog($contactLog, $parsed['slot']);
+
+        if (! $guest) {
+            return RespondActive::clientError(__('messages.sorry_user_not_invited'), [
+                'status' => false,
+                'message' => __('messages.sorry_user_not_invited'),
+                'invitation_count' => 0,
+            ]);
+        }
+
+        if (($guest['is_scanned'] ?? false) === true) {
+            return RespondActive::success(__('messages.already_scanned'), [
+                'status' => false,
+                'message' => __('messages.already_scanned'),
+                'invitation_count' => 0,
+                'guest_name' => $guest['name'] ?? $contactLog->contact_name,
+                'guest_phone' => $contactLog->country_code.$contactLog->phone,
+                'slot' => $parsed['slot'],
+                'code' => $guest['code'],
+                'contact_log_id' => $contactLog->id,
+            ]);
+        }
+
+        $contactLog = $this->markGuestScanned($contactLog, $parsed['slot']);
+        $guest = $this->findGuestInContactLog($contactLog, $parsed['slot']);
+
+        return RespondActive::success('Action ran successfully', [
+            'status' => true,
+            'message' => __('messages.user_scanned_successfully'),
+            'invitation_count' => (int) $contactLog->invitation_count,
+            'scanned_count' => $contactLog->scannedGuestsCount(),
+            'remaining_count' => max(0, (int) $contactLog->invitation_count - $contactLog->scannedGuestsCount()),
+            'guest_name' => $guest['name'] ?? $contactLog->contact_name,
+            'guest_phone' => $contactLog->country_code.$contactLog->phone,
+            'slot' => $parsed['slot'],
+            'code' => $guest['code'],
+            'contact_log_id' => $contactLog->id,
+            'all_scanned' => $contactLog->allGuestsScanned(),
+        ]);
     }
 
 	public function PaymentReceipt(PaymentReceiptRequest $request, Invitation $invitation)
@@ -1414,22 +1576,22 @@ class InvitationsController extends Controller
     public function shareInvitation(ShareInvitationRequest $request, $invitationId)
     {
         $invitation = Invitation::findOrFail($invitationId);
-            if ($error = $this->ensureClientWhatsAppConnected()) {
-                return $error;
-            }
+        if ($error = $this->ensureClientWhatsAppConnected()) {
+            return $error;
+        }
 
-            $contactLogs = InvitationContactLog::query()
-                ->where('invitation_id', $invitation->id)
-                ->where('invited_by', auth()->id())
-                // ->whereNotNull('user_id')
-                ->latest()
-                ->get();
+        $contactLogs = InvitationContactLog::query()
+            ->where('invitation_id', $invitation->id)
+            ->where('invited_by', auth()->id())
+            ->latest()
+            ->get()
+            ->map(fn (InvitationContactLog $log) => $this->prepareContactLogForShare($invitation, $log));
 
-            if ($contactLogs->isEmpty()) {
-                return RespondActive::clientError(__('messages.invitation_contacts_not_found'));
-            }
+        if ($contactLogs->isEmpty()) {
+            return RespondActive::clientError(__('messages.invitation_contacts_not_found'));
+        }
 
-            return $this->queueStoredInvitationContactMessages($invitation, $contactLogs);
+        return $this->queueStoredInvitationContactMessages($invitation, $contactLogs);
     }
 
     public function contactInvitationLogs(Invitation $invitation)
@@ -1715,15 +1877,11 @@ try {
         $index = 0;
 
         foreach ($persisted['stored'] as $entry) {
-            $log = $entry['log'];
+            $log = $this->prepareContactLogForShare($invitation, $entry['log']);
             $contact = $entry['contact'];
             $referenceId = $log->reference_id ?: $invitation->id.'-contact-'.$log->id;
 
-            $log->update([
-                'reference_id' => $referenceId,
-            ]);
-
-            $message = $this->buildContactInvitationMessage($invitation, $log, 'invitation_sms_template');
+            $message = $this->buildContactInvitationMessage($invitation, $log);
             $availableAt = $this->invitationContactDispatchDelay($index, deferBatchesToTenAm: true);
 
             SendBaileysInvitationContactMessage::dispatch(
@@ -1771,8 +1929,9 @@ try {
         $index = 0;
 
         foreach ($contactLogs as $log) {
+            $log = $this->prepareContactLogForShare($invitation, $log);
             $referenceId = $log->reference_id ?: $invitation->id.'-contact-'.$log->id;
-            $message = $this->buildContactInvitationMessage($invitation, $log, 'invitation_sms_template');
+            $message = $this->buildContactInvitationMessage($invitation, $log);
             $availableAt = $this->invitationContactDispatchDelay($index, deferBatchesToTenAm: false);
 
             $log->update([
@@ -1857,8 +2016,24 @@ try {
                 'reference_id' => $invitation->id.'-contact-'.$log->id,
             ]);
 
+            $invitationCount = max(1, (int) ($contact['invitation_count'] ?? 1));
+            $guestCodes = $this->syncGuestCodes(
+                $invitation,
+                $log,
+                $invitationCount,
+                $contact['name']
+            );
+
+            $log->update([
+                'invitation_count' => $invitationCount,
+                'guest_codes' => $guestCodes,
+            ]);
+
+            $log = $log->fresh();
+            $this->ensureGuestQrCodes($invitation, $log);
+
             $stored[] = [
-                'log' => $log->fresh(),
+                'log' => $log,
                 'contact' => $contact,
             ];
         }
@@ -1936,6 +2111,113 @@ try {
     }
 
     /**
+     * @return array{guests: list<array<string, mixed>>}
+     */
+    private function syncGuestCodes(
+        Invitation $invitation,
+        InvitationContactLog $contactLog,
+        int $invitationCount,
+        string $contactName
+    ): array {
+        $existingGuests = collect($contactLog->guestEntries())->keyBy('slot');
+        $guests = [];
+
+        for ($slot = 1; $slot <= $invitationCount; $slot++) {
+            $existing = $existingGuests->get($slot);
+            $code = $this->buildGuestScanCode($invitation->id, $contactLog->id, $slot);
+
+            $guests[] = [
+                'slot' => $slot,
+                'code' => $code,
+                'name' => $slot === 1
+                    ? $contactName
+                    : ($existing['name'] ?? "Companion {$slot}"),
+                'is_primary' => $slot === 1,
+                'is_scanned' => (bool) ($existing['is_scanned'] ?? false),
+                'scanned_at' => $existing['scanned_at'] ?? null,
+            ];
+        }
+
+        return ['guests' => $guests];
+    }
+
+    private function buildGuestScanCode(int $invitationId, int $contactLogId, int $slot): string
+    {
+        return "{$invitationId}-contact-{$contactLogId}-{$slot}";
+    }
+
+    /**
+     * @return array{invitation_id: int, contact_log_id: int, slot: int}|null
+     */
+    private function parseGuestScanCode(string $code): ?array
+    {
+        if (preg_match('/^(\d+)-contact-(\d+)-(\d+)$/', $code, $matches)) {
+            return [
+                'invitation_id' => (int) $matches[1],
+                'contact_log_id' => (int) $matches[2],
+                'slot' => (int) $matches[3],
+            ];
+        }
+
+        if (preg_match('/^(\d+)-contact-(\d+)$/', $code, $matches)) {
+            return [
+                'invitation_id' => (int) $matches[1],
+                'contact_log_id' => (int) $matches[2],
+                'slot' => 1,
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function findGuestInContactLog(InvitationContactLog $contactLog, int $slot): ?array
+    {
+        return collect($contactLog->guestEntries())
+            ->first(fn (array $guest) => (int) ($guest['slot'] ?? 0) === $slot);
+    }
+
+    private function markGuestScanned(InvitationContactLog $contactLog, int $slot): InvitationContactLog
+    {
+        $guestCodes = $contactLog->guest_codes ?? ['guests' => []];
+        $now = now()->toIso8601String();
+
+        $guestCodes['guests'] = collect($guestCodes['guests'] ?? [])
+            ->map(function (array $guest) use ($slot, $now) {
+                if ((int) ($guest['slot'] ?? 0) !== $slot) {
+                    return $guest;
+                }
+
+                return [
+                    ...$guest,
+                    'is_scanned' => true,
+                    'scanned_at' => $now,
+                ];
+            })
+            ->values()
+            ->all();
+
+        $contactLog->guest_codes = $guestCodes;
+
+        if ($contactLog->allGuestsScanned()) {
+            $contactLog->seen = Constant::SEEN_STATUS['scanned'];
+        }
+
+        $contactLog->save();
+
+        return $contactLog->fresh();
+    }
+
+    private function ensureGuestQrCodes(Invitation $invitation, InvitationContactLog $contactLog): void
+    {
+        foreach ($contactLog->guestEntries() as $guest) {
+            $invitation->ensureQrCodeForGuestPayload($guest['code']);
+        }
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function formatContactLog(InvitationContactLog $log): array
@@ -1969,6 +2251,22 @@ try {
             'phone' => $log->phone,
             'country_code' => $log->country_code,
             'user_id' => $log->user_id,
+            'invitation_count' => (int) ($log->invitation_count ?? 1),
+            'scanned_count' => $log->scannedGuestsCount(),
+            'guest_codes' => $log->guest_codes,
+            'guests' => collect($log->guestEntries())->map(function (array $guest) use ($invitation) {
+                return [
+                    'slot' => $guest['slot'],
+                    'code' => $guest['code'],
+                    'name' => $guest['name'],
+                    'is_primary' => $guest['is_primary'] ?? false,
+                    'is_scanned' => $guest['is_scanned'] ?? false,
+                    'scanned_at' => $guest['scanned_at'] ?? null,
+                    'qr_url' => $invitation && isset($guest['code'])
+                        ? Storage::disk('public')->url('qr-code/Qr-'.$guest['code'].'.png')
+                        : null,
+                ];
+            })->values()->all(),
             'invitation_link' => $invitation
                 ? app(InvitationBuilderService::class)->guestContactInvitationUrl($invitation, (int) $log->id)
                 : null,

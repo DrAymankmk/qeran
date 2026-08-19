@@ -370,7 +370,8 @@ class InvitationsController extends Controller
                 'seen' => Constant::SEEN_STATUS['accepted'],
             ]);
 
-            $invitation->ensureQrCodeForContact((int) $contactLog->id);
+            $invitation->ensureQrCodesForContactLog($contactLog);
+            $guestQrCards = $invitation->guestQrCardsForContactLog($contactLog->fresh());
 
             return response()->json([
                 'success' => true,
@@ -378,7 +379,9 @@ class InvitationsController extends Controller
                 'status' => 'accepted',
                 'contact_log_id' => (int) $contactLog->id,
                 'acceptance_status' => Constant::ACCEPTANCE_STATUS['accepted'],
-                'qr_url' => $invitation->qrForContact((int) $contactLog->id),
+                'invitation_count' => max(1, (int) ($contactLog->invitation_count ?? 1)),
+                'qr_url' => $guestQrCards[0]['qr_url'] ?? $invitation->qrForContact((int) $contactLog->id),
+                'guest_qr_cards' => $guestQrCards,
             ]);
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => 'حدث خطأ أثناء قبول الدعوة: '.$e->getMessage()], 500);
@@ -474,11 +477,17 @@ class InvitationsController extends Controller
         ];
 
         $initialView = $this->resolveContactInitialView($invitation, $contactLog);
+        $guestQrCards = $invitation->guestQrCardsForContactLog($contactLog);
+        $uploadedMediaUrl = $this->invitationBuilder->usesUploadedGuestMedia($invitation)
+            ? $this->invitationBuilder->guestUploadedMediaShareUrl($invitation)
+            : null;
 
         return view('invitation', compact(
             'invitation',
             'user',
             'contactLog',
+            'guestQrCards',
+            'uploadedMediaUrl',
             'routes',
             'category',
             'host_name',
@@ -524,7 +533,7 @@ class InvitationsController extends Controller
         }
 
         if ((int) $contactLog->acceptance_status === Constant::ACCEPTANCE_STATUS['accepted']) {
-            $invitation->ensureQrCodeForContact((int) $contactLog->id);
+            $invitation->ensureQrCodesForContactLog($contactLog);
 
             return 'success';
         }

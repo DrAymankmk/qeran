@@ -376,6 +376,104 @@ class Invitation extends Model
         $this->writeQrCodeFiles($basePath, $this->id.'-'.$userId);
     }
 
+    public function ensureQrCodeForGuestPayload(string $payload): void
+    {
+        $basePath = 'qr-code/Qr-'.$payload;
+
+        if (Storage::disk('public')->exists($basePath.'.png')) {
+            return;
+        }
+
+        $this->writeQrCodeFiles($basePath, $payload);
+    }
+
+    public function ensureQrCodesForContactLog(InvitationContactLog $contactLog): void
+    {
+        $guests = $contactLog->guestEntries();
+
+        if ($guests !== []) {
+            foreach ($guests as $guest) {
+                $code = (string) ($guest['code'] ?? '');
+                if ($code !== '') {
+                    $this->ensureQrCodeForGuestPayload($code);
+                }
+            }
+
+            return;
+        }
+
+        $invitationCount = max(1, (int) ($contactLog->invitation_count ?? 1));
+        for ($slot = 1; $slot <= $invitationCount; $slot++) {
+            $this->ensureQrCodeForGuestPayload($this->id.'-contact-'.$contactLog->id.'-'.$slot);
+        }
+    }
+
+    /**
+     * @return list<array{slot: int, code: string, name: string, is_primary: bool}>
+     */
+    protected function fallbackGuestEntriesForContactLog(InvitationContactLog $contactLog): array
+    {
+        $guests = $contactLog->guestEntries();
+        if ($guests !== []) {
+            return $guests;
+        }
+
+        $entries = [];
+        $invitationCount = max(1, (int) ($contactLog->invitation_count ?? 1));
+
+        for ($slot = 1; $slot <= $invitationCount; $slot++) {
+            $entries[] = [
+                'slot' => $slot,
+                'code' => $this->id.'-contact-'.$contactLog->id.'-'.$slot,
+                'name' => $slot === 1
+                    ? (string) $contactLog->contact_name
+                    : "Companion {$slot}",
+                'is_primary' => $slot === 1,
+            ];
+        }
+
+        return $entries;
+    }
+
+    public function qrUrlForGuestPayload(string $payload): ?string
+    {
+        $this->ensureQrCodeForGuestPayload($payload);
+        $relativePath = 'qr-code/Qr-'.$payload.'.png';
+
+        if (Storage::disk('public')->exists($relativePath)) {
+            return Storage::disk('public')->url($relativePath);
+        }
+
+        return null;
+    }
+
+    /**
+     * @return list<array{slot: int, code: string, name: string, is_primary: bool, qr_url: ?string, qr_filename: string}>
+     */
+    public function guestQrCardsForContactLog(InvitationContactLog $contactLog): array
+    {
+        $this->ensureQrCodesForContactLog($contactLog);
+        $cards = [];
+
+        foreach ($this->fallbackGuestEntriesForContactLog($contactLog) as $guest) {
+            $code = (string) ($guest['code'] ?? '');
+            if ($code === '') {
+                continue;
+            }
+
+            $cards[] = [
+                'slot' => (int) ($guest['slot'] ?? 0),
+                'code' => $code,
+                'name' => (string) ($guest['name'] ?? $contactLog->contact_name),
+                'is_primary' => (bool) ($guest['is_primary'] ?? false),
+                'qr_url' => $this->qrUrlForGuestPayload($code),
+                'qr_filename' => 'Qr-'.$code.'.png',
+            ];
+        }
+
+        return $cards;
+    }
+
     public function publicQrPngPathForContact(int $contactLogId): ?string
     {
         $this->ensureQrCodeForContact($contactLogId);

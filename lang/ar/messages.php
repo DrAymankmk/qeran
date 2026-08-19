@@ -3,6 +3,8 @@
 return [
     'already_scanned' => "لقد قمت بالدخول مسبقا",
     "sorry_user_not_invited" => "للأسف المستخدم غير مدعو",
+    'invalid_scan_code' => 'رمز الدخول غير صالح',
+    'user_scanned_successfully' => 'تم مسح الضيف بنجاح',
 
     'invitation_notification_template' => "🌟برنامج قران لارسال الدعوات🌟\nبكل فرح وسرور\n :host_name \n نتشرف بدعوتكم لحضور :event_type \nالرجاء ابراز الكود المرفق مع الدعوة في الرابط التالي عند الدخول\n\n:invitation_link\n\nلتحميل التطبيق عبر ابل ستور 👇🏻\n:apple_link\n\nوللتحميل عبر قوقل بلاي ستور 👇🏻\n:google_play_link",
     'invitation_sms_template' => "
@@ -12,9 +14,20 @@ return [
 :invitation_link
 \n\nلتحميل التطبيق \n:application_link
 \n\n",
+    'invitation_contact_share_template' => "
+🌟برنامج قران لارسال الدعوات🌟
+\nبكل فرح وسرور\n :host_name \n نتشرف بدعوتكم لحضور :event_type \n
+عدد الدعوات: :invitation_count (الضيف الرئيسي + المرافقين)
+\nالرجاء فتح الرابط التالي لعرض الدعوة وتحميل أكواد الدخول (QR) لكل ضيف\n\n
+:invitation_link
+\n\nلتحميل التطبيق \n:application_link
+\n\n",
     'invitation_contact_reminder_sms_template' => "تذكير ودي 🌷\n:event_type / :host_name\nيسرّنا حضوركم ومشاركتكم",
     'invitation_contact_reminder_default_event' => 'المناسبة',
     'invitation_qr_caption' => "الرجاء ابراز هذا الرمز عند الدخول",
+    'invitation_qr_codes_heading' => 'أكواد الدخول (QR)',
+    'invitation_qr_primary_guest' => 'الضيف الرئيسي',
+    'invitation_qr_companion_guest' => 'مرافق',
     'variables' => [
         'event_type' => 'نوع المناسبة',
         'host_name' => 'اسم الداعي',

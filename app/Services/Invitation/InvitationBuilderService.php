@@ -1731,6 +1731,7 @@ class InvitationBuilderService
             'name' => $log->contact_name,
             'seen' => $log->seen,
             'invited_by' => $log->invited_by,
+            'invitation_count' => max(1, (int) ($log->invitation_count ?? 1)),
         ], 'invitation_user'));
 
         return $user;
@@ -1870,11 +1871,6 @@ class InvitationBuilderService
         int $contactLogId,
         bool $preview = false
     ): string {
-        if ($this->usesUploadedGuestMedia($invitation)) {
-            return $this->guestUploadedMediaShareUrl($invitation)
-                ?: rtrim((string) config('app.url'), '/').'/m/'.$invitation->code.'/invitation.webp';
-        }
-
         $invitation->loadMissing('builderSetting');
         $builderRow = $invitation->builderSetting;
 

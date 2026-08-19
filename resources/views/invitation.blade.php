@@ -2163,10 +2163,22 @@
 					</div>
 				</div>
 
-				@include('invitation.partials.qr-section', [
+				@if(!empty($uploadedMediaUrl))
+					<div class="uploaded-invitation-media-section">
+						<h3 class="user-info-title">تصميم الدعوة</h3>
+						@if(\Illuminate\Support\Str::endsWith(strtolower($uploadedMediaUrl), ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.m4v', '.mkv']))
+							<video src="{{ $uploadedMediaUrl }}" controls playsinline style="width:100%;border-radius:12px;"></video>
+						@else
+							<img src="{{ $uploadedMediaUrl }}" alt="{{ $invitation->event_name }}" style="width:100%;border-radius:12px;" />
+						@endif
+					</div>
+				@endif
+
+				@include('invitation.partials.qr-guests-section', [
 					'invitation' => $invitation,
 					'user' => $user,
 					'contactLog' => $contactLog ?? null,
+					'guestQrCards' => $guestQrCards ?? [],
 				])
 			</div>
 

@@ -29,10 +29,8 @@ class CheckInvitationRequest extends FormRequest
     public function rules()
     {
         return [
-            'user_id' => ['required', Rule::exists('users','id')],
+            'code' => ['required', 'string', 'max:255'],
             'invitation_id' => ['required', Rule::exists('invitations','id')],
-
-
         ];
     }
 

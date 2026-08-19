@@ -118,6 +118,10 @@ function wiBindRsvpButtons() {
     acceptBtn.addEventListener('click', function () {
       wiRsvpPost(wiAcceptUrl, acceptBtn)
         .then(function (data) {
+          if (wiAcceptUrl.indexOf('/contact/') !== -1) {
+            window.location.reload();
+            return;
+          }
           wiShowRsvpAccepted(data.qr_url || '');
           if (acceptBtn) acceptBtn.disabled = false;
         })

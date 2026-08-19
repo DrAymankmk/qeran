@@ -105,42 +105,10 @@ class SendBaileysInvitationContactMessage implements ShouldQueue
                 'error_message' => null,
             ]);
 
-            try {
-                $qrMedia = app(InvitationBuilderService::class)->guestQrShareMedia(
-                    Invitation::query()->find($this->invitationId),
-                    $this->contactLogId
-                );
-                $qrBase64 = is_array($qrMedia) ? ($qrMedia['base64'] ?? null) : null;
-                if (is_string($qrBase64) && $qrBase64 !== '') {
-                    $qrResponse = BaileysWhatsApp::sendFromSession(
-                        'user_'.$this->hostUserId,
-                        $targetPhone,
-                        __('messages.invitation_qr_caption'),
-                        $this->referenceId !== '' ? $this->referenceId.'-qr' : '',
-                        null,
-                        'image',
-                        $qrBase64
-                    );
-                    if (! isset($qrResponse->sent) || $qrResponse->sent !== 'true') {
-                        Log::warning('Invitation QR WhatsApp send failed', [
-                            'contact_log_id' => $this->contactLogId,
-                            'invitation_id' => $this->invitationId,
-                            'error' => $qrResponse->error ?? null,
-                        ]);
-                    }
-                } else {
-                    Log::warning('Invitation QR PNG was not generated', [
-                        'contact_log_id' => $this->contactLogId,
-                        'invitation_id' => $this->invitationId,
-                    ]);
-                }
-            } catch (\Throwable $e) {
-                Log::warning('Failed to send invitation QR to contact', [
-                    'contact_log_id' => $this->contactLogId,
-                    'invitation_id' => $this->invitationId,
-                    'error' => $e->getMessage(),
-                ]);
-            }
+            Log::info('Baileys contact invitation sent — QR codes available on invitation link', [
+                'contact_log_id' => $this->contactLogId,
+                'invitation_id' => $this->invitationId,
+            ]);
 
             Log::info('Baileys contact invitation sent — awaiting delivery/read webhooks', [
                 'contact_log_id' => $this->contactLogId,

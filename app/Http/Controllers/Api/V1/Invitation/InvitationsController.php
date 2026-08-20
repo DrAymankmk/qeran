@@ -804,7 +804,15 @@ class InvitationsController extends Controller
     {
         $contacts = $request->input('contacts', []);
 
-        if ($error = $this->ensureContactInvitationQuota($invitation, count($contacts))) {
+        if ($this->contactsProvideInvitationCount($contacts)) {
+            $requestedSlots = collect($contacts)->sum(
+                fn ($contact) => max(1, (int) (is_array($contact) ? ($contact['invitation_count'] ?? 1) : 1))
+            );
+
+            if ($error = $this->ensureContactGuestSlotQuota($invitation, $requestedSlots)) {
+                return $error;
+            }
+        } elseif ($error = $this->ensureContactInvitationQuota($invitation, count($contacts))) {
             return $error;
         }
 
@@ -2140,21 +2148,26 @@ try {
                 'reference_id' => $invitation->id.'-contact-'.$log->id,
             ]);
 
-            $invitationCount = max(1, (int) ($contact['invitation_count'] ?? 1));
-            $guestCodes = $this->syncGuestCodes(
-                $invitation,
-                $log,
-                $invitationCount,
-                $contact['name']
-            );
+            // Rebuild guest slots only when invitation_count was sent (editUser flow).
+            if (array_key_exists('invitation_count', $contact)) {
+                $invitationCount = max(1, (int) $contact['invitation_count']);
+                $guestCodes = $this->syncGuestCodes(
+                    $invitation,
+                    $log,
+                    $invitationCount,
+                    $contact['name']
+                );
 
-            $log->update([
-                'invitation_count' => $invitationCount,
-                'guest_codes' => $guestCodes,
-            ]);
+                $log->update([
+                    'invitation_count' => $invitationCount,
+                    'guest_codes' => $guestCodes,
+                ]);
 
-            $log = $log->fresh();
-            $this->ensureGuestQrCodes($invitation, $log);
+                $log = $log->fresh();
+                $this->ensureGuestQrCodes($invitation, $log);
+            } else {
+                $log = $this->ensureContactLogHasGuestCodes($invitation, $log->fresh());
+            }
 
             $stored[] = [
                 'log' => $log,
@@ -2190,8 +2203,49 @@ try {
     }
 
     /**
-     * @param  array<int, array{name?: string, phone?: string}>  $contacts
-     * @return list<array{name: string, phone: string, country_code: string, e164: string, valid: bool}>
+     * Quota check for guest slots (invitation_count), matching editUser helpers.
+     */
+    private function ensureContactGuestSlotQuota(Invitation $invitation, int $requestedSlots)
+    {
+        if ($requestedSlots <= 0) {
+            return RespondActive::clientError(__('messages.invitation_contacts_required'));
+        }
+
+        if ($invitation->user_id == auth()->id()) {
+            if (! checkPackageCountForContactLog($invitation, $requestedSlots, 0)) {
+                return RespondActive::clientError(__('validation.exceeded_number_of_invited_users'));
+            }
+        } elseif (! checkPackageCountForAdminContactLog($invitation, $requestedSlots, auth()->id(), 'check')) {
+            return RespondActive::clientError(__('validation.exceeded_number_of_invited_users'));
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<int, mixed>  $contacts
+     */
+    private function contactsProvideInvitationCount(array $contacts): bool
+    {
+        foreach ($contacts as $contact) {
+            if (! is_array($contact)) {
+                continue;
+            }
+
+            if (array_key_exists('invitation_count', $contact)
+                && $contact['invitation_count'] !== null
+                && $contact['invitation_count'] !== ''
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<int, array{name?: string, phone?: string, invitation_count?: int}>  $contacts
+     * @return list<array{name: string, phone: string, country_code: string, e164: string, valid: bool, invitation_count?: int}>
      */
     private function normalizeShareContacts(array $contacts, string $defaultCountryCode): array
     {
@@ -2216,13 +2270,22 @@ try {
             $ccDigits = preg_replace('/\D+/', '', $defaultCountryCode);
             $phoneForDb = PhoneNumber::informationForStorage($countryCode, $rawPhone);
 
-            $normalized[] = [
+            $entry = [
                 'name' => $name !== '' ? $name : $phoneForDb,
                 'phone' => $phoneForDb,
                 'country_code' => $countryCode,
                 'e164' => $e164,
                 'valid' => PhoneNumber::isValidWhatsAppPairingNumber($e164, $countryCode),
             ];
+
+            if (array_key_exists('invitation_count', $contact)
+                && $contact['invitation_count'] !== null
+                && $contact['invitation_count'] !== ''
+            ) {
+                $entry['invitation_count'] = max(1, (int) $contact['invitation_count']);
+            }
+
+            $normalized[] = $entry;
         }
 
         return $normalized;

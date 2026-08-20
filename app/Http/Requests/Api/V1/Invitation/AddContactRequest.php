@@ -142,6 +142,7 @@ class AddContactRequest extends FormRequest
             'contacts' => ['required', 'array', 'min:1'],
             'contacts.*.name' => ['required', 'string', 'max:255'],
             'contacts.*.phone' => ['required', 'string', 'max:32'],
+            'contacts.*.invitation_count' => ['nullable', 'integer', 'min:1'],
         ];
     }
 

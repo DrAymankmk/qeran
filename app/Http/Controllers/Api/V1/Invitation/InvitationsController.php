@@ -2472,7 +2472,7 @@ try {
             'phone' => $log->phone,
             'country_code' => $log->country_code,
             'user_id' => $log->user_id,
-            'invitation_count' => (int) ($log->invitation_count ?? 1),
+            'invitation_count' => (int) ($log->invitation_count + 1 ?? 1),
             'scanned_count' => $log->scannedGuestsCount(),
             'guest_codes' => $log->guest_codes,
             'guests' => collect($log->guestEntries())->map(function (array $guest) use ($invitation) {

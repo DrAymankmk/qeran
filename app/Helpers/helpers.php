@@ -281,7 +281,10 @@ if (!function_exists('storeAudio')) {
 if (!function_exists('deleteImage')) {
     function deleteImage($path, $record = null)
     {
-        Storage::disk(mediaDisk())->delete($path);
+        if (is_string($path) && $path !== '') {
+            Storage::disk(mediaDisk())->delete($path);
+        }
+
         if ($record) {
             $record->delete();
         }

@@ -107,8 +107,9 @@ class CategoryController extends Controller
             ]
         ]);
         if ($request->image) {
-            if ($category->hubFiles()->exists()) {
-                deleteImage($category->image(), $category->hubFiles());
+            $hubFile = $category->hubFiles;
+            if ($hubFile) {
+                deleteImage($hubFile->get_folder_file(), $hubFile);
             }
 
             storeImage([
@@ -126,8 +127,9 @@ class CategoryController extends Controller
     {
 
         $category = Category::whereId($id)->first();
-        if ($category->hubFiles()->exists()) {
-            deleteImage($category->image(), $category->hubFiles());
+        $hubFile = $category->hubFiles;
+        if ($hubFile) {
+            deleteImage($hubFile->get_folder_file(), $hubFile);
         }
         $category->delete();
 

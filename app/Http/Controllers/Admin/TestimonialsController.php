@@ -135,8 +135,9 @@ class TestimonialsController extends Controller
         
         // Handle image upload
         if ($request->image) {
-            if ($testimonial->hubFiles()->exists()) {
-                deleteImage($testimonial->image(), $testimonial->hubFiles());
+            $hubFile = $testimonial->hubFiles;
+            if ($hubFile) {
+                deleteImage($hubFile->get_folder_file(), $hubFile);
             }
             
             storeImage([
@@ -158,8 +159,9 @@ class TestimonialsController extends Controller
      */
     public function destroy(Testimonial $testimonial)
     {
-        if ($testimonial->hubFiles()->exists()) {
-            deleteImage($testimonial->image(), $testimonial->hubFiles());
+        $hubFile = $testimonial->hubFiles;
+        if ($hubFile) {
+            deleteImage($hubFile->get_folder_file(), $hubFile);
         }
         
         $testimonial->delete();

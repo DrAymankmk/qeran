@@ -4,6 +4,11 @@ return [
     'already_scanned' => 'Already scanned',
     'sorry_user_not_invited' => 'Sorry, this guest is not invited',
     'invalid_scan_code' => 'Invalid scan code',
+    'scan_code_invitation_mismatch' => 'This scan code does not match the selected invitation',
+    'scan_invitation_not_found' => 'Invitation not found',
+    'scan_guard_not_assigned' => 'You are not assigned as a guard for this invitation',
+    'scan_contact_not_found' => 'This guest is not registered for this invitation',
+    'scan_guest_slot_not_found' => 'This scan code does not match any guest slot for this invitation',
     'user_scanned_successfully' => 'Guest scanned successfully',
 
     'invitation_contact_share_template' => "🌟Quran App for Sending Invitations🌟\nWith joy and happiness\n :host_name \n We are honored to invite you to attend :event_type \nNumber of invitations: :invitation_count (main guest + companions)\nInvitation link:\n:invitation_link\nQR codes link (one per guest):\n:qr_codes_link\n\nDownload the app\n:application_link\n",

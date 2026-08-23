@@ -4,6 +4,11 @@ return [
     'already_scanned' => "لقد قمت بالدخول مسبقا",
     "sorry_user_not_invited" => "للأسف المستخدم غير مدعو",
     'invalid_scan_code' => 'رمز الدخول غير صالح',
+    'scan_code_invitation_mismatch' => 'رمز الدخول لا يتطابق مع هذه الدعوة',
+    'scan_invitation_not_found' => 'الدعوة غير موجودة',
+    'scan_guard_not_assigned' => 'لست مُعيَّناً كحارس لهذه الدعوة',
+    'scan_contact_not_found' => 'جهة الاتصال غير مسجلة في هذه الدعوة',
+    'scan_guest_slot_not_found' => 'رمز الدخول لا يطابق أي ضيف في هذه الدعوة',
     'user_scanned_successfully' => 'تم مسح الضيف بنجاح',
 
     'invitation_notification_template' => "🌟برنامج قران لارسال الدعوات🌟\nبكل فرح وسرور\n :host_name \n نتشرف بدعوتكم لحضور :event_type \nالرجاء ابراز الكود المرفق مع الدعوة في الرابط التالي عند الدخول\n\n:invitation_link\n\nلتحميل التطبيق عبر ابل ستور 👇🏻\n:apple_link\n\nوللتحميل عبر قوقل بلاي ستور 👇🏻\n:google_play_link",

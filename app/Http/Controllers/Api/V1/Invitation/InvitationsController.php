@@ -1505,9 +1505,9 @@ class InvitationsController extends Controller
                 'parsed' => $parsed,
             ]);
 
-            return RespondActive::clientError(__('messages.sorry_user_not_invited'), [
+            return RespondActive::clientError(__('messages.scan_code_invitation_mismatch'), [
                 'status' => false,
-                'message' => __('messages.sorry_user_not_invited'),
+                'message' => __('messages.scan_code_invitation_mismatch'),
                 'invitation_count' => 0,
             ]);
         }
@@ -1520,9 +1520,9 @@ class InvitationsController extends Controller
                 'parsed' => $parsed,
             ]);
 
-            return RespondActive::clientError(__('messages.sorry_user_not_invited'), [
+            return RespondActive::clientError(__('messages.scan_invitation_not_found'), [
                 'status' => false,
-                'message' => __('messages.sorry_user_not_invited'),
+                'message' => __('messages.scan_invitation_not_found'),
                 'invitation_count' => 0,
             ]);
         }
@@ -1533,7 +1533,11 @@ class InvitationsController extends Controller
                 'invitation_id' => $invitation->id,
             ]);
 
-            return RespondActive::clientError(__('messages.sorry_user_not_invited'));
+            return RespondActive::clientError(__('messages.scan_guard_not_assigned'), [
+                'status' => false,
+                'message' => __('messages.scan_guard_not_assigned'),
+                'invitation_count' => 0,
+            ]);
         }
 
         $contactLog = InvitationContactLog::query()
@@ -1547,9 +1551,9 @@ class InvitationsController extends Controller
                 'parsed' => $parsed,
             ]);
 
-            return RespondActive::clientError(__('messages.sorry_user_not_invited'), [
+            return RespondActive::clientError(__('messages.scan_contact_not_found'), [
                 'status' => false,
-                'message' => __('messages.sorry_user_not_invited'),
+                'message' => __('messages.scan_contact_not_found'),
                 'invitation_count' => 0,
             ]);
         }
@@ -1567,9 +1571,9 @@ class InvitationsController extends Controller
                 'parsed' => $parsed,
             ]);
 
-            return RespondActive::clientError(__('messages.sorry_user_not_invited'), [
+            return RespondActive::clientError(__('messages.scan_guest_slot_not_found'), [
                 'status' => false,
-                'message' => __('messages.sorry_user_not_invited'),
+                'message' => __('messages.scan_guest_slot_not_found'),
                 'invitation_count' => 0,
             ]);
         }

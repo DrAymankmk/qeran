@@ -1949,7 +1949,7 @@ class InvitationBuilderService
             'event_type' => $eventType ?: '',
             'host_name' => $invitation->host_name,
             'invitation_link' => $invitationLink,
-            'application_link' => env('APPLICATION_LINK'),
+            'application_link' => applicationDownloadLink(),
         ]);
     }
 

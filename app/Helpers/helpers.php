@@ -709,6 +709,28 @@ if (!function_exists('asset_versioned')) {
     }
 }
 
+if (! function_exists('applicationDownloadLink')) {
+    /**
+     * Unified app download URL for invitation WhatsApp/SMS messages.
+     * Prefer APPLICATION_LINK; fall back to Apple or Google Play if set.
+     */
+    function applicationDownloadLink(): string
+    {
+        foreach ([
+            config('app.application_link'),
+            config('app.apple_link'),
+            config('app.google_play_link'),
+        ] as $link) {
+            $link = trim((string) $link);
+            if ($link !== '') {
+                return $link;
+            }
+        }
+
+        return '';
+    }
+}
+
 // media 
 
 if (! function_exists('mediaDisk')) {

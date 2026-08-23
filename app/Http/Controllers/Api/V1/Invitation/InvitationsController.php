@@ -682,8 +682,8 @@ class InvitationsController extends Controller
 
         $invitation->loadMissing(['category']);
 
-        $appleLink = env('APPLE_LINK');
-        $googlePlayLink = env('GOOGLE_PLAY_LINK');
+        $appleLink = config('app.apple_link');
+        $googlePlayLink = config('app.google_play_link');
 
         // Ensure invitation_link, invitation_message, and store links are present for this endpoint.
         // UserResource reads dynamic attributes; Eloquent users won't have them unless we attach them.
@@ -1219,9 +1219,7 @@ class InvitationsController extends Controller
             'event_type' => $eventType,
             'host_name' => $hostName,
             'invitation_link' => $invitationLink,
-            'application_link' => env('APPLICATION_LINK'),
-            // 'apple_link' => env('APPLE_LINK'),
-            // 'google_play_link' => env('GOOGLE_PLAY_LINK'),
+            'application_link' => applicationDownloadLink(),
         ]);
     }
 
@@ -1257,7 +1255,7 @@ class InvitationsController extends Controller
             'host_name' => $hostName,
             'invitation_link' => $invitationLink,
             'qr_codes_link' => $qrCodesLink,
-            'application_link' => env('APPLICATION_LINK'),
+            'application_link' => applicationDownloadLink(),
             'invitation_count' => max(1, (int) ($log->invitation_count ?? 1)),
         ]);
     }
@@ -1295,8 +1293,8 @@ class InvitationsController extends Controller
             'event_type' => $eventType,
             'host_name' => $hostName,
             'message_body' => $messageBody,
-            'apple_link' => env('APPLE_LINK'),
-            'google_play_link' => env('GOOGLE_PLAY_LINK'),
+            'apple_link' => config('app.apple_link'),
+            'google_play_link' => config('app.google_play_link'),
         ]);
     }
 

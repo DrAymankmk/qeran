@@ -67,6 +67,15 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Mobile app store links (WhatsApp / SMS invitation messages)
+    |--------------------------------------------------------------------------
+    */
+    'application_link' => env('APPLICATION_LINK'),
+    'apple_link' => env('APPLE_LINK'),
+    'google_play_link' => env('GOOGLE_PLAY_LINK'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Invitation file upload limits (for admin update)
     |--------------------------------------------------------------------------
     | Max size in KB. Server must allow: php.ini upload_max_filesize & post_max_size >= this.

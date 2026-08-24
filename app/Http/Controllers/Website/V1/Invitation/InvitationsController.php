@@ -184,17 +184,45 @@ class InvitationsController extends Controller
         }
 
         $invitation = $contactLog->invitation;
-        $invitation->ensureQrCodesForContactLog($contactLog);
-        $guestQrCards = $invitation->guestQrCardsForContactLog($contactLog);
+
+        if (! $this->contactHasResponded($contactLog)
+            && (int) ($contactLog->seen ?? 0) !== Constant::SEEN_STATUS['seen']) {
+            $contactLog->update(['seen' => Constant::SEEN_STATUS['seen']]);
+            $contactLog->refresh();
+        }
+
+        $acceptanceView = 'pending';
+        $guestQrCards = [];
+
+        if ((int) $contactLog->acceptance_status === Constant::ACCEPTANCE_STATUS['accepted']) {
+            $acceptanceView = 'accepted';
+            $invitation->ensureQrCodesForContactLog($contactLog);
+            $guestQrCards = $invitation->guestQrCardsForContactLog($contactLog);
+        } elseif ((int) $contactLog->acceptance_status === Constant::ACCEPTANCE_STATUS['declined']) {
+            $acceptanceView = 'declined';
+        }
+
         $user = $this->invitationBuilder->guestDisplayFromContactLog($contactLog);
         $invitationLink = $this->invitationBuilder->guestContactInvitationUrl($invitation, (int) $contactLog->id);
+        $routes = [
+            'accept' => route('user.invitation.contact.accept', [
+                'invitation_code' => $invitation->code,
+                'contact_log_id' => $contactLog->id,
+            ]),
+            'decline' => route('user.invitation.contact.decline', [
+                'invitation_code' => $invitation->code,
+                'contact_log_id' => $contactLog->id,
+            ]),
+        ];
 
         return view('invitation.contact-qr-codes', compact(
             'invitation',
             'contactLog',
             'guestQrCards',
             'user',
-            'invitationLink'
+            'invitationLink',
+            'acceptanceView',
+            'routes'
         ));
     }
 

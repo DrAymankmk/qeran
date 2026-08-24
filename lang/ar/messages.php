@@ -37,6 +37,13 @@ return [
     'invitation_qr_codes_page_count' => 'عدد أكواد الدخول: :count',
     'invitation_qr_codes_view_invitation' => '← العودة إلى صفحة الدعوة',
     'invitation_qr_codes_download_link' => 'تحميل أكواد الدخول (QR)',
+    'invitation_qr_codes_rsvp_title' => 'تأكيد الحضور',
+    'invitation_qr_codes_rsvp_subtitle' => 'يرجى قبول الدعوة لعرض أكواد الدخول، أو الاعتذار عن الحضور.',
+    'invitation_qr_codes_accept' => 'قبول الدعوة',
+    'invitation_qr_codes_decline' => 'اعتذار عن الحضور',
+    'invitation_qr_codes_declined_title' => 'تم رفض الدعوة',
+    'invitation_qr_codes_declined_subtitle' => 'نأسف لعدم قدرتك على الحضور إلى :event',
+    'invitation_qr_codes_response_error' => 'تعذر حفظ الرد. حاول مرة أخرى.',
     'variables' => [
         'event_type' => 'نوع المناسبة',
         'host_name' => 'اسم الداعي',

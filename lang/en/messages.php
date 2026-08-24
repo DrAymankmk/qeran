@@ -27,6 +27,13 @@ return [
     'invitation_qr_codes_page_count' => 'Number of QR codes: :count',
     'invitation_qr_codes_view_invitation' => '← Back to invitation page',
     'invitation_qr_codes_download_link' => 'Download entry QR codes',
+    'invitation_qr_codes_rsvp_title' => 'Confirm attendance',
+    'invitation_qr_codes_rsvp_subtitle' => 'Please accept the invitation to view entry QR codes, or decline if you cannot attend.',
+    'invitation_qr_codes_accept' => 'Accept invitation',
+    'invitation_qr_codes_decline' => 'Decline invitation',
+    'invitation_qr_codes_declined_title' => 'Invitation declined',
+    'invitation_qr_codes_declined_subtitle' => 'We are sorry you cannot attend :event',
+    'invitation_qr_codes_response_error' => 'Could not save your response. Please try again.',
     
     'variables' => [
         'event_type' => 'event type',

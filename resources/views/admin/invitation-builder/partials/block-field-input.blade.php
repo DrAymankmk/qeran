@@ -4,7 +4,6 @@
 	$builder = app(InvitationBuilderService::class);
 	$type = $fieldDef['type'] ?? 'text';
 	$label = $fieldDef['label_ar'] ?? ($fieldKey ?? '');
-	$maxlength = (int) ($fieldDef['max'] ?? 500);
 	$placeholder = $fieldDef['placeholder'] ?? '';
 	$inputId = $inputId ?? ('ib_bf_'.substr(md5($name.($rowIndex ?? '0')), 0, 10));
 	$displayValue = $builder->formatBlockFieldForInput($type, $value ?? '');
@@ -26,7 +25,7 @@
 @switch($type)
 	@case('textarea')
 	<textarea name="{{ $name }}" id="{{ $inputId }}" rows="{{ $fieldDef['rows'] ?? 2 }}"
-		class="form-control form-control-sm {{ $inputClass }}" maxlength="{{ $maxlength }}"
+		class="form-control form-control-sm {{ $inputClass }}"
 		placeholder="{{ $placeholder }}">{{ $displayValue }}</textarea>
 	@break
 	@case('color')
@@ -37,7 +36,7 @@
 	<div class="d-flex gap-2 align-items-center">
 		<input type="text" name="{{ $name }}" id="{{ $inputId }}"
 			class="form-control form-control-sm {{ $inputClass }} ib-optional-color-text"
-			value="{{ $displayValue }}" maxlength="7"
+			value="{{ $displayValue }}"
 			placeholder="{{ __('admin.ib-block-style-inherit') }}">
 		<input type="color" class="form-control form-control-color ib-optional-color-picker {{ $inputClass }}"
 			data-target="{{ $inputId }}" value="{{ $displayValue ?: '#faf7f2' }}"
@@ -57,14 +56,10 @@
 	@case('font_size')
 	<div class="input-group input-group-sm">
 		<input type="number" name="{{ $name }}" id="{{ $inputId }}"
-			class="form-control {{ $inputClass }}" value="{{ $displayValue }}"
-			min="{{ $fieldDef['min'] ?? 8 }}" max="{{ $fieldDef['max'] ?? 96 }}" step="1"
+			class="form-control {{ $inputClass }}" value="{{ $displayValue }}" step="1"
 			placeholder="{{ __('admin.ib-block-style-inherit') }}">
 		<span class="input-group-text">px</span>
 	</div>
-	@if(!empty($fieldDef['hint']))
-	<small class="text-muted d-block mt-1">{{ __($fieldDef['hint']) }}</small>
-	@endif
 	@break
 	@case('font_weight')
 	<select name="{{ $name }}" id="{{ $inputId }}" class="form-select form-select-sm {{ $inputClass }}">
@@ -89,16 +84,11 @@
 		<option value="{{ $optionKey }}" @selected((string) ($value ?? ($fieldDef['default'] ?? '')) === (string) $optionKey)>{{ $optionLabel }}</option>
 		@endforeach
 	</select>
-	@if(!empty($fieldDef['hint']))
-	<small class="text-muted d-block mt-1">{{ __($fieldDef['hint']) }}</small>
-	@endif
 	@break
 	@case('number')
 	<input type="number" name="{{ $name }}" id="{{ $inputId }}"
 		class="form-control form-control-sm {{ $inputClass }}" value="{{ $displayValue }}"
 		@if($step !== null) step="{{ $step }}" @endif
-		@if(isset($fieldDef['min'])) min="{{ $fieldDef['min'] }}" @endif
-		@if(isset($fieldDef['max'])) max="{{ $fieldDef['max'] }}" @endif
 		placeholder="{{ $placeholder }}">
 	@break
 	@case('date')
@@ -201,6 +191,41 @@
 	}; @endphp
 	<input type="{{ $htmlType }}" name="{{ $name }}" id="{{ $inputId }}"
 		class="form-control form-control-sm {{ $inputClass }}" value="{{ $displayValue }}"
-		maxlength="{{ $maxlength }}" placeholder="{{ $placeholder }}">
+		placeholder="{{ $placeholder }}">
 @endswitch
+
+@php
+	$fieldMin = $fieldDef['min'] ?? null;
+	$fieldMax = $fieldDef['max'] ?? null;
+	$limitHint = '';
+
+	if (in_array($type, ['font_size', 'number'], true)) {
+		if ($fieldMin !== null && $fieldMax !== null) {
+			$limitHint = __('admin.ib-hint-value-range', ['min' => $fieldMin, 'max' => $fieldMax]);
+		} elseif ($fieldMax !== null) {
+			$limitHint = __('admin.ib-hint-value-max', ['max' => $fieldMax]);
+		} elseif ($fieldMin !== null) {
+			$limitHint = __('admin.ib-hint-value-min', ['min' => $fieldMin]);
+		}
+	} elseif ($fieldMax !== null && in_array($type, ['text', 'textarea', 'url', 'email', 'tel'], true)) {
+		$limitHint = __('admin.ib-input-max-hint', ['max' => $fieldMax]);
+	}
+
+	$errorKey = str_replace(['[', ']'], ['.', ''], $name);
+@endphp
+
+@if(!empty($fieldDef['hint']) || $limitHint !== '')
+<small class="text-muted d-block mt-1">
+	@if(!empty($fieldDef['hint']))
+	<span class="d-block">{{ __($fieldDef['hint']) }}</span>
+	@endif
+	@if($limitHint !== '')
+	<span class="d-block">{{ $limitHint }}</span>
+	@endif
+</small>
+@endif
+
+@error($errorKey)
+<div class="invalid-feedback d-block">{{ $message }}</div>
+@enderror
 @endif

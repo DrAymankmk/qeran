@@ -10,6 +10,39 @@
 	<li>✓ {{ __('admin.ib-tab-details-bullet-3') }}</li>
 </ul> -->
 
+@php
+	// Display guidance only — these lengths are shown as hints and are not enforced anywhere.
+	$ibLimits = [
+		'bride' => ['min' => 2, 'max' => 50],
+		'groom' => ['min' => 2, 'max' => 50],
+		'bride_father' => ['min' => 2, 'max' => 50],
+		'groom_father' => ['min' => 2, 'max' => 50],
+		'details_section_label' => ['min' => 2, 'max' => 30],
+		'details_section_title' => ['min' => 2, 'max' => 60],
+		'venue_name' => ['min' => 2, 'max' => 60],
+		'venue_location' => ['min' => 2, 'max' => 120],
+		'ceremony_note' => ['min' => 2, 'max' => 120],
+		'reception_note' => ['min' => 2, 'max' => 60],
+	];
+
+	$ibLimitHint = function (string $field) use ($ibLimits): string {
+		$min = $ibLimits[$field]['min'] ?? null;
+		$max = $ibLimits[$field]['max'] ?? null;
+
+		if ($min !== null && $max !== null) {
+			$text = __('admin.ib-input-range-hint', ['min' => $min, 'max' => $max]);
+		} elseif ($max !== null) {
+			$text = __('admin.ib-input-max-hint', ['max' => $max]);
+		} elseif ($min !== null) {
+			$text = __('admin.ib-input-min-hint', ['min' => $min]);
+		} else {
+			return '';
+		}
+
+		return '<small class="text-muted d-block mt-1">'.e($text).'</small>';
+	};
+@endphp
+
 <div class="row g-3">
 	<div class="col-12">
 		<div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
@@ -24,25 +57,29 @@
 	</div>
 	<div class="col-md-6">
 		<label class="form-label">{{ __('admin.bride') }}</label>
-		<input type="text" name="bride" class="form-control ib-preview-field" maxlength="50"
+		<input type="text" name="bride" class="form-control ib-preview-field"
 			value="{{ old('bride', $invitation->bride) }}" placeholder="{{ __('admin.bride') }}">
+		{!! $ibLimitHint('bride') !!}
 	</div>
 	<div class="col-md-6">
 		<label class="form-label">{{ __('admin.groom') }}</label>
-		<input type="text" name="groom" class="form-control ib-preview-field" maxlength="50"
+		<input type="text" name="groom" class="form-control ib-preview-field"
 			value="{{ old('groom', $invitation->groom) }}" placeholder="{{ __('admin.groom') }}">
+		{!! $ibLimitHint('groom') !!}
 	</div>
 	<div class="col-md-6">
 		<label class="form-label">{{ __('admin.bride_father') }}</label>
-		<input type="text" name="bride_father" class="form-control ib-preview-field" maxlength="50"
+		<input type="text" name="bride_father" class="form-control ib-preview-field"
 			value="{{ old('bride_father', $invitation->bride_father) }}"
 			placeholder="{{ __('admin.bride_father') }}">
+		{!! $ibLimitHint('bride_father') !!}
 	</div>
 	<div class="col-md-6">
 		<label class="form-label">{{ __('admin.groom_father') }}</label>
-		<input type="text" name="groom_father" class="form-control ib-preview-field" maxlength="50"
+		<input type="text" name="groom_father" class="form-control ib-preview-field"
 			value="{{ old('groom_father', $invitation->groom_father) }}"
 			placeholder="{{ __('admin.groom_father') }}">
+		{!! $ibLimitHint('groom_father') !!}
 	</div>
 
 	<div class="col-12">
@@ -76,24 +113,28 @@
 		<input type="text" name="details_section_label" class="form-control ib-preview-field"
 			value="{{ old('details_section_label', $config['details_section_label']) }}"
 			placeholder="جميع التفاصيل">
+		{!! $ibLimitHint('details_section_label') !!}
 	</div>
 	<div class="col-md-6">
 		<label class="form-label">{{ __('admin.ib-details-section-title') }}</label>
 		<input type="text" name="details_section_title" class="form-control ib-preview-field"
 			value="{{ old('details_section_title', $config['details_section_title']) }}"
 			placeholder="{{ $invitation->event_name }}">
+		{!! $ibLimitHint('details_section_title') !!}
 	</div>
 	<div class="col-md-6">
 		<label class="form-label">{{ __('admin.ib-venue-name') }}</label>
 		<input type="text" name="venue_name" class="form-control ib-preview-field"
 			value="{{ old('venue_name', $config['venue_name']) }}"
 			placeholder="{{ $invitation->event_name }}">
+		{!! $ibLimitHint('venue_name') !!}
 	</div>
 	<div class="col-md-6">
 		<label class="form-label">{{ __('admin.ib-venue-location') }}</label>
 		<input type="text" name="venue_location" class="form-control ib-preview-field"
 			value="{{ old('venue_location', $config['venue_location']) }}"
 			placeholder="{{ $invitation->address }}">
+		{!! $ibLimitHint('venue_location') !!}
 		@if($invitation->address || ($invitation->latitude && $invitation->longitude))
 		<small class="text-muted d-block mt-1">
 			{{ __('admin.ib-venue-location-hint') }}
@@ -110,6 +151,7 @@
 		<input type="text" name="ceremony_note" class="form-control ib-preview-field"
 			value="{{ old('ceremony_note', $config['ceremony_note']) }}"
 			placeholder="{{ __('admin.ib-ceremony-note-placeholder') }}">
+		{!! $ibLimitHint('ceremony_note') !!}
 	</div>
 	<div class="col-md-3">
 		<label class="form-label">{{ __('admin.ib-reception-time') }}</label>
@@ -120,6 +162,7 @@
 		<label class="form-label">{{ __('admin.ib-reception-note') }}</label>
 		<input type="text" name="reception_note" class="form-control ib-preview-field"
 			value="{{ old('reception_note', $config['reception_note']) }}">
+		{!! $ibLimitHint('reception_note') !!}
 	</div>
 
 	<div class="col-md-6">

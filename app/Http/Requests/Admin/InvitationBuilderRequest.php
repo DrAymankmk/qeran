@@ -34,9 +34,9 @@ class InvitationBuilderRequest extends FormRequest
             'text_color' => ['nullable', 'string', 'max:20'],
             'font_family' => ['nullable', 'string', 'max:64'],
             'headline_font' => ['nullable', 'string', 'max:64'],
-            'custom_css' => ['nullable', 'string', 'max:8000'],
-            'welcome_title' => ['nullable', 'string', 'max:255'],
-            'welcome_subtitle' => ['nullable', 'string', 'max:255'],
+            'custom_css' => ['nullable', 'string'],
+            'welcome_title' => ['nullable', 'string'],
+            'welcome_subtitle' => ['nullable', 'string'],
             'welcome_enabled' => ['nullable', 'boolean'],
             'music_enabled' => ['nullable', 'boolean'],
             'video_background' => ['nullable', 'boolean'],
@@ -47,9 +47,9 @@ class InvitationBuilderRequest extends FormRequest
             'envelope_shape' => ['nullable', 'string', Rule::in($envelopeShapeKeys)],
             'seal_style' => ['required', 'string', Rule::in($sealKeys)],
             'seal_color' => ['nullable', 'string', 'regex:/^#?[0-9A-Fa-f]{6}$/'],
-            'envelope_initials' => ['nullable', 'string', 'max:8'],
-            'envelope_image_ref' => ['nullable', 'string', 'max:128'],
-            'opening_headline' => ['nullable', 'string', 'max:500'],
+            'envelope_initials' => ['nullable', 'string'],
+            'envelope_image_ref' => ['nullable', 'string', 'max:128', 'regex:/^(none|stock:[A-Za-z0-9._-]+|hub:[0-9]+)$/'],
+            'opening_headline' => ['nullable', 'string'],
             'groom' => ['nullable', 'string', 'max:50'],
             'bride' => ['nullable', 'string', 'max:50'],
             'groom_father' => ['nullable', 'string', 'max:50'],
@@ -57,13 +57,13 @@ class InvitationBuilderRequest extends FormRequest
             'event_date' => ['nullable', 'date'],
             'event_time' => ['nullable', 'string', 'max:32'],
             'date_position' => ['required', 'string', Rule::in($datePosKeys)],
-            'venue_name' => ['nullable', 'string', 'max:255'],
-            'venue_location' => ['nullable', 'string', 'max:500'],
-            'ceremony_note' => ['nullable', 'string', 'max:255'],
+            'venue_name' => ['nullable', 'string'],
+            'venue_location' => ['nullable', 'string'],
+            'ceremony_note' => ['nullable', 'string'],
             'reception_time' => ['nullable', 'string', 'max:32'],
-            'reception_note' => ['nullable', 'string', 'max:255'],
-            'details_section_title' => ['nullable', 'string', 'max:255'],
-            'details_section_label' => ['nullable', 'string', 'max:255'],
+            'reception_note' => ['nullable', 'string'],
+            'details_section_title' => ['nullable', 'string'],
+            'details_section_label' => ['nullable', 'string'],
             'block_accent_color' => ['nullable', 'string', 'max:20'],
             'block_floral_border' => ['nullable', 'boolean'],
             'hero_enabled' => ['nullable', 'boolean'],
@@ -119,6 +119,34 @@ class InvitationBuilderRequest extends FormRequest
         if ($merge !== []) {
             $this->merge($merge);
         }
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'envelope_shape.in' => __('admin.ib-error-invalid-option', [
+                'values' => $this->acceptedValues('envelope_shapes'),
+            ]),
+            'envelope_color.in' => __('admin.ib-error-invalid-option', [
+                'values' => $this->acceptedValues('envelope_colors'),
+            ]),
+            'seal_style.in' => __('admin.ib-error-invalid-option', [
+                'values' => $this->acceptedValues('seal_styles'),
+            ]),
+            'date_position.in' => __('admin.ib-error-invalid-option', [
+                'values' => $this->acceptedValues('date_positions'),
+            ]),
+            'seal_color.regex' => __('admin.ib-error-hex-color'),
+            'envelope_image_ref.regex' => __('admin.ib-error-envelope-image-ref'),
+        ];
+    }
+
+    protected function acceptedValues(string $configKey): string
+    {
+        return implode(' · ', array_keys(config('invitation_builder.'.$configKey, [])));
     }
 
     /**

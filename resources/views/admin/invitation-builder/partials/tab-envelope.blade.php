@@ -23,8 +23,7 @@ $activeEnvelopeShape = app(\App\Services\Invitation\InvitationBuilderService::cl
 
 <label class="form-label fw-semibold">{{ __('admin.ib-envelope-shape') }}</label>
 <p class="small text-muted mb-2">{{ __('admin.ib-envelope-shape-hint') }}</p>
-@error('envelope_shape')<div class="alert alert-danger py-2 small mb-2">{{ $message }}</div>@enderror
-<div class="row g-2 mb-4" id="ibEnvelopeShapeGrid">
+<div class="row g-2 mb-1" id="ibEnvelopeShapeGrid">
 	@foreach($catalog['envelope_shapes'] as $shapeKey => $shape)
 	<div class="col-4 col-md-4">
 		<label class="ib-envelope-shape-card @if($activeEnvelopeShape === $shapeKey) is-active @endif">
@@ -40,8 +39,9 @@ $activeEnvelopeShape = app(\App\Services\Invitation\InvitationBuilderService::cl
 	</div>
 	@endforeach
 </div>
+@include('admin.invitation-builder.partials.field-hint', ['field' => 'envelope_shape'])
 
-<label class="form-label fw-semibold">{{ __('admin.ib-envelope-image') }}</label>
+<label class="form-label fw-semibold mt-3">{{ __('admin.ib-envelope-image') }}</label>
 <p class="small text-muted mb-2">{{ __('admin.ib-envelope-image-hint') }}</p>
 <input type="hidden" name="envelope_image_ref" id="envelope_image_ref" value="{{ $selectedEnvelopeRef }}"
 	class="ib-preview-field">
@@ -79,11 +79,11 @@ $activeEnvelopeShape = app(\App\Services\Invitation\InvitationBuilderService::cl
 	<p class="small text-warning mb-0">{{ __('admin.ib-envelope-images-empty') }}</p>
 	@endif
 </div>
+@include('admin.invitation-builder.partials.field-hint', ['field' => 'envelope_image_ref'])
 
-<label class="form-label fw-semibold">{{ __('admin.ib-envelope-color') }}</label>
+<label class="form-label fw-semibold mt-3">{{ __('admin.ib-envelope-color') }}</label>
 <small class="text-muted d-block mb-2">{{ __('admin.ib-envelope-color-hint') }}</small>
-@error('envelope_color')<div class="alert alert-danger py-2 small mb-2">{{ $message }}</div>@enderror
-<div class="d-flex flex-wrap gap-2 mb-4">
+<div class="d-flex flex-wrap gap-2 mb-1">
 	@foreach($catalog['envelope_colors'] as $key => $color)
 	<label class="ib-envelope-swatch @if($config['envelope_color'] === $key) is-active @endif"
 		title="{{ $color['label_ar'] }}">
@@ -94,6 +94,7 @@ $activeEnvelopeShape = app(\App\Services\Invitation\InvitationBuilderService::cl
 	</label>
 	@endforeach
 </div>
+@include('admin.invitation-builder.partials.field-hint', ['field' => 'envelope_color'])
 
 @php
 $resolvedSealColor = \App\Services\Invitation\WeddingInvitationPresenter::resolveSealColor(
@@ -102,7 +103,7 @@ $config['seal_color'] ?? null
 );
 @endphp
 
-<label class="form-label fw-semibold">{{ __('admin.ib-seal-style') }}</label>
+<label class="form-label fw-semibold mt-3">{{ __('admin.ib-seal-style') }}</label>
 <p class="small text-muted mb-2">{{ __('admin.ib-seal-style-hint') }}</p>
 
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
@@ -117,10 +118,9 @@ $config['seal_color'] ?? null
 		data-seal-color="{{ $palHex }}" title="{{ $palKey }}" style="background: {{ $palHex }};"></button>
 	@endforeach
 </div>
+@include('admin.invitation-builder.partials.field-hint', ['field' => 'seal_color'])
 
-@error('seal_style')<div class="alert alert-danger py-2 small mb-2">{{ $message }}</div>@enderror
-@error('seal_color')<div class="alert alert-danger py-2 small mb-2">{{ $message }}</div>@enderror
-<div class="row g-2 mb-4" id="ibSealStyleGrid">
+<div class="row g-2 mb-1" id="ibSealStyleGrid">
 	@foreach($catalog['seal_styles'] as $key => $seal)
 	@php
 	$sealDefaultColor = \App\Services\Invitation\WeddingInvitationPresenter::defaultSealColorForStyle($key);
@@ -149,11 +149,13 @@ $config['seal_color'] ?? null
 	</div>
 	@endforeach
 </div>
+@include('admin.invitation-builder.partials.field-hint', ['field' => 'seal_style'])
 
-<label class="form-label fw-semibold" for="envelope_initials">{{ __('admin.ib-envelope-initials') }}</label>
-<input type="text" name="envelope_initials" id="envelope_initials" class="form-control ib-preview-field mb-2"
-	maxlength="8" placeholder="A & B" value="{{ old('envelope_initials', $config['envelope_initials']) }}">
-<small class="text-muted">{{ __('admin.ib-envelope-initials-hint') }}</small>
+<label class="form-label fw-semibold mt-3" for="envelope_initials">{{ __('admin.ib-envelope-initials') }}</label>
+<input type="text" name="envelope_initials" id="envelope_initials"
+	class="form-control ib-preview-field @error('envelope_initials') is-invalid @enderror"
+	placeholder="A & B" value="{{ old('envelope_initials', $config['envelope_initials']) }}">
+@include('admin.invitation-builder.partials.field-hint', ['field' => 'envelope_initials'])
 
 <div class="form-check mt-3">
 	<input class="form-check-input ib-preview-field" type="checkbox" name="welcome_enabled" value="1"

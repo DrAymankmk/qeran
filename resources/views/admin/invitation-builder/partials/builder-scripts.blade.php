@@ -13,6 +13,12 @@
 	const csrf = @json(csrf_token());
 	const blockCatalog = @json($catalog['information_blocks']);
 	const blockSchemas = JSON.parse(document.getElementById('ibBlockSchemasJson')?.textContent || '{}');
+	const hintStrings = {
+		valueRange: @json(__('admin.ib-hint-value-range', ['min' => '__MIN__', 'max' => '__MAX__'])),
+		valueMax: @json(__('admin.ib-hint-value-max', ['max' => '__MAX__'])),
+		valueMin: @json(__('admin.ib-hint-value-min', ['min' => '__MIN__'])),
+		charsMax: @json(__('admin.ib-input-max-hint', ['max' => '__MAX__'])),
+	};
 	let debounceTimer = null;
 	let previewSeq = 0;
 	let previewReady = false;
@@ -901,11 +907,32 @@
 		});
 	}
 
+	function ibBlockFieldHintHtml(fieldType, fieldDef) {
+		var min = fieldDef.min;
+		var max = fieldDef.max;
+		var text = '';
+
+		if (fieldType === 'number' || fieldType === 'font_size') {
+			if (min !== undefined && min !== null && max !== undefined && max !== null) {
+				text = hintStrings.valueRange.replace('__MIN__', min).replace('__MAX__', max);
+			} else if (max !== undefined && max !== null) {
+				text = hintStrings.valueMax.replace('__MAX__', max);
+			} else if (min !== undefined && min !== null) {
+				text = hintStrings.valueMin.replace('__MIN__', min);
+			}
+		} else if ((max !== undefined && max !== null)
+			&& ['text', 'textarea', 'url', 'email', 'tel'].indexOf(fieldType) !== -1) {
+			text = hintStrings.charsMax.replace('__MAX__', max);
+		}
+
+		return text ? '<small class="text-muted d-block mt-1">' + text + '</small>' : '';
+	}
+
 	function ibBlockFieldInputHtml(fieldType, name, label, fieldDef) {
 		fieldDef = fieldDef || {};
 		var inputId = 'ib_bf_dyn_' + Math.random().toString(36).slice(2, 9);
-		var maxlength = fieldDef.max || 500;
 		var placeholder = fieldDef.placeholder || '';
+		var limitHint = ibBlockFieldHintHtml(fieldType, fieldDef);
 
 		if (fieldType === 'checkbox') {
 			return '<div class="form-check mt-1"><input type="hidden" name="' + name + '" value="0">'
@@ -916,8 +943,8 @@
 		var html = '<label class="form-label small mb-1" for="' + inputId + '">' + label + '</label>';
 		if (fieldType === 'textarea') {
 			return html + '<textarea name="' + name + '" id="' + inputId + '" rows="' + (fieldDef.rows || 2)
-				+ '" class="form-control form-control-sm ib-preview-field" maxlength="' + maxlength
-				+ '" placeholder="' + placeholder + '"></textarea>';
+				+ '" class="form-control form-control-sm ib-preview-field"'
+				+ ' placeholder="' + placeholder + '"></textarea>' + limitHint;
 		}
 		if (fieldType === 'color') {
 			return html + '<input type="color" name="' + name + '" id="' + inputId
@@ -925,7 +952,7 @@
 		}
 		if (fieldType === 'number') {
 			return html + '<input type="number" name="' + name + '" id="' + inputId
-				+ '" class="form-control form-control-sm ib-preview-field" placeholder="' + placeholder + '">';
+				+ '" class="form-control form-control-sm ib-preview-field" placeholder="' + placeholder + '">' + limitHint;
 		}
 		if (fieldType === 'date' || fieldType === 'time' || fieldType === 'datetime-local') {
 			return html + '<input type="' + fieldType + '" name="' + name + '" id="' + inputId
@@ -947,8 +974,8 @@
 		}
 		var htmlType = ({ url: 'url', email: 'email', tel: 'tel' })[fieldType] || 'text';
 		return html + '<input type="' + htmlType + '" name="' + name + '" id="' + inputId
-			+ '" class="form-control form-control-sm ib-preview-field" maxlength="' + maxlength
-			+ '" placeholder="' + placeholder + '">';
+			+ '" class="form-control form-control-sm ib-preview-field"'
+			+ ' placeholder="' + placeholder + '">' + limitHint;
 	}
 
 	function buildRepeaterRowHtml(blockKey, repeaterKey, rowIndex, fields) {

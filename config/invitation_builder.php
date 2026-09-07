@@ -532,6 +532,45 @@ return [
         'ivory_emboss' => ['label_ar' => 'نقش عاجي', 'label_en' => 'Ivory Emboss', 'icon' => '🤍', 'shape' => 'emboss-round', 'palette' => 'ivory', 'default_color' => '#e8e0d0', 'ring' => true, 'drip' => false],
     ],
 
+    /**
+     * Hints shown under each input of the envelope tab, and the accepted values
+     * repeated in the hint. Rendered by partials/field-hint.blade.php, which also
+     * prints the validation error for the same field.
+     *
+     * hint     translation key for the guidance line
+     * options  key in this config file whose array keys are the accepted values
+     * format   accepted format, printed as-is
+     * min/max  recommended character length (guidance only, never enforced)
+     */
+    'field_hints' => [
+        'envelope_shape' => [
+            'hint' => 'admin.ib-hint-envelope-shape',
+            'options' => 'envelope_shapes',
+        ],
+        'envelope_image_ref' => [
+            'hint' => 'admin.ib-hint-envelope-image-ref',
+            'format' => 'stock:{name} · hub:{id}',
+        ],
+        'envelope_color' => [
+            'hint' => 'admin.ib-hint-envelope-color',
+            'options' => 'envelope_colors',
+        ],
+        'seal_color' => [
+            'hint' => 'admin.ib-hint-seal-color',
+            'format' => '#RRGGBB',
+            'options' => 'seal_palette_colors',
+        ],
+        'seal_style' => [
+            'hint' => 'admin.ib-hint-seal-style',
+            'options' => 'seal_styles',
+        ],
+        'envelope_initials' => [
+            'hint' => 'admin.ib-envelope-initials-hint',
+            'min' => 1,
+            'max' => 8,
+        ],
+    ],
+
     'fonts' => [
         'Cairo' => 'Cairo',
         'Playfair Display' => 'Playfair Display',

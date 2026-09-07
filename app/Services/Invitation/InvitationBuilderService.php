@@ -1417,9 +1417,7 @@ class InvitationBuilderService
                 return '';
             }
             $px = (float) $value;
-            $min = isset($fieldDef['min']) ? (float) $fieldDef['min'] : 8;
-            $max = isset($fieldDef['max']) ? (float) $fieldDef['max'] : 120;
-            if ($px < $min || $px > $max) {
+            if ($px <= 0) {
                 return '';
             }
 

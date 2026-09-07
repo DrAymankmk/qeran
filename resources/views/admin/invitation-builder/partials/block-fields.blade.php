@@ -103,6 +103,7 @@
 				<label class="form-label small mb-0">{{ $repeaterDef['label_ar'] ?? $repeaterKey }}</label>
 				<button type="button" class="btn btn-sm btn-outline-primary ib-repeater-add">{{ __('admin.ib-block-add-row') }}</button>
 			</div>
+			<small class="text-muted d-block mb-1">{{ __('admin.ib-hint-rows-max', ['max' => $maxRows]) }}</small>
 			<div class="ib-repeater-rows">
 				@foreach($rows as $rowIndex => $row)
 				@include('admin.invitation-builder.partials.block-repeater-row', [

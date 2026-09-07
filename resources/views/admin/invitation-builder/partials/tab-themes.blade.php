@@ -35,7 +35,7 @@
 		<div class="row g-3 align-items-end">
 			<div class="col-md-4">
 				<label class="form-label" for="ibThemeNameAr">{{ __('admin.ib-theme-upload-name') }}</label>
-				<input type="text" id="ibThemeNameAr" class="form-control" maxlength="120"
+				<input type="text" id="ibThemeNameAr" class="form-control"
 					placeholder="{{ __('admin.ib-theme-upload-name-placeholder') }}">
 			</div>
 			<div class="col-md-3">

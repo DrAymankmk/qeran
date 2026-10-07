@@ -288,6 +288,8 @@ Route::group(['prefix' => 'admin', 'middleware' => 'set.admin.locale'], function
             Route::get('/invitations/get-packages-by-invitation', 'getPackagesByInvitationId')->name('invitations.getPackagesByInvitationId');
             Route::get('/invitations/packages/change', 'changePackageStatus')->name('invitations.packages.change-status');
             Route::get('/invitations/guards/{invitation}', 'guards')->name('invitation.guards');
+            Route::get('/invitations/contacts/{invitation}', 'contacts')->name('invitation.contacts');
+            Route::get('/invitations/contacts/{invitation}/export/pdf', 'contactsExportPdf')->name('invitation.contacts.export.pdf');
             Route::get('/invitations/details/{id}', 'show')->name('invitations.details');
             Route::get('/invitations/export/pdf', 'invitationsExportPdf')->name('invitations.export.pdf');
         });

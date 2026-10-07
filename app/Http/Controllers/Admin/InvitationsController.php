@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Mpdf\Mpdf;
@@ -245,7 +246,8 @@ class InvitationsController extends Controller
             }
 
             $actionsHtml .= '<a href="'.route('invitations.getPackagesByInvitationId', ['invitation_id' => $invitation->id]).'" title="'.__('admin.packages').'" class="text-success"><i class="mdi mdi-package font-size-22"></i></a>'.
-                '<a href="'.route('invitation.guards', $invitation->id).'" title="'.__('admin.guards').'" class="text-success"><i class="mdi mdi-account font-size-22"></i></a>';
+                '<a href="'.route('invitation.guards', $invitation->id).'" title="'.__('admin.guards').'" class="text-success"><i class="mdi mdi-account font-size-22"></i></a>'.
+                '<a href="'.route('invitation.contacts', $invitation->id).'" title="'.e(__('admin.invitation-contacts-qr')).'" class="text-primary"><i class="mdi mdi-qrcode font-size-22"></i></a>';
 
             // Check permission for delete
             if (Gate::allows('delete-invitations')) {
@@ -298,6 +300,125 @@ class InvitationsController extends Controller
                 'guards' => collect([])->paginate(),
                 'invitation' => $invitation,
             ])->with('error', __('admin.error-loading-guards'));
+        }
+    }
+
+    /**
+     * Display contacts the invitation was sent to, with QR codes.
+     */
+    public function contacts(Invitation $invitation): View
+    {
+        $contactLogs = InvitationContactLog::query()
+            ->where('invitation_id', $invitation->id)
+            ->latest()
+            ->paginate(config('app.pagination.per_page', 15));
+
+        $contactLogs->getCollection()->transform(function (InvitationContactLog $log) use ($invitation) {
+            $log->setAttribute('guest_qr_cards', $invitation->guestQrCardsForContactLog($log));
+
+            return $log;
+        });
+
+        return view('pages.invitation.contacts', compact('invitation', 'contactLogs'));
+    }
+
+    /**
+     * Export invitation contacts with QR codes as PDF.
+     */
+    public function contactsExportPdf(Invitation $invitation)
+    {
+        $contactLogs = InvitationContactLog::query()
+            ->where('invitation_id', $invitation->id)
+            ->latest()
+            ->get();
+
+        $contacts = $contactLogs->map(function (InvitationContactLog $log) use ($invitation) {
+            $guestCards = collect($invitation->guestQrCardsForContactLog($log))
+                ->map(function (array $card) {
+                    $card['qr_base64'] = $this->qrPayloadBase64((string) ($card['code'] ?? ''));
+
+                    return $card;
+                })
+                ->all();
+
+            return [
+                'id' => $log->id,
+                'contact_name' => self::sanitizePdfText($log->contact_name),
+                'phone' => self::sanitizePdfText(trim(($log->country_code ?? '').' '.($log->phone ?? ''))),
+                'invitation_count' => max(1, (int) ($log->invitation_count ?? 1)),
+                'send_status' => $this->contactSendStatusLabel($log),
+                'acceptance_status' => $this->contactAcceptanceStatusLabel($log),
+                'guest_qr_cards' => $guestCards,
+            ];
+        });
+
+        $invitationName = self::sanitizePdfText($invitation->event_name ?: $invitation->name);
+        $filename = 'invitation_'.$invitation->id.'_contacts_qr_'.date('Y-m-d_His').'.pdf';
+
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'margin_left' => 12,
+            'margin_right' => 12,
+            'margin_top' => 14,
+            'margin_bottom' => 14,
+            'autoLangToFont' => true,
+            'autoScriptToLang' => true,
+            'autoArabic' => true,
+            'direction' => app()->getLocale() == 'ar' ? 'rtl' : 'ltr',
+        ]);
+
+        $html = view('pages.invitation.contacts-pdf-export', [
+            'invitation' => $invitation,
+            'invitationName' => $invitationName,
+            'contacts' => $contacts,
+        ])->render();
+
+        $mpdf->WriteHTML($html);
+
+        return $mpdf->Output($filename, 'D');
+    }
+
+    private function contactSendStatusLabel(InvitationContactLog $log): string
+    {
+        $key = array_search((int) $log->send_status, Constant::INVITATION_CONTACT_SEND_STATUS, true);
+
+        return $key !== false
+            ? __('admin.invitation-contact-send-status-'.$key)
+            : __('admin.no-data-available');
+    }
+
+    private function contactAcceptanceStatusLabel(InvitationContactLog $log): string
+    {
+        if ($log->acceptance_status === null) {
+            return __('admin.invitation-contact-acceptance-pending');
+        }
+
+        $key = array_search((int) $log->acceptance_status, Constant::ACCEPTANCE_STATUS, true);
+
+        return $key !== false
+            ? __('admin.invitation-contact-acceptance-'.$key)
+            : __('admin.no-data-available');
+    }
+
+    private function qrPayloadBase64(string $payload): ?string
+    {
+        if ($payload === '') {
+            return null;
+        }
+
+        $relativePath = 'qr-code/Qr-'.$payload.'.png';
+
+        try {
+            if (! Storage::disk('public')->exists($relativePath)) {
+                return null;
+            }
+
+            $bytes = Storage::disk('public')->get($relativePath);
+
+            return is_string($bytes) && $bytes !== '' ? base64_encode($bytes) : null;
+        } catch (\Throwable) {
+            return null;
         }
     }
 

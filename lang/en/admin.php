@@ -532,6 +532,7 @@ return[
     'invitation-contact-message' => 'Message sent to contacts',
     'invitation-contacts-qr' => 'Invitation contacts & QR codes',
     'invitation-contacts-export-pdf' => 'Export contacts PDF',
+    'invitation-contacts-export-pdf-failed' => 'Could not export contacts PDF. Please try again or contact support.',
     'invitation-contacts-empty' => 'No contacts have been sent invitations for this invitation yet.',
     'invitation-contact-qr-codes' => 'QR codes',
     'invitation-count' => 'Invitation count',

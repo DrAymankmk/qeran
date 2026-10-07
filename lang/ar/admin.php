@@ -559,6 +559,7 @@ return[
     'invitation-contact-message' => 'الرسالة المرسلة لجهات الاتصال',
     'invitation-contacts-qr' => 'جهات اتصال الدعوة ورموز QR',
     'invitation-contacts-export-pdf' => 'تصدير جهات الاتصال PDF',
+    'invitation-contacts-export-pdf-failed' => 'تعذر تصدير ملف PDF لجهات الاتصال. حاول مرة أخرى أو تواصل مع الدعم.',
     'invitation-contacts-empty' => 'لا توجد جهات اتصال تم إرسال الدعوة إليها بعد.',
     'invitation-contact-qr-codes' => 'رموز QR',
     'invitation-count' => 'عدد الدعوات',

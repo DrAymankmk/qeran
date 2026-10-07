@@ -51,6 +51,12 @@
 	<div class="col-12">
 		<div class="card">
 			<div class="card-body">
+				@if(session('error'))
+					<div class="alert alert-danger">{{ session('error') }}</div>
+				@endif
+				@if(session('success'))
+					<div class="alert alert-success">{{ session('success') }}</div>
+				@endif
 				<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
 					<div>
 						<h5 class="mb-1">{{ $invitation->event_name ?: $invitation->name }}</h5>

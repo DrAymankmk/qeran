@@ -327,56 +327,116 @@ class InvitationsController extends Controller
      */
     public function contactsExportPdf(Invitation $invitation)
     {
-        $contactLogs = InvitationContactLog::query()
-            ->where('invitation_id', $invitation->id)
-            ->latest()
-            ->get();
+        @ini_set('memory_limit', '512M');
+        @set_time_limit(180);
 
-        $contacts = $contactLogs->map(function (InvitationContactLog $log) use ($invitation) {
-            $guestCards = collect($invitation->guestQrCardsForContactLog($log))
-                ->map(function (array $card) {
-                    $card['qr_base64'] = $this->qrPayloadBase64((string) ($card['code'] ?? ''));
+        try {
+            $contactLogs = InvitationContactLog::query()
+                ->where('invitation_id', $invitation->id)
+                ->latest()
+                ->get();
 
-                    return $card;
-                })
-                ->all();
+            $tempDir = storage_path('app/mpdf-temp');
+            if (! is_dir($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
 
-            return [
-                'id' => $log->id,
-                'contact_name' => self::sanitizePdfText($log->contact_name),
-                'phone' => self::sanitizePdfText(trim(($log->country_code ?? '').' '.($log->phone ?? ''))),
-                'invitation_count' => max(1, (int) ($log->invitation_count ?? 1)),
-                'send_status' => $this->contactSendStatusLabel($log),
-                'acceptance_status' => $this->contactAcceptanceStatusLabel($log),
-                'guest_qr_cards' => $guestCards,
-            ];
-        });
+            $contacts = $contactLogs->map(function (InvitationContactLog $log) use ($invitation) {
+                $guestCards = [];
 
-        $invitationName = self::sanitizePdfText($invitation->event_name ?: $invitation->name);
-        $filename = 'invitation_'.$invitation->id.'_contacts_qr_'.date('Y-m-d_His').'.pdf';
+                try {
+                    $guestCards = collect($invitation->guestQrCardsForContactLog($log))
+                        ->map(function (array $card) {
+                            $code = (string) ($card['code'] ?? '');
+                            $card['name'] = self::sanitizePdfText($card['name'] ?? '');
+                            $card['qr_src'] = $this->qrPayloadLocalPath($code);
 
-        $mpdf = new Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4',
-            'margin_left' => 12,
-            'margin_right' => 12,
-            'margin_top' => 14,
-            'margin_bottom' => 14,
-            'autoLangToFont' => true,
-            'autoScriptToLang' => true,
-            'autoArabic' => true,
-            'direction' => app()->getLocale() == 'ar' ? 'rtl' : 'ltr',
-        ]);
+                            return $card;
+                        })
+                        ->all();
+                } catch (\Throwable $e) {
+                    Log::warning('Failed preparing guest QR cards for PDF', [
+                        'invitation_id' => $invitation->id,
+                        'contact_log_id' => $log->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
 
-        $html = view('pages.invitation.contacts-pdf-export', [
-            'invitation' => $invitation,
-            'invitationName' => $invitationName,
-            'contacts' => $contacts,
-        ])->render();
+                return [
+                    'id' => $log->id,
+                    'contact_name' => self::sanitizePdfText($log->contact_name),
+                    'phone' => self::sanitizePdfText(trim(($log->country_code ?? '').' '.($log->phone ?? ''))),
+                    'invitation_count' => max(1, (int) ($log->invitation_count ?? 1)),
+                    'send_status' => self::sanitizePdfText($this->contactSendStatusLabel($log)),
+                    'acceptance_status' => self::sanitizePdfText($this->contactAcceptanceStatusLabel($log)),
+                    'guest_qr_cards' => $guestCards,
+                ];
+            });
 
-        $mpdf->WriteHTML($html);
+            $invitationName = self::sanitizePdfText($invitation->event_name ?: $invitation->name);
+            $filename = 'invitation_'.$invitation->id.'_contacts_qr_'.date('Y-m-d_His').'.pdf';
 
-        return $mpdf->Output($filename, 'D');
+            $mpdf = new Mpdf([
+                'mode' => 'utf-8',
+                'format' => 'A4',
+                'margin_left' => 12,
+                'margin_right' => 12,
+                'margin_top' => 14,
+                'margin_bottom' => 14,
+                'autoLangToFont' => true,
+                'autoScriptToLang' => true,
+                'autoVietnamese' => true,
+                'autoArabic' => true,
+                'tempDir' => $tempDir,
+            ]);
+
+            if (app()->getLocale() === 'ar') {
+                $mpdf->SetDirectionality('rtl');
+            }
+
+            // Header once, then write contacts in small chunks to avoid memory / OTL crashes.
+            $mpdf->WriteHTML(view('pages.invitation.contacts-pdf-export', [
+                'invitation' => $invitation,
+                'invitationName' => $invitationName,
+                'contacts' => collect(),
+                'renderMode' => 'header',
+            ])->render());
+
+            if ($contacts->isEmpty()) {
+                $mpdf->WriteHTML(view('pages.invitation.contacts-pdf-export', [
+                    'invitation' => $invitation,
+                    'invitationName' => $invitationName,
+                    'contacts' => $contacts,
+                    'renderMode' => 'empty',
+                ])->render());
+            } else {
+                foreach ($contacts as $index => $contact) {
+                    if ($index > 0 && $index % 2 === 0) {
+                        $mpdf->AddPage();
+                    }
+
+                    $mpdf->WriteHTML(view('pages.invitation.contacts-pdf-export', [
+                        'invitation' => $invitation,
+                        'invitationName' => $invitationName,
+                        'contact' => $contact,
+                        'contacts' => collect(),
+                        'renderMode' => 'contact',
+                    ])->render());
+                }
+            }
+
+            return $mpdf->Output($filename, 'D');
+        } catch (\Throwable $e) {
+            Log::error('Invitation contacts PDF export failed', [
+                'invitation_id' => $invitation->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return redirect()
+                ->route('invitation.contacts', $invitation)
+                ->with('error', __('admin.invitation-contacts-export-pdf-failed'));
+        }
     }
 
     private function contactSendStatusLabel(InvitationContactLog $log): string
@@ -401,9 +461,17 @@ class InvitationsController extends Controller
             : __('admin.no-data-available');
     }
 
-    private function qrPayloadBase64(string $payload): ?string
+    /**
+     * Resolve a local filesystem path mPDF can embed (avoid huge base64 HTML).
+     */
+    private function qrPayloadLocalPath(string $payload): ?string
     {
         if ($payload === '') {
+            return null;
+        }
+
+        // Prevent path traversal via guest payload.
+        if (! preg_match('/^[A-Za-z0-9._-]+$/', $payload)) {
             return null;
         }
 
@@ -414,10 +482,34 @@ class InvitationsController extends Controller
                 return null;
             }
 
-            $bytes = Storage::disk('public')->get($relativePath);
+            $absolutePath = Storage::disk('public')->path($relativePath);
+            if (is_string($absolutePath) && is_file($absolutePath) && filesize($absolutePath) > 0) {
+                return $absolutePath;
+            }
 
-            return is_string($bytes) && $bytes !== '' ? base64_encode($bytes) : null;
-        } catch (\Throwable) {
+            // Cloud/local mismatch: materialize into mPDF temp for embedding.
+            $bytes = Storage::disk('public')->get($relativePath);
+            if (! is_string($bytes) || $bytes === '') {
+                return null;
+            }
+
+            $tempDir = storage_path('app/mpdf-temp');
+            if (! is_dir($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+
+            $tempPath = $tempDir.DIRECTORY_SEPARATOR.'Qr-'.md5($payload).'.png';
+            if (file_put_contents($tempPath, $bytes) === false) {
+                return null;
+            }
+
+            return $tempPath;
+        } catch (\Throwable $e) {
+            Log::warning('QR local path resolve failed', [
+                'payload' => $payload,
+                'error' => $e->getMessage(),
+            ]);
+
             return null;
         }
     }

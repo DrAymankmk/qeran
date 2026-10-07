@@ -250,9 +250,9 @@ class InvitationsController extends Controller
                 '<a href="'.route('invitation.guards', $invitation->id).'" title="'.__('admin.guards').'" class="text-success"><i class="mdi mdi-account font-size-22"></i></a>';
 
             // QR/contacts button only when the client has added contacts to this invitation
-            if ((int) ($invitation->contact_logs_count ?? 0) > 0) {
+            // if ((int) ($invitation->contact_logs_count ?? 0) > 0) {
                 $actionsHtml .= '<a href="'.route('invitation.contacts', $invitation->id).'" title="'.e(__('admin.invitation-contacts-qr')).'" class="text-primary"><i class="mdi mdi-qrcode font-size-22"></i></a>';
-            }
+            // }
 
             // Check permission for delete
             if (Gate::allows('delete-invitations')) {
